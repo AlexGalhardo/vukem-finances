@@ -74,7 +74,7 @@ func (c *Chat) Complete(ctx context.Context, req Request) (Response, error) {
 	}
 
 	for _, m := range req.Messages {
-		messages = append(messages, chatMessage{Role: m.Role, Content: m.Content})
+		messages = append(messages, chatMessage(m))
 	}
 
 	maxTokens := req.MaxTokens

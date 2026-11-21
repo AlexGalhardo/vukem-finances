@@ -130,7 +130,7 @@ func (h *HTTP) once(ctx context.Context, url string, headers map[string]string, 
 		return 0, nil, pe
 	}
 
-	defer resp.Body.Close()
+	defer func() { _ = resp.Body.Close() }()
 
 	raw, err := io.ReadAll(resp.Body)
 	if err != nil {
