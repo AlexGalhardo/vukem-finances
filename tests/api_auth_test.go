@@ -147,3 +147,16 @@ func TestSecurity_RemovedMemberToken(t *testing.T) {
 
 	assertProblem(t, apiClient(t, app, fresh).Get("/api/v1/me"), 404, "not_found")
 }
+
+func TestAPIUnknownRoutesAnswerJSON(t *testing.T) {
+	t.Parallel()
+
+	app := newApp(t)
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	c := apiClient(t, app, makeToken(t, app, ana, 30, "accounts:read"))
+
+	assertProblem(t, c.Get("/api/v1/nope"), 404, "not_found")
+	assertProblem(t, c.Delete("/api/v1/me"), 404, "not_found")
+	assertProblem(t, app.Client(t).Get("/api/v1/nope"), 404, "not_found")
+	c.Get("/api/v1/nope").AssertHeaderContains("Content-Type", "problem+json")
+}
