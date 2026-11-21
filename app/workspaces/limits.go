@@ -33,6 +33,12 @@ var (
 	}
 )
 
+// Personal is the plan of the personal edition: no caps, every feature on.
+var Personal = Limits{
+	Plan: "personal", Accounts: Unlimited, Transactions: Unlimited,
+	Members: Unlimited, CSVImport: true, Budgets: true,
+}
+
 // IsUpgrade reports whether err is a plan limit: controllers send the user
 // to /billing instead of showing an error page.
 func IsUpgrade(err error) bool {
@@ -89,9 +95,14 @@ func (l Limits) CheckBudgets() error {
 	return nil
 }
 
-// Limits returns the limits of the workspace of ctx: Pro with a valid
-// subscription (active or trialing), else Free.
+// Limits returns the limits of the workspace of ctx: Personal in the
+// personal edition, else Pro with a valid subscription (active or
+// trialing), else Free.
 func (s *Service) Limits(ctx context.Context) (Limits, error) {
+	if s.Edition.Personal() {
+		return Personal, nil
+	}
+
 	subs, err := Scoped[models.WorkspaceSubscription](ctx, s.DB).Get(ctx)
 	if err != nil {
 		return Limits{}, err

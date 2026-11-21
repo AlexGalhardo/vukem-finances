@@ -25,6 +25,7 @@ import (
 
 	appmail "github.com/AlexGalhardo/vukem-finances/app/mail"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
 // DefaultCurrency is the currency of a new workspace (ISO 4217).
@@ -42,6 +43,8 @@ type Service struct {
 	Mailer *mail.Mailer
 	Log    *slog.Logger
 	Gate   *authz.Gate[models.User]
+	// Edition is the shape the app runs in (APP_EDITION).
+	Edition config.Edition
 	// URL is the public base URL used in emails (APP_URL).
 	URL string
 	// InviteTTL is how long an invite link works.
@@ -69,8 +72,13 @@ func New(app *vukem.App) (*Service, error) {
 		return orm.QueryOf[models.EmailSuppression](db).Where("address", addr).Exists(ctx)
 	})
 
+	edition, err := config.LoadEdition(app.Source)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Service{
-		DB: db, Mailer: mailer, Log: app.Log, Gate: newGate(),
+		DB: db, Mailer: mailer, Log: app.Log, Gate: newGate(), Edition: edition,
 		URL: strings.TrimSuffix(app.Config.URL, "/"), InviteTTL: 7 * 24 * time.Hour, now: app.Now,
 	}, nil
 }
