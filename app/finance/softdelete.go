@@ -52,13 +52,30 @@ func trashed[T any](ctx context.Context, ex database.Executor, now time.Time, id
 }
 
 // DeleteAccount deletes an account of the workspace and, in the same
-// transaction, its transactions (each one logged by the triggers). Its CSV
-// imports are server-side artifacts of the account and go with it.
+// transaction, its transactions (each one logged by the triggers). The other
+// leg of every transfer it took part in goes too, so no transfer is left with
+// one side. Its CSV imports are server-side artifacts of the account and go
+// with it.
 func (s *Service) DeleteAccount(ctx context.Context, id int64) error {
+	ws, err := s.WS.Current(ctx)
+	if err != nil {
+		return err
+	}
+
 	at := s.now().UTC()
 
 	return s.DB.Tx(ctx, func(tx *database.Tx) error {
+		if err := lockWorkspace(ctx, tx, ws.ID); err != nil {
+			return err
+		}
+
 		if err := softDelete[models.Account](ctx, tx, id, at); err != nil {
+			return err
+		}
+
+		uids, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("account_id", id).
+			WhereNotNull("transfer_uid").Pluck[string](ctx, "transfer_uid")
+		if err != nil {
 			return err
 		}
 
@@ -67,7 +84,14 @@ func (s *Service) DeleteAccount(ctx context.Context, id int64) error {
 			return err
 		}
 
-		_, err := workspaces.Scoped[models.Import](ctx, tx).Where("account_id", id).Delete(ctx)
+		if len(uids) > 0 {
+			if _, err := workspaces.Scoped[models.Transaction](ctx, tx).WhereIn("transfer_uid", anys(uids)...).
+				Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+				return err
+			}
+		}
+
+		_, err = workspaces.Scoped[models.Import](ctx, tx).Where("account_id", id).Delete(ctx)
 
 		return err
 	})
@@ -95,9 +119,32 @@ func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 	})
 }
 
-// DeleteTransaction deletes a transaction of the workspace.
+// DeleteTransaction deletes a transaction of the workspace. A leg of a
+// transfer takes the other leg with it.
 func (s *Service) DeleteTransaction(ctx context.Context, id int64) error {
-	return softDelete[models.Transaction](ctx, s.DB, id, s.now().UTC())
+	ws, err := s.WS.Current(ctx)
+	if err != nil {
+		return err
+	}
+
+	at := s.now().UTC()
+
+	return s.DB.Tx(ctx, func(tx *database.Tx) error {
+		if err := lockWorkspace(ctx, tx, ws.ID); err != nil {
+			return err
+		}
+
+		leg, err := isTransferLeg(ctx, tx, id)
+		if err != nil {
+			return err
+		}
+
+		if leg {
+			return deleteTransferOf(ctx, tx, id, at)
+		}
+
+		return softDelete[models.Transaction](ctx, tx, id, at)
+	})
 }
 
 // DeleteBudget deletes the budget of a category.
@@ -108,9 +155,30 @@ func (s *Service) DeleteBudget(ctx context.Context, id int64) error {
 // RestoreAccount brings back an account deleted less than RestoreWindow ago,
 // with the transactions that were deleted together with it.
 func (s *Service) RestoreAccount(ctx context.Context, id int64) (models.Account, error) {
-	err := s.DB.Tx(ctx, func(tx *database.Tx) error {
+	ws, err := s.WS.Current(ctx)
+	if err != nil {
+		return models.Account{}, err
+	}
+
+	err = s.DB.Tx(ctx, func(tx *database.Tx) error {
+		if err := lockWorkspace(ctx, tx, ws.ID); err != nil {
+			return err
+		}
+
 		a, err := trashed[models.Account](ctx, tx, s.now(), id)
 		if err != nil {
+			return err
+		}
+
+		// Read before the legs of this account come back: the transfers whose
+		// other leg lives on another account have to come back with them.
+		uids, err := workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("account_id", id).
+			Where("deleted_at", a.DeletedAt.V).WhereNotNull("transfer_uid").Pluck[string](ctx, "transfer_uid")
+		if err != nil {
+			return err
+		}
+
+		if err := checkPairedAccounts(ctx, tx, id, a.DeletedAt.V, uids); err != nil {
 			return err
 		}
 
@@ -121,8 +189,11 @@ func (s *Service) RestoreAccount(ctx context.Context, id int64) (models.Account,
 
 		_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("account_id", id).
 			Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil})
+		if err != nil {
+			return err
+		}
 
-		return err
+		return restorePairedLegs(ctx, tx, a.DeletedAt.V, uids)
 	})
 	if err != nil {
 		return models.Account{}, err
@@ -161,9 +232,19 @@ func (s *Service) RestoreCategory(ctx context.Context, id int64) (models.Categor
 	return reload[models.Category](ctx, s.DB, id)
 }
 
-// RestoreTransaction brings back a transaction whose account is alive.
+// RestoreTransaction brings back a transaction whose account is alive. A leg
+// of a transfer brings the other leg back with it.
 func (s *Service) RestoreTransaction(ctx context.Context, id int64) (models.Transaction, error) {
-	err := s.DB.Tx(ctx, func(tx *database.Tx) error {
+	ws, err := s.WS.Current(ctx)
+	if err != nil {
+		return models.Transaction{}, err
+	}
+
+	err = s.DB.Tx(ctx, func(tx *database.Tx) error {
+		if err := lockWorkspace(ctx, tx, ws.ID); err != nil {
+			return err
+		}
+
 		t, err := trashed[models.Transaction](ctx, tx, s.now(), id)
 		if err != nil {
 			return err
@@ -171,6 +252,10 @@ func (s *Service) RestoreTransaction(ctx context.Context, id int64) (models.Tran
 
 		if err := requireLive[models.Account](ctx, tx, t.AccountID); err != nil {
 			return err
+		}
+
+		if t.TransferUID.Valid {
+			return restoreTransfer(ctx, tx, t)
 		}
 
 		_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("id", id).
@@ -223,4 +308,64 @@ func requireLive[T any](ctx context.Context, ex database.Executor, id int64) err
 	}
 
 	return nil
+}
+
+func anys[T any](values []T) []any {
+	out := make([]any, len(values))
+	for i, v := range values {
+		out[i] = v
+	}
+
+	return out
+}
+
+// restoreTransfer brings back both legs of the transfer of t, the ones
+// deleted together with it. The account of the other leg must be alive.
+func restoreTransfer(ctx context.Context, tx *database.Tx, t models.Transaction) error {
+	uids := []string{t.TransferUID.V}
+
+	if err := checkPairedAccounts(ctx, tx, 0, t.DeletedAt.V, uids); err != nil {
+		return err
+	}
+
+	return restorePairedLegs(ctx, tx, t.DeletedAt.V, uids)
+}
+
+// checkPairedAccounts refuses a restore that would bring back a transfer leg
+// whose account is still deleted: that would leave a transfer with one side.
+// skip is the account being restored itself.
+func checkPairedAccounts(ctx context.Context, tx *database.Tx, skip int64, at time.Time, uids []string) error {
+	if len(uids) == 0 {
+		return nil
+	}
+
+	legs, err := workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().
+		WhereIn("transfer_uid", anys(uids)...).Where("deleted_at", at).Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, l := range legs {
+		if l.AccountID == skip {
+			continue
+		}
+
+		if err := requireLive[models.Account](ctx, tx, l.AccountID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func restorePairedLegs(ctx context.Context, tx *database.Tx, at time.Time, uids []string) error {
+	if len(uids) == 0 {
+		return nil
+	}
+
+	_, err := workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().
+		WhereIn("transfer_uid", anys(uids)...).Where("deleted_at", at).
+		Update(ctx, orm.Set{"deleted_at": nil})
+
+	return err
 }

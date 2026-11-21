@@ -88,7 +88,10 @@ func (s *Service) Dashboard(ctx context.Context, month string) (Dashboard, error
 	from, _ := monthBounds(months[0])
 	_, to := monthBounds(month)
 
-	for t, err := range workspaces.Scoped[models.Transaction](ctx, s.DB).WhereBetween("occurred_on", from, to).Each(ctx) {
+	// Transfer legs move money between accounts: never income, expense or spending.
+	entries := workspaces.Scoped[models.Transaction](ctx, s.DB).WhereNull("transfer_uid").WhereBetween("occurred_on", from, to)
+
+	for t, err := range entries.Each(ctx) {
 		if err != nil {
 			return d, err
 		}

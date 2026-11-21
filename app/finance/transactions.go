@@ -100,6 +100,10 @@ func (s *Service) persistTransaction(
 			return err
 		}
 
+		if row.TransferUID.Valid {
+			return errIsTransfer
+		}
+
 		*previous = row
 	}
 
@@ -148,7 +152,9 @@ func (s *Service) persistTransaction(
 func checkMonthQuota(ctx context.Context, tx *database.Tx, lim workspaces.Limits, date string) error {
 	from, to := monthBounds(MonthOf(date))
 
-	n, err := workspaces.Scoped[models.Transaction](ctx, tx).WhereBetween("occurred_on", from, to).Count(ctx)
+	// A transfer moves money between accounts; it is not an entry of the plan's monthly quota.
+	n, err := workspaces.Scoped[models.Transaction](ctx, tx).WhereNull("transfer_uid").
+		WhereBetween("occurred_on", from, to).Count(ctx)
 	if err != nil {
 		return err
 	}
