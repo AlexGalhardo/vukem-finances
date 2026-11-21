@@ -1,0 +1,50 @@
+import type en from "../en/ai";
+
+const dict = {
+  ai: "IA",
+  aiIntro:
+    "Conecta la clave de tu propio proveedor de IA. La IA está apagada hasta que el propietario del workspace la active, y la clave se guarda cifrada.",
+  aiOwnerOnly: "Solo el propietario del workspace puede cambiar esta configuración.",
+  aiStatus: "Estado",
+  aiStatusOn: "La IA está activada en este workspace.",
+  aiStatusOff: "La IA está desactivada en este workspace.",
+  aiKeyTitle: "Clave del proveedor",
+  aiProvider: "Proveedor",
+  aiProviderAnthropic: "Anthropic",
+  aiProviderOpenai: "OpenAI",
+  aiProviderCompatible: "Servidor compatible con OpenAI",
+  aiKey: "Clave de API",
+  aiKeyHelp:
+    "La clave se cifra en el servidor y no se vuelve a mostrar. Solo se guardan en claro sus últimos cuatro caracteres.",
+  aiLabel: "Etiqueta (opcional)",
+  aiBaseUrl: "URL base",
+  aiBaseUrlHelp:
+    "Debe empezar por https://. Un servidor local por http solo funciona si el administrador del servidor lo permite.",
+  aiModel: "Modelo (opcional)",
+  aiSaveKey: "Guardar clave",
+  aiKeySaved: "Hay una clave guardada",
+  aiKeyEnding: "terminada en",
+  aiLastUsed: "Último uso",
+  aiNeverUsed: "nunca",
+  aiNoKey: "Todavía no hay ninguna clave guardada.",
+  aiTestKey: "Probar clave",
+  aiSettingsTitle: "Interruptores y límite",
+  aiEnable: "Activar la IA en este workspace",
+  aiFeatureCategorize: "Sugerir categorías para las transacciones",
+  aiFeatureAssistant: "Asistente",
+  aiMonthlyLimit: "Límite mensual de llamadas",
+  aiSaveSettings: "Guardar configuración",
+  aiConsentTitle: "Qué se envía a tu proveedor",
+  aiConsentBody:
+    "Cuando se ejecuta una función, la descripción, el importe, la fecha y los nombres de categoría de las transacciones implicadas se envían a tu proveedor. Nunca se envían nombres de personas, correos, números de cuenta ni tu clave. Desactivar la IA detiene todas las llamadas al instante.",
+  aiConsentCheckbox: "Entiendo qué se envía y quiero activar la IA.",
+  aiConsentConfirm: "Activar la IA",
+  aiUsageTitle: "Uso de este mes",
+  aiUsageCalls: "Llamadas",
+  aiUsageInput: "Tokens de entrada",
+  aiUsageOutput: "Tokens de salida",
+  aiUsageFeature: "Función",
+  aiUsageNone: "Todavía no hay llamadas este mes.",
+  aiBillingNote: "El coste lo factura tu proveedor. Abre su página de facturación para verlo.",
+} satisfies Record<keyof typeof en, string>;
+export default dict;

@@ -50,7 +50,7 @@ of truth for cost.
    `GoString`, JSON and logs.
 4. The key exists in clear only inside the function that builds one outbound
    request.
-5. Saving a new key revokes the previous active one. The owner can delete the
+5. A workspace has one active key: saving a new one (for any provider) revokes the previous one. The owner can delete the
    key; deleting only marks it revoked and clears the ciphertext.
 6. After an `APP_KEY` rotation, a daily job (`ai_reseal`) re-seals every
    credential whose ciphertext needs rotation. Keep the old key in
@@ -74,8 +74,10 @@ saving and deleting a key are written to the audit log, without the key.
   so concurrent calls cannot exceed it.
 - A provider's error text is never shown to the browser or written to the log
   as is. The browser gets a generic message ("the provider rejected the key",
-  "the provider is unavailable"); the log gets the status code and a redacted,
-  truncated excerpt.
+  "the provider is unavailable"); the log gets the provider, the feature, the
+  status code and the provider's error type when it has a plain shape
+  (`authentication_error`), and never the upstream message or body, because a
+  provider can echo the key or the prompt in it.
 
 ## Custom base URL and local models
 
@@ -89,6 +91,13 @@ In the personal edition only, the host administrator may set
 `AI_ALLOW_PRIVATE_HOSTS=true` to reach a model server on the same machine or
 network. `http` is then accepted for private hosts only. In the saas edition
 the variable is ignored.
+
+## Pages and routes
+
+`GET /ai` (every member reads the status; only the owner receives the saved key
+and its hint), `PUT /ai/settings`, `POST /ai/key`, `DELETE /ai/key/{credential}`
+and `POST /ai/check` (the "Test key" button; one 16-token request, not counted
+against the monthly limit). Every write checks `ai.manage` on the server.
 
 ## Add a provider
 
