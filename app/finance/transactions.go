@@ -65,15 +65,10 @@ func (s *Service) saveTransaction(ctx context.Context, id int64, in TxInput) (mo
 		return models.Transaction{}, err
 	}
 
-	lim, err := s.WS.Limits(ctx)
-	if err != nil {
-		return models.Transaction{}, err
-	}
-
 	var out, previous models.Transaction
 
 	err = s.DB.Tx(ctx, func(tx *database.Tx) error {
-		return s.persistTransaction(ctx, tx, ws.ID, lim, id, in, &out, &previous)
+		return s.persistTransaction(ctx, tx, ws.ID, id, in, &out, &previous)
 	})
 	if err != nil {
 		return models.Transaction{}, err
@@ -90,7 +85,6 @@ func (s *Service) persistTransaction(
 	ctx context.Context,
 	tx *database.Tx,
 	workspaceID int64,
-	lim workspaces.Limits,
 	id int64,
 	in TxInput,
 	out, previous *models.Transaction,
@@ -120,6 +114,14 @@ func (s *Service) persistTransaction(
 	}
 
 	if id == 0 || MonthOf(previous.OccurredOn) != MonthOf(row.OccurredOn) {
+		// The plan is read here, inside the transaction and after the workspace
+		// lock, never before it: a plan that changes while the request waits
+		// (a refund, a payment) is the plan the quota is checked against.
+		lim, err := s.WS.LimitsIn(ctx, tx)
+		if err != nil {
+			return err
+		}
+
 		if err := checkMonthQuota(ctx, tx, lim, row.OccurredOn); err != nil {
 			return err
 		}

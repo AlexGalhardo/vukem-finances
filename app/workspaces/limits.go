@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/AlexGalhardo/vukem/database"
 	"github.com/AlexGalhardo/vukem/errs"
 )
 
@@ -97,6 +98,12 @@ func (l Limits) CheckBudgets() error {
 // personal edition, else Pro with a valid subscription (active or
 // trialing), else Free.
 func (s *Service) Limits(ctx context.Context) (Limits, error) {
+	return s.LimitsIn(ctx, s.DB)
+}
+
+// LimitsIn is Limits reading through ex. A quota check inside a transaction
+// uses it, so the plan and the count are read in the same transaction.
+func (s *Service) LimitsIn(ctx context.Context, ex database.Executor) (Limits, error) {
 	if s.Edition.Personal() {
 		return Personal, nil
 	}
@@ -106,7 +113,7 @@ func (s *Service) Limits(ctx context.Context) (Limits, error) {
 		return Free, nil
 	}
 
-	pro, err := s.Entitled(ctx, id, s.now().UTC())
+	pro, err := s.entitledIn(ctx, ex, id, s.now().UTC())
 	if err != nil {
 		return Limits{}, err
 	}
