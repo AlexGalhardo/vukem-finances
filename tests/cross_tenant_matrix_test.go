@@ -78,7 +78,23 @@ var crossTenantCases = map[string]crossTenantCase{
 		},
 	},
 	"transfers.destroy": {method: http.MethodDelete, table: "transactions", param: "transaction"},
-	"budgets.destroy":   {method: http.MethodDelete, table: "budgets", param: "budget"},
+	"cards.show":        {method: http.MethodGet, table: "credit_cards", param: "card"},
+	"cards.update": {
+		method: http.MethodPatch, table: "credit_cards", param: "card",
+		body: func(map[string]int64) map[string]any {
+			return map[string]any{"name": "Renamed", "limit": "10.00", "closingDay": "5", "dueDay": "15"}
+		},
+	},
+	"cards.archive":   {method: http.MethodPost, table: "credit_cards", param: "card"},
+	"cards.unarchive": {method: http.MethodPost, table: "credit_cards", param: "card"},
+	"cards.destroy":   {method: http.MethodDelete, table: "credit_cards", param: "card"},
+	"cards.pay": {
+		method: http.MethodPost, table: "transactions", param: "card",
+		body: func(ids map[string]int64) map[string]any {
+			return map[string]any{"fromAccountId": strconv.FormatInt(ids["bobAccount"], 10), "amount": "1.00"}
+		},
+	},
+	"budgets.destroy": {method: http.MethodDelete, table: "budgets", param: "budget"},
 	"import.confirm": {
 		method: http.MethodPost, table: "imports", param: "import",
 		body: func(map[string]int64) map[string]any {
@@ -126,6 +142,9 @@ func TestCrossTenantMatrix(t *testing.T) {
 	}).AssertRedirect("/budgets")
 	upload(t, ana, accAna, statement).AssertOK()
 	ana.Client.PostJSON("/tags", map[string]any{"name": "Trip"}).AssertStatus(http.StatusCreated)
+	ana.Client.PostForm("/cards", map[string][]string{
+		"name": {"Visa"}, "limit": {"1000.00"}, "closingDay": {"10"}, "dueDay": {"20"},
+	}).AssertRedirect("/cards")
 	ana.Client.PostForm("/ai/key", map[string][]string{"provider": {"anthropic"}, "apiSecret": {"sk-placeholder-matrix-0123456789"}}).
 		AssertRedirect("/ai")
 
@@ -136,6 +155,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 		"import":      firstOf[models.Import](t, app, ana, "").ID,
 		"credential":  firstOf[models.AICredential](t, app, ana, "").ID,
 		"user":        cara.ID,
+		"card":        firstOf[models.CreditCard](t, app, ana, "").ID,
 		"bobAccount":  firstAccount(t, app, bob),
 		"category":    categoryID(t, app, ana, "Groceries"),
 		"bobCategory": categoryID(t, app, bob, "Groceries"),
@@ -148,7 +168,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
 
 	tables := map[string]int64{}
-	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true} {
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true} {
 		tables[table] = rowCount(t, app, table)
 	}
 
@@ -178,6 +198,10 @@ func TestCrossTenantMatrix(t *testing.T) {
 			}
 
 			target := pathParam.ReplaceAllStringFunc(route.Path, func(p string) string {
+				if p == "{ref}" {
+					return "2026-11-10"
+				}
+
 				return strconv.FormatInt(ids[p[1:len(p)-1]], 10)
 			})
 
@@ -189,6 +213,8 @@ func TestCrossTenantMatrix(t *testing.T) {
 			var res *vukemtest.Response
 
 			switch tc.method {
+			case http.MethodGet:
+				res = bob.Client.Get(target)
 			case http.MethodDelete:
 				res = bob.Client.Delete(target)
 			case http.MethodPatch:

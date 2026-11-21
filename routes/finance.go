@@ -123,6 +123,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		financeDashboard(g, h)
 		financeTransactions(g, h)
 		financeAccounts(g, h)
+		financeCards(g, h)
 		financeCategories(g, h)
 		financeBudgets(g, h)
 		financeImports(g, h, imports)

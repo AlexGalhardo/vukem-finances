@@ -253,37 +253,56 @@ func (s *Service) CardOverviews(ctx context.Context) ([]CardOverview, error) {
 	out := make([]CardOverview, 0, len(cards))
 
 	for _, cv := range cards {
-		list, err := cardStatements(ctx, s.DB, cv.CreditCard, today)
+		o, err := overviewOf(ctx, s.DB, cv, today)
 		if err != nil {
 			return nil, err
-		}
-
-		balance, err := cardBalance(ctx, s.DB, cv.AccountID)
-		if err != nil {
-			return nil, err
-		}
-
-		o := CardOverview{CardView: cv, BalanceCents: balance, UsedCents: max(0, -balance)}
-		o.AvailableCents = cv.LimitCents - o.UsedCents
-		o.OverLimit = o.UsedCents > cv.LimitCents
-
-		cur := statementRefFor(today, cv.ClosingDay)
-
-		for i := len(list) - 1; i >= 0; i-- {
-			st := list[i]
-
-			switch {
-			case st.Ref == cur:
-				o.Current = st
-			case o.Due == nil && (st.Status == StatementClosed || st.Status == StatementOverdue):
-				o.Due = &st
-			}
 		}
 
 		out = append(out, o)
 	}
 
 	return out, nil
+}
+
+// CardOverview is the overview of one card.
+func (s *Service) CardOverview(ctx context.Context, id int64) (CardOverview, error) {
+	cv, err := s.Card(ctx, id)
+	if err != nil {
+		return CardOverview{}, err
+	}
+
+	return overviewOf(ctx, s.DB, cv, s.Today(ctx))
+}
+
+func overviewOf(ctx context.Context, ex database.Executor, cv CardView, today string) (CardOverview, error) {
+	list, err := cardStatements(ctx, ex, cv.CreditCard, today)
+	if err != nil {
+		return CardOverview{}, err
+	}
+
+	balance, err := cardBalance(ctx, ex, cv.AccountID)
+	if err != nil {
+		return CardOverview{}, err
+	}
+
+	o := CardOverview{CardView: cv, BalanceCents: balance, UsedCents: max(0, -balance)}
+	o.AvailableCents = cv.LimitCents - o.UsedCents
+	o.OverLimit = o.UsedCents > cv.LimitCents
+
+	cur := statementRefFor(today, cv.ClosingDay)
+
+	for i := len(list) - 1; i >= 0; i-- {
+		st := list[i]
+
+		switch {
+		case st.Ref == cur:
+			o.Current = st
+		case o.Due == nil && (st.Status == StatementClosed || st.Status == StatementOverdue):
+			o.Due = &st
+		}
+	}
+
+	return o, nil
 }
 
 // PaymentInput is a statement payment as the form sends it. An empty Amount

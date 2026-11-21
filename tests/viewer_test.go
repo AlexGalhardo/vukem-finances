@@ -37,8 +37,14 @@ func TestViewerIsReadOnly(t *testing.T) {
 	vera := viewerOf(t, app, ana)
 	addTransaction(t, ana, firstAccount(t, app, ana), 0, "expense", "11.00", "2026-01-10").AssertRedirect("/transactions")
 
+	// A card, so the card page the viewer reads (/cards/1) exists.
+	makePro(t, app, ana)
+	ana.Client.PostForm("/cards", url.Values{
+		"name": {"Visa"}, "limit": {"1000.00"}, "closingDay": {"10"}, "dueDay": {"20"},
+	}).AssertRedirect("/cards")
+
 	before := map[string]int64{}
-	for _, table := range []string{"transactions", "accounts", "categories", "budgets", "imports", "invites", "memberships"} {
+	for _, table := range []string{"transactions", "accounts", "categories", "budgets", "imports", "invites", "memberships", "credit_cards"} {
 		before[table] = rowCount(t, app, table)
 	}
 
