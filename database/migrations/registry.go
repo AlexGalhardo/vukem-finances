@@ -17,5 +17,6 @@ func All() []schema.Migration {
 		m20261121200000AddSyncColumns(),
 		m20261121200100InstallChangeTriggers(),
 		m20261121200000CreateAITables(),
+		m20261121210000AddAccountArchiveAndTransfers(),
 	}
 }

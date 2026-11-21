@@ -28,4 +28,8 @@ type Transaction struct {
 	Description string          `json:"description"`
 	OccurredOn  string          `json:"occurred_on"`
 	ImportID    sql.Null[int64] `json:"-"`
+
+	// TransferUID is the ULID both legs of a transfer share; null on an
+	// ordinary income or expense.
+	TransferUID sql.Null[string] `json:"transfer_uid"`
 }

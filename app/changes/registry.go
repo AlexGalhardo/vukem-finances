@@ -67,11 +67,14 @@ func Lookup(name string) (Entity, bool) {
 }
 
 func init() {
-	Register(Entity{Name: "account", Table: "accounts", Fields: []string{"name", "kind", "opening_cents"}})
+	Register(Entity{
+		Name: "account", Table: "accounts",
+		Fields: []string{"name", "kind", "opening_cents", "archived_at", "position"},
+	})
 	Register(Entity{Name: "category", Table: "categories", Fields: []string{"name", "kind"}})
 	Register(Entity{
 		Name: "transaction", Table: "transactions",
-		Fields: []string{"account_id", "category_id", "kind", "amount_cents", "description", "occurred_on"},
+		Fields: []string{"account_id", "category_id", "kind", "amount_cents", "description", "occurred_on", "transfer_uid"},
 		Refs:   []Ref{{"account_id", "account"}, {"category_id", "category"}},
 	})
 	Register(Entity{
