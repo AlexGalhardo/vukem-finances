@@ -237,14 +237,17 @@ func seed(ctx context.Context, tx *database.Tx) error {
 		return err
 	}
 
-	for kind, names := range map[string][]string{
-		models.KindIncome:  {"Salary", "Other income"},
-		models.KindExpense: {"Housing", "Groceries", "Transport", "Leisure", "Health"},
+	for _, c := range []models.Category{
+		{Name: "Salary", Kind: models.KindIncome, Color: "green", Icon: "briefcase"},
+		{Name: "Other income", Kind: models.KindIncome, Color: "teal", Icon: "coins"},
+		{Name: "Housing", Kind: models.KindExpense, Color: "blue", Icon: "home"},
+		{Name: "Groceries", Kind: models.KindExpense, Color: "olive", Icon: "cart"},
+		{Name: "Transport", Kind: models.KindExpense, Color: "slate", Icon: "car"},
+		{Name: "Leisure", Kind: models.KindExpense, Color: "violet", Icon: "film"},
+		{Name: "Health", Kind: models.KindExpense, Color: "pink", Icon: "heart"},
 	} {
-		for _, name := range names {
-			if err := orm.Create(ctx, tx, &models.Category{Name: name, Kind: kind}); err != nil {
-				return err
-			}
+		if err := orm.Create(ctx, tx, &c); err != nil {
+			return err
 		}
 	}
 

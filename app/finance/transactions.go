@@ -20,7 +20,7 @@ func (s *Service) UpdateTransaction(ctx context.Context, id int64, in TxInput) (
 
 // transactionInput validates in. keepAccount is the account the row already
 // uses (0 for a new one): its history stays editable after it is archived.
-func transactionInput(ctx context.Context, ex database.Executor, in TxInput, keepAccount int64) (models.Transaction, error) {
+func transactionInput(ctx context.Context, ex database.Executor, in TxInput, keepAccount, keepCategory int64) (models.Transaction, error) {
 	if in.Kind != models.KindIncome && in.Kind != models.KindExpense {
 		return models.Transaction{}, errKind
 	}
@@ -47,10 +47,14 @@ func transactionInput(ctx context.Context, ex database.Executor, in TxInput, kee
 		OccurredOn:  in.Date,
 	}
 	if in.CategoryID > 0 {
-		ok, err := workspaces.Scoped[models.Category](ctx, ex).
+		q := workspaces.Scoped[models.Category](ctx, ex).
 			Where("id", in.CategoryID).
-			Where("kind", in.Kind).
-			Exists(ctx)
+			Where("kind", in.Kind)
+		// An archived category takes no new entries; a row that already has it keeps it.
+		if in.CategoryID != keepCategory {
+			q = q.WhereNull("archived_at")
+		}
+		ok, err := q.Exists(ctx)
 		if err != nil || !ok {
 			return models.Transaction{}, firstErr(err, errCategory)
 		}
@@ -108,7 +112,7 @@ func (s *Service) persistTransaction(
 		*previous = row
 	}
 
-	row, err := transactionInput(ctx, tx, in, previous.AccountID)
+	row, err := transactionInput(ctx, tx, in, previous.AccountID, previous.CategoryID.V)
 	if err != nil {
 		return err
 	}

@@ -317,6 +317,10 @@ func (s *Service) importRows(
 
 	byName := map[string]models.Category{}
 	for _, c := range cats {
+		if c.ArchivedAt.Valid {
+			continue
+		}
+
 		byName[strings.ToLower(c.Name)+"/"+c.Kind] = c
 	}
 
