@@ -15,5 +15,6 @@ func All() []schema.Migration {
 		m20261121190000AddWorkspaceTimezone(),
 		m20261121190100CreateAuditEventsTable(),
 		m20261121200000AddSyncColumns(),
+		m20261121200100InstallChangeTriggers(),
 	}
 }

@@ -31,6 +31,7 @@ func New(opts ...vukem.Option) (*vukem.App, error) {
 		vukem.WithListeners(listeners.All()...),
 		vukem.WithJobsFunc(jobs.All),
 		vukem.WithSchedule(routes.Schedule),
+		vukem.WithRoutesAfterBoot(checkTriggers),
 		vukem.WithViews(resources.Views()),
 		vukem.WithVite(resources.Public()),
 		vukem.WithReactEmails(resources.Emails()),
