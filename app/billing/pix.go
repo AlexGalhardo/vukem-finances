@@ -188,7 +188,7 @@ func (b *Billing) activatePix(ctx context.Context, p models.PixPayment) error {
 
 		activated = true
 
-		if err := b.changeMonths(ctx, tx, p.WorkspaceID, p.Months, now, ""); err != nil {
+		if err := b.grantMonths(ctx, tx, p, now); err != nil {
 			return err
 		}
 
@@ -215,12 +215,47 @@ func (b *Billing) restorePix(ctx context.Context, p models.PixPayment) error {
 			return err
 		}
 
-		if err := b.changeMonths(ctx, tx, p.WorkspaceID, p.Months, now, ""); err != nil {
+		if err := b.grantMonths(ctx, tx, p, now); err != nil {
 			return err
 		}
 
 		return record(ctx, tx, p.WorkspaceID, SourcePix, "pix_dispute_won", p.PublicRef, "PIX dispute won: access restored")
 	})
+}
+
+// grantMonths adds the months of p and records the period they count in.
+func (b *Billing) grantMonths(ctx context.Context, tx *database.Tx, p models.PixPayment, now time.Time) error {
+	period, err := b.changeMonths(ctx, tx, p.WorkspaceID, p.Months, now, "")
+	if err != nil {
+		return err
+	}
+
+	_, err = orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
+		Update(ctx, orm.Set{"entitlement_period": period})
+
+	return err
+}
+
+// countsInCurrentPeriod reports whether the months of payment p are part of
+// the entitlement's current period. Those of an ended period were already used.
+func countsInCurrentPeriod(ctx context.Context, tx *database.Tx, p models.PixPayment) (bool, error) {
+	tctx := workspaces.WithTenant(ctx, p.WorkspaceID)
+
+	row, err := workspaces.Scoped[models.PixPayment](tctx, tx).Where("id", p.ID).First(tctx)
+	if err != nil {
+		return false, err
+	}
+
+	ent, err := workspaces.Scoped[models.PixEntitlement](tctx, tx).First(tctx)
+	if errors.Is(err, orm.ErrNotFound) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	return row.EntitlementPeriod == ent.Period, nil
 }
 
 // disputePix marks a paid payment disputed and takes its months away.
@@ -246,10 +281,11 @@ func (b *Billing) RevokePixPayment(ctx context.Context, p models.PixPayment, rea
 }
 
 // takeBack moves a payment from the status "from" to "to" and subtracts its
-// months; only the call that changes the row subtracts.
+// months when they belong to the current period; only the call that changes
+// the row subtracts.
 func (b *Billing) takeBack(ctx context.Context, p models.PixPayment, to, reason, source, from string) error {
 	now := b.Now().UTC()
-	changed := false
+	subtracted := false
 
 	err := b.DB.Tx(ctx, func(tx *database.Tx) error {
 		n, err := orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
@@ -258,15 +294,19 @@ func (b *Billing) takeBack(ctx context.Context, p models.PixPayment, to, reason,
 			return err
 		}
 
-		changed = true
-
-		if err := b.changeMonths(ctx, tx, p.WorkspaceID, -p.Months, now, reason); err != nil {
+		if subtracted, err = countsInCurrentPeriod(ctx, tx, p); err != nil {
 			return err
+		}
+
+		if subtracted {
+			if _, err := b.changeMonths(ctx, tx, p.WorkspaceID, -p.Months, now, reason); err != nil {
+				return err
+			}
 		}
 
 		return record(ctx, tx, p.WorkspaceID, source, "pix_"+to, p.PublicRef, "PIX payment "+to+": "+reason)
 	})
-	if err != nil || !changed {
+	if err != nil || !subtracted {
 		return err
 	}
 
@@ -282,26 +322,26 @@ func (b *Billing) takeBack(ctx context.Context, p models.PixPayment, to, reason,
 // drift: valid_until = AddMonths(anchor_at, paid_months).
 //
 // Adding while the entitlement is still valid grows paid_months; adding after
-// it ended or was revoked starts again from now. Subtracting to zero revokes
-// with reason.
+// it ended or was revoked starts a new period from now. Subtracting to zero
+// revokes with reason. It returns the period the entitlement is in.
 func (b *Billing) changeMonths(
 	ctx context.Context, tx *database.Tx, workspaceID int64, months int, now time.Time, reason string,
-) error {
+) (int, error) {
 	tctx := workspaces.WithTenant(ctx, workspaceID)
 
 	ent, err := workspaces.Scoped[models.PixEntitlement](tctx, tx).First(tctx)
 	if errors.Is(err, orm.ErrNotFound) {
 		if months <= 0 {
-			return nil
+			return 0, nil
 		}
 
-		return orm.Create(tctx, tx, &models.PixEntitlement{
-			AnchorAt: now, PaidMonths: months, ValidUntil: timeutil.AddMonths(now, months),
+		return 1, orm.Create(tctx, tx, &models.PixEntitlement{
+			AnchorAt: now, PaidMonths: months, ValidUntil: timeutil.AddMonths(now, months), Period: 1,
 		})
 	}
 
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	set := orm.Set{}
@@ -311,7 +351,8 @@ func (b *Billing) changeMonths(
 		ent.PaidMonths += months
 	case months > 0:
 		ent.AnchorAt, ent.PaidMonths = now, months
-		set["anchor_at"] = ent.AnchorAt
+		ent.Period++
+		set["anchor_at"], set["period"] = ent.AnchorAt, ent.Period
 		set["revoked_at"], set["revoked_reason"] = nil, ""
 	default:
 		ent.PaidMonths = max(ent.PaidMonths+months, 0)
@@ -325,5 +366,5 @@ func (b *Billing) changeMonths(
 
 	_, err = workspaces.Scoped[models.PixEntitlement](tctx, tx).Where("id", ent.ID).Update(tctx, set)
 
-	return err
+	return ent.Period, err
 }

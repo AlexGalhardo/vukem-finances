@@ -44,6 +44,9 @@ type PixPayment struct {
 	ExpiresAt   time.Time    `json:"expires_at"`
 	PaidAt      orm.NullTime `json:"paid_at"`
 	CreatedBy   int64        `json:"created_by"`
+	// EntitlementPeriod is the PixEntitlement.Period this payment's months
+	// count in. A refund of an earlier period takes nothing from the current one.
+	EntitlementPeriod int `json:"-"`
 }
 
 // Table maps PixPayment to pix_payments.
@@ -74,6 +77,8 @@ type PixEntitlement struct {
 	ValidUntil    time.Time    `json:"valid_until"`
 	RevokedAt     orm.NullTime `json:"revoked_at"`
 	RevokedReason string       `json:"revoked_reason"`
+	// Period grows each time access starts again from a new anchor.
+	Period int `json:"period"`
 }
 
 // Table maps PixEntitlement to pix_entitlements.
