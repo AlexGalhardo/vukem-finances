@@ -181,12 +181,27 @@ type PixView struct {
 
 // AdminRevenueProps are the props of Admin/Revenue.
 type AdminRevenueProps struct {
-	MRRCents   int64 `json:"mrrCents"`
-	Active     int64 `json:"active"`
-	Trialing   int64 `json:"trialing"`
-	PastDue    int64 `json:"pastDue"`
-	Workspaces int64 `json:"workspaces"`
-	Users      int64 `json:"users"`
+	MRRCents int64 `json:"mrrCents"`
+	// PixMRRCents is the monthly equivalent of the valid PIX payments, in BRL cents.
+	PixMRRCents int64             `json:"pixMrrCents"`
+	PixActive   int64             `json:"pixActive"`
+	Active      int64             `json:"active"`
+	Trialing    int64             `json:"trialing"`
+	PastDue     int64             `json:"pastDue"`
+	Workspaces  int64             `json:"workspaces"`
+	Users       int64             `json:"users"`
+	RecentPix   []AdminPixPayment `json:"recentPix"`
+}
+
+// AdminPixPayment is a PIX payment in the admin overview. Workspace is its id,
+// not a name or a person.
+type AdminPixPayment struct {
+	Ref         string `json:"ref"`
+	Workspace   int64  `json:"workspace"`
+	Status      string `json:"status"`
+	AmountCents int64  `json:"amountCents"`
+	Months      int    `json:"months"`
+	CanRefund   bool   `json:"canRefund"`
 }
 
 // AI is the settings page of the AI layer.

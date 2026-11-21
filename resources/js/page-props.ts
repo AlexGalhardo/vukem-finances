@@ -35,6 +35,15 @@ export type AccountBalance = {
   transactions: number;
 };
 
+export type AdminPixPayment = {
+  amountCents: number;
+  canRefund: boolean;
+  months: number;
+  ref: string;
+  status: string;
+  workspace: number;
+};
+
 export type AuditEntry = {
   action: string;
   actor: string;
@@ -282,6 +291,9 @@ export type AdminRevenueProps = {
   active: number;
   mrrCents: number;
   pastDue: number;
+  pixActive: number;
+  pixMrrCents: number;
+  recentPix: AdminPixPayment[];
   trialing: number;
   users: number;
   workspaces: number;

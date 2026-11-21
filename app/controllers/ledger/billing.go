@@ -247,6 +247,10 @@ func Revenue(h *Handlers) func(c *web.Ctx) error {
 		}
 
 		for i := range subs {
+			if subs[i].AccessRevokedAt.Valid {
+				continue // refunded or disputed access is not revenue
+			}
+
 			switch subs[i].Status {
 			case "active":
 				props.Active++
@@ -256,6 +260,10 @@ func Revenue(h *Handlers) func(c *web.Ctx) error {
 			case "past_due":
 				props.PastDue++
 			}
+		}
+
+		if err := pixRevenue(ctx, h, &props); err != nil {
+			return err
 		}
 
 		if props.Workspaces, err = orm.QueryOf[models.Workspace](h.WS.DB).Count(ctx); err != nil {
