@@ -8,10 +8,24 @@ import { Shell } from "./Layout";
 // the real values when the mail is sent.
 type Props = { workspace: string; category: string; percent: string; spent: string; limit: string; url: string };
 
-export default function BudgetAlert({ workspace = go(".Workspace"), category = go(".Category"), percent = go(".Percent"), spent = go(".Spent"), limit = go(".Limit"), url = go(".URL") }: Partial<Props>) {
+export default function BudgetAlert({
+  workspace = go(".Workspace"),
+  category = go(".Category"),
+  percent = go(".Percent"),
+  spent = go(".Spent"),
+  limit = go(".Limit"),
+  url = go(".URL"),
+}: Partial<Props>) {
   return (
-    <Shell preview="A budget needs attention" title={`${category} is at ${percent}% of its budget`} action="See your budgets" href={url}>
-      <Text>{workspace} has spent {spent} of the {limit} monthly budget for {category}.</Text>
+    <Shell
+      preview="A budget needs attention"
+      title={`${category} is at ${percent}% of its budget`}
+      action="See your budgets"
+      href={url}
+    >
+      <Text>
+        {workspace} has spent {spent} of the {limit} monthly budget for {category}.
+      </Text>
     </Shell>
   );
 }

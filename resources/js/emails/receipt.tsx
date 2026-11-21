@@ -14,13 +14,10 @@ export default function Receipt({
   url = go(".URL"),
 }: Partial<Props>) {
   return (
-    <Shell
-      preview="Your receipt"
-      title={`Receipt for ${amount}`}
-      action="View the invoice"
-      href={url}
-    >
-      <Text>Thanks. We charged {amount} for the Pro plan of {workspace}.</Text>
+    <Shell preview="Your receipt" title={`Receipt for ${amount}`} action="View the invoice" href={url}>
+      <Text>
+        Thanks. We charged {amount} for the Pro plan of {workspace}.
+      </Text>
     </Shell>
   );
 }
