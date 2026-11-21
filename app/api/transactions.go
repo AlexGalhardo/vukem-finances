@@ -226,6 +226,10 @@ func (a *API) transactionsCreate(c *web.Ctx, in TransactionCreateIn) (Transactio
 		return TransactionOut{}, c.JSON(http.StatusOK, v)
 	}
 
+	if err := a.requireScopeForNewTags(ctx, in.Tags); err != nil {
+		return TransactionOut{}, err
+	}
+
 	x, err := a.Fin.CreateTransaction(ctx, finance.TxInput{
 		UID: in.UID, AccountID: account, CategoryID: category, Kind: in.Kind, Amount: centsText(in.AmountCents),
 		Description: in.Description, Date: in.Date, Tags: in.Tags,
@@ -303,6 +307,10 @@ func (a *API) transactionsUpdate(c *web.Ctx, in TransactionUpdateIn) (Transactio
 		next.Tags = *in.Tags
 		if next.Tags == nil {
 			next.Tags = []string{}
+		}
+
+		if err := a.requireScopeForNewTags(ctx, next.Tags); err != nil {
+			return TransactionOut{}, err
 		}
 	}
 

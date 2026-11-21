@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -152,6 +153,31 @@ func (a *API) tagByUID(ctx context.Context, uid string) (models.Tag, error) {
 	x, err := workspaces.Scoped[models.Tag](ctx, a.WS.DB).Where("uid", uid).First(ctx)
 
 	return x, lookupErr(err)
+}
+
+// requireScopeForNewTags stops a token without tags:write from creating tags
+// through a transaction: the service creates a name it does not know. Naming
+// tags that already exist only needs the scope of the transaction.
+func (a *API) requireScopeForNewTags(ctx context.Context, names []string) error {
+	p, ok := PrincipalFrom(ctx)
+	if !ok || slices.Contains(p.Token.Abilities, ScopeTagsWrite) {
+		return nil
+	}
+
+	for _, name := range names {
+		found, err := workspaces.Scoped[models.Tag](ctx, a.WS.DB).
+			WhereRaw("lower(name) = lower(?)", strings.TrimSpace(name)).Exists(ctx)
+		if err != nil {
+			return err
+		}
+
+		if !found {
+			return errs.New(http.StatusForbidden, "Creating a tag needs the scope "+ScopeTagsWrite+".").
+				WithExtension("code", CodeMissingScope)
+		}
+	}
+
+	return nil
 }
 
 func (a *API) transactionByUID(ctx context.Context, uid string) (models.Transaction, error) {
