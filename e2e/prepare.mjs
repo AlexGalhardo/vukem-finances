@@ -22,6 +22,8 @@ export const appEnv = {
   FINANCE_ADMIN_EMAIL: process.env.E2E_ADMIN_EMAIL,
   FINANCE_ADMIN_PASSWORD: process.env.E2E_ADMIN_PASSWORD,
   MAIL_MAILER: "log",
+  // The AI spec points the openai_compatible provider at a fake server on this machine (personal edition only).
+  AI_ALLOW_PRIVATE_HOSTS: "true",
 };
 
 function run(cmd, args, env = process.env) {
