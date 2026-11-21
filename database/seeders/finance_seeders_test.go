@@ -13,6 +13,7 @@ import (
 	"github.com/AlexGalhardo/vukem/vukemtest"
 
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 	"github.com/AlexGalhardo/vukem-finances/database/seeders"
 )
@@ -80,5 +81,49 @@ func TestSecurity_FinanceSeedRandomPrivateCredential(t *testing.T) {
 	files, _ = filepath.Glob("storage/finance-admin-*.txt")
 	if len(files) != 1 {
 		t.Fatal("rerun created another credential file")
+	}
+}
+
+func TestFinanceDemoSeedHasTwoAccountsAndATransfer(t *testing.T) {
+	t.Chdir(t.TempDir())
+	app := vukemtest.New(t, bootstrap.New, vukemtest.Options{
+		Env: map[string]string{"ADMIN_EMAILS": "admin@example.test"},
+	})
+
+	for _, seeder := range []vukem.AppSeeder{seeders.FinanceAdminSeeder{}, seeders.FinanceDemoSeeder{}} {
+		if err := seeder.SeedApp(t.Context(), app.App); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	db, err := app.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	ctx := workspaces.WithTenant(t.Context(), 1)
+
+	accounts, err := workspaces.Scoped[models.Account](ctx, db).Get(ctx)
+	if err != nil || len(accounts) != 2 {
+		t.Fatalf("accounts = %d, %v; want 2", len(accounts), err)
+	}
+
+	legs, err := workspaces.Scoped[models.Transaction](ctx, db).WhereNotNull("transfer_uid").Get(ctx)
+	if err != nil || len(legs) != 2 {
+		t.Fatalf("transfer legs = %d, %v; want 2", len(legs), err)
+	}
+
+	if legs[0].TransferUID != legs[1].TransferUID || legs[0].AccountID == legs[1].AccountID ||
+		legs[0].AmountCents != legs[1].AmountCents || legs[0].Kind == legs[1].Kind || legs[0].CategoryID.Valid || legs[1].CategoryID.Valid {
+		t.Fatalf("legs = %+v, want an expense and an income of the same amount on two accounts, uncategorized", legs)
+	}
+
+	// Rerunning the seed keeps what exists.
+	if err := (seeders.FinanceDemoSeeder{}).SeedApp(t.Context(), app.App); err != nil {
+		t.Fatal(err)
+	}
+
+	if n, _ := workspaces.Scoped[models.Account](ctx, db).Count(ctx); n != 2 {
+		t.Fatalf("a rerun left %d accounts, want 2", n)
 	}
 }

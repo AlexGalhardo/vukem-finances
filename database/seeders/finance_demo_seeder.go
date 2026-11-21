@@ -68,8 +68,17 @@ func seedDemoWorkspace(ctx context.Context, tx *database.Tx, userID int64) error
 	}
 
 	tenant := workspaces.WithTenant(ctx, ws.ID)
-	account := models.Account{WorkspaceID: ws.ID, Name: "Checking", Kind: "checking", OpeningCents: 125000}
+	account := models.Account{
+		WorkspaceID: ws.ID, Name: "Checking", Kind: models.AccountChecking, OpeningCents: 125000, Position: 1,
+	}
 	if err := orm.Create(tenant, tx, &account); err != nil {
+		return err
+	}
+
+	savings := models.Account{
+		WorkspaceID: ws.ID, Name: "Savings", Kind: models.AccountSavings, OpeningCents: 300000, Position: 2,
+	}
+	if err := orm.Create(tenant, tx, &savings); err != nil {
 		return err
 	}
 
@@ -78,7 +87,33 @@ func seedDemoWorkspace(ctx context.Context, tx *database.Tx, userID int64) error
 		return err
 	}
 
-	return seedDemoMonths(tenant, tx, ws.ID, account.ID, ids)
+	if err := seedDemoMonths(tenant, tx, ws.ID, account.ID, ids); err != nil {
+		return err
+	}
+
+	return seedDemoTransfer(tenant, tx, ws.ID, account.ID, savings.ID)
+}
+
+// seedDemoTransfer moves 500.00 from checking to savings: two legs sharing a
+// transfer uid, so the demo shows a transfer that is neither income nor expense.
+func seedDemoTransfer(ctx context.Context, tx *database.Tx, workspaceID, from, to int64) error {
+	uid := sql.Null[string]{V: models.NewUID(), Valid: true}
+
+	for _, leg := range []models.Transaction{
+		{AccountID: from, Kind: models.KindExpense, Description: "Move to savings"},
+		{AccountID: to, Kind: models.KindIncome, Description: "Move to savings"},
+	} {
+		leg.WorkspaceID = workspaceID
+		leg.AmountCents = 50000
+		leg.OccurredOn = "2026-11-02"
+		leg.TransferUID = uid
+
+		if err := orm.Create(ctx, tx, &leg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 func seedDemoCategories(ctx context.Context, tx *database.Tx, workspaceID int64) ([]int64, error) {
