@@ -17,4 +17,7 @@ func Schedule(s *schedule.Schedule, _ *vukem.App) {
 	// workspace once it is the 1st, 08:00 or later, in the workspace's own
 	// timezone: hourly, and the sent marker makes a doubled run harmless.
 	s.Job(jobs.MonthlySummary{}).Hourly().WithoutOverlapping()
+
+	// Purge old tombstones and compact the change log, once a day at night.
+	s.Job(jobs.ChangesCompact{}).DailyAt("03:30").WithoutOverlapping()
 }
