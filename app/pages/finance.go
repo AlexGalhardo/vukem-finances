@@ -106,11 +106,11 @@ type BudgetsProps struct {
 
 // ImportProps are the props of Import.
 type ImportProps struct {
-	Accounts    []models.Account `json:"accounts"`
-	Imports     []models.Import  `json:"imports"`
-	Preview     *finance.Preview `json:"preview"`
-	DateFormats []string         `json:"dateFormats"`
-	Enabled     bool             `json:"enabled"`
+	Accounts    []models.Account     `json:"accounts"`
+	Imports     []finance.ImportView `json:"imports"`
+	Preview     *finance.Preview     `json:"preview"`
+	DateFormats []string             `json:"dateFormats"`
+	Enabled     bool                 `json:"enabled"`
 }
 
 // WorkspaceProps are the props of Workspace.

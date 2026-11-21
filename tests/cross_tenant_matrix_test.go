@@ -87,6 +87,14 @@ var crossTenantCases = map[string]crossTenantCase{
 			}
 		},
 	},
+	"import.preview": {
+		method: http.MethodPost, table: "imports", param: "import",
+		body: func(map[string]int64) map[string]any {
+			return map[string]any{
+				"date": "Date", "description": "Description", "amount": "Amount", "dateFormat": "2006-01-02",
+			}
+		},
+	},
 	"ai.key.destroy":            {method: http.MethodDelete, table: "ai_credentials", param: "credential"},
 	"workspace.members.destroy": {method: http.MethodDelete, table: "memberships", param: "user"},
 	"workspace.members.role": {

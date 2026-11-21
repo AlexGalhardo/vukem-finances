@@ -20,7 +20,17 @@ type Mapping struct {
 	Category    string `json:"category"`
 	DateFormat  string `json:"dateFormat"`
 	Invert      bool   `json:"invert"`
+	// AllowDuplicates imports the rows that an earlier import already brought
+	// in; it is a setting of the import, not a column.
+	AllowDuplicates bool `json:"allowDuplicates"`
 }
+
+const (
+	// maxCSVColumns bounds the columns of a record.
+	maxCSVColumns = 200
+	// maxCSVCell bounds a cell the importer reads, in bytes.
+	maxCSVCell = 1000
+)
 
 // CSVParser reads a CSV statement through the column Mapping the user chose.
 type CSVParser struct {
@@ -52,8 +62,13 @@ func readCSV(content string) ([]string, [][]string, error) {
 			return nil, nil, errImportCSV
 		}
 
+		// The header is one record: more than maxImportRows after it is a file to split, not to cut.
 		if len(rows) >= maxImportRows+1 {
-			break
+			return nil, nil, errImportRows
+		}
+
+		if len(rec) > maxCSVColumns {
+			return nil, nil, errImportCSV
 		}
 
 		rows = append(rows, rec)
@@ -100,6 +115,13 @@ func csvRow(row []string, line, di, ni, ai, ci int, m Mapping) StatementRow {
 	if len(row) <= max(di, ni, ai) {
 		r.Problem = "too few columns"
 		return r
+	}
+
+	for _, i := range []int{di, ni, ai, ci} {
+		if i >= 0 && i < len(row) && len(row[i]) > maxCSVCell {
+			r.Problem = "field too long"
+			return r
+		}
 	}
 
 	date, err := time.Parse(m.DateFormat, strings.TrimSpace(row[di]))
