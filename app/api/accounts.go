@@ -232,4 +232,13 @@ func (a *API) Routes(g *router.Group, idem router.Middleware) {
 	register(g, idem, "tags.create", a.tagsCreate)
 	register(g, idem, "tags.update", a.tagsUpdate)
 	register(g, idem, "tags.delete", a.tagsDelete)
+
+	register(g, idem, "transactions.list", a.transactionsList)
+	register(g, idem, "transactions.show", a.transactionsShow)
+	register(g, idem, "transactions.create", a.transactionsCreate)
+	register(g, idem, "transactions.update", a.transactionsUpdate)
+	register(g, idem, "transactions.delete", a.transactionsDelete)
+
+	register(g, idem, "transfers.create", a.transfersCreate)
+	register(g, idem, "transfers.delete", a.transfersDelete)
 }
