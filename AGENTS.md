@@ -6,7 +6,18 @@ Guide for every agent that works in this repository. `CLAUDE.md` points here.
 
 vukem-finances is a personal finance application built with [Vukem](https://vukem.dev): Go on the server, React with Inertia and Tailwind in the browser, SQLite by default. It has accounts, categories, transactions, monthly budgets, a dashboard and CSV import, on top of sign-up, workspaces with roles, and Stripe billing.
 
-The app ships in two editions of one binary (decision D-003): `personal` (one implicit workspace, no billing, no public sign-up, no landing page) and `saas`. The edition switch, `APP_EDITION`, is coming in epic 02; until then the app behaves as the SaaS edition.
+The app ships in two editions of one binary (decision D-003), chosen by `APP_EDITION` (`config.LoadEdition`; unset means `personal`, any other value besides `personal` and `saas` stops the boot):
+
+| | `personal` | `saas` |
+| --- | --- | --- |
+| Workspaces | one implicit workspace, made by `/setup` | one per user plus created ones |
+| Sign-up | closed: `/register` is 404; the first owner uses `/setup` with `SETUP_TOKEN` or the code in the boot log, the others use `/invites/{token}/register` | public `/register`, email verification always on |
+| Billing, `/stripe/webhook`, `/admin/revenue` | not registered (404), no Stripe settings read | registered |
+| Plan limits | none (`workspaces.Personal`) | Free and Pro |
+| `GET /` | redirects to `/dashboard`, `/login` or `/setup` | landing page |
+| Social login | find-only, never creates a user | creates users |
+
+Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEdition(app.Source)` where there is no service. Never read `APP_EDITION` in a handler. The finance test suite builds the app as `saas` (`newSaaSApp`); use `newPersonalApp` for the other edition. A sign-up address is never marked verified in `saas` (`AUTH_REQUIRE_EMAIL_VERIFICATION` is forced on, and a production boot refuses `false`).
 
 ## Module map
 
