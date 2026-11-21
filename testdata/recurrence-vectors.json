@@ -1,0 +1,1420 @@
+[
+	{
+		"name": "monthly from Jan 31, common February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-06-30",
+		"expect": [
+			"2027-01-31",
+			"2027-02-28",
+			"2027-03-31",
+			"2027-04-30",
+			"2027-05-31",
+			"2027-06-30"
+		]
+	},
+	{
+		"name": "monthly from Jan 31, leap February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2028-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-01-01",
+		"to": "2028-06-30",
+		"expect": [
+			"2028-01-31",
+			"2028-02-29",
+			"2028-03-31",
+			"2028-04-30",
+			"2028-05-31",
+			"2028-06-30"
+		]
+	},
+	{
+		"name": "monthly from Jan 30, common February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-30",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-04-30",
+		"expect": [
+			"2027-01-30",
+			"2027-02-28",
+			"2027-03-30",
+			"2027-04-30"
+		]
+	},
+	{
+		"name": "monthly from Jan 30, leap February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2028-01-30",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-01-01",
+		"to": "2028-04-30",
+		"expect": [
+			"2028-01-30",
+			"2028-02-29",
+			"2028-03-30",
+			"2028-04-30"
+		]
+	},
+	{
+		"name": "monthly from Jan 29, common February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-04-30",
+		"expect": [
+			"2027-01-29",
+			"2027-02-28",
+			"2027-03-29",
+			"2027-04-29"
+		]
+	},
+	{
+		"name": "monthly from Jan 29, leap February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2028-01-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-01-01",
+		"to": "2028-04-30",
+		"expect": [
+			"2028-01-29",
+			"2028-02-29",
+			"2028-03-29",
+			"2028-04-29"
+		]
+	},
+	{
+		"name": "monthly from Jan 28 never clamps",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-28",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-04-30",
+		"expect": [
+			"2027-01-28",
+			"2027-02-28",
+			"2027-03-28",
+			"2027-04-28"
+		]
+	},
+	{
+		"name": "monthly from Mar 31 runs through the 30-day months",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-03-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-03-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-03-31",
+			"2027-04-30",
+			"2027-05-31",
+			"2027-06-30",
+			"2027-07-31",
+			"2027-08-31",
+			"2027-09-30",
+			"2027-10-31",
+			"2027-11-30",
+			"2027-12-31"
+		]
+	},
+	{
+		"name": "monthly from Aug 31 across the year end",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-08-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-08-01",
+		"to": "2028-03-31",
+		"expect": [
+			"2027-08-31",
+			"2027-09-30",
+			"2027-10-31",
+			"2027-11-30",
+			"2027-12-31",
+			"2028-01-31",
+			"2028-02-29",
+			"2028-03-31"
+		]
+	},
+	{
+		"name": "monthly from Dec 31 into a leap year",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-12-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-12-01",
+		"to": "2028-04-30",
+		"expect": [
+			"2027-12-31",
+			"2028-01-31",
+			"2028-02-29",
+			"2028-03-31",
+			"2028-04-30"
+		]
+	},
+	{
+		"name": "monthly from Dec 31 into a common year",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2026-12-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2026-12-01",
+		"to": "2027-04-30",
+		"expect": [
+			"2026-12-31",
+			"2027-01-31",
+			"2027-02-28",
+			"2027-03-31",
+			"2027-04-30"
+		]
+	},
+	{
+		"name": "monthly from the 1st",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-05-31",
+		"expect": [
+			"2027-01-01",
+			"2027-02-01",
+			"2027-03-01",
+			"2027-04-01",
+			"2027-05-01"
+		]
+	},
+	{
+		"name": "monthly from the 15th over a year end",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-11-15",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-11-01",
+		"to": "2028-02-29",
+		"expect": [
+			"2027-11-15",
+			"2027-12-15",
+			"2028-01-15",
+			"2028-02-15"
+		]
+	},
+	{
+		"name": "monthly from Feb 28 stays on the 28th",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-02-28",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-02-01",
+		"to": "2027-06-30",
+		"expect": [
+			"2027-02-28",
+			"2027-03-28",
+			"2027-04-28",
+			"2027-05-28",
+			"2027-06-28"
+		]
+	},
+	{
+		"name": "monthly from Feb 29 in a leap year",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2028-02-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-02-01",
+		"to": "2028-07-31",
+		"expect": [
+			"2028-02-29",
+			"2028-03-29",
+			"2028-04-29",
+			"2028-05-29",
+			"2028-06-29",
+			"2028-07-29"
+		]
+	},
+	{
+		"name": "monthly every 12 months from Feb 29 reaches the next leap February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 12,
+			"start_date": "2028-02-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-01-01",
+		"to": "2036-12-31",
+		"expect": [
+			"2028-02-29",
+			"2029-02-28",
+			"2030-02-28",
+			"2031-02-28",
+			"2032-02-29",
+			"2033-02-28",
+			"2034-02-28",
+			"2035-02-28",
+			"2036-02-29"
+		]
+	},
+	{
+		"name": "monthly from Jan 31 never drifts after February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-03-01",
+		"to": "2027-03-31",
+		"expect": [
+			"2027-03-31"
+		]
+	},
+	{
+		"name": "monthly every 2 months from Jan 31",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 2,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-31",
+			"2027-03-31",
+			"2027-05-31",
+			"2027-07-31",
+			"2027-09-30",
+			"2027-11-30"
+		]
+	},
+	{
+		"name": "monthly every 3 months from Nov 30",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 3,
+			"start_date": "2026-11-30",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2026-11-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2026-11-30",
+			"2027-02-28",
+			"2027-05-30",
+			"2027-08-30",
+			"2027-11-30"
+		]
+	},
+	{
+		"name": "monthly every 3 months from Nov 30 hits February",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 3,
+			"start_date": "2027-11-30",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-11-01",
+		"to": "2028-12-31",
+		"expect": [
+			"2027-11-30",
+			"2028-02-29",
+			"2028-05-30",
+			"2028-08-30",
+			"2028-11-30"
+		]
+	},
+	{
+		"name": "monthly every 6 months from Aug 31",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 6,
+			"start_date": "2027-08-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-08-01",
+		"to": "2029-02-28",
+		"expect": [
+			"2027-08-31",
+			"2028-02-29",
+			"2028-08-31",
+			"2029-02-28"
+		]
+	},
+	{
+		"name": "monthly every 12 months equals yearly",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 12,
+			"start_date": "2027-03-15",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2030-12-31",
+		"expect": [
+			"2027-03-15",
+			"2028-03-15",
+			"2029-03-15",
+			"2030-03-15"
+		]
+	},
+	{
+		"name": "monthly every 25 months",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 25,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2035-12-31",
+		"expect": [
+			"2027-01-31",
+			"2029-02-28",
+			"2031-03-31",
+			"2033-04-30",
+			"2035-05-31"
+		]
+	},
+	{
+		"name": "yearly every 2 years",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 2,
+			"start_date": "2027-06-15",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2037-12-31",
+		"expect": [
+			"2027-06-15",
+			"2029-06-15",
+			"2031-06-15",
+			"2033-06-15",
+			"2035-06-15",
+			"2037-06-15"
+		]
+	},
+	{
+		"name": "yearly every 4 years from Feb 29",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 4,
+			"start_date": "2028-02-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-01-01",
+		"to": "2044-12-31",
+		"expect": [
+			"2028-02-29",
+			"2032-02-29",
+			"2036-02-29",
+			"2040-02-29",
+			"2044-02-29"
+		]
+	},
+	{
+		"name": "yearly from Feb 29 falls back to Feb 28",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 1,
+			"start_date": "2028-02-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-01-01",
+		"to": "2033-12-31",
+		"expect": [
+			"2028-02-29",
+			"2029-02-28",
+			"2030-02-28",
+			"2031-02-28",
+			"2032-02-29",
+			"2033-02-28"
+		]
+	},
+	{
+		"name": "yearly from Feb 29 over a century year",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 1,
+			"start_date": "2096-02-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2096-01-01",
+		"to": "2101-12-31",
+		"expect": [
+			"2096-02-29",
+			"2097-02-28",
+			"2098-02-28",
+			"2099-02-28",
+			"2100-02-28",
+			"2101-02-28"
+		]
+	},
+	{
+		"name": "yearly from Dec 31",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 1,
+			"start_date": "2026-12-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2026-01-01",
+		"to": "2030-12-31",
+		"expect": [
+			"2026-12-31",
+			"2027-12-31",
+			"2028-12-31",
+			"2029-12-31",
+			"2030-12-31"
+		]
+	},
+	{
+		"name": "yearly from Jan 1",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 1,
+			"start_date": "2027-01-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2030-12-31",
+		"expect": [
+			"2027-01-01",
+			"2028-01-01",
+			"2029-01-01",
+			"2030-01-01"
+		]
+	},
+	{
+		"name": "yearly from Mar 31",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 1,
+			"start_date": "2027-03-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2029-12-31",
+		"expect": [
+			"2027-03-31",
+			"2028-03-31",
+			"2029-03-31"
+		]
+	},
+	{
+		"name": "weekly across a month end",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 1,
+			"start_date": "2027-01-25",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-03-15",
+		"expect": [
+			"2027-01-25",
+			"2027-02-01",
+			"2027-02-08",
+			"2027-02-15",
+			"2027-02-22",
+			"2027-03-01",
+			"2027-03-08",
+			"2027-03-15"
+		]
+	},
+	{
+		"name": "weekly across a leap day",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 1,
+			"start_date": "2028-02-21",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-02-01",
+		"to": "2028-03-20",
+		"expect": [
+			"2028-02-21",
+			"2028-02-28",
+			"2028-03-06",
+			"2028-03-13",
+			"2028-03-20"
+		]
+	},
+	{
+		"name": "weekly across a year end",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 1,
+			"start_date": "2027-12-20",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-12-01",
+		"to": "2028-01-31",
+		"expect": [
+			"2027-12-20",
+			"2027-12-27",
+			"2028-01-03",
+			"2028-01-10",
+			"2028-01-17",
+			"2028-01-24",
+			"2028-01-31"
+		]
+	},
+	{
+		"name": "weekly every 2 weeks",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 2,
+			"start_date": "2027-01-04",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-04-30",
+		"expect": [
+			"2027-01-04",
+			"2027-01-18",
+			"2027-02-01",
+			"2027-02-15",
+			"2027-03-01",
+			"2027-03-15",
+			"2027-03-29",
+			"2027-04-12",
+			"2027-04-26"
+		]
+	},
+	{
+		"name": "weekly every 3 weeks across February",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 3,
+			"start_date": "2027-01-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-06-30",
+		"expect": [
+			"2027-01-29",
+			"2027-02-19",
+			"2027-03-12",
+			"2027-04-02",
+			"2027-04-23",
+			"2027-05-14",
+			"2027-06-04",
+			"2027-06-25"
+		]
+	},
+	{
+		"name": "weekly every 52 weeks",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 52,
+			"start_date": "2027-01-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2031-12-31",
+		"expect": [
+			"2027-01-01",
+			"2027-12-31",
+			"2028-12-29",
+			"2029-12-28",
+			"2030-12-27",
+			"2031-12-26"
+		]
+	},
+	{
+		"name": "daily across a common February end",
+		"rule": {
+			"frequency": "daily",
+			"interval": 1,
+			"start_date": "2027-02-24",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-02-01",
+		"to": "2027-03-05",
+		"expect": [
+			"2027-02-24",
+			"2027-02-25",
+			"2027-02-26",
+			"2027-02-27",
+			"2027-02-28",
+			"2027-03-01",
+			"2027-03-02",
+			"2027-03-03",
+			"2027-03-04",
+			"2027-03-05"
+		]
+	},
+	{
+		"name": "daily across a leap February end",
+		"rule": {
+			"frequency": "daily",
+			"interval": 1,
+			"start_date": "2028-02-24",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2028-02-01",
+		"to": "2028-03-05",
+		"expect": [
+			"2028-02-24",
+			"2028-02-25",
+			"2028-02-26",
+			"2028-02-27",
+			"2028-02-28",
+			"2028-02-29",
+			"2028-03-01",
+			"2028-03-02",
+			"2028-03-03",
+			"2028-03-04",
+			"2028-03-05"
+		]
+	},
+	{
+		"name": "daily across a year end",
+		"rule": {
+			"frequency": "daily",
+			"interval": 1,
+			"start_date": "2027-12-28",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-12-01",
+		"to": "2028-01-04",
+		"expect": [
+			"2027-12-28",
+			"2027-12-29",
+			"2027-12-30",
+			"2027-12-31",
+			"2028-01-01",
+			"2028-01-02",
+			"2028-01-03",
+			"2028-01-04"
+		]
+	},
+	{
+		"name": "daily every 2 days",
+		"rule": {
+			"frequency": "daily",
+			"interval": 2,
+			"start_date": "2027-01-30",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-02-12",
+		"expect": [
+			"2027-01-30",
+			"2027-02-01",
+			"2027-02-03",
+			"2027-02-05",
+			"2027-02-07",
+			"2027-02-09",
+			"2027-02-11"
+		]
+	},
+	{
+		"name": "daily every 3 days across a month end",
+		"rule": {
+			"frequency": "daily",
+			"interval": 3,
+			"start_date": "2027-03-28",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-03-01",
+		"to": "2027-04-15",
+		"expect": [
+			"2027-03-28",
+			"2027-03-31",
+			"2027-04-03",
+			"2027-04-06",
+			"2027-04-09",
+			"2027-04-12",
+			"2027-04-15"
+		]
+	},
+	{
+		"name": "daily every 10 days",
+		"rule": {
+			"frequency": "daily",
+			"interval": 10,
+			"start_date": "2027-01-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-03-31",
+		"expect": [
+			"2027-01-01",
+			"2027-01-11",
+			"2027-01-21",
+			"2027-01-31",
+			"2027-02-10",
+			"2027-02-20",
+			"2027-03-02",
+			"2027-03-12",
+			"2027-03-22"
+		]
+	},
+	{
+		"name": "daily every 31 days",
+		"rule": {
+			"frequency": "daily",
+			"interval": 31,
+			"start_date": "2027-01-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-01",
+			"2027-02-01",
+			"2027-03-04",
+			"2027-04-04",
+			"2027-05-05",
+			"2027-06-05",
+			"2027-07-06",
+			"2027-08-06",
+			"2027-09-06",
+			"2027-10-07",
+			"2027-11-07",
+			"2027-12-08"
+		]
+	},
+	{
+		"name": "end date equal to an occurrence is included",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-15",
+			"end_date": "2027-04-15",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-15",
+			"2027-02-15",
+			"2027-03-15",
+			"2027-04-15"
+		]
+	},
+	{
+		"name": "end date one day before an occurrence excludes it",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-15",
+			"end_date": "2027-04-14",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-15",
+			"2027-02-15",
+			"2027-03-15"
+		]
+	},
+	{
+		"name": "end date one day after an occurrence",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-15",
+			"end_date": "2027-04-16",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-15",
+			"2027-02-15",
+			"2027-03-15",
+			"2027-04-15"
+		]
+	},
+	{
+		"name": "end date on the clamped February date",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": "2027-02-28",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-31",
+			"2027-02-28"
+		]
+	},
+	{
+		"name": "end date before the clamped February date",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": "2027-02-27",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-31"
+		]
+	},
+	{
+		"name": "end date equal to the start date gives one",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 1,
+			"start_date": "2027-01-04",
+			"end_date": "2027-01-04",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-04"
+		]
+	},
+	{
+		"name": "end date before the start date gives none",
+		"rule": {
+			"frequency": "daily",
+			"interval": 1,
+			"start_date": "2027-01-04",
+			"end_date": "2027-01-03",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": []
+	},
+	{
+		"name": "end date inside a weekly window",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 1,
+			"start_date": "2027-01-04",
+			"end_date": "2027-01-25",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-04",
+			"2027-01-11",
+			"2027-01-18",
+			"2027-01-25"
+		]
+	},
+	{
+		"name": "end date inside a yearly rule",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 1,
+			"start_date": "2027-06-01",
+			"end_date": "2029-06-01",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2035-12-31",
+		"expect": [
+			"2027-06-01",
+			"2028-06-01",
+			"2029-06-01"
+		]
+	},
+	{
+		"name": "max count 1 gives only the start",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": 1
+		},
+		"from": "2027-01-01",
+		"to": "2030-12-31",
+		"expect": [
+			"2027-01-31"
+		]
+	},
+	{
+		"name": "max count 3 monthly from Jan 31",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": 3
+		},
+		"from": "2027-01-01",
+		"to": "2030-12-31",
+		"expect": [
+			"2027-01-31",
+			"2027-02-28",
+			"2027-03-31"
+		]
+	},
+	{
+		"name": "max count 4 daily",
+		"rule": {
+			"frequency": "daily",
+			"interval": 1,
+			"start_date": "2027-02-27",
+			"end_date": null,
+			"max_count": 4
+		},
+		"from": "2027-02-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-02-27",
+			"2027-02-28",
+			"2027-03-01",
+			"2027-03-02"
+		]
+	},
+	{
+		"name": "max count 5 weekly every 2 weeks",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 2,
+			"start_date": "2027-01-04",
+			"end_date": null,
+			"max_count": 5
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-04",
+			"2027-01-18",
+			"2027-02-01",
+			"2027-02-15",
+			"2027-03-01"
+		]
+	},
+	{
+		"name": "max count 3 yearly from Feb 29",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 1,
+			"start_date": "2028-02-29",
+			"end_date": null,
+			"max_count": 3
+		},
+		"from": "2028-01-01",
+		"to": "2040-12-31",
+		"expect": [
+			"2028-02-29",
+			"2029-02-28",
+			"2030-02-28"
+		]
+	},
+	{
+		"name": "max count larger than the window",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-10",
+			"end_date": null,
+			"max_count": 100
+		},
+		"from": "2027-01-01",
+		"to": "2027-06-30",
+		"expect": [
+			"2027-01-10",
+			"2027-02-10",
+			"2027-03-10",
+			"2027-04-10",
+			"2027-05-10",
+			"2027-06-10"
+		]
+	},
+	{
+		"name": "max count counts from the start, not from the window",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-10",
+			"end_date": null,
+			"max_count": 4
+		},
+		"from": "2027-03-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-03-10",
+			"2027-04-10"
+		]
+	},
+	{
+		"name": "max count and end date: the count comes first",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-10",
+			"end_date": "2027-12-10",
+			"max_count": 2
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-10",
+			"2027-02-10"
+		]
+	},
+	{
+		"name": "max count and end date: the end date comes first",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-10",
+			"end_date": "2027-03-10",
+			"max_count": 12
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": [
+			"2027-01-10",
+			"2027-02-10",
+			"2027-03-10"
+		]
+	},
+	{
+		"name": "max count 6 monthly every 2 months",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 2,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": 6
+		},
+		"from": "2027-01-01",
+		"to": "2029-12-31",
+		"expect": [
+			"2027-01-31",
+			"2027-03-31",
+			"2027-05-31",
+			"2027-07-31",
+			"2027-09-30",
+			"2027-11-30"
+		]
+	},
+	{
+		"name": "window starts after the start date",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-03-01",
+		"to": "2027-05-31",
+		"expect": [
+			"2027-03-31",
+			"2027-04-30",
+			"2027-05-31"
+		]
+	},
+	{
+		"name": "window starts exactly on an occurrence",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-02-28",
+		"to": "2027-03-31",
+		"expect": [
+			"2027-02-28",
+			"2027-03-31"
+		]
+	},
+	{
+		"name": "window ends exactly on an occurrence",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-02-28",
+		"expect": [
+			"2027-01-31",
+			"2027-02-28"
+		]
+	},
+	{
+		"name": "window ends the day before an occurrence",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-02-27",
+		"expect": [
+			"2027-01-31"
+		]
+	},
+	{
+		"name": "window before the start date is empty",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2027-06-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-05-31",
+		"expect": []
+	},
+	{
+		"name": "window straddling the start date",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 1,
+			"start_date": "2027-01-15",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-02-05",
+		"expect": [
+			"2027-01-15",
+			"2027-01-22",
+			"2027-01-29",
+			"2027-02-05"
+		]
+	},
+	{
+		"name": "window of a single day with an occurrence",
+		"rule": {
+			"frequency": "daily",
+			"interval": 1,
+			"start_date": "2027-01-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-05-05",
+		"to": "2027-05-05",
+		"expect": [
+			"2027-05-05"
+		]
+	},
+	{
+		"name": "window of a single day without an occurrence",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 1,
+			"start_date": "2027-01-04",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-05",
+		"to": "2027-01-05",
+		"expect": []
+	},
+	{
+		"name": "window far from the start",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2020-01-31",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-04-30",
+		"expect": [
+			"2027-01-31",
+			"2027-02-28",
+			"2027-03-31",
+			"2027-04-30"
+		]
+	},
+	{
+		"name": "window far from the start, weekly",
+		"rule": {
+			"frequency": "weekly",
+			"interval": 1,
+			"start_date": "2020-01-06",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-01-31",
+		"expect": [
+			"2027-01-04",
+			"2027-01-11",
+			"2027-01-18",
+			"2027-01-25"
+		]
+	},
+	{
+		"name": "window far from the start, yearly Feb 29",
+		"rule": {
+			"frequency": "yearly",
+			"interval": 1,
+			"start_date": "2020-02-29",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2029-12-31",
+		"expect": [
+			"2027-02-28",
+			"2028-02-29",
+			"2029-02-28"
+		]
+	},
+	{
+		"name": "window far from the start, daily every 7",
+		"rule": {
+			"frequency": "daily",
+			"interval": 7,
+			"start_date": "2020-01-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-01-31",
+		"expect": [
+			"2027-01-06",
+			"2027-01-13",
+			"2027-01-20",
+			"2027-01-27"
+		]
+	},
+	{
+		"name": "empty window when to is before from",
+		"rule": {
+			"frequency": "daily",
+			"interval": 1,
+			"start_date": "2027-01-01",
+			"end_date": null,
+			"max_count": null
+		},
+		"from": "2027-02-01",
+		"to": "2027-01-01",
+		"expect": []
+	},
+	{
+		"name": "window far from the start with a max count already reached",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2020-01-31",
+			"end_date": null,
+			"max_count": 12
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": []
+	},
+	{
+		"name": "window far from the start with an end date already passed",
+		"rule": {
+			"frequency": "monthly",
+			"interval": 1,
+			"start_date": "2020-01-31",
+			"end_date": "2021-06-30",
+			"max_count": null
+		},
+		"from": "2027-01-01",
+		"to": "2027-12-31",
+		"expect": []
+	}
+]
