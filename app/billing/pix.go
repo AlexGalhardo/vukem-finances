@@ -263,18 +263,7 @@ func restoreMonths(ctx context.Context, tx *database.Tx, row models.PixPayment) 
 		return false, nil
 	}
 
-	// Summed from the payments because a refund during a lapse subtracts
-	// nothing, so the running paid_months may still include refunded months.
-	paid, err := workspaces.Scoped[models.PixPayment](tctx, tx).
-		Where("status", models.PixPaid).Where("entitlement_period", ent.Period).Get(tctx)
-	if err != nil {
-		return false, err
-	}
-
-	months := 0
-	for i := range paid {
-		months += paid[i].Months
-	}
+	months := ent.PaidMonths + row.MonthsWithheld
 
 	_, err = workspaces.Scoped[models.PixEntitlement](tctx, tx).Where("id", ent.ID).Update(tctx, orm.Set{
 		"paid_months": months, "valid_until": timeutil.AddMonths(ent.AnchorAt, months),
@@ -297,26 +286,30 @@ func (b *Billing) grantMonths(ctx context.Context, tx *database.Tx, p models.Pix
 	return err
 }
 
-// countsInCurrentPeriod reports whether the months of payment p are part of a
-// period still running at now. Those of an ended period were already used.
-func countsInCurrentPeriod(ctx context.Context, tx *database.Tx, p models.PixPayment, now time.Time) (bool, error) {
+// countsInCurrentPeriod reports whether the months of payment p belong to the
+// entitlement's latest period, even if it has lapsed, so paid_months stays the
+// sum of that period's paid payments. granting says if that period gives access
+// at now.
+func countsInCurrentPeriod(
+	ctx context.Context, tx *database.Tx, p models.PixPayment, now time.Time,
+) (counts, granting bool, err error) {
 	tctx := workspaces.WithTenant(ctx, p.WorkspaceID)
 
 	row, err := workspaces.Scoped[models.PixPayment](tctx, tx).Where("id", p.ID).First(tctx)
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
 	ent, err := workspaces.Scoped[models.PixEntitlement](tctx, tx).First(tctx)
 	if errors.Is(err, orm.ErrNotFound) {
-		return false, nil
+		return false, false, nil
 	}
 
 	if err != nil {
-		return false, err
+		return false, false, err
 	}
 
-	return row.EntitlementPeriod == ent.Period && ent.Granting(now), nil
+	return row.EntitlementPeriod == ent.Period, ent.Granting(now), nil
 }
 
 // disputePix marks a paid payment disputed and takes its months away.
@@ -346,7 +339,7 @@ func (b *Billing) RevokePixPayment(ctx context.Context, p models.PixPayment, rea
 // the row subtracts.
 func (b *Billing) takeBack(ctx context.Context, p models.PixPayment, to, reason, source, from string) error {
 	now := b.Now().UTC()
-	subtracted := false
+	subtracted, wasGranting := false, false
 
 	err := b.DB.Tx(ctx, func(tx *database.Tx) error {
 		n, err := orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
@@ -355,7 +348,7 @@ func (b *Billing) takeBack(ctx context.Context, p models.PixPayment, to, reason,
 			return err
 		}
 
-		if subtracted, err = countsInCurrentPeriod(ctx, tx, p, now); err != nil {
+		if subtracted, wasGranting, err = countsInCurrentPeriod(ctx, tx, p, now); err != nil {
 			return err
 		}
 
@@ -374,8 +367,8 @@ func (b *Billing) takeBack(ctx context.Context, p models.PixPayment, to, reason,
 
 		return record(ctx, tx, p.WorkspaceID, source, "pix_"+to, p.PublicRef, "PIX payment "+to+": "+reason)
 	})
-	if err != nil || !subtracted {
-		return err
+	if err != nil || !subtracted || !wasGranting {
+		return err // access that had already ended needs no "ended" mail
 	}
 
 	if ok, err := b.WS.Entitled(ctx, p.WorkspaceID, now); err == nil && !ok {

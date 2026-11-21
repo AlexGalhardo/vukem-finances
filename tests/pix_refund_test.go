@@ -286,6 +286,58 @@ func TestPixDisputeWonDoesNotReviveARefundedPayment(t *testing.T) {
 	}
 }
 
+func TestPixDisputesAcrossALapseRestoreInAnyOrder(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name        string
+		bFirstToWin bool
+	}{{"first disputed wins first", false}, {"last disputed wins first", true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			clock := newPixClock(time.Date(2027, 3, 1, 10, 0, 0, 0, time.UTC))
+			f, app := pixApp(t, clock)
+			b := pixBilling(t, app)
+			ana := signUp(t, app, "Ana", "ana@example.com")
+			a := paidPix(t, f, b, ana, 3)
+			c := paidPix(t, f, b, ana, 1)
+
+			apply := func(p models.PixPayment, status string) {
+				t.Helper()
+				f.setStatus(p.ProviderRef, status)
+
+				if err := b.HandlePixEvent(t.Context(), p.ProviderRef); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			apply(a, "UNDER_DISPUTE")
+			clock.Advance(40 * 24 * time.Hour) // past the one month left
+			apply(c, "UNDER_DISPUTE")
+
+			for _, m := range app.Mails().SentTo("ana@example.com") {
+				if m.Subject == "Your Pro access has ended" {
+					t.Error("a dispute on access that had already ended sent an \"ended\" mail")
+				}
+			}
+
+			if tc.bFirstToWin {
+				apply(c, "PAID")
+				apply(a, "PAID")
+			} else {
+				apply(a, "PAID")
+				apply(c, "PAID")
+			}
+
+			e := pixEntitlementOf(t, app, ana.Workspace.ID)
+			if e.PaidMonths != 4 || e.ValidUntil.UTC().Format("2006-01-02") != "2027-07-01" || e.RevokedAt.Valid {
+				t.Errorf("entitlement = %+v, want 4 months until 2027-07-01", e)
+			}
+		})
+	}
+}
+
 func TestPixRefundAfterDisputeWonRevokes(t *testing.T) {
 	t.Parallel()
 
