@@ -187,37 +187,27 @@ func (h *TwoFactorHandlers) Challenge(c *web.Ctx) error {
 	// it, and only wrong codes spend it.
 	key := "2fa-account:" + u.AuthID()
 
-	left, err := h.failed.Peek(c.Context(), key)
-	if err != nil {
-		return err
-	}
-
-	if !left.Allowed {
-		return h.endChallenge(c, u, false)
-	}
-
 	in, err := web.Parse(c, requests.TwoFactorChallengeSchema)
 	if err != nil {
 		return err
 	}
 
-	ok, err := h.a.VerifyTwoFactor(c.Context(), u.ID, in.Code, in.RecoveryCode)
+	got, err := h.budget.try(c.Context(), u.ID, key, func() (bool, error) {
+		return h.a.VerifyTwoFactor(c.Context(), u.ID, in.Code, in.RecoveryCode)
+	})
 	if err != nil {
 		return err
 	}
 
-	if !ok {
+	if got.Wrong {
 		web.SecurityEvent(c.Request(), "auth.2fa_failed", "user_id", u.AuthID(), "stage", "challenge")
+	}
 
-		spent, err := h.failed.Allow(c.Context(), key)
-		if err != nil {
-			return err
-		}
+	if got.Locked {
+		return h.endChallenge(c, u, got.JustLocked)
+	}
 
-		if !spent.Allowed || spent.Remaining == 0 {
-			return h.endChallenge(c, u, true)
-		}
-
+	if !got.OK {
 		if in.Code == "" {
 			msg := h.a.T(c.Context(), "auth.two_factor.invalid_recovery_code")
 
