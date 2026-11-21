@@ -62,6 +62,51 @@ func TestRefundRevokesWhenThePeriodIsCurrentOrUnknown(t *testing.T) {
 	}
 }
 
+func TestLateDeliveryOfACurrentPeriodRefundStillRevokes(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 900)
+
+	now := app.Now()
+	f.setInvoicePeriod(now.Add(-time.Hour), false) // ended after the refund, before this delivery
+
+	postStripeAt(t, app, "evt_late", "charge.refunded", map[string]any{"id": "ch_1"}, now.Add(-2*time.Hour)).AssertOK()
+	assertPlan(t, ana, "free")
+
+	if n := len(f.canceled()); n != 1 {
+		t.Errorf("cancel calls = %d, want 1", n)
+	}
+}
+
+func TestRetryAfterThePeriodEndedFinishesTheCancel(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 900)
+	f.setInvoicePeriod(app.Now().Add(24*time.Hour), false)
+
+	f.mu.Lock()
+	f.cancelErr = true
+	f.mu.Unlock()
+
+	if r := postStripe(t, app, "evt_x", "charge.refunded", map[string]any{"id": "ch_1"}); r.Status() < 500 {
+		t.Fatalf("a failed cancel answered %d, want a retryable error", r.Status())
+	}
+
+	f.mu.Lock()
+	f.cancelErr = false
+	f.mu.Unlock()
+	f.setInvoicePeriod(app.Now().Add(-time.Hour), false)
+
+	postStripe(t, app, "evt_x", "charge.refunded", map[string]any{"id": "ch_1"}).AssertOK()
+	assertPlan(t, ana, "free")
+
+	if n := len(f.canceled()); n != 1 {
+		t.Errorf("cancel calls after the retry = %d, want 1", n)
+	}
+}
+
 func TestDisputeWonWhilePastDueRestoresAccessOnRecovery(t *testing.T) {
 	t.Parallel()
 
