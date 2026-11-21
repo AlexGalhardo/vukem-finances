@@ -172,6 +172,11 @@ func (s *Service) TransactionPage(ctx context.Context, f TxFilter) (TxPage, erro
 	return TxPage{Rows: rows, Total: total, Page: page, PageSize: PageSize}, err
 }
 
+// Rows adds the names, tags and transfer side the list shows to txs.
+func (s *Service) Rows(ctx context.Context, txs []models.Transaction) ([]TxRow, error) {
+	return s.rowsOf(ctx, txs)
+}
+
 func (s *Service) rowsOf(ctx context.Context, txs []models.Transaction) ([]TxRow, error) {
 	accounts, err := s.Accounts(ctx)
 	if err != nil {

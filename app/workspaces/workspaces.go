@@ -468,6 +468,10 @@ func (s *Service) RemoveMember(ctx context.Context, actor models.User, userID in
 			return err
 		}
 
+		if err := s.revokeTokens(ctx, tx, userID); err != nil {
+			return err
+		}
+
 		return s.record(ctx, tx, actor.ID, AuditMemberRemoved, fmt.Sprintf("user:%d", userID))
 	})
 }

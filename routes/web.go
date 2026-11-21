@@ -11,6 +11,7 @@ import (
 	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
+	"github.com/AlexGalhardo/vukem-finances/app/api"
 	"github.com/AlexGalhardo/vukem-finances/app/controllers"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 	"github.com/AlexGalhardo/vukem-finances/config"
@@ -19,7 +20,12 @@ import (
 
 // Web registers the browser routes. vukem route:list shows them.
 func Web(r *router.Router, app *vukem.App) error {
-	if err := vukem.DefaultMiddleware(app, r); err != nil {
+	// The API authenticates with a bearer token only: no session is read, so a cookie is
+	// ignored, and no CSRF check applies (nothing the browser sends by itself authenticates).
+	apiPrefix := api.BasePath + "/"
+	if err := vukem.DefaultMiddlewareWith(app, r, vukem.MiddlewareOptions{
+		SessionBypass: []string{apiPrefix}, CSRFBypass: []string{apiPrefix},
+	}); err != nil {
 		return err
 	}
 

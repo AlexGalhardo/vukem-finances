@@ -62,6 +62,12 @@ func liveAccounts(ctx context.Context, ex database.Executor) (int, error) {
 
 // CreateAccount adds an account; the Free plan allows one that is not archived.
 func (s *Service) CreateAccount(ctx context.Context, name, kind, opening string) (models.Account, error) {
+	return s.CreateAccountWithUID(ctx, "", name, kind, opening)
+}
+
+// CreateAccountWithUID is CreateAccount with the uid a client chose (empty
+// generates one); the caller has checked its shape.
+func (s *Service) CreateAccountWithUID(ctx context.Context, uid, name, kind, opening string) (models.Account, error) {
 	if !slices.Contains(models.AccountKinds(), kind) {
 		return models.Account{}, errAccountKind
 	}
@@ -88,7 +94,7 @@ func (s *Service) CreateAccount(ctx context.Context, name, kind, opening string)
 			return err
 		}
 
-		a, err := insertAccount(ctx, tx, lim, name, kind, cents)
+		a, err := insertAccount(ctx, tx, lim, uid, name, kind, cents)
 		id = a.ID
 
 		return err
@@ -101,9 +107,10 @@ func (s *Service) CreateAccount(ctx context.Context, name, kind, opening string)
 }
 
 // insertAccount adds an account inside a transaction that holds the workspace
-// lock, after the plan's account quota allows one more.
+// lock, after the plan's account quota allows one more. An empty uid gets a
+// new one.
 func insertAccount(
-	ctx context.Context, tx *database.Tx, lim workspaces.Limits, name, kind string, opening int64,
+	ctx context.Context, tx *database.Tx, lim workspaces.Limits, uid, name, kind string, opening int64,
 ) (models.Account, error) {
 	n, err := liveAccounts(ctx, tx)
 	if err != nil {
@@ -119,7 +126,7 @@ func insertAccount(
 		return models.Account{}, err
 	}
 
-	a := models.Account{Name: strings.TrimSpace(name), Kind: kind, OpeningCents: opening, Position: int(last) + 1}
+	a := models.Account{UID: uid, Name: strings.TrimSpace(name), Kind: kind, OpeningCents: opening, Position: int(last) + 1}
 	if err := orm.Create(ctx, tx, &a); err != nil {
 		return models.Account{}, err
 	}

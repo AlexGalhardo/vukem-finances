@@ -40,6 +40,7 @@ func transactionInput(ctx context.Context, ex database.Executor, in TxInput, kee
 		}
 	}
 	out := models.Transaction{
+		UID:         in.UID,
 		AccountID:   in.AccountID,
 		Kind:        in.Kind,
 		AmountCents: cents,

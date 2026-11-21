@@ -138,6 +138,9 @@ type TxInput struct {
 	// (none on a new one), a list, even an empty one, replaces them. Names
 	// that do not exist yet are created.
 	Tags []string
+	// UID is the id a client chose for a new transaction (a ULID, checked by
+	// the caller); empty makes the service generate one. Ignored on an edit.
+	UID string
 }
 
 // TxRow is a transaction with the names the list shows.
