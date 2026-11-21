@@ -115,7 +115,7 @@ The six-month income and expense series retains every month's totals, including 
 | `.markdownlint-cli2.jsonc` | Markdown rules; run them with `npm run lint:md` |
 | `CHANGELOG.md` | [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), generated from the commits by `git cliff --config .config/cliff.toml` |
 | `.githooks/` | a `commit-msg` hook that enforces [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and a `pre-commit` hook that scans the staged changes for secrets (when [Betterleaks](https://github.com/betterleaks/betterleaks) is installed), then runs `gofmt` and `go vet` |
-| `.betterleaks.toml` | secret scanning rules (`APP_KEY`, `vk_` API tokens, Stripe keys) on top of Betterleaks' defaults; scan the history with `npm run secrets:scan` |
+| `.betterleaks.toml` | secret scanning rules (`APP_KEY`, `vk_` and `vf_` API tokens, Stripe keys) on top of Betterleaks' defaults; scan the history with `npm run secrets:scan` |
 | `compose.yaml` | the local stack: the app on SQLite and a mail catcher (`docker compose up --build`) |
 | `compose.prod.yaml`, `deploy/` | the VPS stack with Caddy, and the [deployment guide](../deploy/README.md) |
 
