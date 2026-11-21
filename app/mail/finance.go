@@ -116,3 +116,17 @@ func (m MonthlySummary) Envelope() mail.Envelope {
 func (m MonthlySummary) Content() mail.Content { return mail.React("monthly_summary", m) }
 
 func tag(kind string) map[string]string { return map[string]string{"type": kind} }
+
+// AccessRevoked tells the owner that Pro ended before the paid period did,
+// and why (a refund or a dispute). Reason is a plain sentence.
+type AccessRevoked struct {
+	To, Workspace, Reason, URL string
+}
+
+// Envelope implements mail.Mailable.
+func (m AccessRevoked) Envelope() mail.Envelope {
+	return mail.Envelope{To: []string{m.To}, Subject: "Your Pro access has ended", Tags: tag("access_revoked")}
+}
+
+// Content implements mail.Mailable.
+func (m AccessRevoked) Content() mail.Content { return mail.React("access_revoked", m) }

@@ -3,6 +3,7 @@ package tests
 import (
 	"bytes"
 	"encoding/json"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -38,12 +39,20 @@ type fakeStripe struct {
 	checkouts []url.Values
 	portals   []url.Values
 	subs      map[string]map[string]any
+	charges   map[string]map[string]any
+	invoices  map[string]map[string]any
+	disputes  map[string]map[string]any
+	cancels   []url.Values
+	cancelErr bool
 }
 
 func newFakeStripe(t *testing.T) *fakeStripe {
 	t.Helper()
 
-	f := &fakeStripe{t: t, subs: map[string]map[string]any{}}
+	f := &fakeStripe{
+		t: t, subs: map[string]map[string]any{}, charges: map[string]map[string]any{},
+		invoices: map[string]map[string]any{}, disputes: map[string]map[string]any{},
+	}
 	mux := http.NewServeMux()
 
 	record := func(list *[]url.Values, reply func(url.Values) map[string]any) http.HandlerFunc {
@@ -88,6 +97,49 @@ func newFakeStripe(t *testing.T) *fakeStripe {
 		}
 
 		f.json(w, sub)
+	})
+
+	object := func(from map[string]map[string]any) http.HandlerFunc {
+		return func(w http.ResponseWriter, r *http.Request) {
+			f.mu.Lock()
+			obj, ok := from[r.PathValue("id")]
+			f.mu.Unlock()
+
+			if !ok {
+				w.WriteHeader(http.StatusNotFound)
+				f.json(w, map[string]any{"error": map[string]any{"type": "invalid_request_error", "code": "resource_missing"}})
+
+				return
+			}
+
+			f.json(w, obj)
+		}
+	}
+
+	mux.HandleFunc("GET /v1/charges/{id}", object(f.charges))
+	mux.HandleFunc("GET /v1/invoices/{id}", object(f.invoices))
+	mux.HandleFunc("GET /v1/disputes/{id}", object(f.disputes))
+	mux.HandleFunc("DELETE /v1/subscriptions/{id}", func(w http.ResponseWriter, r *http.Request) {
+		raw, _ := io.ReadAll(r.Body)
+		form, _ := url.ParseQuery(string(raw))
+
+		f.mu.Lock()
+		defer f.mu.Unlock()
+
+		if f.cancelErr {
+			w.WriteHeader(http.StatusInternalServerError)
+			f.json(w, map[string]any{"error": map[string]any{"type": "api_error", "message": "secret-detail-from-stripe"}})
+
+			return
+		}
+
+		f.cancels = append(f.cancels, form)
+
+		if sub, ok := f.subs[r.PathValue("id")]; ok {
+			sub["status"] = "canceled"
+		}
+
+		f.json(w, map[string]any{"id": r.PathValue("id"), "status": "canceled"})
 	})
 
 	f.srv = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -135,6 +187,32 @@ func (f *fakeStripe) setSubscription(customer, status string) {
 			"current_period_end": time.Now().Add(30 * 24 * time.Hour).Unix(),
 		}}},
 	}
+}
+
+// setCharge makes the fake API serve a charge of the invoice in_1.
+func (f *fakeStripe) setCharge(id string, amount, refunded int64) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.charges[id] = map[string]any{"id": id, "amount": amount, "amount_refunded": refunded, "invoice": "in_1"}
+	f.invoices["in_1"] = map[string]any{
+		"id": "in_1", "customer": testCustomer,
+		"parent": map[string]any{"subscription_details": map[string]any{"subscription": testSubscript}},
+	}
+}
+
+func (f *fakeStripe) setDispute(id, chargeID, status string) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	f.disputes[id] = map[string]any{"id": id, "charge": chargeID, "status": status}
+}
+
+func (f *fakeStripe) canceled() []url.Values {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+
+	return append([]url.Values(nil), f.cancels...)
 }
 
 func billingApp(t *testing.T, f *fakeStripe) *vukemtest.App {
