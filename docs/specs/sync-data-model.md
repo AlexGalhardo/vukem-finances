@@ -70,15 +70,17 @@ A client whose cursor is below `compacted_through_seq` receives `resync_required
 
 ## Conflict policy
 
-Row-level versions with field-level merging, as a pure function `changes.Merge(current Row, incoming Mutation, since []Change) Result`. A mutation carries `base_seq` (the last `seq` the client saw for that row) and only the fields it changed. `since` holds the changes of that row with `seq > base_seq`.
+Row-level versions with field-level merging, as the pure function `changes.Merge(current Row, incoming Mutation, since []Change) Result`. `since` holds the logged changes of that row with `seq > base_seq`.
 
-1. **Disjoint fields apply cleanly.** A field not changed by any `since` change applies. Example: the phone edits `description` of a transaction while the web UI changed its `amount_cents` after the phone's `base_seq`; both edits survive.
-2. **Same field: the later arrival wins.** A field changed both by the client and by a later change is a conflict on that field, and the mutation wins by server order. The previous value is stored in `sync_conflicts` and returned in the response. Example: the web sets a budget limit to 50000, then the phone, offline since before that, sets it to 60000; the limit becomes 60000 and 50000 is kept as `lost_value`.
-3. **Delete wins over a concurrent edit.** An edit of a row deleted after `base_seq` is dropped and logged as a conflict of kind `edited_deleted_row`; only an explicit restore brings the row back. Example: the phone renames an account that the web deleted meanwhile; the rename is dropped.
-4. **Create with an existing uid.** When the fields are equal it is an idempotent retry (nothing changes); when they differ it is an edit under rule 2. Example: the phone resends a lost create after a timeout, and nothing duplicates.
-5. **Missing or deleted parent.** A mutation that references a missing or deleted parent is rejected with `unknown_reference` or `parent_deleted`; the other operations of the batch are not affected. Example: a transaction that points at a category deleted on the web is rejected with `parent_deleted`.
-6. **Duplicate name.** Creating a category with a live name already in use in the workspace is rejected with `duplicate_name`; the client renames or adopts the existing one. Example: two phones create "Food" offline; the second push gets `duplicate_name`.
-7. **Derived values are never synced.** Balances, totals and budget progress are computed by each client from synced rows.
+1. **A mutation names its base and its fields.** It carries `base_seq` (the last `seq` the client saw for that row) and only the fields it changed. Example: the phone edits `description` of a transaction; it sends `{"description": "dinner", "base_seq": 5}` and nothing else, so the other columns are never overwritten.
+2. **Fields no later change touched apply cleanly.** Example: the web UI changed `amount_cents` after the phone's `base_seq`; the phone's `description` edit still applies, and both edits survive.
+3. **The same field changed on both sides is a conflict: the later arrival at the server wins** (last writer wins by server order). The previous value is stored in `sync_conflicts` (`lost_value`, `lost_by_device`) for 30 days and returned in the response so the client can tell the user. Example: the web sets a budget limit to 50000, then the phone, offline since before that, sets it to 60000; the limit becomes 60000 and 50000 is kept as `lost_value`.
+4. **Delete wins over a concurrent edit.** An edit of a deleted row is dropped and logged as a conflict of kind `edited_deleted_row`; only an explicit restore brings the row back. Example: the phone renames an account that the web deleted meanwhile; the rename is dropped and reported.
+5. **Creating a `uid` that already exists** is an idempotent retry when the fields are equal, and an edit under rule 3 when they differ. Example: the phone resends a lost create after a timeout, and nothing duplicates.
+6. **A mutation that references a missing or deleted parent** is rejected with `unknown_reference` or `parent_deleted`; the other operations of the batch are not affected. Example: a transaction that points at a category deleted on the web is rejected with `parent_deleted`.
+7. **Derived values are never synced.** Balances, totals and budget progress are computed by each client from the synced rows; no field of them exists to merge.
+
+Names are not part of `Merge`: two devices that create the same live category name offline are told apart by the partial unique index, and the second gets a `duplicate_name` conflict (the service answers 409); the client renames or adopts the existing row.
 
 Last-writer-wins can overwrite an edit of an amount. The lost value is kept 30 days and reported to the client; the policy applies to money fields too (D-023).
 
