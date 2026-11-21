@@ -64,7 +64,7 @@ func (bh *BillingHandlers) Show(c *web.Ctx) error {
 			props.Subscription.RevokedReason = sub.RevokedReason
 		}
 		if sub.CurrentPeriodEnd.Valid {
-			props.Subscription.CurrentPeriodEnd = sub.CurrentPeriodEnd.V.Format("January 2, 2006")
+			props.Subscription.CurrentPeriodEnd = sub.CurrentPeriodEnd.V.Format("2006-01-02")
 		}
 	}
 
@@ -100,7 +100,7 @@ func (bh *BillingHandlers) pixAccess(c *web.Ctx) (*pages.PixAccess, error) {
 	}
 
 	view := &pages.PixAccess{
-		Active: ent.Granting(bh.b.Now().UTC()), ValidUntil: ent.ValidUntil.UTC().Format("January 2, 2006"),
+		Active: ent.Granting(bh.b.Now().UTC()), ValidUntil: ent.ValidUntil.UTC().Format("2006-01-02"),
 	}
 	if ent.RevokedAt.Valid {
 		view.RevokedReason = ent.RevokedReason

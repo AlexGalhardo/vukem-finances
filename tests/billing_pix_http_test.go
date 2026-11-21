@@ -109,7 +109,7 @@ func TestPixPollActivatesAndTheBillingPageShowsIt(t *testing.T) {
 	page = ana.Client.Inertia("").Get("/billing").AssertInertia("Billing")
 	page.PropEquals("limits.plan", "pro")
 	page.PropEquals("pixAccess.active", true)
-	page.PropEquals("pixAccess.validUntil", "February 28, 2027")
+	page.PropEquals("pixAccess.validUntil", "2027-02-28")
 
 	// A refund shows its reason.
 	f.setStatus(provider, "REFUNDED")

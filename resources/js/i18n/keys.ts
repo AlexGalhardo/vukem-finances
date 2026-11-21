@@ -1,5 +1,6 @@
 import type accounts from "./en/accounts";
 import type ai from "./en/ai";
+import type billing from "./en/billing";
 import type common from "./en/common";
 import type components from "./en/components";
 import type shell from "./en/shell";
@@ -9,6 +10,7 @@ import type transactions from "./en/transactions";
 export type Key =
   | keyof typeof accounts
   | keyof typeof ai
+  | keyof typeof billing
   | keyof typeof common
   | keyof typeof components
   | keyof typeof shell

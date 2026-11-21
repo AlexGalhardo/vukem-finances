@@ -46,6 +46,7 @@ export type AuditEntry = {
 export type BillingStatus = {
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: string;
+  revokedReason: string;
   status: string;
   valid: boolean;
 };
@@ -155,6 +156,22 @@ export type NullInt64 = {
 export type NullString = {
   V: string;
   Valid: boolean;
+};
+
+export type PixAccess = {
+  active: boolean;
+  revokedReason: string;
+  validUntil: string;
+};
+
+export type PixOffer = {
+  currency: string;
+  options: PixOption[];
+};
+
+export type PixOption = {
+  months: number;
+  totalCents: number;
 };
 
 export type Preview = {
@@ -302,6 +319,8 @@ export type BillingProps = {
   configured: boolean;
   currencies: string[];
   limits: Limits;
+  pix?: PixOffer | null;
+  pixAccess?: PixAccess | null;
   subscription?: BillingStatus | null;
   trialDays: number;
 };
