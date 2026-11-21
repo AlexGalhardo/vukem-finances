@@ -138,6 +138,10 @@ func (s *Service) persistTransaction(
 			return err
 		}
 
+		if err := s.applyTags(ctx, tx, out.ID, in.Tags); err != nil {
+			return err
+		}
+
 		saved, err := reload[models.Transaction](ctx, tx, out.ID)
 		if err != nil {
 			return err
@@ -152,6 +156,10 @@ func (s *Service) persistTransaction(
 		return err
 	}
 
+	if err := s.applyTags(ctx, tx, id, in.Tags); err != nil {
+		return err
+	}
+
 	saved, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("id", id).First(ctx)
 	if err != nil {
 		return err
@@ -160,6 +168,14 @@ func (s *Service) persistTransaction(
 	*out = saved
 
 	return nil
+}
+
+func (s *Service) applyTags(ctx context.Context, tx *database.Tx, id int64, names []string) error {
+	if names == nil {
+		return nil
+	}
+
+	return s.replaceTags(ctx, tx, id, names)
 }
 
 func checkMonthQuota(ctx context.Context, tx *database.Tx, lim workspaces.Limits, date string) error {
