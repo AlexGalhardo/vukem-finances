@@ -55,6 +55,7 @@ func All() []inertia.PageInfo {
 		VerifyEmail.Info(),
 		Dashboard.Info(),
 		ResetPassword.Info(),
+		Setup.Info(),
 		TwoFactor.Info(),
 		TwoFactorChallenge.Info(),
 		AdminDashboard.Info(),

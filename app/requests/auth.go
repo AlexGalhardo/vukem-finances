@@ -67,3 +67,30 @@ var ResetPasswordSchema = z.Struct[ResetPassword](z.Shape{
 
 	return nil
 })
+
+// Setup is the form of the first owner of a personal installation.
+type Setup struct {
+	Name                 string `json:"name"                  form:"name"`
+	Email                string `json:"email"                 form:"email"`
+	Password             string `json:"password"              form:"password"`
+	PasswordConfirmation string `json:"password_confirmation" form:"password_confirmation"`
+	Currency             string `json:"currency"              form:"currency"`
+	// Code is the setup secret; its absence is a 403, not a validation error.
+	Code string `json:"code" form:"code"`
+}
+
+// SetupSchema validates Setup with the password rules of Register.
+var SetupSchema = z.Struct[Setup](z.Shape{
+	"name":                  z.String().Trim().Min(2).Max(100),
+	"email":                 z.String().Trim().Email().Max(254),
+	"password":              z.String().Min(12).Max(256),
+	"password_confirmation": z.String(),
+	"currency":              z.String().Trim().Min(3).Max(3),
+	"code":                  z.String().Optional(),
+}).Refine(func(r Setup) error {
+	if r.Password != r.PasswordConfirmation {
+		return z.FieldError("password_confirmation", "The password confirmation does not match.")
+	}
+
+	return nil
+})

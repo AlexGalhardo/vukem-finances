@@ -14,6 +14,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/AlexGalhardo/vukem"
@@ -151,21 +152,74 @@ func (s *Service) Create(ctx context.Context, u models.User, name, currency stri
 
 	ws := models.Workspace{Name: strings.TrimSpace(name), Currency: currency}
 
-	err := s.DB.Tx(ctx, func(tx *database.Tx) error {
-		if err := orm.Create(ctx, tx, &ws); err != nil {
-			return err
-		}
-
-		if err := orm.Create(ctx, tx, &models.Membership{
-			WorkspaceID: ws.ID, UserID: u.ID, Role: models.RoleOwner,
-		}); err != nil {
-			return err
-		}
-
-		return seed(WithTenant(ctx, ws.ID), tx)
-	})
+	err := s.DB.Tx(ctx, func(tx *database.Tx) error { return createIn(ctx, tx, u, &ws) })
 
 	return ws, err
+}
+
+// createIn stores ws with u as its owner and the starting data, inside tx.
+func createIn(ctx context.Context, tx *database.Tx, u models.User, ws *models.Workspace) error {
+	if err := orm.Create(ctx, tx, ws); err != nil {
+		return err
+	}
+
+	if err := orm.Create(ctx, tx, &models.Membership{
+		WorkspaceID: ws.ID, UserID: u.ID, Role: models.RoleOwner,
+	}); err != nil {
+		return err
+	}
+
+	return seed(WithTenant(ctx, ws.ID), tx)
+}
+
+// setupMu serializes CreateOwner: the "no user yet" check and the insert
+// must not interleave between two requests.
+var setupMu sync.Mutex
+
+// CreateOwner makes the first user of a personal installation, with email
+// already verified (the setup secret vouches for the person at the console),
+// and the implicit workspace they own. It answers 404 once any user exists,
+// so setup works exactly once even with concurrent requests.
+func (s *Service) CreateOwner(
+	ctx context.Context, u models.User, workspace, currency string,
+) (models.User, models.Workspace, error) {
+	currency = strings.ToUpper(strings.TrimSpace(currency))
+	if !validCurrency(currency) {
+		return u, models.Workspace{}, errBadCurrency
+	}
+
+	setupMu.Lock()
+	defer setupMu.Unlock()
+
+	ws := models.Workspace{Name: strings.TrimSpace(workspace), Currency: currency}
+
+	err := s.DB.Tx(ctx, func(tx *database.Tx) error {
+		n, err := orm.QueryOf[models.User](tx).Count(ctx)
+		if err != nil {
+			return err
+		}
+
+		if n > 0 {
+			return errs.ErrNotFound
+		}
+
+		u.EmailVerifiedAt.V, u.EmailVerifiedAt.Valid = s.now().UTC(), true
+		if err := orm.Create(ctx, tx, &u); err != nil {
+			return err
+		}
+
+		return createIn(ctx, tx, u, &ws)
+	})
+
+	return u, ws, err
+}
+
+// SetupOpen reports whether the installation has no user yet, the only time
+// the setup page exists.
+func (s *Service) SetupOpen(ctx context.Context) (bool, error) {
+	n, err := orm.QueryOf[models.User](s.DB).Count(ctx)
+
+	return n == 0, err
 }
 
 func seed(ctx context.Context, tx *database.Tx) error {

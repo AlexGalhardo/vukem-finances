@@ -14,12 +14,18 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/controllers/account"
+	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
 // Auth registers login, registration, password reset and email
 // verification routes (vukem install:auth).
 func Auth(r *router.Router, app *vukem.App) error {
 	acc, err := accounts.New(app)
+	if err != nil {
+		return err
+	}
+
+	edition, err := config.LoadEdition(app.Source)
 	if err != nil {
 		return err
 	}
@@ -48,9 +54,14 @@ func Auth(r *router.Router, app *vukem.App) error {
 
 	r.Get("/login", h.ShowLogin).Name("login").Use(guest)
 	r.Post("/login", h.Login).Use(guest, loginByIP, throttle, perAccount)
-	r.Get("/register", h.ShowRegister).Name("register").Use(guest)
-	r.Post("/register", h.Register).Use(guest, signupIP, signupEmail)
-	r.Get("/register/check-email", h.CheckEmail).Name("register.check").Use(guest)
+	// Public sign-up exists only in the saas edition: a personal installation
+	// gets its first owner from /setup and the others from invite links.
+	if edition.SaaS() {
+		r.Get("/register", h.ShowRegister).Name("register").Use(guest)
+		r.Post("/register", h.Register).Use(guest, signupIP, signupEmail)
+		r.Get("/register/check-email", h.CheckEmail).Name("register.check").Use(guest)
+	}
+
 	r.Post("/logout", h.Logout).Name("logout").Use(required)
 
 	r.Get("/forgot-password", h.ShowForgot).Name("password.request").Use(guest)
