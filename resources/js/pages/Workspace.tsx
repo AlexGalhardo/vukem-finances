@@ -111,6 +111,7 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
             <Select label="Role" value={invite.data.role} onChange={(e) => invite.setData("role", e.target.value)} error={invite.errors.role}>
               <option value="member">Member: records transactions</option>
               <option value="admin">Admin: also manages data and people</option>
+              <option value="viewer">Viewer: sees everything, changes nothing</option>
             </Select>
             <div className="self-end">
               <button type="submit" disabled={invite.processing} className={primary}>

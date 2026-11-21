@@ -12,6 +12,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -33,7 +34,7 @@ import (
 const DefaultCurrency = "USD"
 
 var (
-	errBadRole     = errs.New(http.StatusUnprocessableEntity, "The role must be admin or member.")
+	errBadRole     = errs.New(http.StatusUnprocessableEntity, "The role must be admin, member or viewer.")
 	errBadCurrency = errs.New(http.StatusUnprocessableEntity, "The currency must be an ISO 4217 code, such as USD.")
 	errOwner       = errs.New(http.StatusConflict, "The owner cannot be removed.")
 	errNoWorkspace = errs.New(http.StatusForbidden, "This account belongs to no workspace: ask its owner for an invitation.")
@@ -330,7 +331,7 @@ type InviteLink struct {
 // returns the link. Members and pending invites count against the plan's
 // member limit.
 func (s *Service) Invite(ctx context.Context, inviter models.User, email, role string) (InviteLink, error) {
-	if role != models.RoleAdmin && role != models.RoleMember {
+	if !slices.Contains([]string{models.RoleAdmin, models.RoleMember, models.RoleViewer}, role) {
 		return InviteLink{}, errBadRole
 	}
 

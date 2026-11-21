@@ -7,11 +7,12 @@ import (
 )
 
 // Roles of a workspace member. The owner pays, the admin manages people
-// and data, the member records transactions.
+// and data, the member records transactions, the viewer only reads.
 const (
 	RoleOwner  = "owner"
 	RoleAdmin  = "admin"
 	RoleMember = "member"
+	RoleViewer = "viewer"
 )
 
 // Workspace is the tenant: it owns every account, transaction and budget,
