@@ -19,5 +19,6 @@ func All() []schema.Migration {
 		m20261121200000CreateAITables(),
 		m20261121210000AddAccountArchiveAndTransfers(),
 		m20261122100000CreateBillingTables(),
+		m20261122100100AddPixEntitlementPeriod(),
 	}
 }

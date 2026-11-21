@@ -105,6 +105,74 @@ func TestPixRefundKeepsOtherPaidMonths(t *testing.T) {
 	}
 }
 
+func TestPixRefundOfEndedPeriodKeepsCurrentPeriod(t *testing.T) {
+	t.Parallel()
+
+	clock := newPixClock(time.Date(2027, 1, 31, 10, 0, 0, 0, time.UTC))
+	f, app := pixApp(t, clock)
+	b := pixBilling(t, app)
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	old := paidPix(t, f, b, ana, 1)
+
+	// The login session does not survive this jump, so access is read from
+	// the entitlement instead of the dashboard.
+	clock.Advance(45 * 24 * time.Hour)
+
+	if pixEntitlementOf(t, app, ana.Workspace.ID).Granting(clock.Now()) {
+		t.Fatal("first period should have ended")
+	}
+
+	second := startPix(t, b, ana, 1)
+	f.setStatus(second.ProviderRef, "PAID")
+
+	if err := b.HandlePixEvent(t.Context(), second.ProviderRef); err != nil {
+		t.Fatal(err)
+	}
+
+	before := pixEntitlementOf(t, app, ana.Workspace.ID)
+
+	f.setStatus(old.ProviderRef, "REFUNDED")
+
+	if err := b.HandlePixEvent(t.Context(), old.ProviderRef); err != nil {
+		t.Fatal(err)
+	}
+
+	after := pixEntitlementOf(t, app, ana.Workspace.ID)
+	if !after.Granting(clock.Now()) {
+		t.Errorf("refunding an ended period cut current access: %+v", after)
+	}
+
+	if after.PaidMonths != before.PaidMonths || !after.ValidUntil.Equal(before.ValidUntil) {
+		t.Errorf("entitlement changed: before %+v, after %+v", before, after)
+	}
+
+	for _, m := range app.Mails().SentTo("ana@example.com") {
+		if m.Subject == "Your Pro access has ended" {
+			t.Error("refunding an ended period sent an \"ended\" mail")
+		}
+	}
+}
+
+func TestPixRefundAfterDisputeWonRevokes(t *testing.T) {
+	t.Parallel()
+
+	clock := newPixClock(time.Date(2027, 1, 31, 10, 0, 0, 0, time.UTC))
+	f, app := pixApp(t, clock)
+	b := pixBilling(t, app)
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	p := paidPix(t, f, b, ana, 1)
+
+	for _, status := range []string{"UNDER_DISPUTE", "PAID", "REFUNDED"} {
+		f.setStatus(p.ProviderRef, status)
+
+		if err := b.HandlePixEvent(t.Context(), p.ProviderRef); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	assertPlan(t, ana, "free")
+}
+
 func TestPixDisputeRevokesAndWonRestores(t *testing.T) {
 	t.Parallel()
 
