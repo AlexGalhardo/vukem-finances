@@ -230,7 +230,12 @@ func (s *Service) UpdateRecurrence(ctx context.Context, id int64, in RecurrenceI
 			"max_count": nullable(row.MaxCount), "active": row.Active, "last_error": nil,
 		}
 
-		if row.Active && !cur.Active && (!cur.GeneratedThrough.Valid || cur.GeneratedThrough.V < dayBefore(today)) {
+		// Backfill is a choice made at creation: moving the start of a rule that
+		// has generated nothing into the past must not post those dates.
+		movedBack := !cur.GeneratedThrough.Valid && row.StartDate < today
+		resumed := !cur.Active && (!cur.GeneratedThrough.Valid || cur.GeneratedThrough.V < dayBefore(today))
+
+		if row.Active && (movedBack || resumed) {
 			set["generated_through"] = dayBefore(today)
 		}
 
