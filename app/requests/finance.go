@@ -263,3 +263,18 @@ var StatementPaymentSchema = z.Struct[StatementPayment](z.Shape{
 	"amount":        z.String().Trim().Max(30).Optional(),
 	"date":          z.String().Trim().Max(10).Optional(),
 })
+
+// Token is the input of the new API token form.
+type Token struct {
+	Name   string   `json:"name"   form:"name"`
+	Scopes []string `json:"scopes" form:"scopes"`
+	Days   string   `json:"days"   form:"days"`
+}
+
+// TokenSchema validates Token; the scopes and the expiry are checked by the
+// token service, which owns the list.
+var TokenSchema = z.Struct[Token](z.Shape{
+	"name":   z.String().Trim().Min(1).Max(80),
+	"scopes": z.Slice(z.String().Trim().Max(40)).Min(1).Max(40),
+	"days":   z.String().Trim().Min(1).Max(4),
+})

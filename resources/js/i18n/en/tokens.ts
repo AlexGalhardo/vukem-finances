@@ -1,0 +1,27 @@
+const dict = {
+  tokens: "API tokens",
+  tokensIntro:
+    "A token lets a program read or write the data of this workspace through the API. It can do only what its scopes allow, and never more than your role allows.",
+  tokensCreateTitle: "New token",
+  tokensName: "Name",
+  tokensScopes: "Scopes",
+  tokensExpiry: "Expires after",
+  tokensDays: "days",
+  tokensCreate: "Create token",
+  tokensCreatedTitle: "Copy your token now",
+  tokensCreatedBody: "This is the only time the token is shown. Only a hash is kept, so it cannot be shown again.",
+  tokensCreatedDismiss: "I copied it",
+  tokensCopy: "Copy",
+  tokensListTitle: "Your tokens in this workspace",
+  tokensNone: "You have no tokens in this workspace.",
+  tokensLastUsed: "Last used",
+  tokensNeverUsed: "never",
+  tokensExpires: "Expires",
+  tokensStatus: "Status",
+  tokensStatusLive: "Active",
+  tokensStatusExpired: "Expired",
+  tokensStatusRevoked: "Revoked",
+  tokensRevoke: "Revoke",
+  tokensLimit: "You can hold at most {max} live tokens per workspace.",
+} as const;
+export default dict;

@@ -115,6 +115,11 @@ export type CategorySpend = {
   cents: number;
 };
 
+export type CreatedToken = {
+  name: string;
+  secret: string;
+};
+
 export type Dashboard = {
   balanceCents: number;
   budgets: BudgetStatus[];
@@ -322,6 +327,16 @@ export type TagRef = {
   uid: string;
 };
 
+export type TokenView = {
+  expiresAt: string;
+  id: string;
+  lastUsedAt: string;
+  name: string;
+  revokedAt: string;
+  scopes: string[];
+  status: string;
+};
+
 export type TxFilters = {
   accountId: string;
   categoryId: string;
@@ -517,6 +532,14 @@ export type SharedProps = {
   workspace?: SharedWorkspace | null;
 };
 
+export type TokensProps = {
+  created?: CreatedToken | null;
+  expiryDays: number[];
+  max: number;
+  scopes: string[];
+  tokens: TokenView[];
+};
+
 export type TransactionsProps = {
   accounts: Account[];
   categories: Category[];
@@ -565,6 +588,7 @@ export interface PageProps {
   InviteAccept: InviteAcceptProps;
   InviteRegister: InviteRegisterProps;
   Setup: SetupProps;
+  Tokens: TokensProps;
   Transactions: TransactionsProps;
   Workspace: WorkspaceProps;
 }
