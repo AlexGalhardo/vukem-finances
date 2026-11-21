@@ -91,6 +91,12 @@ func (s *Service) DeleteAccount(ctx context.Context, id int64) error {
 			return err
 		}
 
+		// Its rules would only fail on a deleted account: they go with it.
+		if _, err := workspaces.Scoped[models.Recurrence](ctx, tx).Where("account_id", id).
+			Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+			return err
+		}
+
 		if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).WithTrashed().Where("payment_account_id", id).
 			Update(ctx, orm.Set{"payment_account_id": nil}); err != nil {
 			return err
@@ -121,6 +127,10 @@ func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 
 		if _, err := workspaces.Scoped[models.Budget](ctx, tx).Where("category_id", id).
 			Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+			return err
+		}
+
+		if err := moveRules(ctx, tx, id, nil); err != nil {
 			return err
 		}
 
@@ -206,6 +216,11 @@ func (s *Service) RestoreAccount(ctx context.Context, id int64) (models.Account,
 		}
 
 		if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).OnlyTrashed().Where("account_id", id).
+			Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
+			return err
+		}
+
+		if _, err := workspaces.Scoped[models.Recurrence](ctx, tx).OnlyTrashed().Where("account_id", id).
 			Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
 			return err
 		}
