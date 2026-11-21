@@ -151,6 +151,11 @@ type TxRow struct {
 	CategoryIDValue *int64 `json:"categoryId"`
 	AccountName     string `json:"accountName"`
 	CategoryName    string `json:"categoryName"`
+
+	// TransferID is set on a transfer leg, and TransferAccountName is the
+	// account on the other side of it.
+	TransferID          *string `json:"transferId"`
+	TransferAccountName string  `json:"transferAccountName"`
 }
 
 func validDate(s string) bool {
@@ -207,12 +212,22 @@ func (s *Service) Transactions(ctx context.Context, f TxFilter) ([]TxRow, error)
 		cn[c.ID] = c.Name
 	}
 
+	other, err := s.otherLegAccounts(ctx, txs)
+	if err != nil {
+		return nil, err
+	}
+
 	rows := make([]TxRow, len(txs))
 	for i := range txs {
 		t := &txs[i]
 		rows[i] = TxRow{Transaction: *t, AccountName: an[t.AccountID], CategoryName: cn[t.CategoryID.V]}
 		if t.CategoryID.Valid {
 			rows[i].CategoryIDValue = &t.CategoryID.V
+		}
+
+		if t.TransferUID.Valid {
+			rows[i].TransferID = &t.TransferUID.V
+			rows[i].TransferAccountName = an[other[t.TransferUID.V][t.ID]]
 		}
 	}
 
@@ -292,7 +307,7 @@ func (s *Service) spent(ctx context.Context, categoryID int64, month string) (in
 	from, to := monthBounds(month)
 
 	return workspaces.Scoped[models.Transaction](ctx, s.DB).Where("category_id", categoryID).
-		Where("kind", models.KindExpense).WhereBetween("occurred_on", from, to).Sum[int64](ctx, "amount_cents")
+		WhereNull("transfer_uid").Where("kind", models.KindExpense).WhereBetween("occurred_on", from, to).Sum[int64](ctx, "amount_cents")
 }
 
 // Budgets lists the budgets with what month has spent against each.
@@ -387,4 +402,46 @@ func (s *Service) alertBudget(ctx context.Context, categoryID int64, month strin
 	}
 
 	return nil
+}
+
+// otherLegAccounts maps each transfer uid among txs to, per leg id, the
+// account of the other leg, so a row can name the account on the other side
+// even when the filter hid that leg.
+func (s *Service) otherLegAccounts(ctx context.Context, txs []models.Transaction) (map[string]map[int64]int64, error) {
+	var uids []any
+
+	for _, t := range txs {
+		if t.TransferUID.Valid {
+			uids = append(uids, t.TransferUID.V)
+		}
+	}
+
+	out := map[string]map[int64]int64{}
+	if len(uids) == 0 {
+		return out, nil
+	}
+
+	legs, err := workspaces.Scoped[models.Transaction](ctx, s.DB).WhereIn("transfer_uid", uids...).Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	byUID := map[string][]models.Transaction{}
+	for _, l := range legs {
+		byUID[l.TransferUID.V] = append(byUID[l.TransferUID.V], l)
+	}
+
+	for uid, pair := range byUID {
+		out[uid] = map[int64]int64{}
+
+		for _, l := range pair {
+			for _, o := range pair {
+				if o.ID != l.ID {
+					out[uid][l.ID] = o.AccountID
+				}
+			}
+		}
+	}
+
+	return out, nil
 }
