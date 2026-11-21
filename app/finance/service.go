@@ -134,6 +134,10 @@ type TxInput struct {
 	Amount      string
 	Description string
 	Date        string
+	// Tags are tag names; nil leaves the tags of the transaction as they are
+	// (none on a new one), a list, even an empty one, replaces them. Names
+	// that do not exist yet are created.
+	Tags []string
 }
 
 // TxFilter narrows the transaction list; zero values mean "any".
