@@ -384,10 +384,17 @@ func (s *Service) DeleteCategoryReassigning(ctx context.Context, id, reassignTo 
 			if err := moveCategoryUse(ctx, tx, c, reassignTo, budget, hasBudget, at); err != nil {
 				return err
 			}
-		} else if hasBudget {
-			if _, err := workspaces.Scoped[models.Budget](ctx, tx).Where("id", budget.ID).
-				Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+		} else {
+			// A rule keeps working without a category, live or in the trash.
+			if err := moveRules(ctx, tx, id, nil); err != nil {
 				return err
+			}
+
+			if hasBudget {
+				if _, err := workspaces.Scoped[models.Budget](ctx, tx).Where("id", budget.ID).
+					Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+					return err
+				}
 			}
 		}
 
@@ -418,6 +425,10 @@ func moveCategoryUse(
 		return err
 	}
 
+	if err := moveRules(ctx, tx, from.ID, to); err != nil {
+		return err
+	}
+
 	if !hasBudget {
 		return nil
 	}
@@ -433,6 +444,20 @@ func moveCategoryUse(
 	}
 
 	_, err = workspaces.Scoped[models.Budget](ctx, tx).Where("id", budget.ID).Update(ctx, set)
+
+	return err
+}
+
+// moveRules points the rules of a category (live and in the trash, which can
+// be restored) at another category, or at none when to is nil.
+func moveRules(ctx context.Context, tx *database.Tx, from int64, to any) error {
+	set := orm.Set{"category_id": to}
+
+	if _, err := workspaces.Scoped[models.Recurrence](ctx, tx).Where("category_id", from).Update(ctx, set); err != nil {
+		return err
+	}
+
+	_, err := workspaces.Scoped[models.Recurrence](ctx, tx).OnlyTrashed().Where("category_id", from).Update(ctx, set)
 
 	return err
 }
