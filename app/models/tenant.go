@@ -22,6 +22,10 @@ func (m *Account) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant and, for a row made by the web UI, its uid.
 func (m *Account) BeforeCreate(ctx context.Context) error {
+	if err := CheckCents(m.OpeningCents); err != nil {
+		return err
+	}
+
 	m.UID = stampUID(m.UID)
 
 	return tenancy.Assign(ctx, m)
@@ -42,6 +46,10 @@ func (m *Transaction) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant.
 func (m *Transaction) BeforeCreate(ctx context.Context) error {
+	if err := CheckCents(m.AmountCents); err != nil {
+		return err
+	}
+
 	m.UID = stampUID(m.UID)
 
 	return tenancy.Assign(ctx, m)
@@ -52,6 +60,10 @@ func (m *Budget) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant.
 func (m *Budget) BeforeCreate(ctx context.Context) error {
+	if err := CheckCents(m.LimitCents); err != nil {
+		return err
+	}
+
 	m.UID = stampUID(m.UID)
 
 	return tenancy.Assign(ctx, m)

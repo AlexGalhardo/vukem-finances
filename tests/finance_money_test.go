@@ -30,6 +30,11 @@ func TestParseAmount(t *testing.T) {
 		{"", 0, false},
 		{"abc", 0, false},
 		{"99999999999999999999", 0, false},
+		{"90071992547409.91", 9007199254740991, true},
+		{"90071992547409.92", 0, false},
+		{"-90071992547409.91", -9007199254740991, true},
+		{"-90071992547409.92", 0, false},
+		{"90071992547410", 0, false},
 	} {
 		got, err := finance.ParseAmount(tc.in)
 		if (err == nil) != tc.ok || (tc.ok && got != tc.want) {
