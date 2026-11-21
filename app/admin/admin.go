@@ -1,0 +1,35 @@
+// Package admin defines the admin panel's resources and policies (vukem
+// install:admin). It is your code: change who counts as an admin and what
+// each resource shows.
+package admin
+
+import (
+	"slices"
+	"strings"
+
+	"github.com/AlexGalhardo/vukem-finances/app/models"
+)
+
+// Admins decides who may use the panel: the users whose email is listed in
+// ADMIN_EMAILS (comma-separated). Nobody is an admin when it is empty.
+type Admins struct{ emails []string }
+
+// NewAdmins parses a comma-separated list of emails.
+func NewAdmins(list string) Admins {
+	var a Admins
+
+	for e := range strings.SplitSeq(list, ",") {
+		if e = strings.ToLower(strings.TrimSpace(e)); e != "" {
+			a.emails = append(a.emails, e)
+		}
+	}
+
+	return a
+}
+
+// Has reports whether u is an admin: a verified email listed in
+// ADMIN_EMAILS. Without the verification, anyone who signed up first with
+// an admin's address would get the panel.
+func (a Admins) Has(u *models.User) bool {
+	return u != nil && u.EmailVerified() && u.Email != "" && slices.Contains(a.emails, strings.ToLower(u.Email))
+}

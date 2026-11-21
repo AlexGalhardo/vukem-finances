@@ -1,0 +1,46 @@
+package admin
+
+import (
+	"regexp"
+
+	"github.com/AlexGalhardo/vukem/errs"
+	"github.com/AlexGalhardo/vukem/web"
+
+	"github.com/AlexGalhardo/vukem-finances/app/pages"
+)
+
+// slugPattern is the shape of a resource slug (the panel's own rule). A slug is placed in the URL the React page
+// fetches, so anything else is a 404 instead of a path the browser could normalise elsewhere.
+var slugPattern = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
+
+// DataPrefix is where the framework panel is mounted in the Inertia stack: its dashboard, list and detail routes
+// answer JSON there (Accept: application/json) for the React pages below, behind the panel's own gate.
+const DataPrefix = "/admin-api"
+
+// Pages renders the React shell of each admin screen; the data comes from the panel's JSON routes under DataPrefix.
+// Register the routes behind Panel.Guard() (routes/admin.go does).
+type Pages struct{}
+
+// Dashboard renders /admin.
+func (Pages) Dashboard(c *web.Ctx) error {
+	return pages.AdminDashboard.Render(c, pages.AdminDashboardProps{DataURL: DataPrefix})
+}
+
+// List renders /admin/{slug}.
+func (Pages) List(c *web.Ctx) error {
+	if !slugPattern.MatchString(c.Param("slug")) {
+		return errs.ErrNotFound
+	}
+
+	return pages.AdminResourceList.Render(c, pages.AdminResourceListProps{Slug: c.Param("slug"), DataURL: DataPrefix})
+}
+
+// Show renders /admin/{slug}/{id}.
+func (Pages) Show(c *web.Ctx) error {
+	if !slugPattern.MatchString(c.Param("slug")) {
+		return errs.ErrNotFound
+	}
+
+	return pages.AdminResourceShow.Render(c,
+		pages.AdminResourceShowProps{Slug: c.Param("slug"), ID: c.Param("id"), DataURL: DataPrefix})
+}

@@ -1,0 +1,50 @@
+package account
+
+import (
+	"github.com/AlexGalhardo/vukem/inertia"
+	"github.com/AlexGalhardo/vukem/web"
+
+	"github.com/AlexGalhardo/vukem-finances/app/pages"
+	"github.com/AlexGalhardo/vukem-finances/app/requests"
+)
+
+// ShowForgot renders the reset link request page.
+func (*Handlers) ShowForgot(c *web.Ctx) error { return pages.ForgotPassword.Render(c, struct{}{}) }
+
+// SendResetLink emails a reset link; the answer is the same whether or not
+// the email has an account.
+func (h *Handlers) SendResetLink(c *web.Ctx) error {
+	in, err := web.Parse(c, requests.ForgotPasswordSchema)
+	if err != nil {
+		return err
+	}
+
+	if err := h.a.SendResetLink(c.Context(), in.Email); err != nil {
+		return err
+	}
+
+	inertia.Flash(c, "status", h.a.T(c.Context(), "auth.reset_link_sent"))
+
+	return c.Redirect("/forgot-password")
+}
+
+// ShowReset renders the new password page.
+func (*Handlers) ShowReset(c *web.Ctx) error {
+	return pages.ResetPassword.Render(c, pages.ResetPasswordProps{Token: c.Param("token"), Email: c.Query("email")})
+}
+
+// Reset sets the new password.
+func (h *Handlers) Reset(c *web.Ctx) error {
+	in, err := web.Parse(c, requests.ResetPasswordSchema)
+	if err != nil {
+		return err
+	}
+
+	if _, err := h.a.ResetPassword(c.Context(), in.Email, in.Token, in.Password); err != nil {
+		return err
+	}
+
+	inertia.Flash(c, "status", h.a.T(c.Context(), "auth.password_reset"))
+
+	return c.Redirect("/login")
+}

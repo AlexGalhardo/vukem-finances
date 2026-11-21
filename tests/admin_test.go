@@ -1,0 +1,66 @@
+package tests
+
+import (
+	"testing"
+	"time"
+
+	"github.com/AlexGalhardo/vukem/orm"
+	"github.com/AlexGalhardo/vukem/vukemtest"
+
+	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/bootstrap"
+)
+
+const adminEmail = "admin@example.com"
+
+// newAdminApp boots the app with adminEmail listed in ADMIN_EMAILS.
+func newAdminApp(t *testing.T) *vukemtest.App {
+	t.Helper()
+
+	return vukemtest.New(t, bootstrap.New, vukemtest.Options{Env: map[string]string{"ADMIN_EMAILS": adminEmail}})
+}
+
+// adminClient creates a user with a verified email and returns a
+// same-origin browser client logged in as that user.
+func adminClient(t *testing.T, app *vukemtest.App, email string) *vukemtest.Client {
+	t.Helper()
+
+	return clientFor(t, app, email, true)
+}
+
+// clientFor creates a user with email (verified or not) and returns a
+// same-origin browser client logged in as that user.
+func clientFor(t *testing.T, app *vukemtest.App, email string, verified bool) *vukemtest.Client {
+	t.Helper()
+
+	db, err := app.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	u := models.User{Name: "Test", Email: email, Password: "unused"}
+	u.EmailVerifiedAt.V, u.EmailVerifiedAt.Valid = time.Now().UTC(), verified
+
+	if err := orm.Create(t.Context(), db, &u); err != nil {
+		t.Fatal(err)
+	}
+
+	return app.Client(t).WithHeader("Sec-Fetch-Site", "same-origin").ActingAs("web", u)
+}
+
+func TestAdminPanelAccess(t *testing.T) {
+	t.Parallel()
+
+	app := newAdminApp(t)
+
+	app.Client(t).Get("/admin").AssertRedirect("/login")
+	adminClient(t, app, "user@example.com").Get("/admin").AssertForbidden()
+
+	c := adminClient(t, app, adminEmail)
+	c.Get("/admin").AssertOK().AssertSee("Dashboard")
+	c.Get("/admin-api/_audit").AssertOK().AssertSee("Audit log")
+
+	// An unverified account with an admin's address is not an admin: anyone
+	// can sign up first with an address they do not own.
+	clientFor(t, newAdminApp(t), adminEmail, false).Get("/admin").AssertForbidden()
+}

@@ -1,0 +1,14 @@
+# Git and branches
+
+The process is a release train: the open release pull request is the integration line, approved work joins it as linear commits, and each release is rebase-merged into `main` when it holds about 90 commits. Epic 01 delivers the tool, `scripts/release-train.sh` (`status`, `integrate`, `cut`). Versions start at 0.1.0 and go 0.2.0, 0.3.0 and so on.
+
+1. Never commit or push to `main` directly, except the initial commit that creates the repository. After it, `main` changes only through the rebase-merge of a release pull request.
+2. **The integration branch is the open release branch**, `release/vX.Y.Z`, with its pull request against `main`. It is linear: no merge commit, ever, because GitHub refuses to rebase a pull request that needs one. Every epic is a branch from its tip, `epic/NN-<slug>`, and a fix of the feedback queue is `fix/FB-NNN-<slug>`. Epic and fix branches are never pushed and never get pull requests of their own.
+3. **Only the orchestrator pushes, and only the open release branch**, after integrating work the specialist approved. Never push a branch whose local checks failed.
+4. **Each agent works in its own worktree outside the repository folder**, in the sibling folder `vukem-finances-worktrees/<agent>`, created by the orchestrator from the tip of the release branch. Parallel agents and worktrees need the author's explicit yes.
+5. **The orchestrator integrates an approved branch with `release-train.sh integrate <branch>`**: it cherry-picks, in order and with `-x`, the commits of the branch that are not on `main`, on a release branch or already on the line by patch, and skips merge commits. A conflict stops it: resolve, `git cherry-pick --continue`, run `integrate` again. Then remove the worktree and the local branch. Shared files (`plans.md` section 4) are integrated one epic at a time.
+6. A long epic is updated by merging the release branch into it (the merge commits stay on the epic branch; `integrate` leaves them out), never by rebasing commits another agent may have based work on.
+7. Never `git stash`, `git reset --hard`, `git checkout -- .`. `git reset --soft` to squash your own unpushed commits is fine. No force push.
+8. Chain with `&&`. Never pipe a check into `tail` or `head` before a push: the pipe hides the exit code. Write the output to a file, test `$?`, then push.
+9. **The cut.** At 90 commits or more, and on its own at 95 while `integrate` runs, the train stamps the version, writes the changelog section of the release (every commit since the last `chore(release)` on `main`, each linked to its commit), commits `chore(release): vX.Y.Z`, pushes, rebase-merges the pull request, waits until `main` carries the tree, and starts `release/v<next minor>` from the new `main`. **A release pull request holds at most 95 commits plus the release commit.** GitHub refuses a rebase-merge above 100.
+10. Worktrees and merged branches are removed when their epic is done.

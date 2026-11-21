@@ -1,0 +1,41 @@
+{
+  "version": "0.1.0",
+  "packageManager": "bun@1.4.4",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "format": "biome format --write --no-errors-on-unmatched .",
+    "lint:js": "biome lint --no-errors-on-unmatched .",
+    "secrets:scan": "betterleaks git --no-banner --redact",
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
+    "dev": "vite",
+    "build": "vite build",
+    "build:ssr": "vite build --ssr",
+    "typecheck": "bun check",
+    "build:emails": "email export --dir resources/js/emails --outDir resources/emails"
+  },
+  "dependencies": {
+    "@inertiajs/react": "3.11.0",
+    "class-variance-authority": "0.7.1",
+    "clsx": "2.1.1",
+    "lucide-react": "1.72.0",
+    "radix-ui": "1.8.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "tailwind-merge": "3.7.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.6.7",
+    "markdownlint-cli2": "0.24.1",
+    "@react-email/components": "1.0.12",
+    "react-email": "6.11.11",
+    "@inertiajs/vite": "3.11.0",
+    "@tailwindcss/vite": "4.3.5",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "tailwindcss": "4.3.5",
+    "typescript": "7.0.2",
+    "vite": "8.3.8"
+  }
+}

@@ -1,0 +1,22 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build output and caches
+/bin/
+.vukem/
+
+# Local data
+storage/*
+!storage/.gitkeep
+
+node_modules/
+
+# Local work files of the team (.agents/rules/development-folder.md)
+/development/
+
+# Vite: dev server marker and build output
+/resources/public/hot
+/resources/public/build/
+/bootstrap/ssr/

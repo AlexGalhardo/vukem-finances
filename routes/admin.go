@@ -1,0 +1,76 @@
+package routes
+
+import (
+	"context"
+
+	"github.com/AlexGalhardo/vukem"
+	vadmin "github.com/AlexGalhardo/vukem/admin"
+	"github.com/AlexGalhardo/vukem/auth"
+	"github.com/AlexGalhardo/vukem/authz"
+	"github.com/AlexGalhardo/vukem/router"
+
+	"github.com/AlexGalhardo/vukem-finances/app/accounts"
+	"github.com/AlexGalhardo/vukem-finances/app/admin"
+	"github.com/AlexGalhardo/vukem-finances/app/models"
+)
+
+// Admin mounts the admin panel at /admin (vukem install:admin). Admins are
+// the users listed in ADMIN_EMAILS; resources live in app/admin and are
+// added with vukem make:admin-resource; feature flags are at /admin/_flags.
+func Admin(r *router.Router, app *vukem.App) error {
+	acc, err := accounts.New(app)
+	if err != nil {
+		return err
+	}
+
+	admins := admin.NewAdmins(app.Source.Get("ADMIN_EMAILS"))
+
+	// The panel has its own gate, so its policies never mix with the app's.
+	gate := authz.New(func(ctx context.Context) (*models.User, error) {
+		u, err := auth.UserFrom[models.User](ctx, acc.Web.Name())
+		return &u, err
+	})
+	gate.Define(vadmin.AbilityAdmin, func(_ context.Context, u *models.User) bool { return admins.Has(u) })
+	gate.Define(vadmin.AbilityAudit, func(_ context.Context, u *models.User) bool { return admins.Has(u) })
+	gate.Define(vadmin.AbilityFlags, func(_ context.Context, u *models.User) bool { return admins.Has(u) })
+
+	if err := gate.Register(admin.Policies(admins)...); err != nil {
+		return err
+	}
+
+	// The flags registered with vukem.WithFlags (vukem install:flags) are
+	// toggled at /admin/_flags.
+	ff, err := app.Flags()
+	if err != nil {
+		return err
+	}
+
+	panel, err := vadmin.New(vadmin.Config{
+		DB:         acc.DB,
+		Guard:      acc.Web,
+		Authorizer: gate,
+		Title:      app.Config.Name + " admin",
+		Flags:      ff,
+		Prefix:     admin.DataPrefix,
+	})
+	if err != nil {
+		return err
+	}
+
+	if err := panel.Register(admin.Resources()...); err != nil {
+		return err
+	}
+
+	if err := panel.Mount(r); err != nil {
+		return err
+	}
+
+	// The React screens: each page is a shell behind the panel's gate (login, ability, 2FA, CSRF, IP and session
+	// limits) that reads the panel's JSON routes under admin.DataPrefix.
+	pages := admin.Pages{}
+	r.Get("/admin", pages.Dashboard).Name("admin.home").Use(panel.Guard())
+	r.Get("/admin/{slug}", pages.List).Name("admin.list").Use(panel.Guard())
+	r.Get("/admin/{slug}/{id}", pages.Show).Name("admin.show").Use(panel.Guard())
+
+	return nil
+}
