@@ -30,7 +30,9 @@ export default function Revenue({ mrrCents, active, trialing, pastDue, workspace
           </Card>
         ))}
       </div>
-      <p className="text-sm text-zinc-500">MRR sums the monthly unit price of the active subscriptions, in USD. Trials count once they convert.</p>
+      <p className="text-sm text-zinc-500">
+        MRR sums the monthly unit price of the active subscriptions, in USD. Trials count once they convert.
+      </p>
     </>
   );
 }

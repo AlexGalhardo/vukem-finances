@@ -8,10 +8,16 @@ import { Shell } from "./Layout";
 // the real values when the mail is sent.
 type Props = { name: string; workspace: string; url: string };
 
-export default function Welcome({ name = go(".Name"), workspace = go(".Workspace"), url = go(".URL") }: Partial<Props>) {
+export default function Welcome({
+  name = go(".Name"),
+  workspace = go(".Workspace"),
+  url = go(".URL"),
+}: Partial<Props>) {
   return (
     <Shell preview="Your workspace is ready" title={`Welcome, ${name}`} action="Open your dashboard" href={url}>
-      <Text>Your workspace {workspace} is ready. Add an account, record your first transaction and see where the month goes.</Text>
+      <Text>
+        Your workspace {workspace} is ready. Add an account, record your first transaction and see where the month goes.
+      </Text>
     </Shell>
   );
 }

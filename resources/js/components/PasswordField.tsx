@@ -35,16 +35,7 @@ const meter = ["bg-zinc-300 dark:bg-zinc-700", "bg-red-500", "bg-amber-500", "bg
 // The checklist carries role="list" explicitly: Tailwind's reset sets
 // list-style: none, which drops the list role in some screen readers. Each
 // rule's state is in its text too, never in its colour alone.
-export default function PasswordField({
-  label,
-  name,
-  value,
-  onChange,
-  autoComplete,
-  error,
-  checks,
-  advice,
-}: Props) {
+export default function PasswordField({ label, name, value, onChange, autoComplete, error, checks, advice }: Props) {
   const [visible, setVisible] = useState(false);
   const id = useId();
   const errorId = `${id}-error`;

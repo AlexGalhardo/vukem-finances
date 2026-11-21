@@ -9,9 +9,7 @@ export default function VerifyEmail() {
     <>
       <Head title="Verify your email" />
       <h1 className="mb-2 text-2xl font-semibold">Verify your email</h1>
-      <p className="mb-4">
-        We sent a link to {auth?.user?.email}. Open it to verify your address.
-      </p>
+      <p className="mb-4">We sent a link to {auth?.user?.email}. Open it to verify your address.</p>
       <Link
         href="/email/verification-notification"
         method="post"

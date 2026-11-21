@@ -18,7 +18,10 @@ export default function ResourceShow({ slug, id, dataUrl }: { slug: string; id: 
 
   return (
     <AdminLayout title={data ? `${data.resource.singular} ${data.id}` : id}>
-      <Link href={`/admin/${encodeURIComponent(slug)}`} className="mb-4 inline-block text-sm text-zinc-500 hover:underline">
+      <Link
+        href={`/admin/${encodeURIComponent(slug)}`}
+        className="mb-4 inline-block text-sm text-zinc-500 hover:underline"
+      >
         ← Back
       </Link>
       {error && (

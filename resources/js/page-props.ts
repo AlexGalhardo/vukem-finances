@@ -298,7 +298,7 @@ export type WorkspaceProps = {
 
 /** PageProps maps every typed page component to its props. */
 export interface PageProps {
-  "Accounts": AccountsProps;
+  Accounts: AccountsProps;
   "Admin/Dashboard": AdminDashboardProps;
   "Admin/ResourceList": AdminResourceListProps;
   "Admin/ResourceShow": AdminResourceShowProps;
@@ -311,17 +311,17 @@ export interface PageProps {
   "Auth/TwoFactorChallenge": AuthTwoFactorChallengeProps;
   "Auth/TwoFactor": AuthTwoFactorProps;
   "Auth/VerifyEmail": AuthVerifyEmailProps;
-  "Billing": BillingProps;
-  "Budgets": BudgetsProps;
-  "Categories": CategoriesProps;
-  "Dashboard": DashboardProps;
-  "Home": HomeProps;
-  "Import": ImportProps;
-  "InviteAccept": InviteAcceptProps;
-  "InviteRegister": InviteRegisterProps;
-  "Setup": SetupProps;
-  "Transactions": TransactionsProps;
-  "Workspace": WorkspaceProps;
+  Billing: BillingProps;
+  Budgets: BudgetsProps;
+  Categories: CategoriesProps;
+  Dashboard: DashboardProps;
+  Home: HomeProps;
+  Import: ImportProps;
+  InviteAccept: InviteAcceptProps;
+  InviteRegister: InviteRegisterProps;
+  Setup: SetupProps;
+  Transactions: TransactionsProps;
+  Workspace: WorkspaceProps;
 }
 
 export type PageName = keyof PageProps;

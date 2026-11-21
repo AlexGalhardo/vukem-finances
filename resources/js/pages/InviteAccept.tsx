@@ -16,7 +16,9 @@ export default function InviteAccept({ token }: Page<"InviteAccept">) {
     <>
       <Head title="Join a workspace" />
       <h1 className="text-2xl font-semibold">Join a workspace</h1>
-      <p className="mt-2">Accept the invitation to start working in the shared workspace. It only works for the address it was sent to.</p>
+      <p className="mt-2">
+        Accept the invitation to start working in the shared workspace. It only works for the address it was sent to.
+      </p>
       <form onSubmit={submit} className="mt-4">
         <button type="submit" disabled={form.processing} className={primary}>
           Accept the invitation

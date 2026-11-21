@@ -1,4 +1,5 @@
 import { Head, Link, useForm } from "@inertiajs/react";
+import PageHeader from "../../components/PageHeader";
 import type { FormEvent } from "react";
 
 import Field from "../../components/Field";
@@ -13,8 +14,7 @@ interface Props {
   recoveryCodesLeft: number;
 }
 
-const button =
-  "rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500 disabled:opacity-50";
+const button = "rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500 disabled:opacity-50";
 
 export default function TwoFactor({ enabled, pending, secret, qr, recoveryCodes, recoveryCodesLeft }: Props) {
   const confirm = useForm({ code: "" });
@@ -39,15 +39,15 @@ export default function TwoFactor({ enabled, pending, secret, qr, recoveryCodes,
   return (
     <>
       <Head title="Two-factor authentication" />
-      <h1 className="mb-4 text-2xl font-semibold">Two-factor authentication</h1>
+      <PageHeader title="Two-factor authentication" />
       {enabled ? (
         <div className="space-y-4">
           <p>Two-factor authentication is on: logging in asks for a code from your authenticator app.</p>
           {recoveryCodes ? (
             <>
               <p>
-                <strong>Store these recovery codes somewhere safe.</strong> Each one works once if you lose your
-                device; they are not shown again.
+                <strong>Store these recovery codes somewhere safe.</strong> Each one works once if you lose your device;
+                they are not shown again.
               </p>
               <ul className="grid grid-cols-2 gap-2 font-mono">
                 {recoveryCodes.map((code) => (
@@ -88,7 +88,9 @@ export default function TwoFactor({ enabled, pending, secret, qr, recoveryCodes,
         </div>
       ) : pending && qr ? (
         <div className="space-y-4">
-          <p>Scan this QR code with your authenticator app, or enter the setup key by hand, then type the code it shows.</p>
+          <p>
+            Scan this QR code with your authenticator app, or enter the setup key by hand, then type the code it shows.
+          </p>
           <img className="w-fit" src={qr} width={200} height={200} alt="Two-factor setup QR code" />
           <p>
             Setup key: <code className="font-mono">{secret}</code>

@@ -1,4 +1,5 @@
 import { useFinanceI18n } from "../lib/i18n";
+import PageHeader from "../components/PageHeader";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import type { FormEvent } from "react";
 
@@ -10,7 +11,7 @@ import type { Page, SharedProps } from "../page-props";
 export default function Budgets({ budgets, categories, month, enabled }: Page<"Budgets">) {
   const currency = usePage<SharedProps>().props.workspace?.current.currency ?? "USD";
   const expense = categories.filter((c) => c.kind === "expense");
-  const {t,money:formatMoney,month:monthLabel}=useFinanceI18n();
+  const { t, money: formatMoney, month: monthLabel } = useFinanceI18n();
   const form = useForm({ categoryId: String(expense[0]?.id ?? ""), limit: "" });
 
   const submit = (e: FormEvent) => {
@@ -21,7 +22,7 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
   return (
     <>
       <Head title={t("budgets")} />
-      <h1 className="text-2xl font-semibold">{t("budgets")} · {monthLabel(month)}</h1>
+      <PageHeader title={`${t("budgets")} · ${monthLabel(month)}`} />
       {!enabled && (
         <p className="rounded-md bg-amber-50 px-4 py-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
           Budgets are a Pro feature.{" "}
@@ -33,13 +34,16 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
       )}
       <Card>
         {budgets.length === 0 ? (
-          <p className="text-muted-foreground">No budgets yet. You get an email when a category reaches 80% and 100%.</p>
+          <p className="text-muted-foreground">
+            No budgets yet. You get an email when a category reaches 80% and 100%.
+          </p>
         ) : (
           <ul className="divide-y divide-border">
             {budgets.map((b) => (
               <li key={b.id} className="flex items-center justify-between py-2">
                 <span>
-                  {b.category}: {formatMoney(b.spentCents, currency)} {t("of")} {formatMoney(b.limitCents, currency)} ({b.percent}%)
+                  {b.category}: {formatMoney(b.spentCents, currency)} {t("of")} {formatMoney(b.limitCents, currency)} (
+                  {b.percent}%)
                 </span>
                 <ConfirmDelete
                   href={`/budgets/${b.id}`}
@@ -57,14 +61,27 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
       </Card>
       <Card title={t("setBudget")}>
         <form onSubmit={submit} className="grid gap-3 sm:grid-cols-3">
-          <Select label={t("category")} value={form.data.categoryId} onChange={(e) => form.setData("categoryId", e.target.value)} error={form.errors.categoryId}>
+          <Select
+            label={t("category")}
+            value={form.data.categoryId}
+            onChange={(e) => form.setData("categoryId", e.target.value)}
+            error={form.errors.categoryId}
+          >
             {expense.map((c) => (
               <option key={c.id} value={c.id}>
                 {c.name}
               </option>
             ))}
           </Select>
-          <Field label={t("monthlyLimit")} inputMode="decimal" placeholder="300.00" required value={form.data.limit} onChange={(e) => form.setData("limit", e.target.value)} error={form.errors.limit} />
+          <Field
+            label={t("monthlyLimit")}
+            inputMode="decimal"
+            placeholder="300.00"
+            required
+            value={form.data.limit}
+            onChange={(e) => form.setData("limit", e.target.value)}
+            error={form.errors.limit}
+          />
           <div className="self-end">
             <button type="submit" disabled={form.processing} className={primary}>
               Save budget

@@ -1,8 +1,8 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import { type FormEvent, useState } from "react";
-
 import Field from "../components/Field";
-import { Card, Select, danger, primary } from "../components/ui";
+import PageHeader from "../components/PageHeader";
+import { Card, danger, primary, Select } from "../components/ui";
 import type { Page, SharedProps } from "../page-props";
 
 type InviteLink = { url: string; expiresAt: string };
@@ -24,7 +24,13 @@ function InviteLinkNotice({ link }: { link: InviteLink }) {
         expires on {new Date(link.expiresAt).toLocaleString()}. It will not be shown again.
       </p>
       <div className="mt-3 flex flex-wrap items-center gap-3">
-        <input readOnly aria-label="Invitation link" value={link.url} className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm" onFocus={(e) => e.currentTarget.select()} />
+        <input
+          readOnly
+          aria-label="Invitation link"
+          value={link.url}
+          className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm"
+          onFocus={(e) => e.currentTarget.select()}
+        />
         <button type="button" onClick={copy} className={primary}>
           {copied ? "Copied" : "Copy"}
         </button>
@@ -39,7 +45,11 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
   const personal = page.props.workspace?.edition === "personal";
   const role = page.props.workspace?.role;
   const isOwner = role === "owner";
-  const settings = useForm({ name: workspaceDetails.name, currency: workspaceDetails.currency, timezone: workspaceDetails.timezone });
+  const settings = useForm({
+    name: workspaceDetails.name,
+    currency: workspaceDetails.currency,
+    timezone: workspaceDetails.timezone,
+  });
   const invite = useForm({ email: "", role: "member" });
   const create = useForm({ name: "", currency: "USD" });
 
@@ -61,12 +71,34 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
   return (
     <>
       <Head title="Workspace" />
-      <h1 className="text-2xl font-semibold">{workspaceDetails.name}</h1>
+      <PageHeader title={workspaceDetails.name} />
       <Card title="Settings">
         <form onSubmit={save} className="grid gap-3 sm:grid-cols-4">
-          <Field label="Name" required disabled={!canManage} value={settings.data.name} onChange={(e) => settings.setData("name", e.target.value)} error={settings.errors.name} />
-          <Field label="Currency (ISO 4217)" required maxLength={3} disabled={!canManage} value={settings.data.currency} onChange={(e) => settings.setData("currency", e.target.value.toUpperCase())} error={settings.errors.currency} />
-          <Field label="Timezone (IANA, such as America/Sao_Paulo)" required disabled={!canManage} value={settings.data.timezone} onChange={(e) => settings.setData("timezone", e.target.value)} error={settings.errors.timezone} />
+          <Field
+            label="Name"
+            required
+            disabled={!canManage}
+            value={settings.data.name}
+            onChange={(e) => settings.setData("name", e.target.value)}
+            error={settings.errors.name}
+          />
+          <Field
+            label="Currency (ISO 4217)"
+            required
+            maxLength={3}
+            disabled={!canManage}
+            value={settings.data.currency}
+            onChange={(e) => settings.setData("currency", e.target.value.toUpperCase())}
+            error={settings.errors.currency}
+          />
+          <Field
+            label="Timezone (IANA, such as America/Sao_Paulo)"
+            required
+            disabled={!canManage}
+            value={settings.data.timezone}
+            onChange={(e) => settings.setData("timezone", e.target.value)}
+            error={settings.errors.timezone}
+          />
           {canManage && (
             <div className="self-end">
               <button type="submit" disabled={settings.processing} className={primary}>
@@ -81,7 +113,10 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
           {members.map((m) => (
             <li key={m.userId} className="flex items-center justify-between py-2">
               <span>
-                {m.name} <span className="text-sm text-zinc-500">{m.email}, {m.role}</span>
+                {m.name}{" "}
+                <span className="text-sm text-zinc-500">
+                  {m.email}, {m.role}
+                </span>
               </span>
               <span className="flex items-center gap-3">
                 {canManage && m.role !== "owner" && (
@@ -142,8 +177,20 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
       {canManage && (
         <Card title="Invite someone">
           <form onSubmit={send} className="grid gap-3 sm:grid-cols-3">
-            <Field label="Email" type="email" required value={invite.data.email} onChange={(e) => invite.setData("email", e.target.value)} error={invite.errors.email} />
-            <Select label="Role" value={invite.data.role} onChange={(e) => invite.setData("role", e.target.value)} error={invite.errors.role}>
+            <Field
+              label="Email"
+              type="email"
+              required
+              value={invite.data.email}
+              onChange={(e) => invite.setData("email", e.target.value)}
+              error={invite.errors.email}
+            />
+            <Select
+              label="Role"
+              value={invite.data.role}
+              onChange={(e) => invite.setData("role", e.target.value)}
+              error={invite.errors.role}
+            >
               <option value="member">Member: records transactions</option>
               <option value="admin">Admin: also manages data and people</option>
               <option value="viewer">Viewer: sees everything, changes nothing</option>
@@ -164,7 +211,8 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
             <ul className="divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
               {audit.map((e) => (
                 <li key={e.id} className="py-2">
-                  <span className="font-medium">{e.actor}</span> {e.action} <span className="text-zinc-500">{e.subject}</span>
+                  <span className="font-medium">{e.actor}</span> {e.action}{" "}
+                  <span className="text-zinc-500">{e.subject}</span>
                   <span className="float-right text-zinc-500">{e.createdAt}</span>
                 </li>
               ))}
@@ -175,8 +223,21 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
       {!personal && (
         <Card title="Create another workspace">
           <form onSubmit={add} className="grid gap-3 sm:grid-cols-3">
-            <Field label="Name" required value={create.data.name} onChange={(e) => create.setData("name", e.target.value)} error={create.errors.name} />
-            <Field label="Currency (ISO 4217)" required maxLength={3} value={create.data.currency} onChange={(e) => create.setData("currency", e.target.value.toUpperCase())} error={create.errors.currency} />
+            <Field
+              label="Name"
+              required
+              value={create.data.name}
+              onChange={(e) => create.setData("name", e.target.value)}
+              error={create.errors.name}
+            />
+            <Field
+              label="Currency (ISO 4217)"
+              required
+              maxLength={3}
+              value={create.data.currency}
+              onChange={(e) => create.setData("currency", e.target.value.toUpperCase())}
+              error={create.errors.currency}
+            />
             <div className="self-end">
               <button type="submit" disabled={create.processing} className={primary}>
                 Create

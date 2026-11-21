@@ -17,7 +17,9 @@ export default function MonthlySummary({
 }: Partial<Props>) {
   return (
     <Shell preview="How the month went" title={`${workspace}: ${month}`} action="Open the dashboard" href={url}>
-      <Text>Income {income}, expenses {expense}, net {net}.</Text>
+      <Text>
+        Income {income}, expenses {expense}, net {net}.
+      </Text>
       <Section>
         <Text style={{ fontWeight: "bold" }}>Where the money went</Text>
         {go("range .Top")}

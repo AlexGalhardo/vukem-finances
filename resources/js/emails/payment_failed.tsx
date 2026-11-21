@@ -11,7 +11,10 @@ type Props = { workspace: string; url: string };
 export default function PaymentFailed({ workspace = go(".Workspace"), url = go(".URL") }: Partial<Props>) {
   return (
     <Shell preview="Your payment failed" title="Your payment failed" action="Update payment method" href={url}>
-      <Text>We could not charge the card for {workspace}. Update the payment method to keep Pro; Stripe will retry the payment for a few days.</Text>
+      <Text>
+        We could not charge the card for {workspace}. Update the payment method to keep Pro; Stripe will retry the
+        payment for a few days.
+      </Text>
     </Shell>
   );
 }

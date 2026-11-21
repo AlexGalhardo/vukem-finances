@@ -7,7 +7,7 @@ const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--cha
 // DonutChart draws the spending by category as SVG circle strokes with a
 // legend; each slice is a dash array of one circle, so there is no path maths.
 export default function DonutChart({ slices, currency }: { slices: Slice[]; currency: string }) {
-  const {t,money:formatMoney}=useFinanceI18n();
+  const { t, money: formatMoney } = useFinanceI18n();
   const total = slices.reduce((sum, s) => sum + s.cents, 0);
   const radius = 50;
   const circumference = 2 * Math.PI * radius;

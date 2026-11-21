@@ -1,4 +1,5 @@
 import { Head, Link, router, useForm } from "@inertiajs/react";
+import PageHeader from "../components/PageHeader";
 import type { FormEvent } from "react";
 
 import { Card, Select, primary } from "../components/ui";
@@ -61,20 +62,43 @@ function Mapping({ preview, dateFormats }: { preview: PreviewProps; dateFormats:
         </table>
       </div>
       <form onSubmit={submit} className="grid gap-3 sm:grid-cols-3">
-        <Select label="Date column" value={form.data.date} onChange={(e) => form.setData("date", e.target.value)} error={form.errors.date}>
+        <Select
+          label="Date column"
+          value={form.data.date}
+          onChange={(e) => form.setData("date", e.target.value)}
+          error={form.errors.date}
+        >
           {columns}
         </Select>
-        <Select label="Description column" value={form.data.description} onChange={(e) => form.setData("description", e.target.value)} error={form.errors.description}>
+        <Select
+          label="Description column"
+          value={form.data.description}
+          onChange={(e) => form.setData("description", e.target.value)}
+          error={form.errors.description}
+        >
           {columns}
         </Select>
-        <Select label="Amount column" value={form.data.amount} onChange={(e) => form.setData("amount", e.target.value)} error={form.errors.amount}>
+        <Select
+          label="Amount column"
+          value={form.data.amount}
+          onChange={(e) => form.setData("amount", e.target.value)}
+          error={form.errors.amount}
+        >
           {columns}
         </Select>
-        <Select label="Category column" value={form.data.category} onChange={(e) => form.setData("category", e.target.value)}>
+        <Select
+          label="Category column"
+          value={form.data.category}
+          onChange={(e) => form.setData("category", e.target.value)}
+        >
           <option value="">None</option>
           {columns}
         </Select>
-        <Select label="Date format" value={form.data.dateFormat} onChange={(e) => form.setData("dateFormat", e.target.value)}>
+        <Select
+          label="Date format"
+          value={form.data.dateFormat}
+          onChange={(e) => form.setData("dateFormat", e.target.value)}
+        >
           {dateFormats.map((f) => (
             <option key={f} value={f}>
               {f.replace("2006", "YYYY").replace("01", "MM").replace("02", "DD")}
@@ -82,7 +106,11 @@ function Mapping({ preview, dateFormats }: { preview: PreviewProps; dateFormats:
           ))}
         </Select>
         <label className="flex items-end gap-2 pb-2">
-          <input type="checkbox" checked={form.data.invert === "true"} onChange={(e) => form.setData("invert", String(e.target.checked))} />
+          <input
+            type="checkbox"
+            checked={form.data.invert === "true"}
+            onChange={(e) => form.setData("invert", String(e.target.checked))}
+          />
           Positive amounts are expenses
         </label>
         <div className="sm:col-span-3">
@@ -96,7 +124,10 @@ function Mapping({ preview, dateFormats }: { preview: PreviewProps; dateFormats:
 }
 
 export default function Import({ accounts, imports, preview, dateFormats, enabled }: Page<"Import">) {
-  const form = useForm<{ accountId: string; file: File | null }>({ accountId: String(accounts[0]?.id ?? ""), file: null });
+  const form = useForm<{ accountId: string; file: File | null }>({
+    accountId: String(accounts[0]?.id ?? ""),
+    file: null,
+  });
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -106,7 +137,7 @@ export default function Import({ accounts, imports, preview, dateFormats, enable
   return (
     <>
       <Head title="Import" />
-      <h1 className="text-2xl font-semibold">Import a bank statement</h1>
+      <PageHeader title="Import a bank statement" />
       {!enabled && (
         <p className="rounded-md bg-amber-50 px-4 py-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
           CSV import is a Pro feature.{" "}
@@ -121,7 +152,12 @@ export default function Import({ accounts, imports, preview, dateFormats, enable
       ) : (
         <Card title="Upload a CSV">
           <form onSubmit={submit} className="grid gap-3 sm:grid-cols-3">
-            <Select label="Account" value={form.data.accountId} onChange={(e) => form.setData("accountId", e.target.value)} error={form.errors.accountId}>
+            <Select
+              label="Account"
+              value={form.data.accountId}
+              onChange={(e) => form.setData("accountId", e.target.value)}
+              error={form.errors.accountId}
+            >
               {accounts.map((a) => (
                 <option key={a.id} value={a.id}>
                   {a.name}
@@ -130,7 +166,13 @@ export default function Import({ accounts, imports, preview, dateFormats, enable
             </Select>
             <label className="block sm:col-span-2">
               <span className="font-medium">CSV file (up to 2 MiB)</span>
-              <input type="file" accept=".csv,text/csv" required className="mt-1 block w-full" onChange={(e) => form.setData("file", e.target.files?.[0] ?? null)} />
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                required
+                className="mt-1 block w-full"
+                onChange={(e) => form.setData("file", e.target.files?.[0] ?? null)}
+              />
             </label>
             <div className="sm:col-span-3">
               <button type="submit" disabled={form.processing || !form.data.file} className={primary}>
@@ -154,7 +196,11 @@ export default function Import({ accounts, imports, preview, dateFormats, enable
             ))}
           </ul>
         )}
-        <button type="button" className="mt-3 text-sm text-indigo-600 hover:underline dark:text-indigo-400" onClick={() => router.reload({ only: ["imports"] })}>
+        <button
+          type="button"
+          className="mt-3 text-sm text-indigo-600 hover:underline dark:text-indigo-400"
+          onClick={() => router.reload({ only: ["imports"] })}
+        >
           Refresh
         </button>
       </Card>

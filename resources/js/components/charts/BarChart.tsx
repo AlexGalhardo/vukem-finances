@@ -5,7 +5,7 @@ type Point = { month: string; incomeCents: number; expenseCents: number };
 // BarChart draws income and expense per month as plain SVG: no chart
 // dependency, and the values stay readable in the title of each bar.
 export default function BarChart({ points, currency }: { points: Point[]; currency: string }) {
-  const {t,money:formatMoney,month:monthLabel}=useFinanceI18n();
+  const { t, money: formatMoney, month: monthLabel } = useFinanceI18n();
   const max = Math.max(1, ...points.flatMap((p) => [p.incomeCents, p.expenseCents]));
   const width = 480;
   const height = 180;
