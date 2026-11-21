@@ -39,5 +39,8 @@ func TenantModels() []TenantModel {
 		tenantModel[AICredential](),
 		tenantModel[WorkspaceAISettings](),
 		tenantModel[AIUsage](),
+		tenantModel[PixPayment](),
+		tenantModel[PixEntitlement](),
+		tenantModel[BillingEvent](),
 	}
 }
