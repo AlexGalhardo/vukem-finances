@@ -28,6 +28,23 @@ func TestOneAmountParser(t *testing.T) {
 		}
 	}
 
+	for text, want := range map[string]int64{
+		"1.234.567": 123456700, "1,234,567": 123456700, "1.234.567,89": 123456789, "R$ 1.234,56": 123456,
+		"-$5": -500, "(5.00)": -500, "1 234,56": 123456, ".5": 50,
+	} {
+		if got, err := finance.ParseAmount(text); err != nil || got != want {
+			t.Errorf("ParseAmount(%q) = %d, %v; want %d", text, got, err, want)
+		}
+	}
+
+	for _, text := range []string{
+		"1.234.56", "1,234,56", "1.234.5", "1.234,567.89", "1,2.34", "1234.567,89", "1.5e3", "12abc3", "1-2", "...", "",
+	} {
+		if got, err := finance.ParseAmount(text); err == nil {
+			t.Errorf("ParseAmount(%q) = %d, want it refused", text, got)
+		}
+	}
+
 	t.Run("the forms", func(t *testing.T) {
 		for _, amount := range []string{"1.234,56", "1,234.56"} {
 			ana.Client.PostJSON("/transactions", map[string]any{
