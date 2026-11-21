@@ -118,8 +118,17 @@ write_changelog() {
 	grep -q '^### ' "$section" || printf '## [%s] - %s\n\n### Changed\n\n- Maintenance release (no user-facing changes).\n' "$v" "$(date +%F)" >"$section"
 	awk -v sec="$section" -v ver="$v" '
 		index($0, "## [" ver "]") == 1 { skipping = 1; next }
-		/^## \[Unreleased\]/ && !done { print; print ""; while ((getline l < sec) > 0) { print l } print ""; done = 1; skipping = 1; next }
-		skipping && /^## \[/ { skipping = 0 }
+		/^## \[Unreleased\]/ && !done {
+			print; print ""
+			# git-cliff ends the section with blank lines: markdownlint refuses them.
+			while ((getline l < sec) > 0) {
+				if (l == "") { blanks++; continue }
+				for (; blanks > 0; blanks--) print ""
+				print l
+			}
+			blanks = 0; done = 1; skipping = 1; next
+		}
+		skipping && /^## \[/ { skipping = 0; print "" }
 		skipping { next }
 		{ print }
 	' CHANGELOG.md >CHANGELOG.md.new
