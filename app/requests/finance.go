@@ -13,6 +13,9 @@ type Transaction struct {
 	Amount      string `json:"amount"      form:"amount"`
 	Description string `json:"description" form:"description"`
 	Date        string `json:"date"        form:"date"`
+	// Tags are tag names, created when new. Absent leaves the tags of an
+	// edited transaction alone; a list, even an empty one, replaces them.
+	Tags []string `json:"tags" form:"tags"`
 }
 
 // TransactionSchema validates Transaction.
@@ -23,6 +26,7 @@ var TransactionSchema = z.Struct[Transaction](z.Shape{
 	"amount":      z.String().Trim().Min(1).Max(30),
 	"description": z.String().Trim().Max(200).Optional(),
 	"date":        z.String().Trim().Min(10).Max(10),
+	"tags":        z.Slice(z.String().Trim().Max(120)).Max(40).Optional(),
 })
 
 // Account is the input of the new account form.
@@ -42,13 +46,43 @@ var AccountSchema = z.Struct[Account](z.Shape{
 // Category is the input of the new category form.
 type Category struct {
 	Name string `json:"name" form:"name"`
-	Kind string `json:"kind" form:"kind"`
+	// Kind is needed for a top-level category and ignored on an edit: a
+	// category never changes kind, and a subcategory takes its parent's.
+	Kind     string `json:"kind"     form:"kind"`
+	ParentID string `json:"parentId" form:"parentId"`
+	Color    string `json:"color"    form:"color"`
+	Icon     string `json:"icon"     form:"icon"`
 }
 
 // CategorySchema validates Category.
 var CategorySchema = z.Struct[Category](z.Shape{
-	"name": z.String().Trim().Min(1).Max(60),
-	"kind": z.String().Trim().Min(1).Max(20),
+	"name":     z.String().Trim().Min(1).Max(60),
+	"kind":     z.String().Trim().Max(20).Optional(),
+	"parentId": z.String().Trim().Max(20).Optional(),
+	"color":    z.String().Trim().Max(20).Optional(),
+	"icon":     z.String().Trim().Max(20).Optional(),
+})
+
+// CategoryDelete is the input of the delete category form.
+type CategoryDelete struct {
+	ReassignTo string `json:"reassignTo" form:"reassignTo"`
+}
+
+// CategoryDeleteSchema validates CategoryDelete.
+var CategoryDeleteSchema = z.Struct[CategoryDelete](z.Shape{
+	"reassignTo": z.String().Trim().Max(20).Optional(),
+})
+
+// Tag is the input of the tag form.
+type Tag struct {
+	Name  string `json:"name"  form:"name"`
+	Color string `json:"color" form:"color"`
+}
+
+// TagSchema validates Tag.
+var TagSchema = z.Struct[Tag](z.Shape{
+	"name":  z.String().Trim().Min(1).Max(120),
+	"color": z.String().Trim().Max(20).Optional(),
 })
 
 // Budget is the input of the budget form.

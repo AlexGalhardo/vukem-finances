@@ -27,6 +27,17 @@ type Handlers struct {
 // New returns the handlers.
 func New(ws *workspaces.Service, fin *finance.Service) *Handlers { return &Handlers{WS: ws, Fin: fin} }
 
+// first returns the first of values that is not empty.
+func first(values ...string) string {
+	for _, v := range values {
+		if v != "" {
+			return v
+		}
+	}
+
+	return ""
+}
+
 func id(s string) int64 {
 	n, _ := strconv.ParseInt(strings.TrimSpace(s), 10, 64)
 	return n
@@ -82,6 +93,8 @@ func transactionField(message string) string {
 	msg := strings.ToLower(message)
 
 	switch {
+	case strings.Contains(msg, "tag"):
+		return "tags"
 	case strings.Contains(msg, "date"):
 		return "date"
 	case strings.Contains(msg, "kind"):
@@ -108,7 +121,7 @@ func redirectTransactionFields(c *web.Ctx, fields map[string][]string) error {
 		}
 	}
 
-	for _, key := range []string{"date", "kind", "accountId", "fromAccountId", "toAccountId", "categoryId", "description", "amount"} {
+	for _, key := range []string{"date", "kind", "accountId", "fromAccountId", "toAccountId", "categoryId", "description", "tags", "amount"} {
 		if len(fields[key]) > 0 {
 			inertia.Flash(c, "error", fields[key][0])
 

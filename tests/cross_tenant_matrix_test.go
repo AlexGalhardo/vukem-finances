@@ -39,8 +39,27 @@ var crossTenantCases = map[string]crossTenantCase{
 			}
 		},
 	},
-	"transactions.destroy": {method: http.MethodDelete, table: "transactions", param: "transaction"},
-	"accounts.destroy":     {method: http.MethodDelete, table: "accounts", param: "account"},
+	"transactions.destroy":     {method: http.MethodDelete, table: "transactions", param: "transaction"},
+	"transactions.tags.attach": {method: http.MethodPost, table: "transaction_tags", param: "transaction"},
+	"transactions.tags.detach": {method: http.MethodDelete, table: "transaction_tags", param: "transaction"},
+	"categories.update": {
+		method: http.MethodPatch, table: "categories", param: "category",
+		body: func(map[string]int64) map[string]any { return map[string]any{"name": "Renamed", "color": "blue"} },
+	},
+	"categories.archive":   {method: http.MethodPost, table: "categories", param: "category"},
+	"categories.unarchive": {method: http.MethodPost, table: "categories", param: "category"},
+	"categories.destroy": {
+		method: http.MethodDelete, table: "categories", param: "category",
+		body: func(ids map[string]int64) map[string]any {
+			return map[string]any{"reassignTo": strconv.FormatInt(ids["bobCategory"], 10)}
+		},
+	},
+	"tags.update": {
+		method: http.MethodPatch, table: "tags", param: "tag",
+		body: func(map[string]int64) map[string]any { return map[string]any{"name": "Renamed", "color": "red"} },
+	},
+	"tags.destroy":     {method: http.MethodDelete, table: "tags", param: "tag"},
+	"accounts.destroy": {method: http.MethodDelete, table: "accounts", param: "account"},
 	"accounts.update": {
 		method: http.MethodPatch, table: "accounts", param: "account",
 		body: func(map[string]int64) map[string]any {
@@ -98,6 +117,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 		"categoryId": {strconv.FormatInt(categoryID(t, app, ana, "Groceries"), 10)}, "limit": {"100.00"},
 	}).AssertRedirect("/budgets")
 	upload(t, ana, accAna, statement).AssertOK()
+	ana.Client.PostJSON("/tags", map[string]any{"name": "Trip"}).AssertStatus(http.StatusCreated)
 	ana.Client.PostForm("/ai/key", map[string][]string{"provider": {"anthropic"}, "apiSecret": {"sk-placeholder-matrix-0123456789"}}).
 		AssertRedirect("/ai")
 
@@ -109,6 +129,9 @@ func TestCrossTenantMatrix(t *testing.T) {
 		"credential":  firstOf[models.AICredential](t, app, ana, "").ID,
 		"user":        cara.ID,
 		"bobAccount":  firstAccount(t, app, bob),
+		"category":    categoryID(t, app, ana, "Groceries"),
+		"bobCategory": categoryID(t, app, bob, "Groceries"),
+		"tag":         firstOf[models.Tag](t, app, ana, "Trip").ID,
 	}
 
 	// Control: the same edit is fine for the owner, so only the id is wrong for Bob.
@@ -117,7 +140,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
 
 	tables := map[string]int64{}
-	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true} {
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true} {
 		tables[table] = rowCount(t, app, table)
 	}
 
