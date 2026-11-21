@@ -40,7 +40,7 @@ func New(opts ...vukem.Option) (*vukem.App, error) {
 
 	// First, before any route reads the edition: a typo in APP_EDITION must
 	// stop every command and the server, not boot the wrong edition.
-	base = append(base, vukem.WithRoutes(checkEdition))
+	base = append(base, vukem.WithRoutes(checkEdition), vukem.WithRoutes(checkRetention))
 
 	for _, fn := range routes.All() {
 		base = append(base, vukem.WithRoutes(fn))
@@ -54,6 +54,14 @@ func New(opts ...vukem.Option) (*vukem.App, error) {
 	app.AddCommand(Commands()...)
 
 	return app, nil
+}
+
+// checkRetention stops the boot on a bad TOMBSTONE_RETENTION_DAYS, instead of
+// failing the nightly job a day later.
+func checkRetention(_ *router.Router, app *vukem.App) error {
+	_, err := config.TombstoneRetention(app.Source)
+
+	return err
 }
 
 func checkEdition(_ *router.Router, app *vukem.App) error {

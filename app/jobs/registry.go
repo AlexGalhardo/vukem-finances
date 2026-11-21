@@ -12,5 +12,6 @@ func All(app *vukem.App) []queue.Registration {
 	return []queue.Registration{
 		queue.Handle(HandleImportCSV(app)),
 		queue.Handle(HandleMonthlySummary(app)),
+		queue.Handle(HandleChangesCompact(app)),
 	}
 }
