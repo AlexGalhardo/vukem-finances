@@ -52,6 +52,57 @@ func NewSocial(app *vukem.App) (*social.Social, error) {
 	return s, nil
 }
 
+// FindFromSocial is the personal edition's social login: it never creates a
+// user, because a Google login must not be a public sign-up. It returns the
+// user whose identity is already linked, or links the identity to the
+// existing user with the same email when both the provider and the local
+// account have proven that address. Anyone else gets a 404, like /register.
+func (a *Accounts) FindFromSocial(ctx context.Context, su social.User) (models.User, error) {
+	if su.Provider != "google" || strings.TrimSpace(su.ID) == "" || !su.EmailVerified {
+		return models.User{}, errs.New(422, "Google must supply a verified account identity")
+	}
+
+	links := orm.QueryOf[models.SocialAccount](a.DB).Where("provider", su.Provider)
+
+	link, err := links.Where("provider_id", su.ID).First(ctx)
+	if err == nil {
+		return orm.QueryOf[models.User](a.DB).Find(ctx, link.UserID)
+	}
+
+	if !errors.Is(err, orm.ErrNotFound) {
+		return models.User{}, err
+	}
+
+	email := strings.ToLower(strings.TrimSpace(su.Email))
+	if email == "" {
+		return models.User{}, errs.ErrNotFound
+	}
+
+	var u models.User
+
+	err = a.DB.Tx(ctx, func(tx *database.Tx) error {
+		existing, err := orm.QueryOf[models.User](tx).Where("email", email).First(ctx)
+		if err != nil {
+			if errors.Is(err, orm.ErrNotFound) {
+				return errs.ErrNotFound
+			}
+
+			return err
+		}
+
+		// An unverified local account may belong to someone else: never link it.
+		if !existing.EmailVerified() {
+			return errs.ErrNotFound
+		}
+
+		u = existing
+
+		return orm.Create(ctx, tx, &models.SocialAccount{UserID: u.ID, Provider: su.Provider, ProviderID: su.ID})
+	})
+
+	return u, err
+}
+
 // FindOrCreateFromSocial returns the user linked to su, linking by email
 // only when the provider verified it, or creating a new user.
 func (a *Accounts) FindOrCreateFromSocial(ctx context.Context, su social.User) (models.User, error) {
