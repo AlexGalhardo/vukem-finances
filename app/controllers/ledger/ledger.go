@@ -138,7 +138,7 @@ func (h *Handlers) can(c *web.Ctx, ability string) error { return h.WS.Can(c.Con
 func (h *Handlers) Dashboard(c *web.Ctx) error {
 	month := c.Query("month")
 	if len(month) != 7 {
-		month = h.Fin.Month()
+		month = h.Fin.Month(c.Context())
 	}
 
 	d, err := h.Fin.Dashboard(c.Context(), month)
@@ -176,7 +176,7 @@ func (h *Handlers) Transactions(c *web.Ctx) error {
 	}
 
 	return pages.Transactions.Render(c, pages.TransactionsProps{
-		Transactions: rows, Accounts: accounts, Categories: cats, Filters: f, Today: h.Fin.Today(),
+		Transactions: rows, Accounts: accounts, Categories: cats, Filters: f, Today: h.Fin.Today(c.Context()),
 	})
 }
 
@@ -337,7 +337,7 @@ func (h *Handlers) StoreCategory(c *web.Ctx) error {
 
 // Budgets lists the budgets of this month against what was spent.
 func (h *Handlers) Budgets(c *web.Ctx) error {
-	month := h.Fin.Month()
+	month := h.Fin.Month(c.Context())
 
 	budgets, err := h.Fin.Budgets(c.Context(), month)
 	if err != nil {
