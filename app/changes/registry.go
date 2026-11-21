@@ -85,6 +85,7 @@ func init() {
 		Name: "transaction", Table: "transactions",
 		Fields: []string{
 			"account_id", "category_id", "kind", "amount_cents", "description", "occurred_on", "transfer_uid", "tag_uids",
+			"statement_ref",
 		},
 		Refs: []Ref{{"account_id", "account"}, {"category_id", "category"}},
 		JSON: []string{"tag_uids"},
@@ -93,5 +94,10 @@ func init() {
 		Name: "budget", Table: "budgets",
 		Fields: []string{"category_id", "limit_cents"},
 		Refs:   []Ref{{"category_id", "category"}},
+	})
+	Register(Entity{
+		Name: "credit_card", Table: "credit_cards",
+		Fields: []string{"account_id", "limit_cents", "closing_day", "due_day", "payment_account_id", "brand", "last4"},
+		Refs:   []Ref{{"account_id", "account"}, {"payment_account_id", "account"}},
 	})
 }

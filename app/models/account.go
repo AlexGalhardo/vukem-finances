@@ -4,7 +4,8 @@ import (
 	"github.com/AlexGalhardo/vukem/orm"
 )
 
-// Account kinds. credit_card is reserved for the cards epic and refused.
+// Account kinds a person picks. credit_card (AccountCreditCard) is not one of
+// them: a card account is made with its card.
 const (
 	AccountChecking   = "checking"
 	AccountSavings    = "savings"
