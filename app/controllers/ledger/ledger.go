@@ -505,9 +505,20 @@ func (h *Handlers) Workspace(c *web.Ctx) error {
 		return err
 	}
 
+	canManage := h.can(c, workspaces.AbilityManageMembers) == nil
+
+	// The audit log is for the people who manage the workspace only.
+	audit := []workspaces.AuditEntry{}
+
+	if canManage {
+		if audit, err = h.WS.AuditEvents(c.Context()); err != nil {
+			return err
+		}
+	}
+
 	return pages.Workspace.Render(c, pages.WorkspaceProps{
 		WorkspaceDetails: view(ws), Members: members, Invites: invites, Limits: lim,
-		CanManage: h.can(c, workspaces.AbilityManageMembers) == nil,
+		CanManage: canManage, Audit: audit,
 	})
 }
 
@@ -522,7 +533,12 @@ func (h *Handlers) UpdateWorkspace(c *web.Ctx) error {
 		return err
 	}
 
-	if err := h.WS.Rename(c.Context(), in.Name, in.Currency, in.Timezone); err != nil {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	if err := h.WS.Rename(c.Context(), u, in.Name, in.Currency, in.Timezone); err != nil {
 		return back(c, "/workspace", err)
 	}
 
@@ -610,7 +626,12 @@ func (h *Handlers) RemoveMember(c *web.Ctx) error {
 		return err
 	}
 
-	if err := h.WS.RemoveMember(c.Context(), uid); err != nil {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	if err := h.WS.RemoveMember(c.Context(), u, uid); err != nil {
 		return back(c, "/workspace", err)
 	}
 
@@ -633,7 +654,12 @@ func (h *Handlers) ChangeRole(c *web.Ctx) error {
 		return err
 	}
 
-	if err := h.WS.ChangeRole(c.Context(), uid, in.Role); err != nil {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	if err := h.WS.ChangeRole(c.Context(), u, uid, in.Role); err != nil {
 		return back(c, "/workspace", err)
 	}
 

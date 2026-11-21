@@ -10,6 +10,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"slices"
@@ -372,6 +373,10 @@ func (s *Service) Invite(ctx context.Context, inviter models.User, email, role s
 		return InviteLink{}, err
 	}
 
+	if err := s.record(ctx, s.DB, inviter.ID, AuditInviteCreated, email+" as "+role); err != nil {
+		return InviteLink{}, err
+	}
+
 	ws, err := s.Current(ctx)
 	if err != nil {
 		return InviteLink{}, err
@@ -441,7 +446,7 @@ func (s *Service) Accept(ctx context.Context, u models.User, token string) (mode
 }
 
 // RemoveMember takes userID out of the workspace of ctx; the owner stays.
-func (s *Service) RemoveMember(ctx context.Context, userID int64) error {
+func (s *Service) RemoveMember(ctx context.Context, actor models.User, userID int64) error {
 	return s.DB.Tx(ctx, func(tx *database.Tx) error {
 		if err := lockWorkspace(ctx, tx); err != nil {
 			return err
@@ -456,15 +461,17 @@ func (s *Service) RemoveMember(ctx context.Context, userID int64) error {
 			return errOwner
 		}
 
-		_, err = Scoped[models.Membership](ctx, tx).Where("id", m.ID).Delete(ctx)
+		if _, err = Scoped[models.Membership](ctx, tx).Where("id", m.ID).Delete(ctx); err != nil {
+			return err
+		}
 
-		return err
+		return s.record(ctx, tx, actor.ID, AuditMemberRemoved, fmt.Sprintf("user:%d", userID))
 	})
 }
 
 // Rename changes the name, currency and timezone of the workspace of ctx; an
 // empty timezone leaves it as it is.
-func (s *Service) Rename(ctx context.Context, name, currency, timezone string) error {
+func (s *Service) Rename(ctx context.Context, actor models.User, name, currency, timezone string) error {
 	currency = strings.ToUpper(strings.TrimSpace(currency))
 	if !validCurrency(currency) {
 		return errBadCurrency
@@ -485,9 +492,11 @@ func (s *Service) Rename(ctx context.Context, name, currency, timezone string) e
 		set["timezone"] = timezone
 	}
 
-	_, err := orm.QueryOf[models.Workspace](s.DB).Where("id", id).Update(ctx, set)
+	if _, err := orm.QueryOf[models.Workspace](s.DB).Where("id", id).Update(ctx, set); err != nil {
+		return err
+	}
 
-	return err
+	return s.record(ctx, s.DB, actor.ID, AuditSettingsChanged, fmt.Sprintf("%s %s %s", set["name"], currency, timezone))
 }
 
 // OwnerEmails lists the addresses of the owners of a workspace: the people

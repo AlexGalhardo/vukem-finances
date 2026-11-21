@@ -38,6 +38,16 @@ type MonthlySummarySent struct {
 // Table maps MonthlySummarySent to monthly_summary_sent.
 func (MonthlySummarySent) Table() string { return "monthly_summary_sent" }
 
+// AuditEvent records who did a sensitive thing in a workspace.
+type AuditEvent struct {
+	orm.Model
+
+	WorkspaceID int64  `json:"workspace_id"`
+	ActorUserID int64  `json:"actor_user_id"`
+	Action      string `json:"action"`
+	Subject     string `json:"subject"`
+}
+
 // Membership puts a user in a workspace with a role.
 type Membership struct {
 	orm.Model

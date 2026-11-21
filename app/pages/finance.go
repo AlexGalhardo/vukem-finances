@@ -100,6 +100,8 @@ type WorkspaceProps struct {
 	Invites          []models.Invite     `json:"invites"`
 	Limits           workspaces.Limits   `json:"limits"`
 	CanManage        bool                `json:"canManage"`
+	// Audit is the latest sensitive actions; empty unless the user manages members.
+	Audit []workspaces.AuditEntry `json:"audit"`
 }
 
 // InviteAcceptProps are the props of InviteAccept.

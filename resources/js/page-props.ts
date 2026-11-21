@@ -10,6 +10,14 @@ export type Account = {
   workspace_id: number;
 };
 
+export type AuditEntry = {
+  action: string;
+  actor: string;
+  createdAt: string;
+  id: number;
+  subject: string;
+};
+
 export type BillingStatus = {
   cancelAtPeriodEnd: boolean;
   currentPeriodEnd: string;
@@ -280,6 +288,7 @@ export type TransactionsProps = {
 };
 
 export type WorkspaceProps = {
+  audit: AuditEntry[];
   canManage: boolean;
   invites: Invite[];
   limits: Limits;
