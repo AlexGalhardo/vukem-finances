@@ -25,11 +25,13 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | --- | --- |
 | `app/` | Go application code: `accounts/`, `admin/`, `billing/`, `changes/` (sync: entity registry, change-log triggers and reader, compaction, merge), `controllers/`, `finance/` (money, transactions, dashboard, import), `jobs/`, `listeners/`, `mail/`, `models/`, `pages/`, `requests/`, `workspaces/` |
 | `app/ai/` | the AI layer (bring your own key): providers, the encrypted key vault, `Redact`, the call pipeline with limits (see "The AI layer") |
-| `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `admin.go`, ...) registered by `registry.go` |
+| `app/api/` | the public JSON API: scoped tokens, the middleware chain, the operations table and the handlers (see "The public API") |
+| `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `api.go`, `admin.go`, ...) registered by `registry.go` |
 | `database/migrations/` | Go migrations, registered in `registry.go` |
 | `resources/js/` | React pages, components, layouts and React Email templates |
 | `resources/js/shortcuts/`, `resources/js/nav.ts`, `resources/js/i18n/` | the shortcut registry, the sidebar items, the translation files (see "The application shell") |
-| `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation) |
+| `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API) |
+| `clients/typescript/` | the generated TypeScript client of the API (`api.ts`) |
 | `cmd/app/` | the binary entry point |
 | `config/`, `bootstrap/` | configuration and application start-up |
 | `.agents/rules/` | the rules of the team: read them before editing |
@@ -64,6 +66,17 @@ Read `docs/design.md` and `docs/shortcuts.md` before touching the UI. The design
 - **Add translations.** Add `resources/js/i18n/en/<domain>.ts`, `pt-BR/<domain>.ts` and `es/<domain>.ts` (the last two use `satisfies Record<keyof typeof en, string>`), then add one `typeof` line for the new domain to `resources/js/i18n/keys.ts`. `bun test resources/js/i18n` fails when a locale misses a key.
 - **Page structure.** A signed-in page renders `PageHeader` for its one `h1`; the shell moves focus there after a navigation. Show money with `MoneyText` (sign or label, never color alone) and lists with `DataTable`.
 - **Tests.** `bunx playwright test` runs the browser specs in `e2e/` against the real server (`e2e/prepare.mjs` builds the app and seeds a throwaway database; set `E2E_CHANNEL=chrome` to use the installed Chrome, otherwise run `bunx playwright install chromium` once). `bun run test:js` runs the unit tests (`bun test resources/js`; the path is required). `@types/bun` is not installed: `resources/js/bun-test.d.ts` holds the few ambient types the tests use; extend it when a test needs another matcher.
+
+## The public API
+
+Read `docs/api.md` first. The API is `/api/v1`, bearer tokens only (the session and CSRF middleware skip the prefix, so a cookie is ignored); it exists in both editions.
+
+- A token (`vf_<id>.<secret>`, only a SHA-256 of the secret is stored, shown once on the Tokens page) is bound to one workspace through `access_tokens.resource` and to the person who made it. Scopes are a ceiling: every request intersects the scope with the person's role now (`workspaces.RoleCan`). No `*` scope exists, and a token with one is refused. Removing a member revokes their tokens of the workspace.
+- Every operation is one row of `app/api/operations.go` (name, method, path, scope); `register` reads the row for the route, the scope check and the Idempotency-Key replay, and the OpenAPI document reads it for `x-required-scope` (D-017). To add an endpoint: add the row (and the scope in `scopes.go` if new), write a thin handler that calls a service of `app/finance`, register it in `API.Routes`, regenerate `docs/openapi.json` and `clients/typescript/api.ts` with `UPDATE_OPENAPI=1 go test ./tests/... -run 'TestOpenAPISnapshot|TestTypeScriptClientIsFresh'`, and add the case to `matrixCalls` (`tests/api_scope_matrix_test.go`) and, for a `{uid}` path, to `apiCrossTenantCases` in the cross-tenant matrix.
+- A handler never holds a rule. Amounts become text for `finance.ParseAmount` through `centsText`; the uid of a row is turned into its id with `a.accountByUID` and the like (workspace scoped, a foreign uid is a 404); lists reuse `TransactionPage`. Money on the wire is an integer `*_cents`; ids on the wire are uids.
+- Errors are problem+json with a stable `code` (`api.CodeOf`, set by the `ProblemDecorator` in `routes/api.go`). The failure order is 401, 404 (not a member), 429, 403, then 404 for a row of another workspace.
+- The app serves only `/api/v1/openapi.json`; the reference is rendered by the static docs site (D-021). Never import the framework's `apidocs` package (`TestNoAPIDocsPage`).
+- Rate limits are per token (120 reads and 60 writes a minute, `config/api.go`) and per address for failed lookups (60 a minute, refused before any lookup).
 
 ## The AI layer
 

@@ -78,8 +78,9 @@ is in the document as `x-required-scope`.
 The order of the checks never leaks what exists:
 
 1. `401` for a missing, unknown, expired or revoked token.
-2. `404` for everything of another workspace, and for a token whose person is no
-   longer in its workspace.
+2. `404` for a token whose person is no longer a member of its workspace. Removing
+   or leaving through the app also revokes the person's tokens of that workspace
+   (`401`), so they do not come back if the person is invited again.
 3. `429` over a rate limit.
 4. `403` for a scope the token lacks (`code: missing_scope`) or a role that
    cannot do it (`code: forbidden`).
@@ -129,7 +130,8 @@ at most 200 characters), `min_cents` and `max_cents` (the absolute amount).
 
 ### Creating with your own uid
 
-`POST` on accounts, categories, tags and transactions accepts an optional `uid`
+`POST` on accounts, categories, tags and transactions (not on transfers, which
+rely on `Idempotency-Key`) accepts an optional `uid`
 (26 upper-case Crockford characters, a ULID, at most a day ahead of the server
 clock). Repeating the call with the same `uid` and the same row returns the row
 already made (`200`, not `201`) and creates nothing, so a client can retry
@@ -149,7 +151,12 @@ request is `422`. Keys are per token.
 `PATCH` and `DELETE` accept `If-Match: <version>` (the `version` of the row, with
 or without quotes). A stale version is `409` with `code: version_conflict` and
 the current row in `current`; nothing changes. Without the header the change
-applies to whatever the row is now.
+applies to whatever the row is now. A transfer has no version: `DELETE` on
+`/transfers/{uid}` takes no `If-Match`. The version is checked just before the
+write, so two writers in the same instant can still both pass; use it to catch a
+stale read, not as a lock.
+
+A path or a method the API does not have answers a JSON `404`.
 
 ## Rate limits
 
@@ -176,10 +183,24 @@ server, a script or a mobile app.
 ## The document and the client
 
 - `docs/openapi.json` is generated from the routes (`UPDATE_OPENAPI=1 go test
-  ./tests/... -run TestOpenAPISnapshot` rewrites it; a test fails when it is
-  stale). It uses the `bearer` security scheme and `x-required-scope`.
-- `clients/typescript/api.ts` is generated from it (`UPDATE_OPENAPI=1 go test
-  ./tests/... -run TestTypeScriptClientIsFresh`; a test fails when it is stale).
+  ./tests/... -run 'TestOpenAPISnapshot|TestTypeScriptClientIsFresh'` rewrites
+  it and the client; a test fails when either is stale). It uses the `bearer`
+  security scheme and `x-required-scope`.
+- `clients/typescript/api.ts` is generated from it by `openapi.TypeScriptClient`
+  and type-checked with the app (`bun run typecheck`).
+
+## Adding an operation
+
+1. Add its row to `app/api/operations.go` (name, method, path, scope, summary).
+   A new scope goes in `app/api/scopes.go` with the role ability it needs.
+2. Write the handler in `app/api/` as a thin function (bind the input, call a
+   service of `app/finance` or `app/workspaces`, return the output) and register
+   it in `API.Routes`. The scope check and the `Idempotency-Key` replay come from
+   the table.
+3. Regenerate the document and the client (command above).
+4. Add its case to `matrixCalls` in `tests/api_scope_matrix_test.go`, and, when
+   the path takes a `{uid}`, to `apiCrossTenantCases` in
+   `tests/cross_tenant_matrix_test.go`. Both tests fail until it is done.
 
 ## Examples
 
