@@ -198,11 +198,11 @@ func shareWorkspace(
 
 				all := make([]pages.WorkspaceView, len(mine))
 				for i, m := range mine {
-					all[i] = pages.WorkspaceView{ID: m.ID, Name: m.Name, Currency: m.Currency}
+					all[i] = pages.WorkspaceView{ID: m.ID, Name: m.Name, Currency: m.Currency, Timezone: m.Timezone}
 				}
 
 				return pages.SharedWorkspace{
-					Current: pages.WorkspaceView{ID: cur.ID, Name: cur.Name, Currency: cur.Currency},
+					Current: pages.WorkspaceView{ID: cur.ID, Name: cur.Name, Currency: cur.Currency, Timezone: cur.Timezone},
 					All:     all, Role: workspaces.Role(ctx), Plan: lim.Plan, Admin: admins.Has(&u),
 					Edition: ws.Edition.String(),
 				}, nil

@@ -39,7 +39,7 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
   const personal = page.props.workspace?.edition === "personal";
   const role = page.props.workspace?.role;
   const isOwner = role === "owner";
-  const settings = useForm({ name: workspaceDetails.name, currency: workspaceDetails.currency });
+  const settings = useForm({ name: workspaceDetails.name, currency: workspaceDetails.currency, timezone: workspaceDetails.timezone });
   const invite = useForm({ email: "", role: "member" });
   const create = useForm({ name: "", currency: "USD" });
 
@@ -63,9 +63,10 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
       <Head title="Workspace" />
       <h1 className="text-2xl font-semibold">{workspaceDetails.name}</h1>
       <Card title="Settings">
-        <form onSubmit={save} className="grid gap-3 sm:grid-cols-3">
+        <form onSubmit={save} className="grid gap-3 sm:grid-cols-4">
           <Field label="Name" required disabled={!canManage} value={settings.data.name} onChange={(e) => settings.setData("name", e.target.value)} error={settings.errors.name} />
           <Field label="Currency (ISO 4217)" required maxLength={3} disabled={!canManage} value={settings.data.currency} onChange={(e) => settings.setData("currency", e.target.value.toUpperCase())} error={settings.errors.currency} />
+          <Field label="Timezone (IANA, such as America/Sao_Paulo)" required disabled={!canManage} value={settings.data.timezone} onChange={(e) => settings.setData("timezone", e.target.value)} error={settings.errors.timezone} />
           {canManage && (
             <div className="self-end">
               <button type="submit" disabled={settings.processing} className={primary}>

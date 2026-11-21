@@ -36,6 +36,7 @@ const DefaultCurrency = "USD"
 var (
 	errBadRole     = errs.New(http.StatusUnprocessableEntity, "The role must be admin, member or viewer.")
 	errBadCurrency = errs.New(http.StatusUnprocessableEntity, "The currency must be an ISO 4217 code, such as USD.")
+	errBadTimezone = errs.New(http.StatusUnprocessableEntity, "The timezone must be an IANA name, such as America/Sao_Paulo.")
 	errOwner       = errs.New(http.StatusConflict, "The owner cannot be removed.")
 	errNoWorkspace = errs.New(http.StatusForbidden, "This account belongs to no workspace: ask its owner for an invitation.")
 )
@@ -158,7 +159,7 @@ func (s *Service) Create(ctx context.Context, u models.User, name, currency stri
 		return models.Workspace{}, errBadCurrency
 	}
 
-	ws := models.Workspace{Name: strings.TrimSpace(name), Currency: currency}
+	ws := models.Workspace{Name: strings.TrimSpace(name), Currency: currency, Timezone: DefaultTimezone}
 
 	err := s.DB.Tx(ctx, func(tx *database.Tx) error { return createIn(ctx, tx, u, &ws) })
 
@@ -199,7 +200,7 @@ func (s *Service) CreateOwner(
 	setupMu.Lock()
 	defer setupMu.Unlock()
 
-	ws := models.Workspace{Name: strings.TrimSpace(workspace), Currency: currency}
+	ws := models.Workspace{Name: strings.TrimSpace(workspace), Currency: currency, Timezone: DefaultTimezone}
 
 	err := s.DB.Tx(ctx, func(tx *database.Tx) error {
 		n, err := orm.QueryOf[models.User](tx).Count(ctx)
@@ -461,11 +462,17 @@ func (s *Service) RemoveMember(ctx context.Context, userID int64) error {
 	})
 }
 
-// Rename changes the name and currency of the workspace of ctx.
-func (s *Service) Rename(ctx context.Context, name, currency string) error {
+// Rename changes the name, currency and timezone of the workspace of ctx; an
+// empty timezone leaves it as it is.
+func (s *Service) Rename(ctx context.Context, name, currency, timezone string) error {
 	currency = strings.ToUpper(strings.TrimSpace(currency))
 	if !validCurrency(currency) {
 		return errBadCurrency
+	}
+
+	timezone = strings.TrimSpace(timezone)
+	if _, err := LoadZone(timezone); err != nil {
+		return err
 	}
 
 	id, ok := TenantID(ctx)
@@ -473,8 +480,12 @@ func (s *Service) Rename(ctx context.Context, name, currency string) error {
 		return errs.ErrNotFound
 	}
 
-	_, err := orm.QueryOf[models.Workspace](s.DB).Where("id", id).
-		Update(ctx, orm.Set{"name": strings.TrimSpace(name), "currency": currency})
+	set := orm.Set{"name": strings.TrimSpace(name), "currency": currency}
+	if timezone != "" {
+		set["timezone"] = timezone
+	}
+
+	_, err := orm.QueryOf[models.Workspace](s.DB).Where("id", id).Update(ctx, set)
 
 	return err
 }

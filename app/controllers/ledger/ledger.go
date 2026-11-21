@@ -480,7 +480,7 @@ func (h *Handlers) ConfirmImport(c *web.Ctx) error {
 // ---- workspace ----
 
 func view(w models.Workspace) pages.WorkspaceView {
-	return pages.WorkspaceView{ID: w.ID, Name: w.Name, Currency: w.Currency}
+	return pages.WorkspaceView{ID: w.ID, Name: w.Name, Currency: w.Currency, Timezone: w.Timezone}
 }
 
 // Workspace shows the settings, the members and the invites.
@@ -522,7 +522,7 @@ func (h *Handlers) UpdateWorkspace(c *web.Ctx) error {
 		return err
 	}
 
-	if err := h.WS.Rename(c.Context(), in.Name, in.Currency); err != nil {
+	if err := h.WS.Rename(c.Context(), in.Name, in.Currency, in.Timezone); err != nil {
 		return back(c, "/workspace", err)
 	}
 

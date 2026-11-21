@@ -155,6 +155,7 @@ export type WorkspaceView = {
   currency: string;
   id: number;
   name: string;
+  timezone: string;
 };
 
 export type AccountsProps = {

@@ -79,12 +79,15 @@ var InviteSchema = z.Struct[Invite](z.Shape{
 type Workspace struct {
 	Name     string `json:"name"     form:"name"`
 	Currency string `json:"currency" form:"currency"`
+	// Timezone is an IANA name; empty keeps the current one.
+	Timezone string `json:"timezone" form:"timezone"`
 }
 
 // WorkspaceSchema validates Workspace.
 var WorkspaceSchema = z.Struct[Workspace](z.Shape{
 	"name":     z.String().Trim().Min(1).Max(80),
 	"currency": z.String().Trim().Min(3).Max(3),
+	"timezone": z.String().Trim().Max(64).Optional(),
 })
 
 // ImportMapping is the input of the column mapping step of a CSV import.

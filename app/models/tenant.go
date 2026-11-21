@@ -52,3 +52,9 @@ func (m *Invite) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant.
 func (m *Invite) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
+
+// SetTenant implements tenancy.Scoped.
+func (m *MonthlySummarySent) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
+
+// BeforeCreate stamps the tenant.
+func (m *MonthlySummarySent) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }

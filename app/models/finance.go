@@ -22,8 +22,21 @@ type Workspace struct {
 
 	Name             string           `json:"name"`
 	Currency         string           `json:"currency"`
+	Timezone         string           `json:"timezone"`
 	StripeCustomerID sql.Null[string] `json:"-"`
 }
+
+// MonthlySummarySent records that the summary of Month ("2026-11") went out
+// for the workspace, so a missed or doubled scheduler run is harmless.
+type MonthlySummarySent struct {
+	orm.Model
+
+	WorkspaceID int64  `json:"workspace_id"`
+	Month       string `json:"month"`
+}
+
+// Table maps MonthlySummarySent to monthly_summary_sent.
+func (MonthlySummarySent) Table() string { return "monthly_summary_sent" }
 
 // Membership puts a user in a workspace with a role.
 type Membership struct {
