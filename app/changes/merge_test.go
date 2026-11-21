@@ -262,3 +262,39 @@ func TestMergeWatermarkTakesTheLaterDate(t *testing.T) {
 		t.Errorf("the first watermark = %+v, want it applied", first)
 	}
 }
+
+// A watermark is read strictly: a bad or too-late value changes nothing, and a
+// bad stored value is replaced by a good one.
+func TestMergeWatermarkIsStrict(t *testing.T) {
+	t.Parallel()
+
+	rule := live(fields{"generated_through": "2027-03-31"})
+
+	for _, want := range []any{"9999-12-31", "2027-13-99", "zzzz", "", "2027-04-01", 20270430, nil} {
+		res := changes.Merge(rule, changes.Mutation{Today: "2027-03-31", Fields: fields{"generated_through": want}}, nil)
+		if res.Outcome != changes.OutcomeNoop {
+			t.Errorf("want %v: outcome %s with %v, want a no-op", want, res.Outcome, res.Apply)
+		}
+	}
+
+	// Without a Today the date check is skipped but the shape check stays.
+	if res := changes.Merge(rule, changes.Mutation{Fields: fields{"generated_through": "zzzz"}}, nil); res.Outcome != changes.OutcomeNoop {
+		t.Errorf("zzzz without a today = %+v, want a no-op", res)
+	}
+
+	// A malformed stored value is missing: a valid date replaces it.
+	for _, have := range []any{"zzzz", "9999-99-99", "", nil} {
+		res := changes.Merge(live(fields{"generated_through": have}), changes.Mutation{
+			Today: "2027-03-31", Fields: fields{"generated_through": "2027-03-31"},
+		}, nil)
+		if res.Outcome != changes.OutcomeApplied || res.Apply["generated_through"] != "2027-03-31" {
+			t.Errorf("have %v: %+v, want the valid date applied", have, res)
+		}
+	}
+
+	// Today itself is allowed.
+	res := changes.Merge(rule, changes.Mutation{Today: "2027-04-30", Fields: fields{"generated_through": "2027-04-30"}}, nil)
+	if res.Outcome != changes.OutcomeApplied {
+		t.Errorf("a watermark equal to today = %+v, want it applied", res)
+	}
+}
