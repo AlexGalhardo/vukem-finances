@@ -36,5 +36,8 @@ func TenantModels() []TenantModel {
 		tenantModel[Change](),
 		tenantModel[SyncState](),
 		tenantModel[SyncConflict](),
+		tenantModel[AICredential](),
+		tenantModel[WorkspaceAISettings](),
+		tenantModel[AIUsage](),
 	}
 }

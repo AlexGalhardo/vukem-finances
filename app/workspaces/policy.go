@@ -26,6 +26,8 @@ const (
 	AbilityManageBilling = "billing.manage"
 	// AbilityTransfer: hand the workspace over to another member.
 	AbilityTransfer = "workspace.transfer"
+	// AbilityManageAI: the AI key, the switch, the features and the limit (owner only, D-007).
+	AbilityManageAI = "ai.manage"
 )
 
 // grants says which roles hold each ability.
@@ -36,6 +38,7 @@ var grants = map[string][]string{
 	AbilityManageMembers: {models.RoleOwner, models.RoleAdmin},
 	AbilityManageBilling: {models.RoleOwner},
 	AbilityTransfer:      {models.RoleOwner},
+	AbilityManageAI:      {models.RoleOwner},
 }
 
 func newGate() *authz.Gate[models.User] {
