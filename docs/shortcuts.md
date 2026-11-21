@@ -8,6 +8,7 @@ One registry (`resources/js/shortcuts/registry.ts`) owns every shortcut. A featu
 - Key notation: `g d` is a sequence (one second between keys), `?` a single key, `mod+k` a chord. `mod` is Cmd on macOS and Ctrl elsewhere.
 - Browser-reserved combinations are refused by `registerAction` (`resources/js/shortcuts/reserved.ts`).
 - WCAG 2.1.4: the preference "Single-key shortcuts" (default on, `localStorage` key `vf.shortcuts.single`) turns off every binding without a modifier. Chords with `mod` stay.
+- `/` is registered once, by `QuickAdd` (mounted on every signed-in page): on `/transactions` it focuses the search field, anywhere else it goes to `/transactions#search`, which focuses the field on arrival. Typed inside a field it is just a character.
 - A feature epic may add rows to the table below. It may not take a key that is already listed.
 
 ## Allocation
@@ -27,7 +28,7 @@ One registry (`resources/js/shortcuts/registry.ts`) owns every shortcut. A featu
 | `n e` | `new-expense` | epic 07 |
 | `n i` | `new-income` | epic 07 |
 | `n t` | `new-transfer` | epic 07 |
-| `/` | `search-transactions` | epics 07 and 08 (reserved) |
+| `/` | `search-transactions` | epic 08 |
 | `x` | `export` | epic 12 (reserved) |
 | `g r` | `go-reports` | epic 12 (reserved) |
 | `g k` | `go-cards` | epic 09 (reserved) |
