@@ -8,7 +8,6 @@ import (
 	"github.com/AlexGalhardo/vukem/vukemtest"
 
 	"github.com/AlexGalhardo/vukem-finances/app/models"
-	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 )
 
 const adminEmail = "admin@example.com"
@@ -17,7 +16,7 @@ const adminEmail = "admin@example.com"
 func newAdminApp(t *testing.T) *vukemtest.App {
 	t.Helper()
 
-	return vukemtest.New(t, bootstrap.New, vukemtest.Options{Env: map[string]string{"ADMIN_EMAILS": adminEmail}})
+	return newSaaSApp(t, map[string]string{"ADMIN_EMAILS": adminEmail})
 }
 
 // adminClient creates a user with a verified email and returns a

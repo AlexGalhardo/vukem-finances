@@ -11,7 +11,6 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
-	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 	"github.com/AlexGalhardo/vukem-finances/database/seeders"
 )
 
@@ -32,9 +31,9 @@ func TestFinanceGoogleOptional(t *testing.T) {
 
 func TestSecurity_FinanceGoogleVerifiedLink(t *testing.T) {
 	t.Parallel()
-	app := vukemtest.New(t, bootstrap.New, vukemtest.Options{Env: vukemtest.FakeSocial(social.User{
+	app := newSaaSApp(t, vukemtest.FakeSocial(social.User{
 		ID: "google-owner", Email: "OWNER@example.com", EmailVerified: true, Name: "Owner",
-	})})
+	}))
 	newVerifiedUser(t, app, "Existing owner", "owner@example.com")
 	financeGoogleSignIn(t, app.Client(t)).AssertRedirect("/dashboard")
 	vukemtest.AssertDatabaseCount(t, app, "users", 1)
@@ -45,9 +44,9 @@ func TestSecurity_FinanceGoogleVerifiedLink(t *testing.T) {
 
 func TestSecurity_FinanceGoogleRejectsUnverifiedClaim(t *testing.T) {
 	t.Parallel()
-	app := vukemtest.New(t, bootstrap.New, vukemtest.Options{Env: vukemtest.FakeSocial(social.User{
+	app := newSaaSApp(t, vukemtest.FakeSocial(social.User{
 		ID: "attacker", Email: "owner@example.com",
-	})})
+	}))
 	newVerifiedUser(t, app, "Owner", "owner@example.com")
 	financeGoogleSignIn(t, app.Client(t)).AssertStatus(422)
 	vukemtest.AssertDatabaseCount(t, app, "social_accounts", 0)
@@ -55,9 +54,9 @@ func TestSecurity_FinanceGoogleRejectsUnverifiedClaim(t *testing.T) {
 
 func TestSecurity_FinanceGoogleRequiresTwoFactor(t *testing.T) {
 	t.Parallel()
-	app := vukemtest.New(t, bootstrap.New, vukemtest.Options{Env: vukemtest.FakeSocial(social.User{
+	app := newSaaSApp(t, vukemtest.FakeSocial(social.User{
 		ID: "google-2fa", Email: "owner@example.com", EmailVerified: true,
-	})})
+	}))
 	u := newVerifiedUser(t, app, "Owner", "owner@example.com")
 	db, err := app.DB()
 	if err != nil {

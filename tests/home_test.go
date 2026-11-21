@@ -2,16 +2,12 @@ package tests
 
 import (
 	"testing"
-
-	"github.com/AlexGalhardo/vukem/vukemtest"
-
-	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 )
 
 func TestHome(t *testing.T) {
 	t.Parallel()
 
-	app := vukemtest.New(t, bootstrap.New)
+	app := newSaaSApp(t)
 
 	// First visit: HTML with the page object; Inertia visits: JSON.
 	app.Client(t).Get("/").AssertOK().AssertInertia("Home").HasProp("appName")
@@ -22,7 +18,7 @@ func TestHome(t *testing.T) {
 func TestErrorPage(t *testing.T) {
 	t.Parallel()
 
-	app := vukemtest.New(t, bootstrap.New)
+	app := newSaaSApp(t)
 
 	// Errors on Inertia visits render resources/js/pages/Error; full page
 	// loads keep the HTML status page.

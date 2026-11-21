@@ -5,11 +5,9 @@ import (
 	"testing"
 
 	"github.com/AlexGalhardo/vukem/i18n"
-	"github.com/AlexGalhardo/vukem/vukemtest"
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/mail"
-	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 )
 
 // wantLocales are the locales install:auth wrote catalogs for
@@ -27,7 +25,7 @@ const fallbackLocale = "en"
 func TestAuthMessages(t *testing.T) {
 	t.Parallel()
 
-	app := vukemtest.New(t, bootstrap.New)
+	app := newSaaSApp(t)
 
 	acc, err := accounts.New(app.App)
 	if err != nil {
