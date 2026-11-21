@@ -410,6 +410,12 @@ func moveCategoryUse(
 		return err
 	}
 
+	// A transaction in the trash can be restored: it must come back in the target.
+	if _, err := workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("category_id", from.ID).
+		WhereNull("transfer_uid").Update(ctx, orm.Set{"category_id": to}); err != nil {
+		return err
+	}
+
 	if !hasBudget {
 		return nil
 	}

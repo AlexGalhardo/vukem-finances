@@ -239,7 +239,13 @@ func syncTagUIDs(ctx context.Context, tx *database.Tx, transactionID int64) erro
 		return err
 	}
 
-	_, err = workspaces.Scoped[models.Transaction](ctx, tx).Where("id", transactionID).
+	if _, err = workspaces.Scoped[models.Transaction](ctx, tx).Where("id", transactionID).
+		Update(ctx, orm.Set{"tag_uids": string(raw)}); err != nil {
+		return err
+	}
+
+	// A transaction in the trash can be restored, so it is kept in step too.
+	_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("id", transactionID).
 		Update(ctx, orm.Set{"tag_uids": string(raw)})
 
 	return err
