@@ -3,14 +3,11 @@ package finance
 import (
 	"context"
 	"database/sql"
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
-	"time"
 
 	"github.com/AlexGalhardo/vukem/database"
 	"github.com/AlexGalhardo/vukem/errs"
@@ -34,70 +31,12 @@ var (
 	errMapping      = errs.New(http.StatusUnprocessableEntity, "Choose the date, description and amount columns.")
 )
 
-// DateFormats are the formats a statement's dates may use (Go layouts).
-var DateFormats = []string{"2006-01-02", "02/01/2006", "01/02/2006", "02.01.2006"}
-
-// Mapping says which CSV column holds what. Columns are header names. A
-// negative amount is an expense, a positive one income, unless Invert.
-type Mapping struct {
-	Date        string `json:"date"`
-	Description string `json:"description"`
-	Amount      string `json:"amount"`
-	Category    string `json:"category"`
-	DateFormat  string `json:"dateFormat"`
-	Invert      bool   `json:"invert"`
-}
-
 // Preview is what the mapping step shows: the header and a few rows.
 type Preview struct {
 	ImportID int64      `json:"importId"`
 	Filename string     `json:"filename"`
 	Headers  []string   `json:"headers"`
 	Rows     [][]string `json:"rows"`
-}
-
-func readCSV(content string) ([]string, [][]string, error) {
-	// Statements from European banks use ";": pick it when the header has more of it.
-	head, _, _ := strings.Cut(content, "\n")
-	r := csv.NewReader(strings.NewReader(content))
-	r.Comma = ','
-
-	if strings.Count(head, ";") > strings.Count(head, ",") {
-		r.Comma = ';'
-	}
-
-	r.FieldsPerRecord = -1
-	r.LazyQuotes = true
-
-	var rows [][]string
-
-	for {
-		rec, err := r.Read()
-		if errors.Is(err, io.EOF) {
-			break
-		}
-
-		if err != nil {
-			return nil, nil, errImportCSV
-		}
-
-		if len(rows) >= maxImportRows+1 {
-			break
-		}
-
-		rows = append(rows, rec)
-	}
-
-	if len(rows) < 2 {
-		return nil, nil, errImportCSV
-	}
-
-	headers := rows[0]
-	for i := range headers {
-		headers[i] = strings.TrimSpace(strings.TrimPrefix(headers[i], string(rune(0xFEFF))))
-	}
-
-	return headers, rows[1:], nil
 }
 
 // StartImport stores an uploaded statement for account (Pro) and returns the
@@ -288,26 +227,9 @@ func (s *Service) importRows(
 		return nil, 0, nil, errMapping
 	}
 
-	headers, rows, err := readCSV(imp.Content)
+	rows, err := CSVParser{Mapping: m}.Parse([]byte(imp.Content))
 	if err != nil {
 		return nil, 0, nil, err
-	}
-
-	di, ni, ai, ci := indexOf(
-		headers,
-		m.Date,
-	), indexOf(
-		headers,
-		m.Description,
-	), indexOf(
-		headers,
-		m.Amount,
-	), indexOf(
-		headers,
-		m.Category,
-	)
-	if di < 0 || ni < 0 || ai < 0 {
-		return nil, 0, nil, errMapping
 	}
 
 	cats, err := s.Categories(ctx)
@@ -316,6 +238,7 @@ func (s *Service) importRows(
 	}
 
 	byName := map[string]models.Category{}
+
 	for _, c := range cats {
 		if c.ArchivedAt.Valid {
 			continue
@@ -324,19 +247,18 @@ func (s *Service) importRows(
 		byName[strings.ToLower(c.Name)+"/"+c.Kind] = c
 	}
 
-	for i, row := range rows {
-		t, err := rowToTransaction(row, di, ni, ai, ci, m, imp, byName)
-		if err != nil {
+	for _, row := range rows {
+		if row.Problem != "" {
 			bad++
 
 			if len(notes) < 5 {
-				notes = append(notes, fmt.Sprintf("line %d: %v", i+2, err))
+				notes = append(notes, fmt.Sprintf("line %d: %s", row.Line, row.Problem))
 			}
 
 			continue
 		}
 
-		made = append(made, t)
+		made = append(made, rowToTransaction(row, imp, byName))
 	}
 
 	err = s.DB.Tx(ctx, func(tx *database.Tx) error {
@@ -352,41 +274,19 @@ func (s *Service) importRows(
 	return made, bad, notes, err
 }
 
-func rowToTransaction(
-	row []string, di, ni, ai, ci int, m Mapping, imp models.Import, cats map[string]models.Category,
-) (models.Transaction, error) {
-	if len(row) <= max(di, ni, ai) {
-		return models.Transaction{}, errors.New("too few columns")
-	}
-
-	date, err := time.Parse(m.DateFormat, strings.TrimSpace(row[di]))
-	if err != nil {
-		return models.Transaction{}, errors.New("bad date")
-	}
-
-	cents, err := ParseAmount(row[ai])
-	if err != nil || cents == 0 {
-		return models.Transaction{}, errors.New("bad amount")
-	}
-
-	if m.Invert {
-		cents = -cents
-	}
-
+func rowToTransaction(row StatementRow, imp models.Import, cats map[string]models.Category) models.Transaction {
 	t := models.Transaction{
-		AccountID: imp.AccountID, Description: strings.TrimSpace(row[ni]), OccurredOn: date.Format(isoDate),
-		ImportID: sql.Null[int64]{V: imp.ID, Valid: true}, Kind: models.KindIncome, AmountCents: cents,
+		AccountID: imp.AccountID, Description: row.Description, OccurredOn: row.Date,
+		ImportID: sql.Null[int64]{V: imp.ID, Valid: true}, Kind: models.KindIncome, AmountCents: row.Cents,
 	}
 
-	if cents < 0 {
-		t.Kind, t.AmountCents = models.KindExpense, -cents
+	if row.Cents < 0 {
+		t.Kind, t.AmountCents = models.KindExpense, -row.Cents
 	}
 
-	if ci >= 0 && ci < len(row) {
-		if c, ok := cats[strings.ToLower(strings.TrimSpace(row[ci]))+"/"+t.Kind]; ok {
-			t.CategoryID = sql.Null[int64]{V: c.ID, Valid: true}
-		}
+	if c, ok := cats[strings.ToLower(row.Category)+"/"+t.Kind]; ok && row.Category != "" {
+		t.CategoryID = sql.Null[int64]{V: c.ID, Valid: true}
 	}
 
-	return t, nil
+	return t
 }
