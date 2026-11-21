@@ -3,6 +3,7 @@ package finance
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 	"time"
 
@@ -203,6 +204,9 @@ func (s *Service) SendDueMonthlySummaries(ctx context.Context, now time.Time) er
 		return err
 	}
 
+	// One workspace that cannot be mailed must not starve the ones after it.
+	var failed error
+
 	for _, ws := range all {
 		loc, err := workspaces.LoadZone(ws.Timezone)
 		if err != nil {
@@ -215,11 +219,11 @@ func (s *Service) SendDueMonthlySummaries(ctx context.Context, now time.Time) er
 		}
 
 		if err := s.sendOnce(workspaces.WithTenant(ctx, ws.ID), PreviousMonth(local)); err != nil {
-			return err
+			failed = errors.Join(failed, fmt.Errorf("monthly summary of workspace %d: %w", ws.ID, err))
 		}
 	}
 
-	return nil
+	return failed
 }
 
 // sendOnce claims the marker of month for the workspace of ctx and sends its
