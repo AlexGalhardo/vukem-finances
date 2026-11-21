@@ -116,24 +116,13 @@ func Finance(r *router.Router, app *vukem.App) error {
 		g.Use(required, verified, ws.Middleware(), ws.Require(workspaces.AbilityRead), reads, writes,
 			shareWorkspace(ws, acc, admins))
 
-		g.Get("/dashboard", h.Dashboard).Name("dashboard")
-		g.Get("/transactions", h.Transactions).Name("transactions.index")
-		g.Post("/transactions", h.StoreTransaction).Name("transactions.store")
-		g.Patch("/transactions/{transaction}", h.UpdateTransaction).Name("transactions.update")
-		g.Delete("/transactions/{transaction}", h.DestroyTransaction).Name("transactions.destroy")
-		g.Get("/accounts", h.Accounts).Name("accounts.index")
-		g.Post("/accounts", h.StoreAccount).Name("accounts.store")
-		g.Delete("/accounts/{account}", h.DestroyAccount).Name("accounts.destroy")
-		g.Get("/categories", h.Categories).Name("categories.index")
-		g.Post("/categories", h.StoreCategory).Name("categories.store")
-		g.Get("/budgets", h.Budgets).Name("budgets.index")
-		g.Post("/budgets", h.StoreBudget).Name("budgets.store")
-		g.Delete("/budgets/{budget}", h.DestroyBudget).Name("budgets.destroy")
-		g.Get("/import", h.Import).Name("import.index")
-		g.Post("/import", h.UploadImport).Name("import.upload").Use(imports)
-		g.Post("/import/{import}", h.ConfirmImport).Name("import.confirm").Use(imports)
-		g.Get("/workspace", h.Workspace).Name("workspace.show")
-		g.Put("/workspace", h.UpdateWorkspace).Name("workspace.update")
+		financeDashboard(g, h)
+		financeTransactions(g, h)
+		financeAccounts(g, h)
+		financeCategories(g, h)
+		financeBudgets(g, h)
+		financeImports(g, h, imports)
+		financeWorkspace(g, h)
 
 		// One implicit workspace in the personal edition: nothing to create or switch to.
 		if ws.Edition.SaaS() {
