@@ -3,7 +3,7 @@ import { type FormEvent, useState } from "react";
 
 import Field from "../components/Field";
 import { Card, Select, danger, primary } from "../components/ui";
-import type { Page } from "../page-props";
+import type { Page, SharedProps } from "../page-props";
 
 type InviteLink = { url: string; expiresAt: string };
 
@@ -34,7 +34,9 @@ function InviteLinkNotice({ link }: { link: InviteLink }) {
 }
 
 export default function Workspace({ workspaceDetails, members, invites, limits, canManage }: Page<"Workspace">) {
-  const inviteLink = usePage().flash?.inviteLink as InviteLink | undefined;
+  const page = usePage<SharedProps>();
+  const inviteLink = page.flash?.inviteLink as InviteLink | undefined;
+  const personal = page.props.workspace?.edition === "personal";
   const settings = useForm({ name: workspaceDetails.name, currency: workspaceDetails.currency });
   const invite = useForm({ email: "", role: "member" });
   const create = useForm({ name: "", currency: "USD" });
@@ -91,7 +93,7 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
             </li>
           ))}
         </ul>
-        {limits.members >= 0 && (
+        {!personal && limits.members >= 0 && (
           <p className="mt-3 text-sm text-zinc-500">
             The {limits.plan} plan allows {limits.members} member.{" "}
             <Link href="/billing" className="text-indigo-600 hover:underline dark:text-indigo-400">
@@ -118,17 +120,19 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
           </form>
         </Card>
       )}
-      <Card title="Create another workspace">
-        <form onSubmit={add} className="grid gap-3 sm:grid-cols-3">
-          <Field label="Name" required value={create.data.name} onChange={(e) => create.setData("name", e.target.value)} error={create.errors.name} />
-          <Field label="Currency (ISO 4217)" required maxLength={3} value={create.data.currency} onChange={(e) => create.setData("currency", e.target.value.toUpperCase())} error={create.errors.currency} />
-          <div className="self-end">
-            <button type="submit" disabled={create.processing} className={primary}>
-              Create
-            </button>
-          </div>
-        </form>
-      </Card>
+      {!personal && (
+        <Card title="Create another workspace">
+          <form onSubmit={add} className="grid gap-3 sm:grid-cols-3">
+            <Field label="Name" required value={create.data.name} onChange={(e) => create.setData("name", e.target.value)} error={create.errors.name} />
+            <Field label="Currency (ISO 4217)" required maxLength={3} value={create.data.currency} onChange={(e) => create.setData("currency", e.target.value.toUpperCase())} error={create.errors.currency} />
+            <div className="self-end">
+              <button type="submit" disabled={create.processing} className={primary}>
+                Create
+              </button>
+            </div>
+          </form>
+        </Card>
+      )}
     </>
   );
 }

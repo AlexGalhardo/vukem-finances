@@ -197,6 +197,7 @@ func shareWorkspace(
 				return pages.SharedWorkspace{
 					Current: pages.WorkspaceView{ID: cur.ID, Name: cur.Name, Currency: cur.Currency},
 					All:     all, Role: workspaces.Role(ctx), Plan: lim.Plan, Admin: admins.Has(&u),
+					Edition: ws.Edition.String(),
 				}, nil
 			})
 

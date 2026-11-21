@@ -38,6 +38,7 @@ type SharedWorkspace struct {
 	Role    string          `json:"role"`
 	Plan    string          `json:"plan"`
 	Admin   bool            `json:"admin"`
+	Edition string          `json:"edition"` // personal or saas
 }
 
 // DashboardProps are the props of Dashboard.

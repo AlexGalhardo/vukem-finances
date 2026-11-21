@@ -12,6 +12,8 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/controllers"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
+	"github.com/AlexGalhardo/vukem-finances/config"
 	"github.com/AlexGalhardo/vukem-finances/resources"
 )
 
@@ -23,9 +25,30 @@ func Web(r *router.Router, app *vukem.App) error {
 
 	r.UseServer(middleware.Gzip()) // proxies in front of the app may not compress
 	r.UseServer(middleware.StaticFS(resources.Public(), middleware.StaticConfig{Prefix: "/"}))
-	r.Use(app.Inertia.Middleware, shareProps(app))
+	edition, err := config.LoadEdition(app.Source)
+	if err != nil {
+		return err
+	}
 
-	r.Get("/", controllers.Home).Name("home")
+	r.Use(app.Inertia.Middleware, shareProps(app, edition))
+
+	// The personal edition has no landing page.
+	if edition.Personal() {
+		acc, err := accounts.New(app)
+		if err != nil {
+			return err
+		}
+
+		ws, err := workspaces.New(app)
+		if err != nil {
+			return err
+		}
+
+		r.Get("/", controllers.PersonalHome(acc, ws)).Name("home")
+	} else {
+		r.Get("/", controllers.Home).Name("home")
+	}
+
 	r.Post("/locale", setLocale).Name("locale")
 
 	return nil
@@ -62,10 +85,11 @@ func financeLocale(c *web.Ctx) string {
 }
 
 // shareProps adds the props every page receives (usePage().props).
-func shareProps(app *vukem.App) func(http.Handler) http.Handler {
+func shareProps(app *vukem.App, edition config.Edition) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			inertia.Share(r.Context(), "appName", app.Config.Name)
+			inertia.Share(r.Context(), "edition", edition.String())
 			inertia.Share(r.Context(), "locale", sharedLocale(r))
 			inertia.Share(r.Context(), "googleEnabled", accounts.GoogleEnabled(app))
 			next.ServeHTTP(w, r)

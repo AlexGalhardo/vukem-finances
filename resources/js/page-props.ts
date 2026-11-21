@@ -122,6 +122,7 @@ export type SharedWorkspace = {
   admin: boolean;
   all: WorkspaceView[];
   current: WorkspaceView;
+  edition: string;
   plan: string;
   role: string;
 };
@@ -262,6 +263,7 @@ export type SetupProps = {
 export type SharedProps = {
   appName: string;
   auth?: SharedAuth | null;
+  edition: string;
   errors: Record<string, string | Record<string, string>>;
   googleEnabled: boolean;
   locale: string;
