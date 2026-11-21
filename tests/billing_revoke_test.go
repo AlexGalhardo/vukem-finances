@@ -1,11 +1,19 @@
 package tests
 
 import (
+	"bytes"
+	"encoding/json"
+	"net/http"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/AlexGalhardo/vukem/contrib/stripe"
 	"github.com/AlexGalhardo/vukem/vukemtest"
+
+	"github.com/AlexGalhardo/vukem-finances/app/billing"
+	"github.com/AlexGalhardo/vukem-finances/app/models"
 )
 
 // proViaStripe signs a workspace up and makes it Pro through the same webhook
@@ -261,4 +269,54 @@ func TestDisputeEventsOutOfOrder(t *testing.T) {
 	disputeEvent(t, app, "evt_closed", "charge.dispute.closed")
 	disputeEvent(t, app, "evt_created", "charge.dispute.created")
 	assertPlan(t, ana, "pro")
+}
+
+func TestStripeWebhookRefusesAStaleSignature(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 900)
+
+	payload, err := json.Marshal(map[string]any{
+		"id": "evt_old", "type": "charge.refunded", "created": time.Now().Unix(),
+		"data": map[string]any{"object": map[string]any{"id": "ch_1"}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Signed correctly, but ten minutes ago: a captured delivery cannot be replayed later.
+	old := stripe.SignForTest(payload, stripeSecret, time.Now().Add(-10*time.Minute))
+	res := app.Client(t).WithHeader("Stripe-Signature", old).
+		Do(http.MethodPost, billing.WebhookPath, bytes.NewReader(payload), "application/json")
+
+	if res.Status() < 400 {
+		t.Errorf("a stale signature answered %d", res.Status())
+	}
+
+	assertPlan(t, ana, "pro")
+
+	if n := len(f.canceled()); n != 0 {
+		t.Errorf("a stale event cancelled the subscription %d times", n)
+	}
+}
+
+func TestOnlyTheOwnerStartsStripeCheckoutOrOpensThePortal(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	_, before, _ := f.sent() // the owner's own checkout of the setup
+
+	for _, role := range []string{models.RoleAdmin, models.RoleMember, models.RoleViewer} {
+		u := newVerifiedUser(t, app, role, role+"@example.com")
+		join(t, app, ana, u, role)
+		c := browser(t, app, u, ana.Workspace.ID)
+
+		c.PostForm("/billing/checkout/pro", nil).AssertForbidden()
+		c.PostForm("/billing/portal", nil).AssertForbidden()
+	}
+
+	if _, checkouts, portals := f.sent(); len(checkouts) != len(before) || len(portals) != 0 {
+		t.Errorf("a non-owner reached Stripe: %d checkouts, %d portals", len(checkouts), len(portals))
+	}
 }
