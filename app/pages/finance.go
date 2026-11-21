@@ -17,6 +17,7 @@ var (
 	CardStatement  = inertia.Define[CardStatementProps]("CardStatement")
 	Categories     = inertia.Define[CategoriesProps]("Categories")
 	Budgets        = inertia.Define[BudgetsProps]("Budgets")
+	Recurrences    = inertia.Define[RecurrencesProps]("Recurrences")
 	Import         = inertia.Define[ImportProps]("Import")
 	Workspace      = inertia.Define[WorkspaceProps]("Workspace")
 	InviteAccept   = inertia.Define[InviteAcceptProps]("InviteAccept")
@@ -47,7 +48,18 @@ type SharedWorkspace struct {
 
 // DashboardProps are the props of Dashboard.
 type DashboardProps struct {
-	Dashboard finance.Dashboard `json:"dashboard"`
+	Dashboard finance.Dashboard      `json:"dashboard"`
+	Upcoming  []finance.UpcomingItem `json:"upcoming"`
+}
+
+// RecurrencesProps are the props of Recurrences: the rules and what is due
+// in the next 30 days.
+type RecurrencesProps struct {
+	Recurrences []models.Recurrence    `json:"recurrences"`
+	Upcoming    []finance.UpcomingItem `json:"upcoming"`
+	Accounts    []models.Account       `json:"accounts"`
+	Categories  []models.Category      `json:"categories"`
+	Today       string                 `json:"today"`
 }
 
 // TransactionsProps are the props of Transactions.

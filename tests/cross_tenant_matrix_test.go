@@ -97,6 +97,17 @@ var crossTenantCases = map[string]crossTenantCase{
 		},
 	},
 	"budgets.destroy": {method: http.MethodDelete, table: "budgets", param: "budget"},
+	"recurrences.update": {
+		method: http.MethodPatch, table: "recurrences", param: "recurrence",
+		body: func(ids map[string]int64) map[string]any {
+			return map[string]any{
+				"accountId": strconv.FormatInt(ids["bobAccount"], 10), "kind": "expense", "amount": "1.00", "frequency": "monthly",
+				"interval": "1", "startDate": "2026-01-10",
+			}
+		},
+	},
+	"recurrences.destroy":  {method: http.MethodDelete, table: "recurrences", param: "recurrence"},
+	"installments.destroy": {method: http.MethodDelete, table: "transactions", param: "transaction"},
 	"import.confirm": {
 		method: http.MethodPost, table: "imports", param: "import",
 		body: func(map[string]int64) map[string]any {
@@ -148,6 +159,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PostForm("/cards", map[string][]string{
 		"name": {"Visa"}, "limit": {"1000.00"}, "closingDay": {"10"}, "dueDay": {"20"},
 	}).AssertRedirect("/cards")
+	ana.Client.PostForm("/recurrences", ruleForm(accAna, "2027-01-10")).AssertRedirect("/recurrences")
 	ana.Client.PostForm("/ai/key", map[string][]string{"provider": {"anthropic"}, "apiSecret": {"sk-placeholder-matrix-0123456789"}}).
 		AssertRedirect("/ai")
 
@@ -159,6 +171,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 		"credential":  firstOf[models.AICredential](t, app, ana, "").ID,
 		"user":        cara.ID,
 		"card":        firstOf[models.CreditCard](t, app, ana, "").ID,
+		"recurrence":  firstOf[models.Recurrence](t, app, ana, "").ID,
 		"bobAccount":  firstAccount(t, app, bob),
 		"category":    categoryID(t, app, ana, "Groceries"),
 		"bobCategory": categoryID(t, app, bob, "Groceries"),
@@ -175,7 +188,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
 
 	tables := map[string]int64{}
-	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "access_tokens": true} {
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "recurrences": true, "access_tokens": true} {
 		tables[table] = rowCount(t, app, table)
 	}
 

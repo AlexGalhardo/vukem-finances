@@ -256,6 +256,29 @@ export type PreviewRow = {
   problem: string;
 };
 
+export type Recurrence = {
+  account_id: number;
+  active: boolean;
+  amount_cents: number;
+  category_id: NullInt64;
+  created_at: string;
+  deleted_at?: string | null;
+  description: string;
+  end_date: NullString;
+  frequency: string;
+  generated_through: NullString;
+  id: number;
+  interval: number;
+  kind: string;
+  last_error: NullString;
+  max_count: NullInt64;
+  start_date: string;
+  uid: string;
+  updated_at: string;
+  version: number;
+  workspace_id: number;
+};
+
 export type Settings = {
   enabled: boolean;
   enabledAt: string;
@@ -360,8 +383,13 @@ export type TxRow = {
   deleted_at?: string | null;
   description: string;
   id: number;
+  installment_group_uid: NullString;
+  installment_no: NullInt64;
+  installment_total: NullInt64;
   kind: string;
   occurred_on: string;
+  occurrence_on: NullString;
+  recurrence_uid: NullString;
   statement_ref: NullString;
   tag_uids: string;
   tags: TagRef[];
@@ -373,6 +401,19 @@ export type TxRow = {
   updated_at: string;
   version: number;
   workspace_id: number;
+};
+
+export type UpcomingItem = {
+  accountId: number;
+  amountCents: number;
+  date: string;
+  description: string;
+  installmentNo: number;
+  installmentTotal: number;
+  kind: string;
+  recurrenceId: number;
+  source: string;
+  transactionId: number;
 };
 
 export type WorkspaceView = {
@@ -497,6 +538,7 @@ export type CategoriesProps = {
 
 export type DashboardProps = {
   dashboard: Dashboard;
+  upcoming: UpcomingItem[];
 };
 
 export type HomeProps = Record<string, never>;
@@ -516,6 +558,14 @@ export type InviteAcceptProps = {
 export type InviteRegisterProps = {
   email: string;
   token: string;
+};
+
+export type RecurrencesProps = {
+  accounts: Account[];
+  categories: Category[];
+  recurrences: Recurrence[];
+  today: string;
+  upcoming: UpcomingItem[];
 };
 
 export type SetupProps = {
@@ -563,8 +613,8 @@ export type WorkspaceProps = {
 
 /** PageProps maps every typed page component to its props. */
 export interface PageProps {
-  AI: AIProps;
-  Accounts: AccountsProps;
+  "AI": AIProps;
+  "Accounts": AccountsProps;
   "Admin/Dashboard": AdminDashboardProps;
   "Admin/ResourceList": AdminResourceListProps;
   "Admin/ResourceShow": AdminResourceShowProps;
@@ -577,20 +627,21 @@ export interface PageProps {
   "Auth/TwoFactorChallenge": AuthTwoFactorChallengeProps;
   "Auth/TwoFactor": AuthTwoFactorProps;
   "Auth/VerifyEmail": AuthVerifyEmailProps;
-  Billing: BillingProps;
-  Budgets: BudgetsProps;
-  CardStatement: CardStatementProps;
-  Cards: CardsProps;
-  Categories: CategoriesProps;
-  Dashboard: DashboardProps;
-  Home: HomeProps;
-  Import: ImportProps;
-  InviteAccept: InviteAcceptProps;
-  InviteRegister: InviteRegisterProps;
-  Setup: SetupProps;
-  Tokens: TokensProps;
-  Transactions: TransactionsProps;
-  Workspace: WorkspaceProps;
+  "Billing": BillingProps;
+  "Budgets": BudgetsProps;
+  "CardStatement": CardStatementProps;
+  "Cards": CardsProps;
+  "Categories": CategoriesProps;
+  "Dashboard": DashboardProps;
+  "Home": HomeProps;
+  "Import": ImportProps;
+  "InviteAccept": InviteAcceptProps;
+  "InviteRegister": InviteRegisterProps;
+  "Recurrences": RecurrencesProps;
+  "Setup": SetupProps;
+  "Tokens": TokensProps;
+  "Transactions": TransactionsProps;
+  "Workspace": WorkspaceProps;
 }
 
 export type PageName = keyof PageProps;

@@ -278,3 +278,58 @@ var TokenSchema = z.Struct[Token](z.Shape{
 	"scopes": z.Slice(z.String().Trim().Max(40)).Min(1).Max(40),
 	"days":   z.String().Trim().Min(1).Max(4),
 })
+
+// Recurrence is the input of the recurring rule form. Interval and MaxCount
+// arrive as text like the other numbers; an empty MaxCount means no limit.
+type Recurrence struct {
+	AccountID   string `json:"accountId"   form:"accountId"`
+	CategoryID  string `json:"categoryId"  form:"categoryId"`
+	Kind        string `json:"kind"        form:"kind"`
+	Amount      string `json:"amount"      form:"amount"`
+	Description string `json:"description" form:"description"`
+	Frequency   string `json:"frequency"   form:"frequency"`
+	Interval    string `json:"interval"    form:"interval"`
+	StartDate   string `json:"startDate"   form:"startDate"`
+	EndDate     string `json:"endDate"     form:"endDate"`
+	MaxCount    string `json:"maxCount"    form:"maxCount"`
+	Active      bool   `json:"active"      form:"active"`
+	Backfill    bool   `json:"backfill"    form:"backfill"`
+}
+
+// RecurrenceSchema validates Recurrence.
+var RecurrenceSchema = z.Struct[Recurrence](z.Shape{
+	"accountId":   z.String().Trim().Min(1).Max(20),
+	"categoryId":  z.String().Trim().Max(20).Optional(),
+	"kind":        z.String().Trim().Min(1).Max(20),
+	"amount":      z.String().Trim().Min(1).Max(30),
+	"description": z.String().Trim().Max(200).Optional(),
+	"frequency":   z.String().Trim().Min(1).Max(20),
+	"interval":    z.String().Trim().Min(1).Max(6),
+	"startDate":   z.String().Trim().Min(10).Max(10),
+	"endDate":     z.String().Trim().Max(10).Optional(),
+	"maxCount":    z.String().Trim().Max(6).Optional(),
+	"active":      z.Bool().Optional(),
+	"backfill":    z.Bool().Optional(),
+})
+
+// Installment is the input of the installment purchase form.
+type Installment struct {
+	AccountID   string   `json:"accountId"   form:"accountId"`
+	CategoryID  string   `json:"categoryId"  form:"categoryId"`
+	Total       string   `json:"total"       form:"total"`
+	Parts       string   `json:"parts"       form:"parts"`
+	FirstDate   string   `json:"firstDate"   form:"firstDate"`
+	Description string   `json:"description" form:"description"`
+	Tags        []string `json:"tags"        form:"tags"`
+}
+
+// InstallmentSchema validates Installment.
+var InstallmentSchema = z.Struct[Installment](z.Shape{
+	"accountId":   z.String().Trim().Min(1).Max(20),
+	"categoryId":  z.String().Trim().Max(20).Optional(),
+	"total":       z.String().Trim().Min(1).Max(30),
+	"parts":       z.String().Trim().Min(1).Max(3),
+	"firstDate":   z.String().Trim().Min(10).Max(10),
+	"description": z.String().Trim().Max(200).Optional(),
+	"tags":        z.Slice(z.String().Trim().Max(120)).Max(40).Optional(),
+})
