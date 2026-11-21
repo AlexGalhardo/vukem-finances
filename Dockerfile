@@ -2,7 +2,9 @@
 # Railway, Fly, Render and plain Docker build it as is:
 # https://vukem.dev/docs/deployment/docker-and-railway
 
-FROM oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a AS assets
+# The assets and the static Go binary build on the runner's own architecture:
+# under QEMU the arm64 image takes about an hour instead of minutes.
+FROM --platform=$BUILDPLATFORM oven/bun:1.4.4-alpine@sha256:4cf82f5686b196504fe119db3fcd9185b191f82ece82c40680e597228ec6070a AS assets
 WORKDIR /src
 COPY package.json bun.lock* ./
 # The lockfile is a required build input: the image installs exactly the
@@ -18,7 +20,8 @@ RUN if ! ls bun.lock* >/dev/null 2>&1; then \
 COPY . .
 RUN bun run build
 
-FROM golang:1.27.4-alpine3.24@sha256:0a5f7fe796599ff487605987432e7619ae45beeb2fba4c2ce0b907879932aebf AS build
+FROM --platform=$BUILDPLATFORM golang:1.27.4-alpine3.24@sha256:0a5f7fe796599ff487605987432e7619ae45beeb2fba4c2ce0b907879932aebf AS build
+ARG TARGETOS TARGETARCH
 WORKDIR /src
 ENV CGO_ENABLED=0
 COPY go.mod go.sum ./
@@ -30,7 +33,7 @@ ARG VERSION=0.0.0-dev
 # Same tags as vukem build: .buildtags lists them (one per line or
 # comma-separated, "#" comments); --minimal apps put vukem_nosqlite there.
 RUN tags="$(sed 's/#.*//' .buildtags 2>/dev/null | tr -s ', \t\r\n' ',' | sed 's/^,//; s/,$//')" \
-	&& go build -trimpath \
+	&& GOOS="$TARGETOS" GOARCH="$TARGETARCH" go build -trimpath \
 		-ldflags="-s -w -X github.com/AlexGalhardo/vukem-finances/config.Version=${VERSION}" \
 		-tags "$tags" -o /out/app ./cmd/app
 
