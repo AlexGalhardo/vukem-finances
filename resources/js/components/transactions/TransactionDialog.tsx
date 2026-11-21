@@ -42,6 +42,7 @@ export default function TransactionDialog({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
+        className="max-h-[90dvh] overflow-y-auto"
         onOpenAutoFocus={(event) => {
           event.preventDefault();
           amountRef.current?.focus();
