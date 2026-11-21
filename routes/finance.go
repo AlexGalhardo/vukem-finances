@@ -41,15 +41,20 @@ func Finance(r *router.Router, app *vukem.App) error {
 		return err
 	}
 
-	b, err := billing.New(app, ws)
-	if err != nil {
-		return err
-	}
+	// The personal edition has no billing: no Stripe settings are read, and
+	// the billing pages and the Stripe webhook are not registered (404).
+	var b *billing.Billing
 
-	// The webhooks run before the session and CSRF middleware: Stripe and
-	// Resend authenticate with a signature, not with cookies.
-	r.UseServer(b.Webhook())
-	events.Listen(app.Events, b.HandleWebhook)
+	if ws.Edition.SaaS() {
+		if b, err = billing.New(app, ws); err != nil {
+			return err
+		}
+
+		// The webhooks run before the session and CSRF middleware: Stripe and
+		// Resend authenticate with a signature, not with cookies.
+		r.UseServer(b.Webhook())
+		events.Listen(app.Events, b.HandleWebhook)
+	}
 
 	resend, err := appmail.ResendWebhook(app.Source.Get("RESEND_WEBHOOK_SECRET"), ws.DB, app.Log)
 	if err != nil {
@@ -59,7 +64,6 @@ func Finance(r *router.Router, app *vukem.App) error {
 	r.UseServer(resend)
 
 	h := ledger.New(ws, fin)
-	bh := ledger.NewBilling(h, b)
 	admins := admin.NewAdmins(app.Source.Get("ADMIN_EMAILS"))
 	required := auth.Required(acc.Web)
 	verified := auth.Verified(acc.Web)
@@ -95,13 +99,19 @@ func Finance(r *router.Router, app *vukem.App) error {
 		g.Post("/workspaces/{workspace}/switch", h.SwitchWorkspace).Name("workspaces.switch")
 		g.Post("/workspace/invites", h.Invite).Name("workspace.invite")
 		g.Delete("/workspace/members/{user}", h.RemoveMember).Name("workspace.members.destroy")
-		g.Get("/billing", bh.Show).Name("billing.show")
-		g.Post("/billing/checkout/{plan}", bh.Checkout).Name("billing.checkout")
-		g.Post("/billing/portal", bh.Portal).Name("billing.portal")
+
+		if b != nil {
+			bh := ledger.NewBilling(h, b)
+			g.Get("/billing", bh.Show).Name("billing.show")
+			g.Post("/billing/checkout/{plan}", bh.Checkout).Name("billing.checkout")
+			g.Post("/billing/portal", bh.Portal).Name("billing.portal")
+		}
 	})
 
-	// The business overview of the admins (ADMIN_EMAILS): across workspaces.
-	r.Get("/admin/revenue", ledger.Revenue(h)).Name("admin.revenue").Use(required, verified, onlyAdmins(admins))
+	if ws.Edition.SaaS() {
+		// The business overview of the admins (ADMIN_EMAILS): across workspaces.
+		r.Get("/admin/revenue", ledger.Revenue(h)).Name("admin.revenue").Use(required, verified, onlyAdmins(admins))
+	}
 
 	return nil
 }
