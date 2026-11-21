@@ -47,6 +47,17 @@ export function addTag(tags: readonly string[], name: string): string[] {
   return [...tags, clean];
 }
 
+/** An installment purchase: the amount of the dialog is the total, the date is the first part. */
+export interface InstallmentDraft {
+  accountId: string;
+  categoryId: string;
+  total: string;
+  parts: string;
+  firstDate: string;
+  description: string;
+  tags: string[];
+}
+
 export interface TransferDraft {
   amount: string;
   fromAccountId: string;
@@ -126,7 +137,7 @@ export function readProblem(body: unknown, fallback: string): { message: string;
 export async function sendJSON(
   url: string,
   method: "POST" | "PATCH",
-  body: TransactionDraft | TransferDraft,
+  body: TransactionDraft | TransferDraft | InstallmentDraft,
   fallback: string,
 ): Promise<SubmitResult> {
   let response: Response;

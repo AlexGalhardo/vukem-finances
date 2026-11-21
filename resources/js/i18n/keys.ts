@@ -6,6 +6,7 @@ import type categories from "./en/categories";
 import type common from "./en/common";
 import type components from "./en/components";
 import type importPage from "./en/import";
+import type recurrences from "./en/recurrences";
 import type search from "./en/search";
 import type shell from "./en/shell";
 import type tokens from "./en/tokens";
@@ -21,6 +22,7 @@ export type Key =
   | keyof typeof common
   | keyof typeof components
   | keyof typeof importPage
+  | keyof typeof recurrences
   | keyof typeof search
   | keyof typeof shell
   | keyof typeof tokens
