@@ -329,6 +329,22 @@ func (b *Billing) HandleWebhook(ctx context.Context, r stripe.Received) error {
 
 		return b.SyncSubscription(ctx, sub.ID)
 
+	case "charge.refunded":
+		ch, err := stripe.Decode[charge](ev)
+		if err != nil {
+			return err
+		}
+
+		return b.handleRefund(ctx, ch.ID)
+
+	case "charge.dispute.created", "charge.dispute.closed":
+		d, err := stripe.Decode[dispute](ev)
+		if err != nil {
+			return err
+		}
+
+		return b.handleDispute(ctx, d.ID)
+
 	case "customer.subscription.trial_will_end":
 		sub, err := stripe.Decode[stripe.Subscription](ev)
 		if err != nil {
