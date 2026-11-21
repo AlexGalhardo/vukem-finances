@@ -3,6 +3,7 @@ package workspaces
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -40,7 +41,7 @@ func lockWorkspace(ctx context.Context, tx *database.Tx) error {
 // owner here: TransferOwnership is the only way the owner moves, so the
 // workspace has exactly one owner at all times. The caller needs the
 // members.manage ability.
-func (s *Service) ChangeRole(ctx context.Context, userID int64, role string) error {
+func (s *Service) ChangeRole(ctx context.Context, actor models.User, userID int64, role string) error {
 	if role == models.RoleOwner {
 		return errGrantOwner
 	}
@@ -63,9 +64,11 @@ func (s *Service) ChangeRole(ctx context.Context, userID int64, role string) err
 			return errOwnerRole
 		}
 
-		_, err = Scoped[models.Membership](ctx, tx).Where("id", m.ID).Update(ctx, orm.Set{"role": role})
+		if _, err = Scoped[models.Membership](ctx, tx).Where("id", m.ID).Update(ctx, orm.Set{"role": role}); err != nil {
+			return err
+		}
 
-		return err
+		return s.record(ctx, tx, actor.ID, AuditRoleChanged, fmt.Sprintf("user:%d %s->%s", userID, m.Role, role))
 	})
 }
 
@@ -106,10 +109,12 @@ func (s *Service) TransferOwnership(ctx context.Context, from models.User, toUse
 			return err
 		}
 
-		_, err = Scoped[models.Membership](ctx, tx).Where("id", target.ID).
-			Update(ctx, orm.Set{"role": models.RoleOwner})
+		if _, err = Scoped[models.Membership](ctx, tx).Where("id", target.ID).
+			Update(ctx, orm.Set{"role": models.RoleOwner}); err != nil {
+			return err
+		}
 
-		return err
+		return s.record(ctx, tx, from.ID, AuditOwnershipMoved, fmt.Sprintf("user:%d", toUserID))
 	})
 }
 
@@ -130,8 +135,10 @@ func (s *Service) Leave(ctx context.Context, u models.User) error {
 			return errOwnerLeaves
 		}
 
-		_, err = Scoped[models.Membership](ctx, tx).Where("id", m.ID).Delete(ctx)
+		if _, err = Scoped[models.Membership](ctx, tx).Where("id", m.ID).Delete(ctx); err != nil {
+			return err
+		}
 
-		return err
+		return s.record(ctx, tx, u.ID, AuditMemberLeft, fmt.Sprintf("user:%d", u.ID))
 	})
 }

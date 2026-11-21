@@ -33,7 +33,7 @@ function InviteLinkNotice({ link }: { link: InviteLink }) {
   );
 }
 
-export default function Workspace({ workspaceDetails, members, invites, limits, canManage }: Page<"Workspace">) {
+export default function Workspace({ workspaceDetails, members, invites, limits, canManage, audit }: Page<"Workspace">) {
   const page = usePage<SharedProps>();
   const inviteLink = page.flash?.inviteLink as InviteLink | undefined;
   const personal = page.props.workspace?.edition === "personal";
@@ -154,6 +154,22 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
               </button>
             </div>
           </form>
+        </Card>
+      )}
+      {canManage && (
+        <Card title="Activity">
+          {audit.length === 0 ? (
+            <p className="text-sm text-zinc-500">Nothing yet.</p>
+          ) : (
+            <ul className="divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
+              {audit.map((e) => (
+                <li key={e.id} className="py-2">
+                  <span className="font-medium">{e.actor}</span> {e.action} <span className="text-zinc-500">{e.subject}</span>
+                  <span className="float-right text-zinc-500">{e.createdAt}</span>
+                </li>
+              ))}
+            </ul>
+          )}
         </Card>
       )}
       {!personal && (
