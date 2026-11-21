@@ -8,10 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/AlexGalhardo/vukem/vukemtest"
-
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
-	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 )
 
 // Every page component in resources/js/pages has typed props in Go (the Error
@@ -21,7 +18,7 @@ import (
 func TestEveryPageIsTyped(t *testing.T) {
 	t.Parallel()
 
-	app := vukemtest.New(t, bootstrap.New)
+	app := newSaaSApp(t)
 
 	var registered, declared []string
 	for _, p := range app.Inertia.Pages() {

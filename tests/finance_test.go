@@ -30,7 +30,7 @@ type who struct {
 func newApp(t *testing.T, env ...map[string]string) *vukemtest.App {
 	t.Helper()
 
-	opts := vukemtest.Options{Env: map[string]string{"ADMIN_EMAILS": "boss@example.com"}}
+	opts := vukemtest.Options{Env: map[string]string{"ADMIN_EMAILS": "boss@example.com", "APP_EDITION": "saas"}}
 	for _, e := range env {
 		maps.Copy(opts.Env, e)
 	}
@@ -50,6 +50,7 @@ func authTestApp(t *testing.T, opts ...vukemtest.Options) *vukemtest.App {
 		options.Env = map[string]string{}
 	}
 	options.Env["AUTH_REQUIRE_EMAIL_VERIFICATION"] = "true"
+	options.Env["APP_EDITION"] = "saas"
 	return vukemtest.New(t, bootstrap.New, options)
 }
 
