@@ -1,6 +1,6 @@
 # Sync data model
 
-This is the contract every synced table of vukem-finances follows (decisions D-004, D-005, D-008, D-013). The server protocol and the mobile client build on it; no later epic may add a synced table that skips it. Synced entities today: `account`, `category`, `transaction`, `budget`. Not synced: imports (a server-side artifact), subscriptions, invites, users and memberships.
+This is the contract every synced table of vukem-finances follows (decisions D-004, D-005, D-008, D-013). The server protocol and the mobile client build on it; no later epic may add a synced table that skips it. Synced entities today: `account`, `category`, `tag`, `transaction`, `budget`. Not synced: imports (a server-side artifact), subscriptions, invites, users and memberships.
 
 ## Stable ids
 
@@ -33,7 +33,7 @@ Table `changes`:
 | --- | --- |
 | `seq` | `INTEGER PRIMARY KEY AUTOINCREMENT`; global, strictly increasing; gaps are normal |
 | `workspace_id` | the workspace of the row; the log is readable only within it |
-| `entity` | the registered entity name (`account`, `category`, `transaction`, `budget`) |
+| `entity` | the registered entity name (`account`, `category`, `tag`, `transaction`, `budget`) |
 | `uid` | the row's `uid` |
 | `op` | `upsert` or `delete` |
 | `row_version` | the row's `version` after the change |
@@ -52,7 +52,9 @@ Other tables written by the sync machinery: `sync_state (workspace_id, compacted
 
 ## Entity registry
 
-`changes.Register(changes.Entity{Name, Table, Fields, Refs})` lists each synced entity, the columns a client may write, and its parents by `uid` (`transaction` refs `account` and `category`; `budget` refs `category`). A guard test fails when a table with a `uid` column is not registered or has no triggers. Later epics add their tables here.
+`changes.Register(changes.Entity{Name, Table, Fields, Refs})` lists each synced entity, the columns a client may write, and its parents by `uid` (`transaction` refs `account` and `category`; `budget` refs `category`; `category` refs its parent `category` through `parent_id`, which travels as `parent_uid`).
+
+The tags of a transaction travel as its `tag_uids` field: a JSON array of tag uids, held in a `transactions.tag_uids` column that the service writes in the same database transaction as the `transaction_tags` join rows (the join table itself is not synced, and a snapshot sends the array decoded, see `Entity.JSON`). The array is one field for `Merge`: two devices that change the tags of the same transaction conflict as a whole under rule 3, and the later arrival wins. Deleting a tag removes its uid from every `tag_uids` that held it, each change logged. A guard test fails when a table with a `uid` column is not registered or has no triggers. Later epics add their tables here.
 
 ## Table rebuilds
 

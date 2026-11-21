@@ -50,6 +50,10 @@ func (m *Transaction) BeforeCreate(ctx context.Context) error {
 		return err
 	}
 
+	if m.TagUIDs == "" {
+		m.TagUIDs = "[]"
+	}
+
 	m.UID = stampUID(m.UID)
 
 	return tenancy.Assign(ctx, m)
@@ -68,6 +72,22 @@ func (m *Budget) BeforeCreate(ctx context.Context) error {
 
 	return tenancy.Assign(ctx, m)
 }
+
+// SetTenant implements tenancy.Scoped.
+func (m *Tag) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
+
+// BeforeCreate stamps the tenant and the uid.
+func (m *Tag) BeforeCreate(ctx context.Context) error {
+	m.UID = stampUID(m.UID)
+
+	return tenancy.Assign(ctx, m)
+}
+
+// SetTenant implements tenancy.Scoped.
+func (m *TransactionTag) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
+
+// BeforeCreate stamps the tenant.
+func (m *TransactionTag) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
 
 // SetTenant implements tenancy.Scoped.
 func (m *Import) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }

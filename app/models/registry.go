@@ -29,6 +29,8 @@ func TenantModels() []TenantModel {
 		tenantModel[Category](),
 		tenantModel[Transaction](),
 		tenantModel[Budget](),
+		tenantModel[Tag](),
+		tenantModel[TransactionTag](),
 		tenantModel[Import](),
 		tenantModel[Invite](),
 		tenantModel[MonthlySummarySent](),

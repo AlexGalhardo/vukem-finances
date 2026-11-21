@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -221,6 +222,15 @@ func entityRows(ctx context.Context, tx *database.Tx, e Entity, workspaceID int6
 		for i, n := range names {
 			if b, ok := vals[i].([]byte); ok {
 				vals[i] = string(b)
+			}
+
+			if text, ok := vals[i].(string); ok && slices.Contains(e.JSON, n) {
+				var doc any
+				if err := json.Unmarshal([]byte(text), &doc); err != nil {
+					return nil, fmt.Errorf("changes: %s.%s of %s holds bad JSON: %w", e.Table, n, e.Name, err)
+				}
+
+				vals[i] = doc
 			}
 
 			row[n] = vals[i]

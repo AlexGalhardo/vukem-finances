@@ -20,6 +20,10 @@ type Entity struct {
 	Table  string
 	Fields []string
 	Refs   []Ref
+	// JSON lists the Fields whose column holds a JSON document (the tag_uids
+	// array of a transaction); a snapshot sends it decoded, and a change to it
+	// is one field for Merge, so two edits of the same list are a conflict.
+	JSON []string
 }
 
 // tracked lists the columns whose change is logged: the writable ones and the
@@ -71,11 +75,19 @@ func init() {
 		Name: "account", Table: "accounts",
 		Fields: []string{"name", "kind", "opening_cents", "archived_at", "position"},
 	})
-	Register(Entity{Name: "category", Table: "categories", Fields: []string{"name", "kind"}})
+	Register(Entity{
+		Name: "category", Table: "categories",
+		Fields: []string{"name", "kind", "parent_id", "color", "icon", "archived_at"},
+		Refs:   []Ref{{"parent_id", "category"}},
+	})
+	Register(Entity{Name: "tag", Table: "tags", Fields: []string{"name", "color"}})
 	Register(Entity{
 		Name: "transaction", Table: "transactions",
-		Fields: []string{"account_id", "category_id", "kind", "amount_cents", "description", "occurred_on", "transfer_uid"},
-		Refs:   []Ref{{"account_id", "account"}, {"category_id", "category"}},
+		Fields: []string{
+			"account_id", "category_id", "kind", "amount_cents", "description", "occurred_on", "transfer_uid", "tag_uids",
+		},
+		Refs: []Ref{{"account_id", "account"}, {"category_id", "category"}},
+		JSON: []string{"tag_uids"},
 	})
 	Register(Entity{
 		Name: "budget", Table: "budgets",
