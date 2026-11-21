@@ -60,3 +60,33 @@ func TestLimitsPersonalHasNoCaps(t *testing.T) {
 		AssertRedirect("/budgets")
 	ana.Client.Inertia("").Get("/dashboard").AssertInertia("Dashboard").PropEquals("workspace.plan", "personal")
 }
+
+func TestPersonalHasNoBilling(t *testing.T) {
+	t.Parallel()
+
+	// No STRIPE_* settings: personal boots without validating them.
+	app := newPersonalApp(t, map[string]string{"ADMIN_EMAILS": "boss@example.com"})
+	boss := signUp(t, app, "Boss", "boss@example.com")
+	c := boss.Client
+
+	c.Get("/billing").AssertNotFound()
+	c.PostForm("/billing/checkout/pro", url.Values{}).AssertNotFound()
+	c.PostForm("/billing/portal", url.Values{}).AssertNotFound()
+	// "/admin/revenue" falls to the admin panel's generic "/admin/{slug}" shell,
+	// which shows no revenue and whose data route has no such resource.
+	c.Inertia("").Get("/admin/revenue").AssertInertia("Admin/ResourceList")
+	c.Get("/admin-api/revenue").AssertNotFound()
+	app.Client(t).PostJSON("/stripe/webhook", map[string]any{"type": "ping"}).AssertNotFound()
+
+	// The same paths exist in saas.
+	saas := newSaaSApp(t, map[string]string{"ADMIN_EMAILS": "boss@example.com"})
+	sboss := signUp(t, saas, "Boss", "boss@example.com")
+	sboss.Client.Get("/billing").AssertOK()
+	sboss.Client.Inertia("").Get("/admin/revenue").AssertInertia("Admin/Revenue")
+}
+
+func TestPersonalBootsInProductionWithoutStripe(t *testing.T) {
+	t.Parallel()
+
+	newPersonalApp(t, map[string]string{"APP_ENV": "production"})
+}
