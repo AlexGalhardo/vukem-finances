@@ -18,15 +18,15 @@ const recoveryCodesFlash = "two_factor.recovery_codes"
 type TwoFactorHandlers struct {
 	a      *accounts.Accounts
 	issuer string
-	// failed counts the wrong codes of an account, from every IP.
-	failed ratelimit.Peeker
+	// budget counts the wrong codes of an account, from every IP.
+	budget *codeBudget
 }
 
 // NewTwoFactor returns the handlers; issuer names the app in
 // authenticator apps. failed is the per-account budget of wrong codes at the
 // login challenge (config.TwoFactorAccountLimit per window).
 func NewTwoFactor(a *accounts.Accounts, issuer string, failed ratelimit.Peeker) *TwoFactorHandlers {
-	return &TwoFactorHandlers{a: a, issuer: issuer, failed: failed}
+	return &TwoFactorHandlers{a: a, issuer: issuer, budget: &codeBudget{limiter: failed}}
 }
 
 // TwoFactorThrottleKey limits code attempts per user and IP: the signed-in
