@@ -3,6 +3,7 @@ import type { ActionGroup } from "../shortcuts/registry";
 import { setSingleKeyEnabled, useSingleKeyShortcuts } from "../shortcuts/singleKey";
 import { useActions } from "../shortcuts/useAction";
 import { useIsMac } from "../shortcuts/useIsMac";
+import { useReturnFocus } from "../shortcuts/useReturnFocus";
 import { Shortcut } from "./Kbd";
 import { Button } from "./ui/button";
 import {
@@ -22,10 +23,19 @@ export default function ShortcutHelp({ open, onOpenChange }: { open: boolean; on
   const isMac = useIsMac();
   const actions = useActions();
   const [singleKeys] = useSingleKeyShortcuts();
+  const returnFocus = useReturnFocus(open);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent data-vf-overlay="" showCloseButton={false} className="max-h-[85svh] overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        data-vf-overlay=""
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          returnFocus();
+        }}
+        showCloseButton={false}
+        className="max-h-[85svh] overflow-y-auto sm:max-w-lg"
+      >
         <DialogHeader>
           <DialogTitle>{t("shortcutsTitle")}</DialogTitle>
           <DialogDescription>{t("shortcutsDescription")}</DialogDescription>

@@ -8,6 +8,7 @@ import type { Action, ActionGroup } from "../shortcuts/registry";
 import { useSingleKeyShortcuts } from "../shortcuts/singleKey";
 import { useActions } from "../shortcuts/useAction";
 import { useIsMac } from "../shortcuts/useIsMac";
+import { useReturnFocus } from "../shortcuts/useReturnFocus";
 import Combobox, { type ComboboxItem } from "./Combobox";
 import { Shortcut } from "./Kbd";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -27,6 +28,7 @@ export default function CommandPalette({
   const actions = useActions();
   const [singleKeys] = useSingleKeyShortcuts();
   const [query, setQuery] = useState("");
+  const returnFocus = useReturnFocus(open);
   // The chosen action runs after the dialog gave focus back, so an action that opens something keeps its focus.
   const pending = useRef<(() => void) | null>(null);
 
@@ -70,7 +72,9 @@ export default function CommandPalette({
         data-vf-overlay=""
         showCloseButton={false}
         className="top-[15%] translate-y-0 gap-0 p-0 sm:max-w-xl"
-        onCloseAutoFocus={() => {
+        onCloseAutoFocus={(event) => {
+          event.preventDefault();
+          returnFocus();
           const run = pending.current;
           pending.current = null;
           run?.();

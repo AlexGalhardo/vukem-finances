@@ -43,6 +43,7 @@ function useRouteFocus(): string {
         requestAnimationFrame(() => {
           const main = document.getElementById("content");
           const heading = main?.querySelector<HTMLElement>("h1");
+          if (heading && !heading.hasAttribute("tabindex")) heading.tabIndex = -1;
           const target = heading ?? main;
           target?.focus({ preventScroll: false });
           setAnnouncement(heading?.textContent ?? document.title);
@@ -185,7 +186,7 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
           </SidebarFooter>
         </Sidebar>
         <div className="relative flex min-w-0 flex-1 flex-col bg-background">
-          <header className="flex min-h-14 flex-wrap items-center gap-2 border-b px-4 py-2 lg:px-6">
+          <header className="sticky top-0 z-10 flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-4 py-2 lg:px-6">
             <SidebarTrigger aria-label={t("toggleSidebar")} />
             <span className="truncate text-sm text-muted-foreground">{workspace.current.name}</span>
             <div className="ml-auto flex flex-wrap items-center gap-2">
