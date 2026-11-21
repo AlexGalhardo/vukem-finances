@@ -296,6 +296,14 @@ type invoice struct {
 			Subscription string `json:"subscription"`
 		} `json:"subscription_details"`
 	} `json:"parent"`
+	Lines struct {
+		HasMore bool `json:"has_more"`
+		Data    []struct {
+			Period struct {
+				End int64 `json:"end"`
+			} `json:"period"`
+		} `json:"data"`
+	} `json:"lines"`
 }
 
 func (i invoice) subscription() string {
@@ -304,6 +312,22 @@ func (i invoice) subscription() string {
 	}
 
 	return i.Subscription
+}
+
+// serviceEnd is when the last period this invoice paid for ends, in Unix
+// seconds. It is 0 when the invoice does not say, or lists only part of its
+// lines, so a caller cannot take a period as used on partial data.
+func (i invoice) serviceEnd() int64 {
+	if i.Lines.HasMore {
+		return 0
+	}
+
+	var end int64
+	for _, l := range i.Lines.Data {
+		end = max(end, l.Period.End)
+	}
+
+	return end
 }
 
 // HandleWebhook syncs subscriptions from Stripe events and sends the

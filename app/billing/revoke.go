@@ -56,7 +56,9 @@ func (b *Billing) subscriptionOfCharge(ctx context.Context, ch charge) (string, 
 
 // handleRefund reads the charge (the event is only a pointer to it, so a late
 // or repeated event gives the same answer) and revokes access on a full refund
-// of a subscription payment. A partial refund keeps access.
+// of a subscription payment. A partial refund keeps access, and so does the
+// refund of an invoice whose period has ended: the current period was paid by
+// another invoice. An invoice that does not say its period counts as current.
 func (b *Billing) handleRefund(ctx context.Context, chargeID string) error {
 	var ch charge
 	if err := b.get(ctx, "/v1/charges/", chargeID, &ch); err != nil {
@@ -69,14 +71,23 @@ func (b *Billing) handleRefund(ctx context.Context, chargeID string) error {
 	}
 
 	if ch.Amount <= 0 || ch.AmountRefunded < ch.Amount {
-		return b.notePartialRefund(ctx, subID, ch)
+		return b.noteRefund(ctx, subID, ch, "partial_refund", "Partial refund: access kept")
+	}
+
+	var inv invoice
+	if err := b.get(ctx, "/v1/invoices/", ch.Invoice, &inv); err != nil {
+		return err
+	}
+
+	if end := inv.serviceEnd(); end > 0 && end <= b.Now().Unix() {
+		return b.noteRefund(ctx, subID, ch, "past_period_refund", "Refund of an ended period: access kept")
 	}
 
 	return b.revokeSubscription(ctx, subID, models.RevokedRefund, ch.ID)
 }
 
-// notePartialRefund writes one billing event per refunded amount.
-func (b *Billing) notePartialRefund(ctx context.Context, subID string, ch charge) error {
+// noteRefund writes one billing event per refunded amount.
+func (b *Billing) noteRefund(ctx context.Context, subID string, ch charge, kind, summary string) error {
 	row, ok, err := b.subscriptionRow(ctx, subID)
 	if err != nil || !ok {
 		return err
@@ -85,12 +96,12 @@ func (b *Billing) notePartialRefund(ctx context.Context, subID string, ch charge
 	ref := ch.ID + ":" + itoa(ch.AmountRefunded)
 
 	seen, err := orm.QueryOf[models.BillingEvent](b.DB).Where("workspace_id", row.WorkspaceID).
-		Where("kind", "partial_refund").Where("ref", ref).Exists(ctx)
+		Where("kind", kind).Where("ref", ref).Exists(ctx)
 	if err != nil || seen {
 		return err
 	}
 
-	return record(ctx, b.DB, row.WorkspaceID, SourceStripe, "partial_refund", ref, "Partial refund: access kept")
+	return record(ctx, b.DB, row.WorkspaceID, SourceStripe, kind, ref, summary)
 }
 
 // handleDispute applies the current state of a dispute. Created and closed
@@ -216,8 +227,9 @@ func (b *Billing) cancelSubscription(ctx context.Context, subID string) error {
 }
 
 // reinstate clears a revocation after a won dispute, only when it was this
-// dispute's (reason dispute, same charge) and the subscription is still
-// active, so a won dispute never undoes a refund.
+// dispute's (reason dispute, same charge), so a won dispute never undoes a
+// refund. The subscription's status does not matter here: Valid still requires
+// a paying one, and a past_due subscription gets access back when it recovers.
 func (b *Billing) reinstate(ctx context.Context, subID, chargeID string) error {
 	row, ok, err := b.subscriptionRow(ctx, subID)
 	if err != nil || !ok {
@@ -231,7 +243,7 @@ func (b *Billing) reinstate(ctx context.Context, subID, chargeID string) error {
 	return b.DB.Tx(ctx, func(tx *database.Tx) error {
 		n, err := orm.QueryOf[models.WorkspaceSubscription](tx).
 			Where("stripe_subscription_id", subID).Where("revoked_reason", models.RevokedDispute).
-			Where("revoked_ref", chargeID).Where("status", "active").
+			Where("revoked_ref", chargeID).
 			Update(ctx, orm.Set{"access_revoked_at": nil, "revoked_reason": "", "revoked_ref": ""})
 		if err != nil || n == 0 {
 			return err
