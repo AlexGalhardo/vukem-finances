@@ -59,6 +59,8 @@ func Finance(r *router.Router, app *vukem.App) error {
 		// The webhooks run before the session and CSRF middleware: Stripe and
 		// Resend authenticate with a signature, not with cookies.
 		r.UseServer(b.Webhook())
+		r.UseServer(b.PixWebhook())
+		r.Handle("POST "+billing.PixWebhookPath+"/{secret}", b.PixWebhookWithSecret()).SecretParams("secret")
 		events.Listen(app.Events, b.HandleWebhook)
 	}
 
