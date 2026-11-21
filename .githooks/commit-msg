@@ -40,3 +40,18 @@ if [ ${#header} -gt 100 ]; then
 	echo "commit-msg: the header is ${#header} characters, the limit is 100" >&2
 	exit 1
 fi
+
+# The scope list is shared with the pull request title check.
+scopes_file="$(dirname "$0")/../.github/scopes.txt"
+scope=$(printf '%s' "$header" | sed -n 's/^[a-z]*(\([^)]*\)).*/\1/p')
+if [ -n "$scope" ]; then
+	if [ ! -f "$scopes_file" ]; then
+		echo "commit-msg: $scopes_file not found, cannot check the scope" >&2
+		exit 1
+	fi
+	if ! grep -Fxq "$scope" "$scopes_file"; then
+		echo "commit-msg: scope '$scope' is not in .github/scopes.txt" >&2
+		echo "Add it to that file first, or use one of: $(tr '\n' ' ' <"$scopes_file")" >&2
+		exit 1
+	fi
+fi
