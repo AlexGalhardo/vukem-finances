@@ -91,7 +91,71 @@ func seedDemoWorkspace(ctx context.Context, tx *database.Tx, userID int64) error
 		return err
 	}
 
-	return seedDemoTransfer(tenant, tx, ws.ID, account.ID, savings.ID)
+	if err := seedDemoTransfer(tenant, tx, ws.ID, account.ID, savings.ID); err != nil {
+		return err
+	}
+
+	return seedDemoCard(tenant, tx, ws.ID, account.ID)
+}
+
+// seedDemoCard adds a credit card (closing day 10, due day 20) with two
+// statements: October, paid from checking, and November, closed and unpaid.
+// The purchases keep the statement they belong to, the payment is a transfer
+// whose card leg carries the October statement.
+func seedDemoCard(ctx context.Context, tx *database.Tx, workspaceID, payFrom int64) error {
+	account := models.Account{
+		WorkspaceID: workspaceID, Name: "Demo Visa", Kind: models.AccountCreditCard, Position: 3,
+	}
+	if err := orm.Create(ctx, tx, &account); err != nil {
+		return err
+	}
+
+	card := models.CreditCard{
+		WorkspaceID: workspaceID, AccountID: account.ID, LimitCents: 200000, ClosingDay: 10, DueDay: 20,
+		PaymentAccountID: sql.Null[int64]{V: payFrom, Valid: true}, Brand: "visa", Last4: "4242",
+	}
+	if err := orm.Create(ctx, tx, &card); err != nil {
+		return err
+	}
+
+	ref := func(v string) sql.Null[string] { return sql.Null[string]{V: v, Valid: true} }
+
+	for _, p := range []struct {
+		note, date, statement string
+		cents                 int64
+	}{
+		{"Online store", "2026-10-05", "2026-10-10", 8990},
+		{"Restaurant", "2026-10-08", "2026-10-10", 4210},
+		{"Pharmacy", "2026-10-20", "2026-11-10", 3550},
+		{"Gas station", "2026-11-04", "2026-11-10", 6000},
+	} {
+		t := models.Transaction{
+			WorkspaceID: workspaceID, AccountID: account.ID, Kind: models.KindExpense, AmountCents: p.cents,
+			Description: p.note, OccurredOn: p.date, StatementRef: ref(p.statement),
+		}
+		if err := orm.Create(ctx, tx, &t); err != nil {
+			return err
+		}
+	}
+
+	uid := sql.Null[string]{V: models.NewUID(), Valid: true}
+
+	for _, leg := range []models.Transaction{
+		{AccountID: payFrom, Kind: models.KindExpense},
+		{AccountID: account.ID, Kind: models.KindIncome, StatementRef: ref("2026-10-10")},
+	} {
+		leg.WorkspaceID = workspaceID
+		leg.AmountCents = 13200
+		leg.Description = "Credit card payment 2026-10-10"
+		leg.OccurredOn = "2026-10-18"
+		leg.TransferUID = uid
+
+		if err := orm.Create(ctx, tx, &leg); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // seedDemoTransfer moves 500.00 from checking to savings: two legs sharing a

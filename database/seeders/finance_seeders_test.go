@@ -84,7 +84,7 @@ func TestSecurity_FinanceSeedRandomPrivateCredential(t *testing.T) {
 	}
 }
 
-func TestFinanceDemoSeedHasTwoAccountsAndATransfer(t *testing.T) {
+func TestFinanceDemoSeedHasAccountsATransferAndACard(t *testing.T) {
 	t.Chdir(t.TempDir())
 	app := vukemtest.New(t, bootstrap.New, vukemtest.Options{
 		Env: map[string]string{"ADMIN_EMAILS": "admin@example.test"},
@@ -104,13 +104,35 @@ func TestFinanceDemoSeedHasTwoAccountsAndATransfer(t *testing.T) {
 	ctx := workspaces.WithTenant(t.Context(), 1)
 
 	accounts, err := workspaces.Scoped[models.Account](ctx, db).Get(ctx)
-	if err != nil || len(accounts) != 2 {
-		t.Fatalf("accounts = %d, %v; want 2", len(accounts), err)
+	if err != nil || len(accounts) != 3 {
+		t.Fatalf("accounts = %d, %v; want 3 (checking, savings, a card)", len(accounts), err)
 	}
 
-	legs, err := workspaces.Scoped[models.Transaction](ctx, db).WhereNotNull("transfer_uid").Get(ctx)
+	legs, err := workspaces.Scoped[models.Transaction](ctx, db).WhereNotNull("transfer_uid").
+		Where("description", "Move to savings").Get(ctx)
 	if err != nil || len(legs) != 2 {
 		t.Fatalf("transfer legs = %d, %v; want 2", len(legs), err)
+	}
+
+	cards, err := workspaces.Scoped[models.CreditCard](ctx, db).Get(ctx)
+	if err != nil || len(cards) != 1 || cards[0].ClosingDay != 10 {
+		t.Fatalf("cards = %+v, %v; want one with closing day 10", cards, err)
+	}
+
+	refs, err := workspaces.Scoped[models.Transaction](ctx, db).Where("account_id", cards[0].AccountID).
+		WhereNotNull("statement_ref").Pluck[string](ctx, "statement_ref")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if seen := map[string]bool{}; func() bool {
+		for _, r := range refs {
+			seen[r] = true
+		}
+
+		return len(seen) != 2
+	}() {
+		t.Fatalf("card statements = %v, want two", refs)
 	}
 
 	if legs[0].TransferUID != legs[1].TransferUID || legs[0].AccountID == legs[1].AccountID ||
@@ -123,7 +145,7 @@ func TestFinanceDemoSeedHasTwoAccountsAndATransfer(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if n, _ := workspaces.Scoped[models.Account](ctx, db).Count(ctx); n != 2 {
-		t.Fatalf("a rerun left %d accounts, want 2", n)
+	if n, _ := workspaces.Scoped[models.Account](ctx, db).Count(ctx); n != 3 {
+		t.Fatalf("a rerun left %d accounts, want 3", n)
 	}
 }
