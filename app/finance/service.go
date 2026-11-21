@@ -140,14 +140,6 @@ type TxInput struct {
 	Tags []string
 }
 
-// TxFilter narrows the transaction list; zero values mean "any".
-type TxFilter struct {
-	From, To   string
-	CategoryID int64
-	AccountID  int64
-	Kind       string
-}
-
 // TxRow is a transaction with the names the list shows.
 type TxRow struct {
 	models.Transaction
@@ -161,84 +153,13 @@ type TxRow struct {
 	TransferID          *string `json:"transferId"`
 	TransferAccountName string  `json:"transferAccountName"`
 	TransferAccountID   *int64  `json:"transferAccountId"`
+
+	Tags []TagRef `json:"tags"`
 }
 
 func validDate(s string) bool {
 	_, err := time.Parse(isoDate, s)
 	return err == nil
-}
-
-// Transactions lists the filtered transactions, newest first (at most 500).
-func (s *Service) Transactions(ctx context.Context, f TxFilter) ([]TxRow, error) {
-	q := workspaces.Scoped[models.Transaction](ctx, s.DB)
-
-	if f.From != "" && validDate(f.From) {
-		q = q.Where("occurred_on", ">=", f.From)
-	}
-
-	if f.To != "" && validDate(f.To) {
-		q = q.Where("occurred_on", "<=", f.To)
-	}
-
-	if f.CategoryID > 0 {
-		q = q.Where("category_id", f.CategoryID)
-	}
-
-	if f.AccountID > 0 {
-		q = q.Where("account_id", f.AccountID)
-	}
-
-	if f.Kind == models.KindIncome || f.Kind == models.KindExpense {
-		q = q.Where("kind", f.Kind)
-	}
-
-	txs, err := q.OrderBy("occurred_on", orm.Desc).OrderBy("id", orm.Desc).Limit(500).Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	accounts, err := s.Accounts(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	cats, err := s.Categories(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	an := map[int64]string{}
-	for _, a := range accounts {
-		an[a.ID] = a.Name
-	}
-
-	cn := map[int64]string{}
-	for _, c := range cats {
-		cn[c.ID] = c.Name
-	}
-
-	other, err := s.otherLegAccounts(ctx, txs)
-	if err != nil {
-		return nil, err
-	}
-
-	rows := make([]TxRow, len(txs))
-	for i := range txs {
-		t := &txs[i]
-		rows[i] = TxRow{Transaction: *t, AccountName: an[t.AccountID], CategoryName: cn[t.CategoryID.V]}
-		if t.CategoryID.Valid {
-			rows[i].CategoryIDValue = &t.CategoryID.V
-		}
-
-		if t.TransferUID.Valid {
-			rows[i].TransferID = &t.TransferUID.V
-			rows[i].TransferAccountName = an[other[t.TransferUID.V][t.ID]]
-			otherID := other[t.TransferUID.V][t.ID]
-			rows[i].TransferAccountID = &otherID
-		}
-	}
-
-	return rows, nil
 }
 
 // CreateTransaction records a transaction. The account and the category
