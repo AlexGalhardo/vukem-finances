@@ -45,7 +45,7 @@ func (s *Service) QuickAddOptions(ctx context.Context) (QuickAddOptions, error) 
 		return QuickAddOptions{}, err
 	}
 
-	categories, err := s.Categories(ctx)
+	categories, err := s.ActiveCategories(ctx)
 	if err != nil {
 		return QuickAddOptions{}, err
 	}
