@@ -392,7 +392,9 @@ func TestClosingDayChangeWithManyRows(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if time.Since(began) > 20*time.Second {
+	// The race detector multiplies the cost of the triggers' writes, so a
+	// wall-clock bound under it measures the machine and not this code.
+	if !raceEnabled && time.Since(began) > 20*time.Second {
 		t.Errorf("recomputing 5000 rows took %s", time.Since(began))
 	}
 
