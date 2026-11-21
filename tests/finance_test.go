@@ -722,7 +722,7 @@ func TestMonthlySummaryMailsTheOwners(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := fin.SendAllMonthlySummaries(t.Context(), "2026-03"); err != nil {
+	if err := fin.SendDueMonthlySummaries(t.Context(), time.Date(2026, 4, 1, 8, 0, 0, 0, time.UTC)); err != nil {
 		t.Fatal(err)
 	}
 

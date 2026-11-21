@@ -41,14 +41,15 @@ func HandleImportCSV(app *vukem.App) func(ctx context.Context, j ImportCSV) erro
 	}
 }
 
-// MonthlySummary emails every workspace owner how the month that just ended
-// went. routes/schedule.go runs it on the first day of each month.
+// MonthlySummary emails the owners of each workspace how the month that just
+// ended went, once the first day of the next month has started there (its own
+// timezone). routes/schedule.go runs it hourly.
 type MonthlySummary struct{}
 
 // Kind names the job's handler; keep it stable across deploys.
 func (MonthlySummary) Kind() string { return "monthly_summary" }
 
-// HandleMonthlySummary sends the summaries of the previous month.
+// HandleMonthlySummary sends the summaries that are due and not sent yet.
 func HandleMonthlySummary(app *vukem.App) func(ctx context.Context, j MonthlySummary) error {
 	return func(ctx context.Context, _ MonthlySummary) error {
 		fin, err := service(app)
@@ -56,6 +57,6 @@ func HandleMonthlySummary(app *vukem.App) func(ctx context.Context, j MonthlySum
 			return err
 		}
 
-		return fin.SendAllMonthlySummaries(ctx, finance.PreviousMonth(app.Now()))
+		return fin.SendDueMonthlySummaries(ctx, app.Now())
 	}
 }

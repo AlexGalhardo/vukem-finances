@@ -13,6 +13,8 @@ import (
 // "vukem schedule:list". Tasks must honor ctx: on shutdown it is cancelled
 // after SHUTDOWN_TIMEOUT.
 func Schedule(s *schedule.Schedule, _ *vukem.App) {
-	// The summary of the month that just ended, to every workspace owner.
-	s.Job(jobs.MonthlySummary{}).MonthlyOn(1, "08:00").WithoutOverlapping()
+	// The summary of the month that just ended, to the owners of each
+	// workspace once it is the 1st, 08:00 or later, in the workspace's own
+	// timezone: hourly, and the sent marker makes a doubled run harmless.
+	s.Job(jobs.MonthlySummary{}).Hourly().WithoutOverlapping()
 }

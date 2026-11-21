@@ -2,6 +2,7 @@ package finance
 
 import (
 	"context"
+	"errors"
 	"slices"
 	"time"
 
@@ -182,10 +183,18 @@ func (s *Service) SendMonthlySummary(ctx context.Context, month string) error {
 	return nil
 }
 
-// SendAllMonthlySummaries sends the summary of month for every workspace.
-// It is the one place that reads across tenants on purpose: each workspace
-// is handled under its own tenant context.
-func (s *Service) SendAllMonthlySummaries(ctx context.Context, month string) error {
+// summaryHour is the local hour, on the first day of a month, from which the
+// summary of the month that just ended goes out. The scheduler runs hourly,
+// so a run missed at 08:00 is made up later that day; the sent marker keeps
+// every workspace to one summary per month.
+const summaryHour = 8
+
+// SendDueMonthlySummaries sends the summary of the month that just ended to
+// every workspace for which it is the first day of a month, from 08:00 on, in
+// its own timezone, and whose summary was not sent yet. It is the one place
+// that reads across tenants on purpose: each workspace is handled under its
+// own tenant context. Running it twice sends nothing the second time.
+func (s *Service) SendDueMonthlySummaries(ctx context.Context, now time.Time) error {
 	// shortcut: loads every workspace at once (the rows stay small), and an
 	// open cursor would hold SQLite's single connection while each summary
 	// queries; page with Chunk when there are many thousands.
@@ -195,9 +204,41 @@ func (s *Service) SendAllMonthlySummaries(ctx context.Context, month string) err
 	}
 
 	for _, ws := range all {
-		if err := s.SendMonthlySummary(workspaces.WithTenant(ctx, ws.ID), month); err != nil {
+		loc, err := workspaces.LoadZone(ws.Timezone)
+		if err != nil {
+			loc = time.UTC
+		}
+
+		local := now.In(loc)
+		if local.Day() != 1 || local.Hour() < summaryHour {
+			continue
+		}
+
+		if err := s.sendOnce(workspaces.WithTenant(ctx, ws.ID), PreviousMonth(local)); err != nil {
 			return err
 		}
+	}
+
+	return nil
+}
+
+// sendOnce claims the marker of month for the workspace of ctx and sends its
+// summary; a workspace that already holds the marker is skipped. A failed
+// send releases the marker so the next run tries again.
+func (s *Service) sendOnce(ctx context.Context, month string) error {
+	err := orm.Create(ctx, s.DB, &models.MonthlySummarySent{Month: month})
+	if err != nil && (s.DB.UniqueViolation(err) || errors.Is(err, orm.ErrConflict)) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	if err := s.SendMonthlySummary(ctx, month); err != nil {
+		_, delErr := workspaces.Scoped[models.MonthlySummarySent](ctx, s.DB).Where("month", month).Delete(ctx)
+
+		return errors.Join(err, delErr)
 	}
 
 	return nil
