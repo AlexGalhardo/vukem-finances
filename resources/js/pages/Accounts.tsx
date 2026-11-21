@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
-import { Archive, ArchiveRestore, Pencil, Plus, Trash2, Wallet } from "lucide-react";
+import { Archive, ArchiveRestore, CreditCard, Pencil, Plus, Trash2, Wallet } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import AmountInput from "../components/AmountInput";
 import ConfirmDelete from "../components/ConfirmDelete";
@@ -31,6 +31,7 @@ const kindLabels: Record<string, Key> = {
   cash: "cash",
   investment: "investment",
   wallet: "wallet",
+  credit_card: "creditCard",
 };
 
 interface Row {
@@ -101,15 +102,23 @@ export default function Accounts({ accounts, limits, balances, netWorthCents, ki
         <div className="flex justify-end gap-1">
           {canManage && (
             <>
-              <Button
-                type="button"
-                variant="ghost"
-                size="icon"
-                aria-label={`${t("edit")} ${account.name}`}
-                onClick={() => startEdit(account)}
-              >
-                <Pencil aria-hidden="true" />
-              </Button>
+              {account.kind === "credit_card" ? (
+                <Button asChild variant="ghost" size="icon">
+                  <Link href="/cards" aria-label={`${t("cards")}: ${account.name}`}>
+                    <CreditCard aria-hidden="true" />
+                  </Link>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  aria-label={`${t("edit")} ${account.name}`}
+                  onClick={() => startEdit(account)}
+                >
+                  <Pencil aria-hidden="true" />
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="ghost"

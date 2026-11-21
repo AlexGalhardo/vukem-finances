@@ -69,6 +69,31 @@ export type BudgetStatus = {
   spentCents: number;
 };
 
+export type CardOverview = {
+  account_id: number;
+  archived: boolean;
+  availableCents: number;
+  balanceCents: number;
+  brand: string;
+  closing_day: number;
+  created_at: string;
+  current: StatementSummary;
+  deleted_at?: string | null;
+  due?: StatementSummary | null;
+  due_day: number;
+  id: number;
+  last4: string;
+  limit_cents: number;
+  name: string;
+  overLimit: boolean;
+  payment_account_id: NullInt64;
+  uid: string;
+  updated_at: string;
+  usedCents: number;
+  version: number;
+  workspace_id: number;
+};
+
 export type Category = {
   archived_at: string | null;
   color: string;
@@ -253,6 +278,31 @@ export type SharedWorkspace = {
   role: string;
 };
 
+export type StatementDetail = {
+  closingOn: string;
+  creditsCents: number;
+  dueOn: string;
+  paidCents: number;
+  purchasesCents: number;
+  ref: string;
+  remainingCents: number;
+  rows: TxRow[];
+  status: string;
+  totalCents: number;
+};
+
+export type StatementSummary = {
+  closingOn: string;
+  creditsCents: number;
+  dueOn: string;
+  paidCents: number;
+  purchasesCents: number;
+  ref: string;
+  remainingCents: number;
+  status: string;
+  totalCents: number;
+};
+
 export type Tag = {
   color: string;
   created_at: string;
@@ -297,6 +347,7 @@ export type TxRow = {
   id: number;
   kind: string;
   occurred_on: string;
+  statement_ref: NullString;
   tag_uids: string;
   tags: TagRef[];
   transferAccountId?: number | null;
@@ -405,6 +456,22 @@ export type BudgetsProps = {
   month: string;
 };
 
+export type CardStatementProps = {
+  accounts: Account[];
+  brands: string[];
+  card: CardOverview;
+  statement: StatementDetail;
+  statements: StatementSummary[];
+  today: string;
+};
+
+export type CardsProps = {
+  accounts: Account[];
+  brands: string[];
+  cards: CardOverview[];
+  limits: Limits;
+};
+
 export type CategoriesProps = {
   categories: Category[];
   colors: string[];
@@ -489,6 +556,8 @@ export interface PageProps {
   "Auth/VerifyEmail": AuthVerifyEmailProps;
   Billing: BillingProps;
   Budgets: BudgetsProps;
+  CardStatement: CardStatementProps;
+  Cards: CardsProps;
   Categories: CategoriesProps;
   Dashboard: DashboardProps;
   Home: HomeProps;
