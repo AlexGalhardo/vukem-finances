@@ -250,6 +250,11 @@ export type InviteAcceptProps = {
   token: string;
 };
 
+export type InviteRegisterProps = {
+  email: string;
+  token: string;
+};
+
 export type SetupProps = {
   currency: string;
 };
@@ -301,6 +306,7 @@ export interface PageProps {
   "Home": HomeProps;
   "Import": ImportProps;
   "InviteAccept": InviteAcceptProps;
+  "InviteRegister": InviteRegisterProps;
   "Setup": SetupProps;
   "Transactions": TransactionsProps;
   "Workspace": WorkspaceProps;

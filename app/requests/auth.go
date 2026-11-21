@@ -94,3 +94,24 @@ var SetupSchema = z.Struct[Setup](z.Shape{
 
 	return nil
 })
+
+// InviteRegister is the form of a person joining through an invite link. The
+// email is not a field: it is the address the invite was sent to.
+type InviteRegister struct {
+	Name                 string `json:"name"                  form:"name"`
+	Password             string `json:"password"              form:"password"`
+	PasswordConfirmation string `json:"password_confirmation" form:"password_confirmation"`
+}
+
+// InviteRegisterSchema validates InviteRegister with the password rules of Register.
+var InviteRegisterSchema = z.Struct[InviteRegister](z.Shape{
+	"name":                  z.String().Trim().Min(2).Max(100),
+	"password":              z.String().Min(12).Max(256),
+	"password_confirmation": z.String(),
+}).Refine(func(r InviteRegister) error {
+	if r.Password != r.PasswordConfirmation {
+		return z.FieldError("password_confirmation", "The password confirmation does not match.")
+	}
+
+	return nil
+})

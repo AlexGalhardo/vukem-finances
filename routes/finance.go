@@ -3,17 +3,20 @@ package routes
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/AlexGalhardo/vukem"
 	"github.com/AlexGalhardo/vukem/auth"
 	"github.com/AlexGalhardo/vukem/events"
 	"github.com/AlexGalhardo/vukem/inertia"
+	"github.com/AlexGalhardo/vukem/ratelimit"
 	"github.com/AlexGalhardo/vukem/router"
 	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/admin"
 	"github.com/AlexGalhardo/vukem-finances/app/billing"
+	"github.com/AlexGalhardo/vukem-finances/app/controllers"
 	"github.com/AlexGalhardo/vukem-finances/app/controllers/ledger"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	appmail "github.com/AlexGalhardo/vukem-finances/app/mail"
@@ -68,8 +71,27 @@ func Finance(r *router.Router, app *vukem.App) error {
 	required := auth.Required(acc.Web)
 	verified := auth.Verified(acc.Web)
 
-	// Invitations: any verified user, no workspace yet.
-	r.Get("/invites/{token}", h.ShowInvite).Name("invites.show").Use(required, verified).SecretParams("token")
+	// Invitations: any verified user, no workspace yet. In the personal edition
+	// the link is also how a person with no account registers: the token is a
+	// path segment, never a query string, so it stays out of access logs.
+	if ws.Edition.Personal() {
+		limiters, err := app.RateLimiters()
+		if err != nil {
+			return err
+		}
+
+		ih := controllers.NewInvite(acc, ws)
+		signupIP := ratelimit.Middleware(limiters("register", 10, 10*time.Minute), ratelimit.ByIP)
+
+		r.Get("/invites/{token}", ih.Entry).Name("invites.show").SecretParams("token")
+		r.Get("/invites/{token}/register", ih.ShowRegister).Name("invites.register.show").
+			Use(auth.Guest(acc.Web)).SecretParams("token")
+		r.Post("/invites/{token}/register", ih.Register).Name("invites.register").
+			Use(auth.Guest(acc.Web), signupIP).SecretParams("token")
+	} else {
+		r.Get("/invites/{token}", h.ShowInvite).Name("invites.show").Use(required, verified).SecretParams("token")
+	}
+
 	r.Post("/invites/{token}", h.AcceptInvite).Name("invites.accept").Use(required, verified).SecretParams("token")
 
 	// Everything else lives in a workspace: the tenant middleware picks the

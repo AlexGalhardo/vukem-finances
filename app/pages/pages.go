@@ -46,6 +46,7 @@ func All() []inertia.PageInfo {
 		Import.Info(),
 		Workspace.Info(),
 		InviteAccept.Info(),
+		InviteRegister.Info(),
 		Billing.Info(),
 		AdminRevenue.Info(),
 		Login.Info(),
