@@ -22,6 +22,8 @@ export interface ComboboxProps {
   resultsLabel: (count: number) => string;
   /** The listbox is always shown (the command palette). Otherwise it opens on typing or ArrowDown. */
   alwaysOpen?: boolean;
+  /** Called when focus leaves the input (the popup closes by itself). */
+  onInputBlur?: () => void;
   className?: string;
   inputClassName?: string;
   listClassName?: string;
@@ -37,6 +39,7 @@ export default function Combobox({
   placeholder,
   resultsLabel,
   alwaysOpen = false,
+  onInputBlur,
   className,
   inputClassName,
   listClassName,
@@ -132,7 +135,10 @@ export default function Combobox({
           setPopupOpen(true);
         }}
         onKeyDown={onKeyDown}
-        onBlur={() => setPopupOpen(false)}
+        onBlur={() => {
+          setPopupOpen(false);
+          onInputBlur?.();
+        }}
         className={cn(
           "w-full rounded-lg border border-input bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring pointer-coarse:min-h-11",
           inputClassName,
