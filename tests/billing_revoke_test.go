@@ -140,3 +140,125 @@ func TestRefundRetriesTheCancelAndNeverLeaksProviderText(t *testing.T) {
 
 	vukemtest.AssertDatabaseCount(t, app, "billing_events", 1)
 }
+
+func disputeEvent(t *testing.T, app *vukemtest.App, evt, typ string) {
+	t.Helper()
+	postStripe(t, app, evt, typ, map[string]any{"id": "dp_1"}).AssertOK()
+}
+
+func TestDisputeRevokesPlan(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 0)
+	f.setDispute("dp_1", "ch_1", "needs_response")
+
+	disputeEvent(t, app, "evt_d1", "charge.dispute.created")
+	disputeEvent(t, app, "evt_d1b", "charge.dispute.created")
+
+	assertPlan(t, ana, "free")
+	vukemtest.AssertDatabaseHas(t, app, "workspace_subscriptions", map[string]any{
+		"stripe_subscription_id": testSubscript, "revoked_reason": "dispute", "revoked_ref": "ch_1", "status": "active",
+	})
+	vukemtest.AssertDatabaseCount(t, app, "billing_events", 1)
+
+	if n := len(f.canceled()); n != 0 {
+		t.Errorf("an open dispute cancelled the subscription %d times", n)
+	}
+
+	if !hasSubject(app, "ana@example.com", "Your Pro access has ended") {
+		t.Error("the owner was not told")
+	}
+}
+
+func TestDisputeWonReinstates(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 0)
+	f.setDispute("dp_1", "ch_1", "needs_response")
+	disputeEvent(t, app, "evt_d1", "charge.dispute.created")
+	assertPlan(t, ana, "free")
+
+	f.setDispute("dp_1", "ch_1", "won")
+	disputeEvent(t, app, "evt_d2", "charge.dispute.closed")
+	assertPlan(t, ana, "pro")
+	vukemtest.AssertDatabaseHas(t, app, "billing_events", map[string]any{"kind": "access_reinstated"})
+
+	// A replay of the opening event after the win cannot revoke again.
+	disputeEvent(t, app, "evt_d3", "charge.dispute.created")
+	assertPlan(t, ana, "pro")
+}
+
+func TestDisputeLostStaysRevoked(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 0)
+	f.setDispute("dp_1", "ch_1", "needs_response")
+	disputeEvent(t, app, "evt_d1", "charge.dispute.created")
+
+	f.setDispute("dp_1", "ch_1", "lost")
+	disputeEvent(t, app, "evt_d2", "charge.dispute.closed")
+	disputeEvent(t, app, "evt_d3", "charge.dispute.closed")
+
+	assertPlan(t, ana, "free")
+	vukemtest.AssertDatabaseHas(t, app, "workspace_subscriptions", map[string]any{
+		"stripe_subscription_id": testSubscript, "revoked_reason": "dispute_lost", "status": "canceled",
+	})
+
+	if n := len(f.canceled()); n != 1 {
+		t.Errorf("cancel calls = %d, want 1", n)
+	}
+}
+
+func TestDisputeWonDoesNotUndoRefund(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 900)
+	f.setDispute("dp_1", "ch_1", "won")
+
+	postStripe(t, app, "evt_refund", "charge.refunded", map[string]any{"id": "ch_1"}).AssertOK()
+	disputeEvent(t, app, "evt_d1", "charge.dispute.closed")
+
+	assertPlan(t, ana, "free")
+	vukemtest.AssertDatabaseHas(t, app, "workspace_subscriptions", map[string]any{"revoked_reason": "refund"})
+}
+
+func TestSyncDoesNotRegrantRevoked(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 0)
+	f.setDispute("dp_1", "ch_1", "under_review")
+	disputeEvent(t, app, "evt_d1", "charge.dispute.created")
+
+	for i, typ := range []string{
+		"customer.subscription.updated", "customer.subscription.resumed", "customer.subscription.created",
+	} {
+		f.setSubscription(testCustomer, "active")
+		postStripe(t, app, "evt_sync_"+strconv.Itoa(i), typ,
+			map[string]any{"id": testSubscript, "customer": testCustomer}).AssertOK()
+		assertPlan(t, ana, "free")
+	}
+
+	postStripe(t, app, "evt_inv", "invoice.paid", map[string]any{
+		"id": "in_9", "customer": testCustomer, "amount_paid": 900, "currency": "usd",
+		"parent": map[string]any{"subscription_details": map[string]any{"subscription": testSubscript}},
+	}).AssertOK()
+	assertPlan(t, ana, "free")
+}
+
+func TestDisputeEventsOutOfOrder(t *testing.T) {
+	t.Parallel()
+
+	f, app, ana := proViaStripe(t)
+	f.setCharge("ch_1", 900, 0)
+	f.setDispute("dp_1", "ch_1", "won")
+
+	// The closing event arrives first and the opening one after it.
+	disputeEvent(t, app, "evt_closed", "charge.dispute.closed")
+	disputeEvent(t, app, "evt_created", "charge.dispute.created")
+	assertPlan(t, ana, "pro")
+}
