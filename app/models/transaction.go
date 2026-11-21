@@ -16,8 +16,11 @@ const (
 // whether it adds or subtracts. OccurredOn is an ISO date, "2026-11-12".
 type Transaction struct {
 	orm.Model
+	orm.SoftDeletes
 
 	WorkspaceID int64           `json:"workspace_id"`
+	UID         string          `json:"uid"`
+	Version     int64           `json:"version" orm:"readonly"`
 	AccountID   int64           `json:"account_id"`
 	CategoryID  sql.Null[int64] `json:"category_id"`
 	Kind        string          `json:"kind"`
