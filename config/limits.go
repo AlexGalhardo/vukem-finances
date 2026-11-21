@@ -12,8 +12,9 @@ const (
 	// WriteLimit is the writes (POST, PUT, PATCH, DELETE) of one user per WriteWindow.
 	WriteLimit  = 60
 	WriteWindow = time.Minute
-	// ImportLimit is the CSV uploads and confirmations of one workspace per ImportWindow.
-	ImportLimit  = 5
+	// ImportLimit is the statement uploads, previews and confirmations of one
+	// workspace per ImportWindow: one import takes three of them.
+	ImportLimit  = 15
 	ImportWindow = 10 * time.Minute
 	// InviteLimit is the invitations of one workspace per InviteWindow.
 	InviteLimit  = 10

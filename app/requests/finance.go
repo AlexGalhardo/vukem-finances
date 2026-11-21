@@ -132,16 +132,20 @@ type ImportMapping struct {
 	Category    string `json:"category"    form:"category"`
 	DateFormat  string `json:"dateFormat"  form:"dateFormat"`
 	Invert      string `json:"invert"      form:"invert"`
+	// AllowDuplicates is "true" to import the rows an earlier import brought in.
+	AllowDuplicates string `json:"allowDuplicates" form:"allowDuplicates"`
 }
 
 // ImportMappingSchema validates ImportMapping.
 var ImportMappingSchema = z.Struct[ImportMapping](z.Shape{
-	"date":        z.String().Trim().Min(1).Max(120),
-	"description": z.String().Trim().Min(1).Max(120),
-	"amount":      z.String().Trim().Min(1).Max(120),
-	"category":    z.String().Trim().Max(120).Optional(),
-	"dateFormat":  z.String().Trim().Max(20).Optional(),
-	"invert":      z.String().Trim().Max(5).Optional(),
+	// The columns are needed for a CSV (the service checks) and unused for OFX.
+	"date":            z.String().Trim().Max(120).Optional(),
+	"description":     z.String().Trim().Max(120).Optional(),
+	"amount":          z.String().Trim().Max(120).Optional(),
+	"category":        z.String().Trim().Max(120).Optional(),
+	"dateFormat":      z.String().Trim().Max(20).Optional(),
+	"invert":          z.String().Trim().Max(5).Optional(),
+	"allowDuplicates": z.String().Trim().Max(5).Optional(),
 })
 
 // MemberRole is the input of the change-role form.
