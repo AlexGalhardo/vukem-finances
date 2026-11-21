@@ -44,7 +44,7 @@ There is an index `(workspace_id, seq)`. Clients treat the cursor as an opaque, 
 
 The log is state-based: it says which row changed, not what the row held, and a pull reads the current row. This also means the log holds no field values, so nothing can leak across workspaces through it.
 
-SQLite triggers on every synced table (`AFTER INSERT`, `AFTER UPDATE`) append to `changes` and bump `version`, so imports, jobs and future code are logged without discipline. They are written by `changes.InstallTriggers(table, entity)`. A `delete` op is written when `deleted_at` goes from null to non-null; a restore is an `upsert`. An update that changes no synced field writes nothing. `updated_at` and `version` themselves are not listed in `fields`.
+SQLite triggers on every synced table (`AFTER INSERT`, `AFTER UPDATE`) append to `changes` and bump `version`, so imports, jobs and future code are logged without discipline. They are written by `changes.InstallTriggers(schema, entity)` (a migration passes a literal `Entity`, so its checksum does not move when the registry changes; `uid and workspace_id` are also protected by a `BEFORE UPDATE` trigger). A `delete` op is written when `deleted_at` goes from null to non-null; a restore is an `upsert`. An update that changes no synced field writes nothing. `updated_at` and `version` themselves are not listed in `fields`.
 
 A startup check, `changes.VerifyTriggers`, fails the boot in non-test environments when a registered table lacks its triggers, and a test runs the same check.
 
