@@ -204,19 +204,36 @@ func (b *Billing) activatePix(ctx context.Context, p models.PixPayment) error {
 	return nil
 }
 
-// restorePix gives the months of a payment back after a dispute was won.
+// restorePix gives back what the dispute withheld after it was won. A payment
+// whose months were already used when disputed gets nothing back.
 func (b *Billing) restorePix(ctx context.Context, p models.PixPayment) error {
 	now := b.Now().UTC()
 
 	return b.DB.Tx(ctx, func(tx *database.Tx) error {
-		n, err := orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
-			Where("status", models.PixDisputed).Update(ctx, orm.Set{"status": models.PixPaid})
+		query := func() orm.Query[models.PixPayment] {
+			return orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID)
+		}
+
+		n, err := query().Where("status", models.PixDisputed).Update(ctx, orm.Set{"status": models.PixPaid})
 		if err != nil || n != 1 {
 			return err
 		}
 
-		if err := b.grantMonths(ctx, tx, p, now); err != nil {
+		row, err := query().First(ctx)
+		if err != nil {
 			return err
+		}
+
+		if row.MonthsWithheld > 0 {
+			p.Months = row.MonthsWithheld
+
+			if err := b.grantMonths(ctx, tx, p, now); err != nil {
+				return err
+			}
+
+			if _, err := query().Update(ctx, orm.Set{"months_withheld": 0}); err != nil {
+				return err
+			}
 		}
 
 		return record(ctx, tx, p.WorkspaceID, SourcePix, "pix_dispute_won", p.PublicRef, "PIX dispute won: access restored")
@@ -236,9 +253,9 @@ func (b *Billing) grantMonths(ctx context.Context, tx *database.Tx, p models.Pix
 	return err
 }
 
-// countsInCurrentPeriod reports whether the months of payment p are part of
-// the entitlement's current period. Those of an ended period were already used.
-func countsInCurrentPeriod(ctx context.Context, tx *database.Tx, p models.PixPayment) (bool, error) {
+// countsInCurrentPeriod reports whether the months of payment p are part of a
+// period still running at now. Those of an ended period were already used.
+func countsInCurrentPeriod(ctx context.Context, tx *database.Tx, p models.PixPayment, now time.Time) (bool, error) {
 	tctx := workspaces.WithTenant(ctx, p.WorkspaceID)
 
 	row, err := workspaces.Scoped[models.PixPayment](tctx, tx).Where("id", p.ID).First(tctx)
@@ -255,7 +272,7 @@ func countsInCurrentPeriod(ctx context.Context, tx *database.Tx, p models.PixPay
 		return false, err
 	}
 
-	return row.EntitlementPeriod == ent.Period, nil
+	return row.EntitlementPeriod == ent.Period && ent.Granting(now), nil
 }
 
 // disputePix marks a paid payment disputed and takes its months away.
@@ -294,13 +311,20 @@ func (b *Billing) takeBack(ctx context.Context, p models.PixPayment, to, reason,
 			return err
 		}
 
-		if subtracted, err = countsInCurrentPeriod(ctx, tx, p); err != nil {
+		if subtracted, err = countsInCurrentPeriod(ctx, tx, p, now); err != nil {
 			return err
 		}
 
 		if subtracted {
 			if _, err := b.changeMonths(ctx, tx, p.WorkspaceID, -p.Months, now, reason); err != nil {
 				return err
+			}
+
+			if to == models.PixDisputed {
+				if _, err := orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
+					Update(ctx, orm.Set{"months_withheld": p.Months}); err != nil {
+					return err
+				}
 			}
 		}
 

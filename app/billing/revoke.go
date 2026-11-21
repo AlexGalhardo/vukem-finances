@@ -5,7 +5,6 @@ import (
 	"errors"
 	"net/http"
 	"net/url"
-	"time"
 
 	"github.com/AlexGalhardo/vukem/contrib/stripe"
 	"github.com/AlexGalhardo/vukem/database"
@@ -171,7 +170,7 @@ func (b *Billing) revokeSubscription(ctx context.Context, subID, reason, ref str
 		n, err := orm.QueryOf[models.WorkspaceSubscription](tx).
 			Where("stripe_subscription_id", subID).WhereNull("access_revoked_at").
 			Update(ctx, orm.Set{
-				"access_revoked_at": time.Now().UTC(), "revoked_reason": reason, "revoked_ref": ref,
+				"access_revoked_at": b.Now().UTC(), "revoked_reason": reason, "revoked_ref": ref,
 			})
 		if err != nil || n == 0 {
 			return err
