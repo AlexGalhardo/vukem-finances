@@ -7,6 +7,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem"
 	"github.com/AlexGalhardo/vukem/auth"
+	"github.com/AlexGalhardo/vukem/errs"
 	"github.com/AlexGalhardo/vukem/events"
 	"github.com/AlexGalhardo/vukem/inertia"
 	"github.com/AlexGalhardo/vukem/ratelimit"
@@ -138,6 +139,9 @@ func Finance(r *router.Router, app *vukem.App) error {
 	if ws.Edition.SaaS() {
 		// The business overview of the admins (ADMIN_EMAILS): across workspaces.
 		r.Get("/admin/revenue", ledger.Revenue(h)).Name("admin.revenue").Use(required, verified, onlyAdmins(admins))
+	} else {
+		// Without this, the panel's generic /admin/{slug} answers 200 with an empty shell.
+		r.Get("/admin/revenue", func(*web.Ctx) error { return errs.ErrNotFound }).Name("admin.revenue")
 	}
 
 	return nil
