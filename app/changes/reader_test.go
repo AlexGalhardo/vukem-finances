@@ -119,6 +119,19 @@ func TestSince(t *testing.T) {
 		if _, err := changes.Since(t.Context(), db, 2, 0, 10); err != nil {
 			t.Fatalf("another workspace is not affected: %v", err)
 		}
+
+		// Compaction removed the newest changes: a client at the cursor must not
+		// be sent back to a snapshot forever.
+		exec(t, db, "INSERT INTO sync_state (workspace_id, compacted_through_seq, created_at, updated_at) VALUES (2, 1000, "+now+", "+now+")")
+
+		cursor, err := changes.Cursor(t.Context(), db, 2)
+		if err != nil || cursor != 1000 {
+			t.Fatalf("cursor after compaction = %d, %v; want 1000", cursor, err)
+		}
+
+		if _, err := changes.Since(t.Context(), db, 2, cursor, 10); err != nil {
+			t.Fatalf("Since(Cursor) = %v, want it served", err)
+		}
 	})
 }
 
