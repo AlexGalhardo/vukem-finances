@@ -227,8 +227,17 @@ func billingApp(t *testing.T, f *fakeStripe) *vukemtest.App {
 func postStripe(t *testing.T, app *vukemtest.App, id, typ string, object map[string]any) *vukemtest.Response {
 	t.Helper()
 
+	return postStripeAt(t, app, id, typ, object, time.Now())
+}
+
+// postStripeAt delivers now an event Stripe created at created.
+func postStripeAt(
+	t *testing.T, app *vukemtest.App, id, typ string, object map[string]any, created time.Time,
+) *vukemtest.Response {
+	t.Helper()
+
 	payload, err := json.Marshal(map[string]any{
-		"id": id, "type": typ, "created": time.Now().Unix(), "data": map[string]any{"object": object},
+		"id": id, "type": typ, "created": created.Unix(), "data": map[string]any{"object": object},
 	})
 	if err != nil {
 		t.Fatal(err)

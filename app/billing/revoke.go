@@ -59,7 +59,9 @@ func (b *Billing) subscriptionOfCharge(ctx context.Context, ch charge) (string, 
 // of a subscription payment. A partial refund keeps access, and so does the
 // refund of an invoice whose period has ended: the current period was paid by
 // another invoice. An invoice that does not say its period counts as current.
-func (b *Billing) handleRefund(ctx context.Context, chargeID string) error {
+// The period is compared with when Stripe created the event, which a late or
+// repeated delivery does not change.
+func (b *Billing) handleRefund(ctx context.Context, chargeID string, refundedAt int64) error {
 	var ch charge
 	if err := b.get(ctx, "/v1/charges/", chargeID, &ch); err != nil {
 		return err
@@ -74,12 +76,26 @@ func (b *Billing) handleRefund(ctx context.Context, chargeID string) error {
 		return b.noteRefund(ctx, subID, ch, "partial_refund", "Partial refund: access kept")
 	}
 
+	// This refund already revoked: a retry must finish the cancel at Stripe.
+	row, ok, err := b.subscriptionRow(ctx, subID)
+	if err != nil {
+		return err
+	}
+
+	if ok && row.RevokedReason == models.RevokedRefund && row.RevokedRef == ch.ID {
+		return b.revokeSubscription(ctx, subID, models.RevokedRefund, ch.ID)
+	}
+
 	var inv invoice
 	if err := b.get(ctx, "/v1/invoices/", ch.Invoice, &inv); err != nil {
 		return err
 	}
 
-	if end := inv.serviceEnd(); end > 0 && end <= b.Now().Unix() {
+	if refundedAt <= 0 {
+		refundedAt = b.Now().Unix()
+	}
+
+	if end := inv.serviceEnd(); end > 0 && end <= refundedAt {
 		return b.noteRefund(ctx, subID, ch, "past_period_refund", "Refund of an ended period: access kept")
 	}
 

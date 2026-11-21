@@ -374,7 +374,7 @@ func (b *Billing) HandleWebhook(ctx context.Context, r stripe.Received) error {
 			return err
 		}
 
-		return b.handleRefund(ctx, ch.ID)
+		return b.handleRefund(ctx, ch.ID, ev.Created)
 
 	case "charge.dispute.created", "charge.dispute.closed":
 		d, err := stripe.Decode[dispute](ev)
