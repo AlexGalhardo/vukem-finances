@@ -18,7 +18,9 @@ func (s *Service) UpdateTransaction(ctx context.Context, id int64, in TxInput) (
 	return s.saveTransaction(ctx, id, in)
 }
 
-func transactionInput(ctx context.Context, ex database.Executor, in TxInput) (models.Transaction, error) {
+// transactionInput validates in. keepAccount is the account the row already
+// uses (0 for a new one): its history stays editable after it is archived.
+func transactionInput(ctx context.Context, ex database.Executor, in TxInput, keepAccount int64) (models.Transaction, error) {
 	if in.Kind != models.KindIncome && in.Kind != models.KindExpense {
 		return models.Transaction{}, errKind
 	}
@@ -31,6 +33,11 @@ func transactionInput(ctx context.Context, ex database.Executor, in TxInput) (mo
 	}
 	if ok, err := workspaces.Scoped[models.Account](ctx, ex).Where("id", in.AccountID).Exists(ctx); err != nil || !ok {
 		return models.Transaction{}, firstErr(err, errAccount)
+	}
+	if in.AccountID != keepAccount {
+		if err := refuseArchived(ctx, ex, in.AccountID); err != nil {
+			return models.Transaction{}, err
+		}
 	}
 	out := models.Transaction{
 		AccountID:   in.AccountID,
@@ -107,7 +114,7 @@ func (s *Service) persistTransaction(
 		*previous = row
 	}
 
-	row, err := transactionInput(ctx, tx, in)
+	row, err := transactionInput(ctx, tx, in, previous.AccountID)
 	if err != nil {
 		return err
 	}

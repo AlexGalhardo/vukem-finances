@@ -20,7 +20,24 @@ var (
 	errSameAccount    = errs.New(http.StatusUnprocessableEntity, "Choose two different accounts.")
 	errArchivedTarget = errs.New(http.StatusUnprocessableEntity, "An archived account cannot take part in a transfer.")
 	errIsTransfer     = errs.New(http.StatusUnprocessableEntity, "This is one side of a transfer: edit the transfer instead.")
+	errArchivedEntry  = errs.New(http.StatusUnprocessableEntity, "This account is archived: unarchive it to record new entries.")
 )
+
+// refuseArchived stops new entries on an archived account. An archived account
+// frees its place in the plan's account limit, so accepting them would let a
+// Free workspace keep using more accounts than the plan allows.
+func refuseArchived(ctx context.Context, ex database.Executor, accountID int64) error {
+	archived, err := workspaces.Scoped[models.Account](ctx, ex).Where("id", accountID).WhereNotNull("archived_at").Exists(ctx)
+	if err != nil {
+		return err
+	}
+
+	if archived {
+		return errArchivedEntry
+	}
+
+	return nil
+}
 
 // TransferInput is a transfer as the form sends it.
 type TransferInput struct {
