@@ -38,6 +38,8 @@ type CategoryInput struct {
 	ParentID int64
 	Color    string
 	Icon     string
+	// UID is the id a client chose for a new category; empty generates one.
+	UID string
 }
 
 // ActiveCategories lists the categories a picker offers: the archived ones are left out.
@@ -154,7 +156,7 @@ func (s *Service) AddCategory(ctx context.Context, in CategoryInput) (models.Cat
 			return errName
 		}
 
-		c := models.Category{Name: name, Kind: kind, ParentID: parent, Color: in.Color, Icon: in.Icon}
+		c := models.Category{UID: in.UID, Name: name, Kind: kind, ParentID: parent, Color: in.Color, Icon: in.Icon}
 		if err := orm.Create(ctx, tx, &c); err != nil {
 			// Two devices that create the same name at once: the partial unique
 			// index on live names settles it, and the loser gets the same answer.

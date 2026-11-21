@@ -139,6 +139,10 @@ func (s *Service) Leave(ctx context.Context, u models.User) error {
 			return err
 		}
 
+		if err := s.revokeTokens(ctx, tx, u.ID); err != nil {
+			return err
+		}
+
 		return s.record(ctx, tx, u.ID, AuditMemberLeft, fmt.Sprintf("user:%d", u.ID))
 	})
 }

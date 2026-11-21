@@ -12,8 +12,9 @@ import (
 )
 
 // ownScope are the workspace routes that act on the caller's own account, not
-// on the workspace they are looking at: any role may call them.
-var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leave"}
+// on the workspace they are looking at: any role may call them. A viewer may make
+// an API token: the role limits what it can do at every request (TestAPIScopeMatrix).
+var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leave", "tokens.store", "tokens.destroy"}
 
 // ownerOnlyReads are GET routes that are not open to a viewer: polling a PIX
 // payment re-reads it at the provider and can activate it, so it is billing

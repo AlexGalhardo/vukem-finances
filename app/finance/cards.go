@@ -202,7 +202,7 @@ func (s *Service) CreateCard(ctx context.Context, in CardInput) (CardView, error
 			return err
 		}
 
-		a, err := insertAccount(ctx, tx, lim, f.name, models.AccountCreditCard, 0)
+		a, err := insertAccount(ctx, tx, lim, "", f.name, models.AccountCreditCard, 0)
 		if err != nil {
 			return err
 		}

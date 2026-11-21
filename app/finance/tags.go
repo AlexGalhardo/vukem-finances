@@ -70,7 +70,7 @@ func tagByName(ctx context.Context, ex database.Executor, name string) (models.T
 
 // createTag adds a tag inside tx, which holds the workspace lock. The names
 // are unique without regard to case, and a workspace holds at most 200.
-func (s *Service) createTag(ctx context.Context, tx *database.Tx, name, color string) (models.Tag, error) {
+func (s *Service) createTag(ctx context.Context, tx *database.Tx, uid, name, color string) (models.Tag, error) {
 	if !models.ValidColor(color) {
 		return models.Tag{}, errColor
 	}
@@ -84,7 +84,7 @@ func (s *Service) createTag(ctx context.Context, tx *database.Tx, name, color st
 		return models.Tag{}, errTagsPerWorkspace
 	}
 
-	t := models.Tag{Name: name, Color: color}
+	t := models.Tag{UID: uid, Name: name, Color: color}
 	if err := orm.Create(ctx, tx, &t); err != nil {
 		if s.DB.UniqueViolation(err) {
 			return models.Tag{}, errTagTaken
@@ -98,6 +98,12 @@ func (s *Service) createTag(ctx context.Context, tx *database.Tx, name, color st
 
 // CreateTag adds a tag.
 func (s *Service) CreateTag(ctx context.Context, name, color string) (models.Tag, error) {
+	return s.CreateTagWithUID(ctx, "", name, color)
+}
+
+// CreateTagWithUID is CreateTag with the uid a client chose (empty generates
+// one); the caller has checked its shape.
+func (s *Service) CreateTagWithUID(ctx context.Context, uid, name, color string) (models.Tag, error) {
 	name, err := cleanTagName(name)
 	if err != nil {
 		return models.Tag{}, err
@@ -119,7 +125,7 @@ func (s *Service) CreateTag(ctx context.Context, name, color string) (models.Tag
 			return firstErr(err, errTagTaken)
 		}
 
-		out, err = s.createTag(ctx, tx, name, color)
+		out, err = s.createTag(ctx, tx, uid, name, color)
 
 		return err
 	})
@@ -300,7 +306,7 @@ func (s *Service) replaceTags(ctx context.Context, tx *database.Tx, transactionI
 		}
 
 		if !found {
-			if t, err = s.createTag(ctx, tx, name, ""); err != nil {
+			if t, err = s.createTag(ctx, tx, "", name, ""); err != nil {
 				return err
 			}
 		}
