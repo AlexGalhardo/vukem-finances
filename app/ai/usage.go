@@ -120,17 +120,21 @@ func (c *Client) Call(ctx context.Context, workspace int64, req Request) (Respon
 		return Response{}, err
 	}
 
+	// A client that disconnects cancels ctx: the reservation must still close,
+	// or it would count against the monthly limit forever.
+	closing := context.WithoutCancel(ctx)
+
 	resp, err := c.run(ctx, cred, req)
 	if err != nil {
-		c.finish(ctx, id, UsageFailed, Response{})
+		c.finish(closing, id, UsageFailed, Response{})
 		c.logFailure(ctx, cred.Provider, req.Feature, err)
 
 		return Response{}, publicError(err)
 	}
 
-	c.finish(ctx, id, UsageOK, resp)
+	c.finish(closing, id, UsageOK, resp)
 
-	if err := c.Vault.Touch(ctx, cred.ID); err != nil {
+	if err := c.Vault.Touch(closing, cred.ID); err != nil {
 		c.Log.WarnContext(ctx, "ai: could not record the key use", "workspace", workspace)
 	}
 
