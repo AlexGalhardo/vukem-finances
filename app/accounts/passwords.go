@@ -121,3 +121,27 @@ func digest(token string) string {
 	sum := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(sum[:])
 }
+
+// SetPassword replaces the password of the user with email, ending every
+// session, remembered session and API token, like a reset by mail but
+// without the token. It is for the operator at the server console
+// (user:reset-password): the caller has already proven access to the host.
+func (a *Accounts) SetPassword(ctx context.Context, email, password string) error {
+	u, err := a.Users.ByCredentials(ctx, map[string]string{"email": strings.ToLower(strings.TrimSpace(email))})
+	if err != nil {
+		return err
+	}
+
+	err = a.DB.Tx(ctx, func(tx *database.Tx) error {
+		if err := a.revokeAccess(ctx, tx, u.ID); err != nil {
+			return err
+		}
+
+		return a.updatePassword(ctx, tx, u.ID, password)
+	})
+	if err != nil {
+		return err
+	}
+
+	return a.revokeServerSessions(ctx, u.ID, "")
+}
