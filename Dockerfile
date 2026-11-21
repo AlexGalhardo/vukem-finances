@@ -37,8 +37,8 @@ RUN tags="$(sed 's/#.*//' .buildtags 2>/dev/null | tr -s ', \t\r\n' ',' | sed 's
 FROM alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 RUN apk add --no-cache ca-certificates tzdata \
 	&& adduser -D -H -u 10001 app \
-	&& mkdir -p /app/storage \
-	&& chown app:app /app/storage
+	&& mkdir -p /app/storage/backups /app/storage/restore \
+	&& chown -R app:app /app/storage
 WORKDIR /app
 COPY --from=build /out/app /app/app
 USER app
