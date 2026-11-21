@@ -93,9 +93,10 @@ func New(app *vukem.App, ws *workspaces.Service) (*Billing, error) {
 	var err error
 
 	if cfg.Pix.Enabled() {
-		// ABACATEPAY_API_BASE points the client at the fake server of the
-		// tests; it is ignored elsewhere, so the key only ever goes to AbacatePay.
-		if base := app.Source.Get("ABACATEPAY_API_BASE"); base != "" && app.Kind == vukem.KindTest {
+		// ABACATEPAY_API_BASE points the client at a fake server: the tests and
+		// the browser specs (APP_ENV=development) use it. Production ignores it,
+		// so a real key only ever goes to AbacatePay.
+		if base := app.Source.Get("ABACATEPAY_API_BASE"); base != "" && (app.Kind == vukem.KindTest || !app.Config.IsProduction()) {
 			b.Abacate = newAbacatePay(cfg.Pix.Key.Reveal(), base, &http.Client{Timeout: abacatePayTimeout})
 		} else {
 			b.Abacate = NewAbacatePay(cfg.Pix.Key.Reveal(), "")

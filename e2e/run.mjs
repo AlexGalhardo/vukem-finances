@@ -1,8 +1,30 @@
 // Starts the prepared binary in the foreground so Playwright can stop it.
+// `bun e2e/run.mjs` runs the personal edition; `bun e2e/run.mjs saas` runs the saas edition (billing spec) together
+// with a fake AbacatePay, once prepare.mjs has written its environment.
 import { spawn } from "node:child_process";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { setTimeout as sleep } from "node:timers/promises";
+import { startFakeAbacatePay } from "./fake-abacatepay.mjs";
 
-const { binary, appEnv } = JSON.parse(readFileSync("e2e/.tmp/env.json", "utf8"));
-const child = spawn(binary, [], { stdio: "inherit", env: appEnv });
-for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, () => child.kill());
-child.on("exit", (code) => process.exit(code ?? 0));
+const saas = process.argv[2] === "saas";
+const file = "e2e/.tmp/env.json";
+
+// The saas server is started by its own Playwright web server entry, in parallel with the preparing one.
+for (let i = 0; saas && i < 1800 && !(existsSync(file) && readFileSync(file, "utf8").includes("saasEnv")); i++) {
+  await sleep(100);
+}
+
+const { binary, appEnv, saasEnv } = JSON.parse(readFileSync(file, "utf8"));
+let fake;
+if (saas) fake = await startFakeAbacatePay(Number(process.env.E2E_FAKE_PORT ?? 3919));
+
+const child = spawn(binary, [], { stdio: "inherit", env: saas ? saasEnv : appEnv });
+const stop = () => {
+  child.kill();
+  fake?.close();
+};
+for (const signal of ["SIGINT", "SIGTERM"]) process.on(signal, stop);
+child.on("exit", (code) => {
+  fake?.close();
+  process.exit(code ?? 0);
+});
