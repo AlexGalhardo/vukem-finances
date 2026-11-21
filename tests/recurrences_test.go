@@ -547,3 +547,56 @@ func TestUpcoming(t *testing.T) {
 		t.Errorf("the March occurrence should show once as a virtual one: %+v", items)
 	}
 }
+
+// A rule or a purchase with a year far outside a sane range is refused, so it
+// can never be stored and walked.
+func TestRulesRefuseInsaneYears(t *testing.T) {
+	t.Parallel()
+
+	app, _ := clockApp(t, "2027-03-31")
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	acc := firstAccount(t, app, ana)
+	fin := softService(t, app)
+	ctx := wsCtx(t, ana)
+
+	for _, tc := range []struct{ name, start, end string }{
+		{"start far in the future", "9999-12-31", ""},
+		{"start in the year 3000", "3000-01-01", ""},
+		{"start before 1900", "1899-12-31", ""},
+		{"a five-digit year", "10000-01-01", ""},
+		{"end far in the future", "2027-04-01", "9999-12-31"},
+	} {
+		in := monthlyRule(acc, tc.start)
+		in.EndDate = tc.end
+
+		if _, err := fin.CreateRecurrence(ctx, in); err == nil {
+			t.Errorf("%s: the rule was stored", tc.name)
+		}
+	}
+
+	if _, err := fin.CreateInstallments(ctx, finance.InstallmentInput{
+		AccountID: acc, Total: "10.00", Parts: 3, FirstDate: "9999-12-31", Description: "Far",
+	}); err == nil {
+		t.Error("an installment purchase in the year 9999 was stored")
+	}
+
+	// The edit path is guarded too.
+	rule, err := fin.CreateRecurrence(ctx, monthlyRule(acc, "2027-04-01"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	edit := monthlyRule(acc, "9999-01-01")
+	edit.Active = true
+
+	if _, err := fin.UpdateRecurrence(ctx, rule.ID, edit); err == nil {
+		t.Error("a rule was edited to start in the year 9999")
+	}
+
+	// 1900 and 2999 are inside the range.
+	if _, err := fin.CreateRecurrence(ctx, monthlyRule(acc, "2999-12-31")); err != nil {
+		t.Errorf("a rule that starts in 2999 was refused: %v", err)
+	}
+
+	vukemtest.AssertDatabaseCount(t, app, "recurrences", 2)
+}

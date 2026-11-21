@@ -84,3 +84,51 @@ func TestRecurrenceWindowsCompose(t *testing.T) {
 		}
 	}
 }
+
+// The engine stops at the year 9999 and never walks without end.
+func TestRecurrenceYearBound(t *testing.T) {
+	t.Parallel()
+
+	got := Rule{Frequency: FreqMonthly, Interval: 1, StartDate: "9999-11-30"}.Occurrences("9999-01-01", "9999-12-31", 0)
+	if want := []string{"9999-11-30", "9999-12-30"}; !slices.Equal(got, want) {
+		t.Errorf("monthly at the bound = %v, want %v", got, want)
+	}
+
+	if got := (Rule{Frequency: FreqYearly, Interval: 1, StartDate: "9999-02-28"}).Occurrences("9999-01-01", "9999-12-31", 0); len(got) != 1 {
+		t.Errorf("yearly at the bound = %v, want one date", got)
+	}
+
+	// A five-digit year is not a date, whichever field carries it.
+	for _, r := range []Rule{
+		{Frequency: FreqDaily, Interval: 1, StartDate: "10000-01-01"},
+		{Frequency: FreqDaily, Interval: 1, StartDate: "2027-01-01", EndDate: "10000-01-01"},
+	} {
+		if got := r.Occurrences("2027-01-01", "9999-12-31", 0); len(got) != 0 {
+			t.Errorf("%+v = %v, want nothing", r, got)
+		}
+	}
+
+	if got := (Rule{Frequency: FreqMonthly, Interval: 1, StartDate: "2027-01-01"}).Occurrences("2027-01-01", "10000-01-01", 0); len(got) != 0 {
+		t.Errorf("a five-digit window = %v, want nothing", got)
+	}
+
+	// The widest window of a daily rule is cut at maxWalk, not at 3.6 million.
+	wide := Rule{Frequency: FreqDaily, Interval: 1, StartDate: "0001-01-01"}.Occurrences("0001-01-01", "9999-12-31", 0)
+	if len(wide) != maxWalk {
+		t.Errorf("the widest daily window gave %d dates, want %d", len(wide), maxWalk)
+	}
+
+	if got := (Rule{Frequency: FreqDaily, Interval: 1, StartDate: "0001-01-01"}).Occurrences("9990-01-01", "9990-01-03", 0); len(got) != 3 {
+		t.Errorf("a far window = %v, want 3 dates", got)
+	}
+}
+
+// A window more than 292 years from the start (a time.Duration would saturate).
+func TestRecurrenceVeryFarWindow(t *testing.T) {
+	t.Parallel()
+
+	got := Rule{Frequency: FreqDaily, Interval: 1, StartDate: "1900-01-01"}.Occurrences("2990-01-01", "2990-01-03", 0)
+	if want := []string{"2990-01-01", "2990-01-02", "2990-01-03"}; !slices.Equal(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}

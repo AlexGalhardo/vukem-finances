@@ -24,13 +24,25 @@ const (
 	backfillCap = 36
 	maxInterval = 999
 	maxCount    = 9999
+	// A rule or a purchase starts and ends between these years: a date far
+	// outside them is a mistake or an attack, never a bill.
+	minRuleYear = 1900
+	maxRuleYear = 2999
 )
+
+// saneYear reports whether an ISO date is in the years rules and installments accept.
+func saneYear(date string) bool {
+	d, err := time.Parse(isoDate, date)
+
+	return err == nil && d.Year() >= minRuleYear && d.Year() <= maxRuleYear
+}
 
 var (
 	errFrequency = errs.New(http.StatusUnprocessableEntity, "The frequency must be daily, weekly, monthly or yearly.")
 	errInterval  = errs.New(http.StatusUnprocessableEntity, "Repeat every 1 to 999 days, weeks, months or years.")
 	errEndDate   = errs.New(http.StatusUnprocessableEntity, "The end date must look like 2026-11-30 and not be before the start date.")
 	errMaxCount  = errs.New(http.StatusUnprocessableEntity, "The number of occurrences must be between 1 and 9999.")
+	errRuleYear  = errs.New(http.StatusUnprocessableEntity, "Dates must be between the years 1900 and 2999.")
 	errBackfill  = errs.New(http.StatusUnprocessableEntity,
 		"That start date is more than 36 occurrences in the past. Choose a later start date or turn off the backfill.")
 )
@@ -76,6 +88,10 @@ func recurrenceFields(ctx context.Context, ex database.Executor, in RecurrenceIn
 
 	if !validFrequency(in.Frequency) {
 		return models.Recurrence{}, errFrequency
+	}
+
+	if !saneYear(in.StartDate) || (in.EndDate != "" && validDate(in.EndDate) && !saneYear(in.EndDate)) {
+		return models.Recurrence{}, errRuleYear
 	}
 
 	if in.Interval < 1 || in.Interval > maxInterval {

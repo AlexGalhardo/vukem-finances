@@ -1,6 +1,7 @@
 // The recurrence rules of docs/specs/recurrence.md in TypeScript, for the previews of the forms and the
 // mobile app. It passes the same vectors as the Go engine (testdata/recurrence-vectors.json). Dates are
-// ISO calendar dates, handled as integers: no Date object, no time zone, no daylight saving.
+// ISO calendar dates, handled as integers: no time zone, no daylight saving. The year is a number all
+// the way: a date past MAX_YEAR is never turned into a string and compared, and one walk is capped.
 
 export type Frequency = "daily" | "weekly" | "monthly" | "yearly";
 
@@ -12,7 +13,11 @@ export interface Rule {
   max_count: number | null;
 }
 
-const MAX_YEAR = 9999;
+/** The engine stops after this year: ISO dates stay four digits. */
+export const MAX_YEAR = 9999;
+
+/** One call looks at no more than this many occurrences, whatever the window. */
+export const MAX_WALK = 10000;
 
 interface Ymd {
   y: number;
@@ -24,7 +29,7 @@ function parse(date: string): Ymd | null {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(date);
   if (!match) return null;
   const [y, m, d] = [Number(match[1]), Number(match[2]), Number(match[3])];
-  if (m < 1 || m > 12 || d < 1 || d > lastDay(y, m)) return null;
+  if (y < 1 || m < 1 || m > 12 || d < 1 || d > lastDay(y, m)) return null;
   return { y, m, d };
 }
 
@@ -36,51 +41,117 @@ function format({ y, m, d }: Ymd): string {
   return `${pad(y, 4)}-${pad(m, 2)}-${pad(d, 2)}`;
 }
 
+/** A UTC midnight in milliseconds; setUTCFullYear avoids the two-digit-year rule of Date.UTC (year 50 is not 1950). */
+function utc(y: number, month0: number, d: number): number {
+  const t = new Date(0);
+  t.setUTCFullYear(y, month0, d);
+  return t.getTime();
+}
+
 export function lastDay(year: number, month: number): number {
-  return new Date(Date.UTC(year, month, 0)).getUTCDate();
+  return new Date(utc(year, month, 0)).getUTCDate();
+}
+
+function monthsAdded(p: Ymd, n: number): Ymd {
+  const total = p.y * 12 + (p.m - 1) + n;
+  const y = Math.floor(total / 12);
+  const m = (total % 12) + 1;
+  return { y, m, d: Math.min(p.d, lastDay(y, m)) };
+}
+
+function daysAdded(p: Ymd, n: number): Ymd {
+  const t = new Date(utc(p.y, p.m - 1, p.d + n));
+  return { y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate() };
+}
+
+function checked(p: Ymd): string {
+  if (p.y < 1 || p.y > MAX_YEAR) throw new RangeError(`year ${p.y} is outside 1 to ${MAX_YEAR}`);
+  return format(p);
 }
 
 /** Moves a date by `n` months and clamps the day to the last day of the target month (Jan 31 + 1 is Feb 28). */
 export function addMonths(date: string, n: number): string {
   const p = parse(date);
   if (!p) throw new RangeError(`bad date ${date}`);
-  const total = p.y * 12 + (p.m - 1) + n;
-  const y = Math.floor(total / 12);
-  const m = (total % 12) + 1;
-  return format({ y, m, d: Math.min(p.d, lastDay(y, m)) });
+  return checked(monthsAdded(p, n));
 }
 
 export function addDays(date: string, n: number): string {
   const p = parse(date);
   if (!p) throw new RangeError(`bad date ${date}`);
-  const t = new Date(Date.UTC(p.y, p.m - 1, p.d + n));
-  return format({ y: t.getUTCFullYear(), m: t.getUTCMonth() + 1, d: t.getUTCDate() });
+  return checked(daysAdded(p, n));
 }
 
-/** The date of the k-th occurrence, from the start date and k alone, so a clamped day never drifts. */
-export function nth(rule: Rule, k: number): string {
+/** The k-th occurrence from the start date and k alone (a clamped day never drifts); null past MAX_YEAR. */
+function nthYmd(rule: Rule, start: Ymd, k: number): Ymd | null {
   const n = k * rule.interval;
+  let p: Ymd;
   switch (rule.frequency) {
     case "daily":
-      return addDays(rule.start_date, n);
+      p = daysAdded(start, n);
+      break;
     case "weekly":
-      return addDays(rule.start_date, 7 * n);
+      p = daysAdded(start, 7 * n);
+      break;
     case "monthly":
-      return addMonths(rule.start_date, n);
+      p = monthsAdded(start, n);
+      break;
     case "yearly":
-      return addMonths(rule.start_date, 12 * n);
+      p = monthsAdded(start, 12 * n);
+      break;
   }
+  return p.y > MAX_YEAR ? null : p;
 }
 
-/** The occurrences with from <= date <= to, ascending, honoring the end date and the count (counted from the start). */
+export function nth(rule: Rule, k: number): string {
+  const start = parse(rule.start_date);
+  if (!start) throw new RangeError(`bad date ${rule.start_date}`);
+  const p = nthYmd(rule, start, k);
+  if (p === null) throw new RangeError(`the ${k}-th occurrence is past the year ${MAX_YEAR}`);
+  return format(p);
+}
+
+/** A k that is never later than the first occurrence on or after `from`, so a far window does not walk from 0. */
+function firstIndex(rule: Rule, start: Ymd, from: Ymd): number {
+  const days = Math.floor((utc(from.y, from.m - 1, from.d) - utc(start.y, start.m - 1, start.d)) / 86_400_000);
+  if (days <= 0) return 0;
+  let units: number;
+  switch (rule.frequency) {
+    case "daily":
+      units = Math.floor(days / rule.interval);
+      break;
+    case "weekly":
+      units = Math.floor(days / (7 * rule.interval));
+      break;
+    case "monthly":
+      units = Math.floor(((from.y - start.y) * 12 + (from.m - start.m)) / rule.interval);
+      break;
+    case "yearly":
+      units = Math.floor((from.y - start.y) / rule.interval);
+      break;
+  }
+  return Math.max(0, units - 1);
+}
+
+/**
+ * The occurrences with from <= date <= to, ascending, honoring the end date and the count (counted from the
+ * start). At most MAX_WALK occurrences are looked at, so a hostile rule cannot hold the browser.
+ */
 export function occurrences(rule: Rule, from: string, to: string, limit = 0): string[] {
-  if (!parse(rule.start_date) || !parse(from) || !parse(to) || rule.interval < 1 || to < from) return [];
-  if (rule.end_date !== null && !parse(rule.end_date)) return [];
+  const start = parse(rule.start_date);
+  const lo = parse(from);
+  const hi = parse(to);
+  const end = rule.end_date === null ? null : parse(rule.end_date);
+  if (!start || !lo || !hi || (rule.end_date !== null && !end)) return [];
+  if (!Number.isInteger(rule.interval) || rule.interval < 1 || to < from) return [];
   const out: string[] = [];
-  for (let k = 0; ; k++) {
+  const first = firstIndex(rule, start, lo);
+  for (let k = first; k < first + MAX_WALK; k++) {
     if (rule.max_count !== null && k >= rule.max_count) break;
-    const date = nth(rule, k);
-    if (Number(date.slice(0, 4)) > MAX_YEAR || date > to || (rule.end_date !== null && date > rule.end_date)) break;
+    const p = nthYmd(rule, start, k);
+    if (p === null) break;
+    const date = format(p);
+    if (date > to || (rule.end_date !== null && date > rule.end_date)) break;
     if (date < from) continue;
     out.push(date);
     if (limit > 0 && out.length >= limit) break;

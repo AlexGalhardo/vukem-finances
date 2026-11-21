@@ -14,8 +14,13 @@ const (
 	FreqYearly  = "yearly"
 )
 
-// maxYear bounds the engine: ISO dates stay four digits.
-const maxYear = 9999
+// The engine stays inside the years 1 to 9999 (ISO dates stay four digits) and
+// looks at no more than maxWalk occurrences per call, whatever the window.
+const (
+	minYear = 1
+	maxYear = 9999
+	maxWalk = 10000
+)
 
 // Rule is the pure part of a recurrence: docs/specs/recurrence.md. EndDate
 // and MaxCount are optional (empty and 0).
@@ -62,7 +67,7 @@ func (r Rule) nth(start time.Time, k int) (time.Time, bool) {
 		return time.Time{}, false
 	}
 
-	return d, d.Year() <= maxYear
+	return d, d.Year() >= minYear && d.Year() <= maxYear
 }
 
 // firstIndex is a k that is never later than the first occurrence on or after
@@ -72,13 +77,16 @@ func (r Rule) firstIndex(start, from time.Time) int {
 		return 0
 	}
 
+	// Unix seconds, not Sub: a Duration saturates after 292 years.
+	days := int((from.Unix() - start.Unix()) / 86400)
+
 	var units int
 
 	switch r.Frequency {
 	case FreqDaily:
-		units = int(from.Sub(start).Hours()/24) / r.Interval
+		units = days / r.Interval
 	case FreqWeekly:
-		units = int(from.Sub(start).Hours()/24) / (7 * r.Interval)
+		units = days / (7 * r.Interval)
 	case FreqMonthly:
 		months := (from.Year()-start.Year())*12 + int(from.Month()-start.Month())
 		units = months / r.Interval
@@ -95,7 +103,7 @@ func (r Rule) firstIndex(start, from time.Time) int {
 // above 0. Malformed input yields no dates.
 func (r Rule) Occurrences(from, to string, limit int) []string {
 	start, err := time.Parse(isoDate, r.StartDate)
-	if err != nil || !validFrequency(r.Frequency) || r.Interval < 1 {
+	if err != nil || start.Year() < minYear || !validFrequency(r.Frequency) || r.Interval < 1 {
 		return nil
 	}
 
@@ -119,7 +127,9 @@ func (r Rule) Occurrences(from, to string, limit int) []string {
 
 	var out []string
 
-	for k := r.firstIndex(start, lo); ; k++ {
+	first := r.firstIndex(start, lo)
+
+	for k := first; k < first+maxWalk; k++ {
 		if r.MaxCount > 0 && k >= r.MaxCount {
 			break
 		}

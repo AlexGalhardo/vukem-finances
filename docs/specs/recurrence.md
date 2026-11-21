@@ -35,7 +35,7 @@ The occurrence number `k` (0, 1, 2, ...) is computed from `start_date` and `k` a
 2. the date is not after `end_date`, when `end_date` is set;
 3. `from <= date <= to` (both inclusive).
 
-The index `k` always counts from `start_date`, not from `from`: `max_count: 4` with a window that starts after the third occurrence yields at most one date. An empty window (`to < from`) is empty. The engine stops at the year 9999.
+The index `k` always counts from `start_date`, not from `from`: `max_count: 4` with a window that starts after the third occurrence yields at most one date. An empty window (`to < from`) is empty. The engine stops at the year 9999 (a date is never produced, or compared, past it) and looks at no more than 10000 occurrences per call, counted from the first one that can fall in the window, so a hostile rule cannot hold a device. A stored rule and an installment purchase start and end between the years 1900 and 2999; anything else is refused where it is written, and a client that writes a rule offline must refuse it too.
 
 ## Vector file
 
