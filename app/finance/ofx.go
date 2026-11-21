@@ -185,8 +185,12 @@ func (t *ofxTxn) set(field, raw string) {
 }
 
 var (
-	ofxDate   = regexp.MustCompile(`^(\d{8})(\d{6})?(\.\d{1,3})?(\[[^\]]{0,16}\])?$`)
-	ofxAmount = regexp.MustCompile(`^[+-]?(\d+([.,]\d{1,2})?|[.,]\d{1,2})$`)
+	ofxDate = regexp.MustCompile(`^(\d{8})(\d{6})?(\.\d{1,3})?(\[[^\]]{0,16}\])?$`)
+	// ofxAmount is a plain decimal with at most two places, with or without
+	// thousands groups of three: the spec says "1234.56", and a few banks
+	// write "1.234,56" or "1,234.56". Letters, signs inside, spaces and
+	// currency symbols are not accepted (ParseAmount would drop them).
+	ofxAmount = regexp.MustCompile(`^[+-]?(\d{1,3}([.,]\d{3})+([.,]\d{1,2})?|\d+([.,]\d{1,2})?|[.,]\d{1,2})$`)
 )
 
 func (t *ofxTxn) row() StatementRow {
