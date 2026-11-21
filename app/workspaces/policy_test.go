@@ -16,6 +16,7 @@ func TestPolicyTable(t *testing.T) {
 		AbilityManageData:    {models.RoleOwner, models.RoleAdmin},
 		AbilityManageMembers: {models.RoleOwner, models.RoleAdmin},
 		AbilityManageBilling: {models.RoleOwner},
+		AbilityTransfer:      {models.RoleOwner},
 	}
 
 	if len(grants) != len(want) {

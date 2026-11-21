@@ -617,6 +617,67 @@ func (h *Handlers) RemoveMember(c *web.Ctx) error {
 	return done(c, "/workspace", "Member removed.")
 }
 
+// ChangeRole sets the role of a member.
+func (h *Handlers) ChangeRole(c *web.Ctx) error {
+	if err := h.can(c, workspaces.AbilityManageMembers); err != nil {
+		return err
+	}
+
+	uid, err := c.ParamInt("user")
+	if err != nil {
+		return err
+	}
+
+	in, err := web.Parse(c, requests.MemberRoleSchema)
+	if err != nil {
+		return err
+	}
+
+	if err := h.WS.ChangeRole(c.Context(), uid, in.Role); err != nil {
+		return back(c, "/workspace", err)
+	}
+
+	return done(c, "/workspace", "Role changed.")
+}
+
+// TransferOwnership hands the workspace to another member; the owner becomes an admin.
+func (h *Handlers) TransferOwnership(c *web.Ctx) error {
+	if err := h.can(c, workspaces.AbilityTransfer); err != nil {
+		return err
+	}
+
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	in, err := web.Parse(c, requests.TransferSchema)
+	if err != nil {
+		return err
+	}
+
+	if err := h.WS.TransferOwnership(c.Context(), u, id(in.UserID)); err != nil {
+		return back(c, "/workspace", err)
+	}
+
+	return done(c, "/workspace", "Ownership transferred: you are now an admin.")
+}
+
+// Leave takes the signed-in user out of the workspace; the next request
+// picks another workspace of theirs.
+func (h *Handlers) Leave(c *web.Ctx) error {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	if err := h.WS.Leave(c.Context(), u); err != nil {
+		return back(c, "/workspace", err)
+	}
+
+	return done(c, "/dashboard", "You left the workspace.")
+}
+
 // ShowInvite asks the signed-in user to confirm the invitation.
 func (*Handlers) ShowInvite(c *web.Ctx) error {
 	return pages.InviteAccept.Render(c, pages.InviteAcceptProps{Token: c.Param("token")})
