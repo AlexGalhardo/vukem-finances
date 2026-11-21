@@ -25,10 +25,14 @@ COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
 COPY --from=assets /src/resources/public/build resources/public/build
+# The release version, shown by the about command (never by /up).
+ARG VERSION=0.0.0-dev
 # Same tags as vukem build: .buildtags lists them (one per line or
 # comma-separated, "#" comments); --minimal apps put vukem_nosqlite there.
 RUN tags="$(sed 's/#.*//' .buildtags 2>/dev/null | tr -s ', \t\r\n' ',' | sed 's/^,//; s/,$//')" \
-	&& go build -trimpath -ldflags="-s -w" -tags "$tags" -o /out/app ./cmd/app
+	&& go build -trimpath \
+		-ldflags="-s -w -X github.com/AlexGalhardo/vukem-finances/config.Version=${VERSION}" \
+		-tags "$tags" -o /out/app ./cmd/app
 
 FROM alpine:3.24.4@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d229c0f5a48c71bf
 RUN apk add --no-cache ca-certificates tzdata \
