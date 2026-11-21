@@ -12,6 +12,7 @@ func All() []func(r *router.Router, app *vukem.App) error {
 		Social,
 		Finance,
 		Auth,
+		Setup,
 		TwoFactor,
 		Admin,
 	}

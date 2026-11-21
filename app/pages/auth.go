@@ -11,7 +11,14 @@ var (
 	VerifyEmail    = inertia.Define[struct{}]("Auth/VerifyEmail")
 	Dashboard      = inertia.Define[DashboardProps]("Dashboard")
 	ResetPassword  = inertia.Define[ResetPasswordProps]("Auth/ResetPassword")
+	Setup          = inertia.Define[SetupProps]("Setup")
 )
+
+// SetupProps are the props of Setup, the first-owner form of the personal
+// edition.
+type SetupProps struct {
+	Currency string `json:"currency"`
+}
 
 // ResetPasswordProps are the props of Auth/ResetPassword.
 type ResetPasswordProps struct {

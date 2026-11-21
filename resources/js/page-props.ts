@@ -250,6 +250,10 @@ export type InviteAcceptProps = {
   token: string;
 };
 
+export type SetupProps = {
+  currency: string;
+};
+
 export type SharedProps = {
   appName: string;
   auth?: SharedAuth | null;
@@ -297,6 +301,7 @@ export interface PageProps {
   "Home": HomeProps;
   "Import": ImportProps;
   "InviteAccept": InviteAcceptProps;
+  "Setup": SetupProps;
   "Transactions": TransactionsProps;
   "Workspace": WorkspaceProps;
 }
