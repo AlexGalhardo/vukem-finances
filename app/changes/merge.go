@@ -5,6 +5,7 @@ import (
 	"maps"
 	"reflect"
 	"slices"
+	"time"
 
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 )
@@ -59,6 +60,11 @@ type Mutation struct {
 	BaseSeq int64
 	Device  string
 	Fields  map[string]any
+	// Today is the current ISO date in the time zone of the workspace, read by
+	// the caller. A watermark later than it is ignored: generation never moves
+	// past today, so a later value is a mistake or an attack that would stop a
+	// rule for good. Empty skips that check.
+	Today string
 	// Parents is the state of the parent behind each reference field the
 	// mutation sets (for example "account_id"), looked up by the caller.
 	Parents map[string]ParentState
@@ -109,7 +115,9 @@ type Result struct {
 //     on with the rest of the batch.
 //  7. Derived values are not fields and never reach Merge.
 //  8. A watermark (the generated_through of a recurrence) is never a
-//     conflict: the later date wins, so no device sends a rule back in time.
+//     conflict: the later valid date wins, so no device sends a rule back in
+//     time. A value that is not an ISO date, or is after Today, is ignored; a
+//     stored value that is not an ISO date counts as missing.
 func Merge(current Row, in Mutation, since []Change) Result {
 	if res, ok := checkParents(in); ok {
 		return res
@@ -208,7 +216,7 @@ func mergeFields(current Row, in Mutation, since []Change) Result {
 		want := in.Fields[field]
 		have := current.Fields[field]
 
-		if equalValues(have, want) || (watermarks[field] && !laterDate(want, have)) {
+		if equalValues(have, want) || (watermarks[field] && !laterDate(want, have, in.Today)) {
 			continue
 		}
 
@@ -233,17 +241,34 @@ func mergeFields(current Row, in Mutation, since []Change) Result {
 // arrival.
 var watermarks = map[string]bool{"generated_through": true} //nolint:gochecknoglobals // constant table
 
-// laterDate reports whether want is a date after have; a missing or malformed
-// current value (a rule that never generated) loses to any date.
-func laterDate(want, have any) bool {
-	w, ok := want.(string)
-	if !ok || w == "" {
+// laterDate reports whether want is a valid ISO date after have (a missing or
+// malformed have loses to any valid date) and not after today when today is
+// a valid date.
+func laterDate(want, have any, today string) bool {
+	w, ok := isoDate(want)
+	if !ok {
 		return false
 	}
 
-	h, _ := have.(string)
+	if t, ok := isoDate(today); ok && w.After(t) {
+		return false
+	}
 
-	return w > h
+	h, ok := isoDate(have)
+
+	return !ok || w.After(h)
+}
+
+// isoDate reads a strict "2006-01-02" string; anything else is not a date.
+func isoDate(v any) (time.Time, bool) {
+	s, ok := v.(string)
+	if !ok {
+		return time.Time{}, false
+	}
+
+	t, err := time.Parse("2006-01-02", s)
+
+	return t, err == nil
 }
 
 // equalValues compares values that may come from JSON (float64) or from the
