@@ -18,5 +18,10 @@ func (h *Handlers) Dashboard(c *web.Ctx) error {
 		return err
 	}
 
-	return pages.Dashboard.Render(c, pages.DashboardProps{Dashboard: d})
+	upcoming, err := h.Fin.Upcoming(c.Context(), upcomingDays)
+	if err != nil {
+		return err
+	}
+
+	return pages.Dashboard.Render(c, pages.DashboardProps{Dashboard: d, Upcoming: upcoming})
 }

@@ -95,6 +95,8 @@ func transactionField(message string) string {
 	switch {
 	case strings.Contains(msg, "tag"):
 		return "tags"
+	case strings.Contains(msg, "part") || strings.Contains(msg, "installment"):
+		return "parts"
 	case strings.Contains(msg, "date"):
 		return "date"
 	case strings.Contains(msg, "kind"):
@@ -121,7 +123,7 @@ func redirectTransactionFields(c *web.Ctx, fields map[string][]string) error {
 		}
 	}
 
-	for _, key := range []string{"date", "kind", "accountId", "fromAccountId", "toAccountId", "categoryId", "description", "tags", "amount"} {
+	for _, key := range []string{"date", "kind", "accountId", "fromAccountId", "toAccountId", "categoryId", "description", "tags", "parts", "amount"} {
 		if len(fields[key]) > 0 {
 			inertia.Flash(c, "error", fields[key][0])
 
