@@ -7,11 +7,17 @@ import (
 	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
+	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
 // Social registers optional Google sign-in through the native OAuth flow.
 func Social(r *router.Router, app *vukem.App) error {
 	acc, err := accounts.New(app)
+	if err != nil {
+		return err
+	}
+
+	edition, err := config.LoadEdition(app.Source)
 	if err != nil {
 		return err
 	}
@@ -41,7 +47,14 @@ func Social(r *router.Router, app *vukem.App) error {
 			return err
 		}
 
-		u, err := acc.FindOrCreateFromSocial(c.Context(), su)
+		// A personal installation has no public sign-up: Google only signs in
+		// people who already have an account.
+		find := acc.FindOrCreateFromSocial
+		if edition.Personal() {
+			find = acc.FindFromSocial
+		}
+
+		u, err := find(c.Context(), su)
 		if err != nil {
 			return err
 		}

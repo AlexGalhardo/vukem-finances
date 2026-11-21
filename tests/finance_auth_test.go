@@ -111,3 +111,55 @@ func TestSecurity_FinanceLocalSeedPreservesCredentialsAndData(t *testing.T) {
 	}
 	vukemtest.AssertDatabaseHas(t, app, "accounts", map[string]any{"name": "My edited checking"})
 }
+
+func TestSecurity_PersonalSocialDoesNotCreateUsers(t *testing.T) {
+	t.Parallel()
+
+	fake := social.User{ID: "google-stranger", Email: "stranger@example.com", EmailVerified: true, Name: "Stranger"}
+
+	// An unknown identity gets the 404 of /register and creates nothing.
+	app := newPersonalApp(t, vukemtest.FakeSocial(fake))
+	financeGoogleSignIn(t, app.Client(t)).AssertNotFound()
+	vukemtest.AssertDatabaseCount(t, app, "users", 0)
+	vukemtest.AssertDatabaseCount(t, app, "social_accounts", 0)
+
+	// Not even an existing address with another person's account unverified.
+	db, err := app.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	squat := models.User{Name: "Squatter", Email: "stranger@example.com", Password: "not used"}
+	if err := orm.Create(t.Context(), db, &squat); err != nil {
+		t.Fatal(err)
+	}
+
+	financeGoogleSignIn(t, app.Client(t)).AssertNotFound()
+	vukemtest.AssertDatabaseCount(t, app, "users", 1)
+	vukemtest.AssertDatabaseCount(t, app, "social_accounts", 0)
+
+	// A linked identity signs in.
+	known := newPersonalApp(t, vukemtest.FakeSocial(fake))
+	owner := newVerifiedUser(t, known, "Owner", "owner@example.com")
+
+	kdb, err := known.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := orm.Create(t.Context(), kdb, &models.SocialAccount{
+		UserID: owner.ID, Provider: "google", ProviderID: "google-stranger",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	financeGoogleSignIn(t, known.Client(t)).AssertRedirect("/dashboard")
+	vukemtest.AssertDatabaseCount(t, known, "users", 1)
+
+	// A verified local account with the same verified address gets linked, not created.
+	byMail := newPersonalApp(t, vukemtest.FakeSocial(fake))
+	newVerifiedUser(t, byMail, "Owner", "stranger@example.com")
+	financeGoogleSignIn(t, byMail.Client(t)).AssertRedirect("/dashboard")
+	vukemtest.AssertDatabaseCount(t, byMail, "users", 1)
+	vukemtest.AssertDatabaseCount(t, byMail, "social_accounts", 1)
+}
