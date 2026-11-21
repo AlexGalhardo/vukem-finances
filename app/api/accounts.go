@@ -221,4 +221,15 @@ func (a *API) Routes(g *router.Group, idem router.Middleware) {
 	register(g, idem, "accounts.create", a.accountsCreate)
 	register(g, idem, "accounts.update", a.accountsUpdate)
 	register(g, idem, "accounts.archive", a.accountsArchive)
+
+	register(g, idem, "categories.list", a.categoriesList)
+	register(g, idem, "categories.show", a.categoriesShow)
+	register(g, idem, "categories.create", a.categoriesCreate)
+	register(g, idem, "categories.update", a.categoriesUpdate)
+	register(g, idem, "categories.archive", a.categoriesArchive)
+
+	register(g, idem, "tags.list", a.tagsList)
+	register(g, idem, "tags.create", a.tagsCreate)
+	register(g, idem, "tags.update", a.tagsUpdate)
+	register(g, idem, "tags.delete", a.tagsDelete)
 }
