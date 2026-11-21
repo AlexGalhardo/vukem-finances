@@ -22,6 +22,9 @@ type AccountBalance struct {
 	MovementCents int64 `json:"movementCents"`
 	BalanceCents  int64 `json:"balanceCents"`
 	Archived      bool  `json:"archived"`
+	// Transactions counts the live transactions of the account, at any
+	// date: what deleting the account would remove.
+	Transactions int64 `json:"transactions"`
 }
 
 // movement is the signed sum of the transactions of one account and kind.
@@ -69,6 +72,11 @@ func (s *Service) AccountBalances(ctx context.Context, asOf string) ([]AccountBa
 		return nil, err
 	}
 
+	counts, err := workspaces.Scoped[models.Transaction](ctx, s.DB).GroupCount[int64](ctx, "account_id")
+	if err != nil {
+		return nil, err
+	}
+
 	signed := make(map[int64]int64, len(accounts))
 
 	for _, m := range moves {
@@ -92,7 +100,7 @@ func (s *Service) AccountBalances(ctx context.Context, asOf string) ([]AccountBa
 
 		out[i] = AccountBalance{
 			AccountID: a.ID, OpeningCents: a.OpeningCents, MovementCents: signed[a.ID],
-			BalanceCents: balance, Archived: a.ArchivedAt.Valid,
+			BalanceCents: balance, Archived: a.ArchivedAt.Valid, Transactions: counts[a.ID],
 		}
 	}
 
@@ -107,7 +115,15 @@ func (s *Service) NetWorth(ctx context.Context, asOf string) (int64, error) {
 		return 0, err
 	}
 
+	return NetWorthOf(balances)
+}
+
+// NetWorthOf sums the balances that are not archived: the one rule behind the
+// accounts page and the dashboard.
+func NetWorthOf(balances []AccountBalance) (int64, error) {
 	var total int64
+
+	var err error
 
 	for _, b := range balances {
 		if b.Archived {

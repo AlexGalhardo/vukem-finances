@@ -1,9 +1,6 @@
 package models
 
 import (
-	"database/sql"
-	"time"
-
 	"github.com/AlexGalhardo/vukem/orm"
 )
 
@@ -36,6 +33,6 @@ type Account struct {
 
 	// ArchivedAt is set while the account is archived: hidden from pickers and
 	// out of the plan quota, history and balance kept.
-	ArchivedAt sql.Null[time.Time] `json:"archived_at"`
-	Position   int                 `json:"position"`
+	ArchivedAt orm.NullTime `json:"archived_at"`
+	Position   int          `json:"position"`
 }

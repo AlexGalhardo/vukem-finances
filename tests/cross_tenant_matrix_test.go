@@ -40,7 +40,25 @@ var crossTenantCases = map[string]crossTenantCase{
 	},
 	"transactions.destroy": {method: http.MethodDelete, table: "transactions", param: "transaction"},
 	"accounts.destroy":     {method: http.MethodDelete, table: "accounts", param: "account"},
-	"budgets.destroy":      {method: http.MethodDelete, table: "budgets", param: "budget"},
+	"accounts.update": {
+		method: http.MethodPatch, table: "accounts", param: "account",
+		body: func(map[string]int64) map[string]any {
+			return map[string]any{"name": "Renamed", "kind": "savings", "opening": "1.00"}
+		},
+	},
+	"accounts.archive":   {method: http.MethodPost, table: "accounts", param: "account"},
+	"accounts.unarchive": {method: http.MethodPost, table: "accounts", param: "account"},
+	"transfers.update": {
+		method: http.MethodPatch, table: "transactions", param: "transaction",
+		body: func(ids map[string]int64) map[string]any {
+			return map[string]any{
+				"fromAccountId": strconv.FormatInt(ids["bobAccount"], 10), "toAccountId": strconv.FormatInt(ids["bobAccount"], 10),
+				"amount": "1.00", "date": "2026-01-10",
+			}
+		},
+	},
+	"transfers.destroy": {method: http.MethodDelete, table: "transactions", param: "transaction"},
+	"budgets.destroy":   {method: http.MethodDelete, table: "budgets", param: "budget"},
 	"import.confirm": {
 		method: http.MethodPost, table: "imports", param: "import",
 		body: func(map[string]int64) map[string]any {
