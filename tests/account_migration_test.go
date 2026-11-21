@@ -143,6 +143,9 @@ func TestAccountMigration(t *testing.T) {
 // serverOnlyColumns are the synced-table columns no client writes, with the
 // reason. Every other column must be a writable field of the registry entry.
 var serverOnlyColumns = map[string]map[string]string{
+	"recurrences": {
+		"last_error": "server state of the generation job, never edited by a client",
+	},
 	"transactions": {
 		"import_id":   "set by the server-side CSV import",
 		"import_hash": "the duplicate key of the importer",

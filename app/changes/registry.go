@@ -85,7 +85,7 @@ func init() {
 		Name: "transaction", Table: "transactions",
 		Fields: []string{
 			"account_id", "category_id", "kind", "amount_cents", "description", "occurred_on", "transfer_uid", "tag_uids",
-			"statement_ref",
+			"statement_ref", "recurrence_uid", "occurrence_on", "installment_group_uid", "installment_no", "installment_total",
 		},
 		Refs: []Ref{{"account_id", "account"}, {"category_id", "category"}},
 		JSON: []string{"tag_uids"},
@@ -99,5 +99,13 @@ func init() {
 		Name: "credit_card", Table: "credit_cards",
 		Fields: []string{"account_id", "limit_cents", "closing_day", "due_day", "payment_account_id", "brand", "last4"},
 		Refs:   []Ref{{"account_id", "account"}, {"payment_account_id", "account"}},
+	})
+	Register(Entity{
+		Name: "recurrence", Table: "recurrences",
+		Fields: []string{
+			"account_id", "category_id", "kind", "amount_cents", "description", "frequency", "interval",
+			"start_date", "end_date", "max_count", "generated_through", "active",
+		},
+		Refs: []Ref{{"account_id", "account"}, {"category_id", "category"}},
 	})
 }
