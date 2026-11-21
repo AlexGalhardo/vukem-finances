@@ -239,3 +239,26 @@ func TestMergeIsPure(t *testing.T) {
 		t.Fatal("the result shares its map with the mutation")
 	}
 }
+
+// A watermark only moves forward, and never reports a conflict.
+func TestMergeWatermarkTakesTheLaterDate(t *testing.T) {
+	t.Parallel()
+
+	rule := fields{"generated_through": "2027-03-31"}
+	since := []changes.Change{{Seq: 9, Op: "upsert", Fields: []string{"generated_through"}, Device: "phone"}}
+
+	later := changes.Merge(live(rule), changes.Mutation{BaseSeq: 5, Fields: fields{"generated_through": "2027-04-30"}}, since)
+	if later.Outcome != changes.OutcomeApplied || later.Apply["generated_through"] != "2027-04-30" || len(later.Conflicts) != 0 {
+		t.Errorf("a later watermark = %+v, want it applied without a conflict", later)
+	}
+
+	earlier := changes.Merge(live(rule), changes.Mutation{BaseSeq: 5, Fields: fields{"generated_through": "2027-02-28"}}, since)
+	if earlier.Outcome != changes.OutcomeNoop || len(earlier.Conflicts) != 0 {
+		t.Errorf("an earlier watermark = %+v, want a no-op", earlier)
+	}
+
+	first := changes.Merge(live(fields{"generated_through": nil}), changes.Mutation{Fields: fields{"generated_through": "2027-01-31"}}, nil)
+	if first.Outcome != changes.OutcomeApplied {
+		t.Errorf("the first watermark = %+v, want it applied", first)
+	}
+}

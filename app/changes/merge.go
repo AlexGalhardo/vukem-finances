@@ -108,6 +108,8 @@ type Result struct {
 //  6. A missing or deleted parent rejects the mutation; the caller carries
 //     on with the rest of the batch.
 //  7. Derived values are not fields and never reach Merge.
+//  8. A watermark (the generated_through of a recurrence) is never a
+//     conflict: the later date wins, so no device sends a rule back in time.
 func Merge(current Row, in Mutation, since []Change) Result {
 	if res, ok := checkParents(in); ok {
 		return res
@@ -206,11 +208,11 @@ func mergeFields(current Row, in Mutation, since []Change) Result {
 		want := in.Fields[field]
 		have := current.Fields[field]
 
-		if equalValues(have, want) {
+		if equalValues(have, want) || (watermarks[field] && !laterDate(want, have)) {
 			continue
 		}
 
-		if c, clash := touched[field]; clash {
+		if c, clash := touched[field]; clash && !watermarks[field] {
 			res.Conflicts = append(res.Conflicts, Conflict{
 				Field: field, Kind: models.ConflictField, LostValue: have, LostByDevice: c.Device,
 			})
@@ -225,6 +227,23 @@ func mergeFields(current Row, in Mutation, since []Change) Result {
 	}
 
 	return res
+}
+
+// watermarks are the fields where the later ISO date wins instead of the later
+// arrival.
+var watermarks = map[string]bool{"generated_through": true} //nolint:gochecknoglobals // constant table
+
+// laterDate reports whether want is a date after have; a missing or malformed
+// current value (a rule that never generated) loses to any date.
+func laterDate(want, have any) bool {
+	w, ok := want.(string)
+	if !ok || w == "" {
+		return false
+	}
+
+	h, _ := have.(string)
+
+	return w > h
 }
 
 // equalValues compares values that may come from JSON (float64) or from the
