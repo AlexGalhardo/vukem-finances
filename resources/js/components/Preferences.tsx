@@ -1,6 +1,6 @@
 import { router } from "@inertiajs/react";
 import { useEffect, useState } from "react";
-import { Keyboard, Moon, Sun } from "lucide-react";
+import { Moon, Sun, Zap } from "lucide-react";
 import { useFinanceI18n } from "../lib/i18n";
 import { setSingleKeyEnabled, useSingleKeyShortcuts } from "../shortcuts/singleKey";
 import { Button } from "./ui/button";
@@ -46,7 +46,7 @@ export default function Preferences({ withShortcuts = false }: { withShortcuts?:
           title={t("singleKey")}
           onClick={() => setSingleKeyEnabled(!singleKeys)}
         >
-          <Keyboard aria-hidden="true" />
+          <Zap aria-hidden="true" />
         </Button>
       )}
       <Button
