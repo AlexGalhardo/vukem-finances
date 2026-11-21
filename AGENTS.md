@@ -24,6 +24,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | Path | What lives there |
 | --- | --- |
 | `app/` | Go application code: `accounts/`, `admin/`, `billing/`, `changes/` (sync: entity registry, change-log triggers and reader, compaction, merge), `controllers/`, `finance/` (money, transactions, dashboard, import), `jobs/`, `listeners/`, `mail/`, `models/`, `pages/`, `requests/`, `workspaces/` |
+| `app/ai/` | the AI layer (bring your own key): providers, the encrypted key vault, `Redact`, the call pipeline with limits (see "The AI layer") |
 | `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `admin.go`, ...) registered by `registry.go` |
 | `database/migrations/` | Go migrations, registered in `registry.go` |
 | `resources/js/` | React pages, components, layouts and React Email templates |
@@ -63,6 +64,17 @@ Read `docs/design.md` and `docs/shortcuts.md` before touching the UI. The design
 - **Add translations.** Add `resources/js/i18n/en/<domain>.ts`, `pt-BR/<domain>.ts` and `es/<domain>.ts` (the last two use `satisfies Record<keyof typeof en, string>`), then add one `typeof` line for the new domain to `resources/js/i18n/keys.ts`. `bun test resources/js/i18n` fails when a locale misses a key.
 - **Page structure.** A signed-in page renders `PageHeader` for its one `h1`; the shell moves focus there after a navigation. Show money with `MoneyText` (sign or label, never color alone) and lists with `DataTable`.
 - **Tests.** `bunx playwright test` runs the browser specs in `e2e/` against the real server (`e2e/prepare.mjs` builds the app and seeds a throwaway database; set `E2E_CHANNEL=chrome` to use the installed Chrome, otherwise run `bunx playwright install chromium` once). `bun run test:js` runs the unit tests (`bun test resources/js`; the path is required). `@types/bun` is not installed: `resources/js/bun-test.d.ts` holds the few ambient types the tests use; extend it when a test needs another matcher.
+
+## The AI layer
+
+Read `docs/ai.md` first. AI is bring your own key (D-007): off by default, enabled by the workspace owner (`ai.manage`, owner only), never paid by the service.
+
+- Every feature calls `ai.Client.Call(ctx, workspaceID, ai.Request{Feature: ...})`: it checks enabled, feature, key, 20 calls per minute and the monthly limit, then records `ai_usage`. Never call a provider directly and never build an `http.Client` for one (`ai.NewHTTP`: safe client, 30 s, 1 MiB, no redirects, one retry).
+- The key is an `ai.Key` (prints `[redacted]`), stored sealed with `ai-key:<workspace>:<credential>` as additional data. It must not appear in a response, page prop, flash, log, audit event or export. The form field is `apiSecret` so the framework never flashes it back. Provider error text is never passed on or logged: `ai.ProviderError` keeps only the status and a plain error type.
+- Pass every free-text field through `ai.Redact` before it goes into a request, and send only what the owner agreed to (description, amount, date, category names).
+- A custom base URL (`openai_compatible`) goes through `ai.CheckBaseURL` and the safe client. `AI_ALLOW_PRIVATE_HOSTS` works in the personal edition only.
+- Tests use `app/ai/fake` or an `httptest` server; no test calls a real provider or needs a real key. The tables `ai_credentials`, `workspace_ai_settings` and `ai_usage` stay out of sync, export and API scopes (`TestAIExcludedFromExportAndAPI`); extend that test when those routes exist.
+- To add a provider, see "Add a provider" in `docs/ai.md`.
 
 ## Rules that never bend
 

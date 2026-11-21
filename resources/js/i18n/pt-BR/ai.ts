@@ -1,0 +1,50 @@
+import type en from "../en/ai";
+
+const dict = {
+  ai: "IA",
+  aiIntro:
+    "Conecte a chave do seu próprio provedor de IA. A IA fica desligada até o dono do workspace ligá-la, e a chave é guardada criptografada.",
+  aiOwnerOnly: "Somente o dono do workspace pode alterar estas configurações.",
+  aiStatus: "Situação",
+  aiStatusOn: "A IA está ligada neste workspace.",
+  aiStatusOff: "A IA está desligada neste workspace.",
+  aiKeyTitle: "Chave do provedor",
+  aiProvider: "Provedor",
+  aiProviderAnthropic: "Anthropic",
+  aiProviderOpenai: "OpenAI",
+  aiProviderCompatible: "Servidor compatível com OpenAI",
+  aiKey: "Chave de API",
+  aiKeyHelp:
+    "A chave é criptografada no servidor e nunca é mostrada de novo. Só os quatro últimos caracteres ficam em claro.",
+  aiLabel: "Rótulo (opcional)",
+  aiBaseUrl: "URL base",
+  aiBaseUrlHelp:
+    "Deve começar com https://. Um servidor local por http só funciona se o administrador do servidor permitir.",
+  aiModel: "Modelo (opcional)",
+  aiSaveKey: "Salvar chave",
+  aiKeySaved: "Há uma chave salva",
+  aiKeyEnding: "terminada em",
+  aiLastUsed: "Último uso",
+  aiNeverUsed: "nunca",
+  aiNoKey: "Nenhuma chave salva ainda.",
+  aiTestKey: "Testar chave",
+  aiSettingsTitle: "Chaves de liga e limite",
+  aiEnable: "Ligar a IA neste workspace",
+  aiFeatureCategorize: "Sugerir categorias para transações",
+  aiFeatureAssistant: "Assistente",
+  aiMonthlyLimit: "Limite mensal de chamadas",
+  aiSaveSettings: "Salvar configurações",
+  aiConsentTitle: "O que é enviado ao seu provedor",
+  aiConsentBody:
+    "Quando um recurso roda, a descrição, o valor, a data e os nomes das categorias das transações envolvidas são enviados ao seu provedor. Nomes de pessoas, e-mails, números de conta e a sua chave nunca são enviados. Desligar a IA interrompe todas as chamadas na hora.",
+  aiConsentCheckbox: "Entendo o que é enviado e quero ligar a IA.",
+  aiConsentConfirm: "Ligar a IA",
+  aiUsageTitle: "Uso neste mês",
+  aiUsageCalls: "Chamadas",
+  aiUsageInput: "Tokens de entrada",
+  aiUsageOutput: "Tokens de saída",
+  aiUsageFeature: "Recurso",
+  aiUsageNone: "Nenhuma chamada neste mês.",
+  aiBillingNote: "O custo é cobrado pelo seu provedor. Abra a página de cobrança dele para ver.",
+} satisfies Record<keyof typeof en, string>;
+export default dict;
