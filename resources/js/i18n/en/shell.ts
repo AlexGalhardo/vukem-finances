@@ -1,0 +1,20 @@
+const dict = {
+  dashboard: "Overview",
+  transactions: "Transactions",
+  accounts: "Accounts",
+  categories: "Categories",
+  budgets: "Budgets",
+  import: "Import statement",
+  workspace: "Workspace",
+  billing: "Billing",
+  settings: "Settings",
+  admin: "Admin",
+  logout: "Log out",
+  language: "Language",
+  light: "Switch to light mode",
+  dark: "Switch to dark mode",
+  plan: "Plan",
+  navigate: "Navigation",
+  personalFinance: "Personal finance",
+} as const;
+export default dict;
