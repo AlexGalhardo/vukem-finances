@@ -1,0 +1,173 @@
+package tests
+
+import (
+	"net/http"
+	"regexp"
+	"slices"
+	"strconv"
+	"testing"
+
+	"github.com/AlexGalhardo/vukem/vukemtest"
+
+	"github.com/AlexGalhardo/vukem-finances/app/models"
+)
+
+// crossTenantCase is one id-taking route, called by a user of workspace B
+// with an id owned by workspace A.
+type crossTenantCase struct {
+	method string
+	// body is sent as JSON; it is valid for the route so only the foreign id can be the reason to refuse.
+	body func(ids map[string]int64) map[string]any
+	// table and param name the row that must survive the call.
+	table, param string
+}
+
+// crossTenantExempt are the workspace routes with a path parameter that name
+// no row of another workspace; each says why.
+var crossTenantExempt = map[string]string{
+	"workspaces.switch": "answers a redirect and the next request re-checks the membership; see TestTenancyIsolatesWorkspaces",
+	"billing.checkout":  "the parameter is a plan name, not an id",
+}
+
+var crossTenantCases = map[string]crossTenantCase{
+	"transactions.update": {
+		method: http.MethodPatch, table: "transactions", param: "transaction",
+		body: func(ids map[string]int64) map[string]any {
+			return map[string]any{
+				"accountId": strconv.FormatInt(ids["bobAccount"], 10), "kind": "expense", "amount": "1.00", "date": "2026-01-10",
+			}
+		},
+	},
+	"transactions.destroy": {method: http.MethodDelete, table: "transactions", param: "transaction"},
+	"accounts.destroy":     {method: http.MethodDelete, table: "accounts", param: "account"},
+	"budgets.destroy":      {method: http.MethodDelete, table: "budgets", param: "budget"},
+	"import.confirm": {
+		method: http.MethodPost, table: "imports", param: "import",
+		body: func(map[string]int64) map[string]any {
+			return map[string]any{
+				"date": "Date", "description": "Description", "amount": "Amount", "dateFormat": "2006-01-02",
+			}
+		},
+	},
+	"workspace.members.destroy": {method: http.MethodDelete, table: "memberships", param: "user"},
+}
+
+// tenantMiddleware is how Router.Routes names the workspace middleware: a route
+// without it is outside the workspace and has its own tests.
+const tenantMiddleware = "workspaces.(*Service).Middleware"
+
+var pathParam = regexp.MustCompile(`\{([a-z_]+)\}`)
+
+func TestCrossTenantMatrix(t *testing.T) {
+	t.Parallel()
+
+	app := newApp(t)
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	bob := signUp(t, app, "Bob", "bob@example.com")
+	cara := newVerifiedUser(t, app, "Cara", "cara@example.com")
+	join(t, app, ana, cara, models.RoleMember)
+	makePro(t, app, ana)
+
+	accAna := firstAccount(t, app, ana)
+	addTransaction(t, ana, accAna, 0, "expense", "11.00", "2026-01-10").AssertRedirect("/transactions")
+	ana.Client.PostForm("/budgets", map[string][]string{
+		"categoryId": {strconv.FormatInt(categoryID(t, app, ana, "Groceries"), 10)}, "limit": {"100.00"},
+	}).AssertRedirect("/budgets")
+	upload(t, ana, accAna, statement).AssertOK()
+
+	ids := map[string]int64{
+		"transaction": firstOf[models.Transaction](t, app, ana, "").ID,
+		"account":     accAna,
+		"budget":      firstOf[models.Budget](t, app, ana, "").ID,
+		"import":      firstOf[models.Import](t, app, ana, "").ID,
+		"user":        cara.ID,
+		"bobAccount":  firstAccount(t, app, bob),
+	}
+
+	// Control: the same edit is fine for the owner, so only the id is wrong for Bob.
+	own := crossTenantCases["transactions.update"].body(ids)
+	own["accountId"] = strconv.FormatInt(accAna, 10)
+	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
+
+	tables := map[string]int64{}
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true} {
+		tables[table] = rowCount(t, app, table)
+	}
+
+	covered := map[string]bool{}
+
+	for _, route := range app.Router.Routes() {
+		if !pathParam.MatchString(route.Path) || !slices.Contains(route.Middleware, tenantMiddleware) {
+			continue
+		}
+
+		covered[route.Name] = true
+
+		if _, exempt := crossTenantExempt[route.Name]; exempt {
+			continue
+		}
+
+		tc, ok := crossTenantCases[route.Name]
+		if !ok {
+			t.Errorf("route %s %s (%s) takes an id and has no case in crossTenantCases (or crossTenantExempt)",
+				route.Method, route.Path, route.Name)
+			continue
+		}
+
+		t.Run(route.Name, func(t *testing.T) {
+			if route.Method != tc.method {
+				t.Fatalf("the route is %s, the case calls %s", route.Method, tc.method)
+			}
+
+			target := pathParam.ReplaceAllStringFunc(route.Path, func(p string) string {
+				return strconv.FormatInt(ids[p[1:len(p)-1]], 10)
+			})
+
+			var body map[string]any
+			if tc.body != nil {
+				body = tc.body(ids)
+			}
+
+			var res *vukemtest.Response
+
+			switch tc.method {
+			case http.MethodDelete:
+				res = bob.Client.Delete(target)
+			case http.MethodPatch:
+				res = bob.Client.PatchJSON(target, body)
+			case http.MethodPut:
+				res = bob.Client.PutJSON(target, body)
+			default:
+				res = bob.Client.PostJSON(target, body)
+			}
+
+			res.AssertNotFound()
+
+			if got := rowCount(t, app, tc.table); got != tables[tc.table] {
+				t.Errorf("%s has %d rows after the call, want %d", tc.table, got, tables[tc.table])
+			}
+		})
+	}
+
+	for name := range crossTenantCases {
+		if !covered[name] {
+			t.Errorf("case %s matches no route: remove it", name)
+		}
+	}
+}
+
+func rowCount(t *testing.T, app *vukemtest.App, table string) int64 {
+	t.Helper()
+
+	db, err := app.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var n int64
+	if err := db.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM "+table).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+
+	return n
+}
