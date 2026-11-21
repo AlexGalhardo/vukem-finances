@@ -4,6 +4,7 @@ import {
   CreditCard,
   type LucideIcon,
   PiggyBank,
+  Sparkles,
   Tags,
   Upload,
   Users,
@@ -33,6 +34,7 @@ export const navItems: readonly NavItem[] = [
   { id: "budgets", labelKey: "budgets", href: "/budgets", icon: PiggyBank, keys: "g b" },
   { id: "import", labelKey: "import", href: "/import", icon: Upload, keys: "g i" },
   { id: "workspace", labelKey: "workspace", href: "/workspace", icon: Users, keys: "g w" },
+  { id: "ai", labelKey: "ai", href: "/ai", icon: Sparkles },
   { id: "billing", labelKey: "billing", href: "/billing", icon: CreditCard, edition: "saas" },
 ];
 
