@@ -3,6 +3,7 @@ package pages
 import (
 	"github.com/AlexGalhardo/vukem/inertia"
 
+	"github.com/AlexGalhardo/vukem-finances/app/ai"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
@@ -143,4 +144,33 @@ type AdminRevenueProps struct {
 	PastDue    int64 `json:"pastDue"`
 	Workspaces int64 `json:"workspaces"`
 	Users      int64 `json:"users"`
+}
+
+// AI is the settings page of the AI layer.
+var AI = inertia.Define[AIProps]("AI")
+
+// AICredentialView is the saved key as the page may show it: that it exists,
+// who and when, and the last four characters. The key itself and its
+// ciphertext are not in it.
+type AICredentialView struct {
+	ID         int64  `json:"id"`
+	Provider   string `json:"provider"`
+	Label      string `json:"label"`
+	KeyHint    string `json:"keyHint"`
+	BaseURL    string `json:"baseUrl"`
+	Model      string `json:"model"`
+	CreatedAt  string `json:"createdAt"`
+	LastUsedAt string `json:"lastUsedAt"`
+}
+
+// AIProps are the props of AI. Credential is nil until a key is saved; only
+// the owner receives it.
+type AIProps struct {
+	Settings   ai.Settings       `json:"settings"`
+	Credential *AICredentialView `json:"credential"`
+	Usage      ai.MonthUsage     `json:"usage"`
+	Providers  []string          `json:"providers"`
+	CanManage  bool              `json:"canManage"`
+	// PrivateHosts says whether this server lets the compatible provider reach a local network.
+	PrivateHosts bool `json:"privateHosts"`
 }
