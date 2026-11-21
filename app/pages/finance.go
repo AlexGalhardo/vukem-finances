@@ -70,6 +70,11 @@ type TxFilters struct {
 type AccountsProps struct {
 	Accounts []models.Account  `json:"accounts"`
 	Limits   workspaces.Limits `json:"limits"`
+	// Balances has one entry per account, as of today; NetWorthCents is the
+	// sum of the ones that are not archived.
+	Balances      []finance.AccountBalance `json:"balances"`
+	NetWorthCents int64                    `json:"netWorthCents"`
+	Kinds         []string                 `json:"kinds"`
 }
 
 // CategoriesProps are the props of Categories.

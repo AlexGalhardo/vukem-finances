@@ -12,13 +12,27 @@ export type AICredentialView = {
 };
 
 export type Account = {
+  archived_at: string | null;
   created_at: string;
+  deleted_at?: string | null;
   id: number;
   kind: string;
   name: string;
   opening_cents: number;
+  position: number;
+  uid: string;
   updated_at: string;
+  version: number;
   workspace_id: number;
+};
+
+export type AccountBalance = {
+  accountId: number;
+  archived: boolean;
+  balanceCents: number;
+  movementCents: number;
+  openingCents: number;
+  transactions: number;
 };
 
 export type AuditEntry = {
@@ -47,10 +61,13 @@ export type BudgetStatus = {
 
 export type Category = {
   created_at: string;
+  deleted_at?: string | null;
   id: number;
   kind: string;
   name: string;
+  uid: string;
   updated_at: string;
+  version: number;
   workspace_id: number;
 };
 
@@ -135,6 +152,11 @@ export type NullInt64 = {
   Valid: boolean;
 };
 
+export type NullString = {
+  V: string;
+  Valid: boolean;
+};
+
 export type Preview = {
   filename: string;
   headers: string[];
@@ -185,11 +207,17 @@ export type TxRow = {
   categoryName: string;
   category_id: NullInt64;
   created_at: string;
+  deleted_at?: string | null;
   description: string;
   id: number;
   kind: string;
   occurred_on: string;
+  transferAccountName: string;
+  transferId?: string | null;
+  transfer_uid: NullString;
+  uid: string;
   updated_at: string;
+  version: number;
   workspace_id: number;
 };
 
@@ -211,7 +239,10 @@ export type AIProps = {
 
 export type AccountsProps = {
   accounts: Account[];
+  balances: AccountBalance[];
+  kinds: string[];
   limits: Limits;
+  netWorthCents: number;
 };
 
 export type AdminDashboardProps = {

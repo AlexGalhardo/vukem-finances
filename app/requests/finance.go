@@ -167,3 +167,22 @@ var AISettingsSchema = z.Struct[AISettings](z.Shape{
 	"limit":      z.String().Trim().Min(1).Max(9),
 	"consent":    z.Bool().Optional(),
 })
+
+// AccountTransfer is the input of the transfer form: money moves from one
+// account to another of the same workspace.
+type AccountTransfer struct {
+	FromAccountID string `json:"fromAccountId" form:"fromAccountId"`
+	ToAccountID   string `json:"toAccountId"   form:"toAccountId"`
+	Amount        string `json:"amount"        form:"amount"`
+	Description   string `json:"description"   form:"description"`
+	Date          string `json:"date"          form:"date"`
+}
+
+// AccountTransferSchema validates AccountTransfer.
+var AccountTransferSchema = z.Struct[AccountTransfer](z.Shape{
+	"fromAccountId": z.String().Trim().Min(1).Max(20),
+	"toAccountId":   z.String().Trim().Min(1).Max(20),
+	"amount":        z.String().Trim().Min(1).Max(30),
+	"description":   z.String().Trim().Max(200).Optional(),
+	"date":          z.String().Trim().Min(10).Max(10),
+})

@@ -11,4 +11,7 @@ func financeTransactions(g *router.Group, h *ledger.Handlers) {
 	g.Post("/transactions", h.StoreTransaction).Name("transactions.store")
 	g.Patch("/transactions/{transaction}", h.UpdateTransaction).Name("transactions.update")
 	g.Delete("/transactions/{transaction}", h.DestroyTransaction).Name("transactions.destroy")
+	g.Post("/transfers", h.StoreTransfer).Name("transfers.store")
+	g.Patch("/transfers/{transaction}", h.UpdateTransfer).Name("transfers.update")
+	g.Delete("/transfers/{transaction}", h.DestroyTransfer).Name("transfers.destroy")
 }
