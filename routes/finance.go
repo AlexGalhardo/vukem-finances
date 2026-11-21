@@ -117,8 +117,13 @@ func Finance(r *router.Router, app *vukem.App) error {
 		g.Post("/import/{import}", h.ConfirmImport).Name("import.confirm")
 		g.Get("/workspace", h.Workspace).Name("workspace.show")
 		g.Put("/workspace", h.UpdateWorkspace).Name("workspace.update")
-		g.Post("/workspaces", h.CreateWorkspace).Name("workspaces.store")
-		g.Post("/workspaces/{workspace}/switch", h.SwitchWorkspace).Name("workspaces.switch")
+
+		// One implicit workspace in the personal edition: nothing to create or switch to.
+		if ws.Edition.SaaS() {
+			g.Post("/workspaces", h.CreateWorkspace).Name("workspaces.store")
+			g.Post("/workspaces/{workspace}/switch", h.SwitchWorkspace).Name("workspaces.switch")
+		}
+
 		g.Post("/workspace/invites", h.Invite).Name("workspace.invite")
 		g.Delete("/workspace/members/{user}", h.RemoveMember).Name("workspace.members.destroy")
 

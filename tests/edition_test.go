@@ -90,3 +90,29 @@ func TestPersonalBootsInProductionWithoutStripe(t *testing.T) {
 
 	newPersonalApp(t, map[string]string{"APP_ENV": "production"})
 }
+
+func TestPersonalSingleWorkspace(t *testing.T) {
+	t.Parallel()
+
+	app := newPersonalApp(t)
+	ana := signUp(t, app, "Ana", "ana@example.com")
+
+	// Nothing creates or switches workspaces.
+	ana.Client.PostForm("/workspaces", url.Values{"name": {"Second"}, "currency": {"USD"}}).AssertNotFound()
+	ana.Client.PostForm("/workspaces/"+strconv.FormatInt(ana.Workspace.ID, 10)+"/switch", nil).AssertNotFound()
+	vukemtest.AssertDatabaseCount(t, app, "workspaces", 1)
+
+	// A user with no membership gets a 403, not a workspace of their own.
+	eve := newVerifiedUser(t, app, "Eve", "eve@example.com")
+	browser(t, app, eve, 0).Get("/dashboard").AssertForbidden()
+	vukemtest.AssertDatabaseCount(t, app, "workspaces", 1)
+	vukemtest.AssertDatabaseCount(t, app, "memberships", 1)
+
+	// The owner still works, and saas keeps creating a workspace on the first visit.
+	ana.Client.Inertia("").Get("/dashboard").AssertOK().AssertInertia("Dashboard")
+
+	saas := newSaaSApp(t)
+	sEve := newVerifiedUser(t, saas, "Eve", "eve@example.com")
+	browser(t, saas, sEve, 0).Get("/dashboard").AssertOK()
+	vukemtest.AssertDatabaseCount(t, saas, "workspaces", 1)
+}
