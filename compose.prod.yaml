@@ -10,6 +10,9 @@ name: vukem-finances-prod
 
 services:
   app:
+    # Built from this checkout by default; APP_IMAGE=ghcr.io/alexgalhardo/vukem-finances:X.Y.Z
+    # runs a published image instead (docker compose pull app, then up -d --no-build).
+    image: ${APP_IMAGE:-vukem-finances:local}
     build:
       context: .
       args:
