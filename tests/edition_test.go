@@ -72,9 +72,8 @@ func TestPersonalHasNoBilling(t *testing.T) {
 	c.Get("/billing").AssertNotFound()
 	c.PostForm("/billing/checkout/pro", url.Values{}).AssertNotFound()
 	c.PostForm("/billing/portal", url.Values{}).AssertNotFound()
-	// "/admin/revenue" falls to the admin panel's generic "/admin/{slug}" shell,
-	// which shows no revenue and whose data route has no such resource.
-	c.Inertia("").Get("/admin/revenue").AssertInertia("Admin/ResourceList")
+	c.Get("/admin/revenue").AssertNotFound()
+	c.Inertia("").Get("/admin/revenue").AssertNotFound()
 	c.Get("/admin-api/revenue").AssertNotFound()
 	app.Client(t).PostJSON("/stripe/webhook", map[string]any{"type": "ping"}).AssertNotFound()
 
