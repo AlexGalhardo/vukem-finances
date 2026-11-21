@@ -71,4 +71,13 @@ test("a card takes a purchase after the closing day onto the next statement, and
   await expect(february).toContainText("Paid");
   await expect(page.getByText("Overdue", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("row").filter({ hasText: "Credit card payment 2026-02-10" })).toBeVisible();
+
+  // Leave the demo data as it was: other specs count the accounts.
+  await page.getByRole("button", { name: `Delete ${name}` }).click();
+  await page
+    .getByRole("dialog", { name: "Delete this item?" })
+    .getByRole("button", { name: "Delete", exact: true })
+    .click();
+  await expect(page).toHaveURL(/\/cards$/);
+  await expect(page.getByRole("link", { name })).toHaveCount(0);
 });

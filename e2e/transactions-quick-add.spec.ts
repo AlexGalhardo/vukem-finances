@@ -98,7 +98,7 @@ test("the accounts page shows balances, the net worth and the archive toggle", a
   await page.goto("/accounts");
   await expect(page.getByText("Net worth")).toBeVisible();
   const table = page.getByRole("table", { name: "Accounts and their balances" });
-  await expect(table.getByRole("row")).toHaveCount(3);
+  await expect(table.getByRole("row")).toHaveCount(4);
 
   const savings = table.getByRole("row").filter({ has: page.getByRole("cell", { name: "Savings", exact: true }) });
   await expect(savings).toHaveCount(1);
