@@ -3,10 +3,12 @@ package routes
 import (
 	"net/http"
 	"strings"
+	"sync"
 
 	"github.com/AlexGalhardo/vukem"
 	vukemapi "github.com/AlexGalhardo/vukem/api"
 	"github.com/AlexGalhardo/vukem/auth"
+	"github.com/AlexGalhardo/vukem/openapi"
 	"github.com/AlexGalhardo/vukem/ratelimit"
 	"github.com/AlexGalhardo/vukem/router"
 	"github.com/AlexGalhardo/vukem/web"
@@ -81,6 +83,33 @@ func API(r *router.Router, app *vukem.App) error {
 			return ""
 		},
 	})
+
+	// The document is public and has no reference page: the static docs site renders it (D-021).
+	var (
+		docOnce sync.Once
+		docJSON []byte
+		docErr  error
+	)
+
+	r.Get(api.BasePath+"/openapi.json", func(c *web.Ctx) error {
+		docOnce.Do(func() {
+			var doc *openapi.Document
+			if doc, docErr = api.BuildDocument(r.Routes()); docErr == nil {
+				docJSON, docErr = api.RenderDocument(doc)
+			}
+		})
+
+		if docErr != nil {
+			return docErr
+		}
+
+		c.Writer().Header().Set("Content-Type", "application/json; charset=utf-8")
+		c.Writer().Header().Set("Cache-Control", "public, max-age=300")
+		c.Writer().WriteHeader(http.StatusOK)
+		_, err := c.Writer().Write(docJSON)
+
+		return err
+	}).Name("api.openapi").Doc(openapi.Skip{})
 
 	r.Group(api.BasePath, func(g *router.Group) {
 		g.Use(auth.ProblemJSON, a.Authenticate(failed), reads, writes)
