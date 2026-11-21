@@ -1,0 +1,109 @@
+/* Design tokens of vukem-finances (docs/design.md). Colors are hex so that
+   resources/js/design/contrast.test.ts can read and measure them. */
+
+:root {
+	color-scheme: light;
+
+	--vf-bg: #fbfcfb;
+	--vf-surface: #ffffff;
+	--vf-surface-muted: #eff3f0;
+	--vf-border: #d5ddd8;
+	--vf-control-border: #6f8176;
+	--vf-text: #13201a;
+	--vf-text-muted: #475a50;
+	--vf-brand: #1c7448;
+	--vf-on-brand: #ffffff;
+	--vf-income: #17663c;
+	--vf-expense: #b3261e;
+	--vf-focus: #1c7448;
+
+	--vf-radius: 0.625rem;
+	--vf-space-1: 0.25rem;
+	--vf-space-2: 0.5rem;
+	--vf-space-3: 0.75rem;
+	--vf-space-4: 1rem;
+	--vf-space-6: 1.5rem;
+	--vf-space-8: 2rem;
+	--vf-text-xs: 0.75rem;
+	--vf-text-sm: 0.875rem;
+	--vf-text-base: 1rem;
+	--vf-text-lg: 1.125rem;
+	--vf-text-xl: 1.5rem;
+	--vf-duration-fast: 100ms;
+	--vf-duration-base: 200ms;
+	--vf-duration-slow: 320ms;
+	--vf-target-min: 2.75rem;
+}
+
+.dark {
+	color-scheme: dark;
+
+	--vf-bg: #0e1310;
+	--vf-surface: #151b17;
+	--vf-surface-muted: #1d2520;
+	--vf-border: #28332c;
+	--vf-control-border: #6f8176;
+	--vf-text: #edf3ef;
+	--vf-text-muted: #a6b6ac;
+	--vf-brand: #62d596;
+	--vf-on-brand: #08150d;
+	--vf-income: #6fdc9f;
+	--vf-expense: #ff8f86;
+	--vf-focus: #7fe3ae;
+}
+
+/* The shadcn-style primitives read these names; they now come from the tokens. */
+:root,
+.dark {
+	--background: var(--vf-bg);
+	--foreground: var(--vf-text);
+	--card: var(--vf-surface);
+	--card-foreground: var(--vf-text);
+	--popover: var(--vf-surface);
+	--popover-foreground: var(--vf-text);
+	--primary: var(--vf-brand);
+	--primary-foreground: var(--vf-on-brand);
+	--secondary: var(--vf-surface-muted);
+	--secondary-foreground: var(--vf-text);
+	--muted: var(--vf-surface-muted);
+	--muted-foreground: var(--vf-text-muted);
+	--accent: var(--vf-surface-muted);
+	--accent-foreground: var(--vf-text);
+	--destructive: var(--vf-expense);
+	--border: var(--vf-border);
+	--input: var(--vf-control-border);
+	--ring: var(--vf-focus);
+	--radius: var(--vf-radius);
+	--sidebar: var(--vf-surface-muted);
+	--sidebar-foreground: var(--vf-text);
+	--sidebar-primary: var(--vf-brand);
+	--sidebar-primary-foreground: var(--vf-on-brand);
+	--sidebar-accent: var(--vf-surface);
+	--sidebar-accent-foreground: var(--vf-text);
+	--sidebar-border: var(--vf-border);
+	--sidebar-ring: var(--vf-focus);
+}
+
+:focus-visible {
+	outline: 2px solid var(--vf-focus);
+	outline-offset: 2px;
+}
+
+dialog:modal,
+[role="dialog"] {
+	overscroll-behavior: contain;
+}
+
+@media (forced-colors: active) {
+	:focus-visible {
+		outline-color: Highlight;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	:root {
+		--vf-duration-fast: 0ms;
+		--vf-duration-base: 0ms;
+		--vf-duration-slow: 0ms;
+	}
+}

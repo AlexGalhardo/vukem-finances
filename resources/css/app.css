@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "./finance.css";
+@import "./tokens.css";
 
 /* Inertia pages style themselves with Tailwind utilities. Dark mode follows
    the "dark" class on <html> (set before paint in app.html), so a theme
