@@ -45,7 +45,7 @@ func TestTriggers(t *testing.T) {
 		t.Fatalf("insert wrote %d changes, want 1", len(got))
 	}
 
-	step("insert", "upsert", 1, `["name","kind","opening_cents"]`)
+	step("insert", "upsert", 1, `["name","kind","opening_cents","archived_at","position"]`)
 
 	exec(t, db, "UPDATE accounts SET name = 'Primary', updated_at = "+now+" WHERE uid = ?", uid)
 	step("rename", "upsert", 2, `["name"]`)
