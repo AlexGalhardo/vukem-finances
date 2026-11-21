@@ -42,6 +42,17 @@ type Transaction struct {
 	// card leg of a statement payment, null everywhere else.
 	StatementRef sql.Null[string] `json:"statement_ref"`
 
+	// RecurrenceUID and OccurrenceOn are the natural key of a transaction
+	// generated from a recurrence; both are null on any other row.
+	RecurrenceUID sql.Null[string] `json:"recurrence_uid"`
+	OccurrenceOn  sql.Null[string] `json:"occurrence_on"`
+
+	// InstallmentGroupUID ties the parts of an installment purchase;
+	// InstallmentNo (1-based) and InstallmentTotal say which part this is.
+	InstallmentGroupUID sql.Null[string] `json:"installment_group_uid"`
+	InstallmentNo       sql.Null[int64]  `json:"installment_no"`
+	InstallmentTotal    sql.Null[int64]  `json:"installment_total"`
+
 	// ImportHash is the duplicate key of an imported row; server only.
 	ImportHash sql.Null[string] `json:"-"`
 }

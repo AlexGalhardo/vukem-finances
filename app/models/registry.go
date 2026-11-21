@@ -30,6 +30,7 @@ func TenantModels() []TenantModel {
 		tenantModel[Transaction](),
 		tenantModel[Budget](),
 		tenantModel[CreditCard](),
+		tenantModel[Recurrence](),
 		tenantModel[Tag](),
 		tenantModel[TransactionTag](),
 		tenantModel[Import](),
