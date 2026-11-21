@@ -18,6 +18,11 @@ func Schedule(s *schedule.Schedule, _ *vukem.App) {
 	// timezone: hourly, and the sent marker makes a doubled run harmless.
 	s.Job(jobs.MonthlySummary{}).Hourly().WithoutOverlapping()
 
+	// Create the transactions that fell due for recurring rules, hourly so a
+	// rule posts on its day in the workspace's own timezone; the watermark and
+	// the natural key make a doubled run harmless.
+	s.Job(jobs.RecurrencesGenerate{}).Hourly().WithoutOverlapping()
+
 	// Purge old tombstones and compact the change log, once a day at night.
 	s.Job(jobs.ChangesCompact{}).DailyAt("03:30").WithoutOverlapping()
 
