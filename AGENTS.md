@@ -12,7 +12,7 @@ The app ships in two editions of one binary (decision D-003), chosen by `APP_EDI
 | --- | --- | --- |
 | Workspaces | one implicit workspace, made by `/setup` | one per user plus created ones |
 | Sign-up | closed: `/register` is 404; the first owner uses `/setup` with `SETUP_TOKEN` or the code in the boot log, the others use `/invites/{token}/register` | public `/register`, email verification always on |
-| Billing, `/stripe/webhook`, `/admin/revenue` | not registered (404), no Stripe settings read | registered |
+| Billing, `/stripe/webhook`, `/abacatepay/webhook`, `/admin/revenue` | not registered (404), no Stripe or AbacatePay settings read | registered |
 | Plan limits | none (`workspaces.Personal`) | Free and Pro |
 | `GET /` | redirects to `/dashboard`, `/login` or `/setup` | landing page |
 | Social login | find-only, never creates a user | creates users |
@@ -75,6 +75,20 @@ Read `docs/ai.md` first. AI is bring your own key (D-007): off by default, enabl
 - A custom base URL (`openai_compatible`) goes through `ai.CheckBaseURL` and the safe client. `AI_ALLOW_PRIVATE_HOSTS` works in the personal edition only.
 - Tests use `app/ai/fake` or an `httptest` server; no test calls a real provider or needs a real key. The tables `ai_credentials`, `workspace_ai_settings` and `ai_usage` stay out of sync, export and API scopes (`TestAIExcludedFromExportAndAPI`); extend that test when those routes exist.
 - To add a provider, see "Add a provider" in `docs/ai.md`.
+
+## Billing
+
+Read `docs/billing.md` first. Billing is saas only (D-003): the personal edition registers no billing route, webhook or page and reads no Stripe or AbacatePay setting.
+
+- Access is derived: `workspaces.Service.Entitled` is the only place that decides, and `Limits` uses it. A Stripe subscription is Pro when it is `active` or `trialing` and `access_revoked_at` is empty; a PIX entitlement when it is not revoked and `valid_until` is in the future. Never store a plan flag.
+- Access changes only from a verified webhook or from a re-read of the charge at the provider, never from a redirect or a client claim. Stripe: `/stripe/webhook` (signature and 5 minutes of tolerance from `contrib/stripe`). AbacatePay: `/abacatepay/webhook` (shared secret in constant time from a header or a path segment, never the query string; HMAC signature; 64 KiB cap), and the body only names the charge: `HandlePixEvent` re-reads it.
+- Refunds and disputes revoke through `access_revoked_at`, `revoked_reason` and `revoked_ref`, which `SyncSubscription` never writes. The handlers read the object from the API and write with conditional `UPDATE`s, so a replayed or out-of-order event changes nothing twice.
+- PIX activation is one conditional `UPDATE ... WHERE status IN ('pending','expired')` whose affected rows are checked, in the same transaction as the entitlement change. A charge becomes `expired` only when the provider says so. Months add with `timeutil.AddMonths` from `anchor_at`, so stacked payments do not drift.
+- Amounts are `int64` cents from the server: `config.Pix.Amount(months)` (`PIX_PRICE_PRO_MONTHLY_CENTS` times the months, only the months in `PIX_MONTHS_OPTIONS`). The request names months and nothing else.
+- Only the owner (`billing.manage`) starts a PIX charge, polls it or opens the portal. The poll is `GET /billing/pix/{ref}` (rate limited, 404 for another workspace's reference). The billing tables (`pix_payments`, `pix_entitlements`, `billing_events`) are server-only: no `uid` column, `workspace_id` with a leading index, members of `models.TenantModels`.
+- Provider error text and secrets never reach a log, response or audit entry: wrap errors with `sanitizeStripe` or `providerError`, log references and kinds only. Payment records follow D-022: after a deletion only the amount, date, provider reference and a non-reversible subject reference are kept for 5 years (no legal review of that default).
+- Settings: `STRIPE_*`, `ABACATEPAY_API_KEY`, `ABACATEPAY_WEBHOOK_SECRET`, `PIX_PRICE_PRO_MONTHLY_CENTS`, `PIX_MONTHS_OPTIONS` (`.env.example`). PIX is on when the API key is set; a production saas boot then requires the other three.
+- The job `billing_reconcile` (every 6 hours) re-reads PIX charges that can still change. `ABACATEPAY_API_BASE` and `STRIPE_API_BASE` point at fakes: the tests (`fakeStripe`, `fakeAbacatePay` in `tests/`) and `bunx playwright test e2e/billing.spec.ts` (a saas server on port 3918 and `e2e/fake-abacatepay.mjs`); production ignores the AbacatePay one.
 
 ## Rules that never bend
 
