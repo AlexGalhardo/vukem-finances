@@ -14,5 +14,6 @@ func All(app *vukem.App) []queue.Registration {
 		queue.Handle(HandleMonthlySummary(app)),
 		queue.Handle(HandleChangesCompact(app)),
 		queue.Handle(HandleAIReseal(app)),
+		queue.Handle(HandleBillingReconcile(app)),
 	}
 }
