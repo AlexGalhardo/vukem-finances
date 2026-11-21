@@ -469,3 +469,81 @@ func TestRuleFollowsAccountAndCategoryLifecycle(t *testing.T) {
 		t.Fatalf("rules after the account came back = %d, %v", len(rules), err)
 	}
 }
+
+func TestUpcoming(t *testing.T) {
+	t.Parallel()
+
+	app, clock := clockApp(t, "2027-01-10")
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	makePro(t, app, ana)
+	fin := softService(t, app)
+	ctx := wsCtx(t, ana)
+	acc := firstAccount(t, app, ana)
+
+	rule, err := fin.CreateRecurrence(ctx, monthlyRule(acc, "2027-01-10"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Feb 10 is a real future row of the rule (as after an edit): no virtual twin.
+	db := mustDB(t, app)
+	held := models.Transaction{
+		AccountID: acc, Kind: models.KindExpense, AmountCents: 1000, Description: "Rent", OccurredOn: "2027-02-10",
+		RecurrenceUID: sql.Null[string]{V: rule.UID, Valid: true}, OccurrenceOn: sql.Null[string]{V: "2027-02-10", Valid: true},
+	}
+	if err := orm.Create(ctx, db, &held); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := fin.CreateInstallments(ctx, finance.InstallmentInput{
+		AccountID: acc, Total: "30.00", Parts: 3, FirstDate: "2027-01-25", Description: "Chair",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	items, err := fin.Upcoming(ctx, 50)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var got []string
+	for _, it := range items {
+		got = append(got, it.Date+" "+it.Source)
+	}
+
+	want := []string{"2027-01-25 installment", "2027-02-10 recurrence", "2027-02-25 installment"}
+	if len(got) != len(want) {
+		t.Fatalf("upcoming = %v, want %v", got, want)
+	}
+
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("upcoming = %v, want %v", got, want)
+		}
+	}
+
+	// Once the day comes the occurrence is generated, and nothing shows twice.
+	clock.Set(day("2027-02-12"))
+
+	if _, err := fin.GenerateDue(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	items, err = fin.Upcoming(ctx, 30)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	seen := map[string]int{}
+
+	for _, it := range items {
+		seen[it.Date]++
+		if seen[it.Date] > 1 && it.Source == finance.SourceRecurrence {
+			t.Errorf("duplicate upcoming on %s: %+v", it.Date, items)
+		}
+	}
+
+	if seen["2027-03-10"] != 1 {
+		t.Errorf("the March occurrence should show once as a virtual one: %+v", items)
+	}
+}
