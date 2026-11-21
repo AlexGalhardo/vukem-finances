@@ -8,3 +8,6 @@
 *.woff2 binary
 go.sum linguist-generated
 resources/public/js/*.min.js -text linguist-vendored
+
+# The OFX fixtures are byte-exact: latin1.ofx is not UTF-8.
+tests/fixtures/ofx/*.ofx -text
