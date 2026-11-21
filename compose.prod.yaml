@@ -1,0 +1,63 @@
+# The VPS stack: the app on SQLite behind Caddy, which gets the TLS
+# certificates by itself.
+#
+#   cp .env.example .env   # then set APP_KEY and the production values
+#   APP_DOMAIN=finance.example.com docker compose -f compose.prod.yaml up -d --build --wait
+#
+# Point the DNS A/AAAA record of APP_DOMAIN at the server and open ports 80
+# and 443 first. See deploy/README.md. Secrets come from .env, never the image.
+name: vukem-finances-prod
+
+services:
+  app:
+    build:
+      context: .
+      args:
+        VERSION: ${VERSION:-0.0.0-dev}
+    env_file: [.env]
+    environment:
+      APP_ENV: production
+      APP_DEBUG: "false"
+      APP_URL: https://${APP_DOMAIN:?set APP_DOMAIN to the public host name}
+      APP_EDITION: ${APP_EDITION:-personal}
+      # Only Caddy, on this network, may say who the client is and which
+      # scheme it used; a header from any other peer is ignored.
+      TRUSTED_PROXIES: 172.28.0.0/24
+      TRUST_FORWARDED_PROTO: "true"
+    # No published port: Caddy is the only way in.
+    volumes: ["storage:/app/storage"]
+    entrypoint: ["/bin/sh", "-c", "/app/app migrate && exec /app/app"]
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/up"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+    # One replica: the SQLite file has one writer. Never scale this service.
+    restart: unless-stopped
+    networks: [web]
+
+  caddy:
+    image: caddy:2.11.9-alpine@sha256:003a97808e781aa9f7e75cc2f43d34d461099031faf5e20faefb9f61126836f0
+    environment:
+      APP_DOMAIN: ${APP_DOMAIN:?set APP_DOMAIN to the public host name}
+    ports: ["80:80", "443:443", "443:443/udp"]
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      app:
+        condition: service_healthy
+    restart: unless-stopped
+    networks: [web]
+
+networks:
+  web:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  storage:
+  caddy_data:
+  caddy_config:
