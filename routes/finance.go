@@ -128,6 +128,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		financeBudgets(g, h)
 		financeImports(g, h, imports)
 		financeWorkspace(g, h)
+		financeTokens(g, app, acc, h)
 
 		// One implicit workspace in the personal edition: nothing to create or switch to.
 		if ws.Edition.SaaS() {

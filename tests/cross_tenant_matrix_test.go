@@ -112,6 +112,7 @@ var crossTenantCases = map[string]crossTenantCase{
 		},
 	},
 	"ai.key.destroy":            {method: http.MethodDelete, table: "ai_credentials", param: "credential"},
+	"tokens.destroy":            {method: http.MethodDelete, table: "access_tokens", param: "token"},
 	"workspace.members.destroy": {method: http.MethodDelete, table: "memberships", param: "user"},
 	"workspace.members.role": {
 		method: http.MethodPatch, table: "memberships", param: "user",
@@ -162,13 +163,17 @@ func TestCrossTenantMatrix(t *testing.T) {
 		"tag":         firstOf[models.Tag](t, app, ana, "Trip").ID,
 	}
 
+	// Token ids are strings; the row that must survive is checked after the loop (revoking keeps the row).
+	anaToken := makeToken(t, app, ana, 30, "accounts:read")
+	strIDs := map[string]string{"token": tokenID(anaToken)}
+
 	// Control: the same edit is fine for the owner, so only the id is wrong for Bob.
 	own := crossTenantCases["transactions.update"].body(ids)
 	own["accountId"] = strconv.FormatInt(accAna, 10)
 	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
 
 	tables := map[string]int64{}
-	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true} {
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "access_tokens": true} {
 		tables[table] = rowCount(t, app, table)
 	}
 
@@ -202,6 +207,10 @@ func TestCrossTenantMatrix(t *testing.T) {
 					return "2026-11-10"
 				}
 
+				if v, ok := strIDs[p[1:len(p)-1]]; ok {
+					return v
+				}
+
 				return strconv.FormatInt(ids[p[1:len(p)-1]], 10)
 			})
 
@@ -233,6 +242,10 @@ func TestCrossTenantMatrix(t *testing.T) {
 		})
 	}
 
+	if n := rowCountWhere(t, app, "access_tokens", "id = '"+strIDs["token"]+"' AND revoked_at IS NOT NULL"); n != 0 {
+		t.Error("Bob revoked Ana's token")
+	}
+
 	for name := range crossTenantCases {
 		if !covered[name] {
 			t.Errorf("case %s matches no route: remove it", name)
@@ -250,6 +263,22 @@ func rowCount(t *testing.T, app *vukemtest.App, table string) int64 {
 
 	var n int64
 	if err := db.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM "+table).Scan(&n); err != nil {
+		t.Fatal(err)
+	}
+
+	return n
+}
+
+func rowCountWhere(t *testing.T, app *vukemtest.App, table, where string) int64 {
+	t.Helper()
+
+	db, err := app.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var n int64
+	if err := db.QueryRowContext(t.Context(), "SELECT COUNT(*) FROM "+table+" WHERE "+where).Scan(&n); err != nil {
 		t.Fatal(err)
 	}
 

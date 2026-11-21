@@ -52,6 +52,7 @@ func All() []inertia.PageInfo {
 		InviteRegister.Info(),
 		Billing.Info(),
 		AI.Info(),
+		Tokens.Info(),
 		AdminRevenue.Info(),
 		Login.Info(),
 		Register.Info(),

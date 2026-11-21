@@ -2,6 +2,7 @@ import {
   ArrowLeftRight,
   ChartNoAxesCombined,
   CreditCard,
+  KeyRound,
   type LucideIcon,
   PiggyBank,
   Sparkles,
@@ -37,6 +38,7 @@ export const navItems: readonly NavItem[] = [
   { id: "import", labelKey: "import", href: "/import", icon: Upload, keys: "g i" },
   { id: "workspace", labelKey: "workspace", href: "/workspace", icon: Users, keys: "g w" },
   { id: "ai", labelKey: "ai", href: "/ai", icon: Sparkles },
+  { id: "tokens", labelKey: "tokens", href: "/tokens", icon: KeyRound },
   { id: "billing", labelKey: "billing", href: "/billing", icon: CreditCard, edition: "saas" },
 ];
 
