@@ -1,0 +1,31 @@
+name: PR title
+
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  title:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Read the scope list
+        id: scopes
+        run: |
+          {
+            echo "list<<EOF"
+            cat .github/scopes.txt
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+      - uses: amannn/action-semantic-pull-request@c5e23b7e584519ee15caa684cf60d056aa9f035f # v6.1.3
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          scopes: ${{ steps.scopes.outputs.list }}
+          requireScope: false
+          subjectPattern: ^[a-z].*[^.]$
+          subjectPatternError: The subject must start with a lower-case letter and have no final period.
