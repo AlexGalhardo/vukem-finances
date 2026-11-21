@@ -47,6 +47,9 @@ type PixPayment struct {
 	// EntitlementPeriod is the PixEntitlement.Period this payment's months
 	// count in. A refund of an earlier period takes nothing from the current one.
 	EntitlementPeriod int `json:"-"`
+	// MonthsWithheld is what an open dispute took from the entitlement, and
+	// all that winning it gives back.
+	MonthsWithheld int `json:"-"`
 }
 
 // Table maps PixPayment to pix_payments.

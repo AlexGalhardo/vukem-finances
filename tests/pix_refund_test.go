@@ -153,6 +153,56 @@ func TestPixRefundOfEndedPeriodKeepsCurrentPeriod(t *testing.T) {
 	}
 }
 
+func TestPixDisputeWonOnUsedMonthsGrantsNothing(t *testing.T) {
+	t.Parallel()
+
+	for _, tc := range []struct {
+		name      string
+		newPeriod bool
+	}{{"lapsed with no new payment", false}, {"lapsed with a new period", true}} {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+
+			clock := newPixClock(time.Date(2027, 1, 31, 10, 0, 0, 0, time.UTC))
+			f, app := pixApp(t, clock)
+			b := pixBilling(t, app)
+			ana := signUp(t, app, "Ana", "ana@example.com")
+			old := paidPix(t, f, b, ana, 1)
+
+			clock.Advance(45 * 24 * time.Hour)
+
+			if tc.newPeriod {
+				next := startPix(t, b, ana, 1)
+				f.setStatus(next.ProviderRef, "PAID")
+
+				if err := b.HandlePixEvent(t.Context(), next.ProviderRef); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			before := pixEntitlementOf(t, app, ana.Workspace.ID)
+
+			for _, status := range []string{"UNDER_DISPUTE", "PAID"} {
+				f.setStatus(old.ProviderRef, status)
+
+				if err := b.HandlePixEvent(t.Context(), old.ProviderRef); err != nil {
+					t.Fatal(err)
+				}
+			}
+
+			after := pixEntitlementOf(t, app, ana.Workspace.ID)
+			if after.PaidMonths != before.PaidMonths || !after.ValidUntil.Equal(before.ValidUntil) ||
+				after.Period != before.Period {
+				t.Errorf("entitlement changed: before %+v, after %+v", before, after)
+			}
+
+			if after.Granting(clock.Now()) != tc.newPeriod {
+				t.Errorf("granting = %v, want %v", after.Granting(clock.Now()), tc.newPeriod)
+			}
+		})
+	}
+}
+
 func TestPixRefundAfterDisputeWonRevokes(t *testing.T) {
 	t.Parallel()
 
