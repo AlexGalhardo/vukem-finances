@@ -96,6 +96,10 @@ func (s *Service) CreateInstallments(ctx context.Context, in InstallmentInput) (
 		return nil, errDate
 	}
 
+	if !saneYear(in.FirstDate) {
+		return nil, errRuleYear
+	}
+
 	ws, err := s.WS.Current(ctx)
 	if err != nil {
 		return nil, err

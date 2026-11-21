@@ -64,3 +64,54 @@ describe("installments", () => {
     expect(previewCents("abc")).toBeNull();
   });
 });
+
+describe("the year bound", () => {
+  const rule = (over: Partial<Rule>): Rule => ({
+    frequency: "monthly",
+    interval: 1,
+    start_date: "9999-11-30",
+    end_date: null,
+    max_count: null,
+    ...over,
+  });
+
+  test("a rule at the bound lists its last dates and stops", () => {
+    expect(occurrences(rule({}), "9999-01-01", "9999-12-31")).toEqual(["9999-11-30", "9999-12-30"]);
+    expect(occurrences(rule({ frequency: "yearly", start_date: "9999-02-28" }), "9999-01-01", "9999-12-31")).toEqual([
+      "9999-02-28",
+    ]);
+    expect(occurrences(rule({ frequency: "daily", start_date: "9999-12-30" }), "9999-12-01", "9999-12-31")).toEqual([
+      "9999-12-30",
+      "9999-12-31",
+    ]);
+  });
+
+  test("a date past the bound is never produced, even for the widest window", () => {
+    const end = occurrences(rule({ frequency: "daily", start_date: "9999-12-31" }), "0001-01-01", "9999-12-31");
+    expect(end).toEqual(["9999-12-31"]);
+    expect(occurrences(rule({ frequency: "weekly", start_date: "9999-12-25" }), "9999-12-25", "9999-12-31")).toEqual([
+      "9999-12-25",
+    ]);
+  });
+
+  test("a five-digit year is not a date", () => {
+    expect(occurrences(rule({ start_date: "10000-01-01" }), "2027-01-01", "9999-12-31")).toEqual([]);
+    expect(occurrences(rule({}), "2027-01-01", "10000-01-01")).toEqual([]);
+    expect(() => addMonths("9999-12-31", 1)).toThrow();
+    expect(() => installmentDates("9999-12-31", 3)).toThrow();
+  });
+
+  test("one call walks a bounded number of occurrences", () => {
+    const daily = rule({ frequency: "daily", start_date: "0001-01-01" });
+    expect(occurrences(daily, "0001-01-01", "9999-12-31").length).toBe(10000);
+    expect(occurrences(daily, "9990-01-01", "9990-01-03")).toEqual(["9990-01-01", "9990-01-02", "9990-01-03"]);
+  });
+
+  test("a year below 100 is a year, not 19xx", () => {
+    expect(occurrences(rule({ frequency: "daily", start_date: "0050-02-28" }), "0050-02-27", "0050-03-02")).toEqual([
+      "0050-02-28",
+      "0050-03-01",
+      "0050-03-02",
+    ]);
+  });
+});

@@ -276,7 +276,13 @@ function InstallmentPreview({
   if (cents === null || !Number.isInteger(count) || count < 2 || count > 60 || cents < count) return null;
   if (!/^\d{4}-\d{2}-\d{2}$/.test(first)) return null;
   const amounts = splitInstallments(cents, count);
-  const dates = installmentDates(first, count);
+  let dates: string[];
+  try {
+    dates = installmentDates(first, count);
+  } catch {
+    // A first date so late that a part would pass the year 9999: the server refuses it too.
+    return null;
+  }
   return (
     <div aria-live="polite" className="text-sm">
       <p className="font-medium">{title}</p>
