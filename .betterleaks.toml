@@ -22,6 +22,12 @@ regex = '''\bvk_[A-Z2-7]{26}\.[A-Z2-7]{26}\b'''
 keywords = ["vk_"]
 
 [[rules]]
+id = "vukem-finances-api-token"
+description = "vukem-finances API token (prefix vf_)"
+regex = '''\bvf_[A-Z2-7]{26}\.[A-Z2-7]{26}\b'''
+keywords = ["vf_"]
+
+[[rules]]
 id = "stripe-secret-key"
 description = "Stripe secret or restricted API key"
 regex = '''\b(?:sk|rk)_(?:test|live)_[A-Za-z0-9]{20,247}\b'''
