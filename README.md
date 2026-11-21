@@ -89,3 +89,7 @@ The six-month income and expense series retains every month's totals, including 
 
 Releases use [Semantic Versioning](https://semver.org/spec/v2.0.0.html): tag
 them `vMAJOR.MINOR.PATCH` and regenerate the changelog from the commits.
+
+## License
+
+MIT, see [LICENSE](LICENSE). Copyright (c) 2026-Present Alex Galhardo.
