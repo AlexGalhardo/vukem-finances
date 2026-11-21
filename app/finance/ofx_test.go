@@ -216,7 +216,7 @@ func TestOFXAmountsAndDatesAreStrict(t *testing.T) {
 
 	for amount, want := range map[string]int64{
 		"-1234.56": -123456, "1234.56": 123456, "+5": 500, ".5": 50, "0.05": 5, "12": 1200, "-12.5": -1250, "1,5": 150,
-		"90071992547409.91": 9007199254740991,
+		"90071992547409.91": 9007199254740991, "1.234,56": 123456, "1,234.56": 123456, "1.234.567,89": 123456789,
 	} {
 		if r := row("20260301", amount); r.Problem != "" || r.Cents != want {
 			t.Errorf("amount %q = %d (%q), want %d", amount, r.Cents, r.Problem, want)
@@ -224,7 +224,7 @@ func TestOFXAmountsAndDatesAreStrict(t *testing.T) {
 	}
 
 	for _, amount := range []string{
-		"1.5e3", "1e2", "12.345", "1.234,56", "--5", "5-", "abc", "", "0", "0.00", "1 2", "$5", "(5.00)",
+		"1.5e3", "1e2", "12.345", "1.2345,56", "--5", "5-", "abc", "", "0", "0.00", "1 2", "$5", "(5.00)",
 		"90071992547409.92", "99999999999999999999",
 	} {
 		if r := row("20260301", amount); r.Problem != "bad amount" {
