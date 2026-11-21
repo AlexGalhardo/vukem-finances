@@ -18,7 +18,7 @@ const crockford = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
 // id sorts with its row), the sixteen of entropy from random(). It runs inside
 // one UPDATE, so the backfill needs no Go loop and no batches.
 func ulidSQL() string {
-	ms := "(CAST(COALESCE(strftime('%s', created_at), 0) AS INTEGER) * 1000)"
+	ms := "(CAST(COALESCE(strftime('%s', substr(created_at, 1, 19)), 0) AS INTEGER) * 1000)"
 
 	var parts []string
 
@@ -165,7 +165,7 @@ func createChangeLog(s *schema.Schema) error {
 			op TEXT NOT NULL CHECK (op IN ('upsert', 'delete')),
 			row_version INTEGER NOT NULL,
 			fields TEXT NOT NULL DEFAULT '[]',
-			created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%d %H:%M:%S', 'now'))
+			created_at DATETIME NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))
 		)`,
 		`CREATE INDEX IF NOT EXISTS changes_workspace_id_seq_index ON changes (workspace_id, seq)`,
 		`CREATE INDEX IF NOT EXISTS changes_row_index ON changes (workspace_id, entity, uid, seq)`,
