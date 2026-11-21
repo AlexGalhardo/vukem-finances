@@ -1,34 +1,43 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
-import PageHeader from "../components/PageHeader";
-import { useState, type FormEvent } from "react";
-import { Plus, Pencil, Trash2, ArrowLeftRight, Upload } from "lucide-react";
+import { ArrowLeftRight, Pencil, Trash2, Upload } from "lucide-react";
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import ConfirmDelete from "../components/ConfirmDelete";
+import PageHeader from "../components/PageHeader";
+import { centsToInput } from "../components/transactions/entryForm";
+import { useQuickAdd } from "../components/transactions/QuickAdd";
+import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "../components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
   DialogDescription,
   DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "../components/ui/dialog";
-import { Field, FieldGroup, FieldLabel, FieldError } from "../components/ui/field";
+import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTitle } from "../components/ui/empty";
+import { Field, FieldError, FieldGroup, FieldLabel } from "../components/ui/field";
 import { Input } from "../components/ui/input";
 import { NativeSelect, NativeSelectOption } from "../components/ui/native-select";
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "../components/ui/table";
-import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription, EmptyContent } from "../components/ui/empty";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { useFinanceI18n } from "../lib/i18n";
-import { toInput } from "../lib/money";
 import type { Page, SharedProps } from "../page-props";
 export default function Transactions({ transactions, accounts, categories, filters, today }: Page<"Transactions">) {
   const { t, money, date } = useFinanceI18n();
   const page = usePage<SharedProps>();
   const currency = page.props.workspace?.current.currency ?? "USD";
-  const [open, setOpen] = useState(
-    () => typeof window !== "undefined" && new URLSearchParams(window.location.search).get("create") === "1",
-  );
+  const { openTransaction, openTransfer, canRecord } = useQuickAdd();
+  const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
+  const asked = useRef(false);
+
+  // The dashboard links here with ?create=1: open the shared new transaction dialog once.
+  useEffect(() => {
+    if (asked.current || new URLSearchParams(window.location.search).get("create") !== "1") return;
+    asked.current = true;
+    openTransaction("expense");
+  }, [openTransaction]);
   const form = useForm({
     accountId: String(accounts[0]?.id ?? ""),
     categoryId: "",
@@ -37,27 +46,29 @@ export default function Transactions({ transactions, accounts, categories, filte
     description: "",
     date: today,
   });
-  function create() {
-    setEditing(null);
-    form.setData({
-      accountId: String(accounts[0]?.id ?? ""),
-      categoryId: "",
-      kind: "expense",
-      amount: "",
-      description: "",
-      date: today,
-    });
-    form.clearErrors();
-    setOpen(true);
-  }
   function edit(item: (typeof transactions)[number]) {
+    if (item.transferId !== null && item.transferAccountId !== null) {
+      const outgoing = item.kind === "expense";
+      openTransfer({
+        legId: item.id,
+        draft: {
+          amount: centsToInput(item.amount_cents),
+          fromAccountId: String(outgoing ? item.account_id : item.transferAccountId),
+          toAccountId: String(outgoing ? item.transferAccountId : item.account_id),
+          description: item.description,
+          date: item.occurred_on.slice(0, 10),
+        },
+        accounts: accounts.map((a) => ({ id: a.id, name: a.name, kind: a.kind })),
+      });
+      return;
+    }
     setEditing(item.id);
     form.clearErrors();
     form.setData({
       accountId: String(item.account_id),
       categoryId: item.categoryId ? String(item.categoryId) : "",
       kind: item.kind,
-      amount: toInput(item.amount_cents),
+      amount: centsToInput(item.amount_cents),
       description: item.description,
       date: item.occurred_on.slice(0, 10),
     });
@@ -74,7 +85,6 @@ export default function Transactions({ transactions, accounts, categories, filte
       onError: () => setOpen(true),
     };
     if (editing !== null) form.patch(`/transactions/${editing}`, options);
-    else form.post("/transactions", options);
   }
   function filter(name: string, value: string) {
     const next = { ...filters, [name]: value };
@@ -91,16 +101,18 @@ export default function Transactions({ transactions, accounts, categories, filte
         title={t("transactions")}
         description={t("transactionDescription")}
         actions={
-          <Button onClick={create}>
-            <Plus data-icon="inline-start" />
-            {t("newTransaction")}
-          </Button>
+          canRecord && (
+            <Button variant="outline" onClick={() => openTransfer()}>
+              <ArrowLeftRight data-icon="inline-start" />
+              {t("newTransfer")}
+            </Button>
+          )
         }
       />
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{t(editing !== null ? "editTransaction" : "newTransaction")}</DialogTitle>
+            <DialogTitle>{t("editTransaction")}</DialogTitle>
             <DialogDescription>{t("modalDescription")}</DialogDescription>
           </DialogHeader>
           <form onSubmit={submit} className="flex flex-col gap-6">
@@ -174,7 +186,7 @@ export default function Transactions({ transactions, accounts, categories, filte
                 {t("cancel")}
               </Button>
               <Button type="submit" disabled={form.processing || accounts.length === 0}>
-                {t(form.processing ? "working" : editing !== null ? "save" : "add")}
+                {t(form.processing ? "working" : "save")}
               </Button>
             </DialogFooter>
           </form>
@@ -252,7 +264,19 @@ export default function Transactions({ transactions, accounts, categories, filte
                   <TableRow key={item.id}>
                     <TableCell className="whitespace-nowrap text-muted-foreground">{date(item.occurred_on)}</TableCell>
                     <TableCell className="font-medium">
-                      {item.description || t(item.kind === "income" ? "income" : "expense")}
+                      {item.transferId !== null ? (
+                        <span className="flex flex-wrap items-center gap-2">
+                          <Badge variant="secondary">{t("transfer")}</Badge>
+                          <span>
+                            {t(item.kind === "expense" ? "transferTo" : "transferFrom")} {item.transferAccountName}
+                          </span>
+                          {item.description && (
+                            <span className="font-normal text-muted-foreground">{item.description}</span>
+                          )}
+                        </span>
+                      ) : (
+                        item.description || t(item.kind === "income" ? "income" : "expense")
+                      )}
                     </TableCell>
                     <TableCell>{item.categoryName || "—"}</TableCell>
                     <TableCell>{item.accountName}</TableCell>
@@ -265,13 +289,14 @@ export default function Transactions({ transactions, accounts, categories, filte
                         <Button
                           variant="ghost"
                           size="icon"
+                          disabled={!canRecord}
                           onClick={() => edit(item)}
                           aria-label={`${t("edit")} ${item.description}`}
                         >
                           <Pencil />
                         </Button>
                         <ConfirmDelete
-                          href={`/transactions/${item.id}`}
+                          href={item.transferId !== null ? `/transfers/${item.id}` : `/transactions/${item.id}`}
                           name={item.description || t(item.kind === "income" ? "income" : "expense")}
                           trigger={
                             <Button
