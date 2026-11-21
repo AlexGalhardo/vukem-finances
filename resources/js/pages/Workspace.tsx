@@ -1,11 +1,40 @@
-import { Head, Link, useForm } from "@inertiajs/react";
-import type { FormEvent } from "react";
+import { Head, Link, useForm, usePage } from "@inertiajs/react";
+import { type FormEvent, useState } from "react";
 
 import Field from "../components/Field";
 import { Card, Select, danger, primary } from "../components/ui";
 import type { Page } from "../page-props";
 
+type InviteLink = { url: string; expiresAt: string };
+
+// The invite link is shown once, right after the invite is created: a
+// personal installation usually sends no email, and only a hash is stored.
+function InviteLinkNotice({ link }: { link: InviteLink }) {
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    await navigator.clipboard.writeText(link.url);
+    setCopied(true);
+  };
+
+  return (
+    <Card title="Invitation link">
+      <p className="text-sm">
+        Send this link to the person you invited. It is a secret: anyone who has it can join this workspace until it
+        expires on {new Date(link.expiresAt).toLocaleString()}. It will not be shown again.
+      </p>
+      <div className="mt-3 flex flex-wrap items-center gap-3">
+        <input readOnly aria-label="Invitation link" value={link.url} className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm" onFocus={(e) => e.currentTarget.select()} />
+        <button type="button" onClick={copy} className={primary}>
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 export default function Workspace({ workspaceDetails, members, invites, limits, canManage }: Page<"Workspace">) {
+  const inviteLink = usePage().flash?.inviteLink as InviteLink | undefined;
   const settings = useForm({ name: workspaceDetails.name, currency: workspaceDetails.currency });
   const invite = useForm({ email: "", role: "member" });
   const create = useForm({ name: "", currency: "USD" });
@@ -72,6 +101,7 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
           </p>
         )}
       </Card>
+      {inviteLink && <InviteLinkNotice link={inviteLink} />}
       {canManage && (
         <Card title="Invite someone">
           <form onSubmit={send} className="grid gap-3 sm:grid-cols-3">

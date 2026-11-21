@@ -584,8 +584,16 @@ func (h *Handlers) Invite(c *web.Ctx) error {
 		return err
 	}
 
-	if err := h.WS.Invite(c.Context(), u, in.Email, in.Role); err != nil {
+	link, err := h.WS.Invite(c.Context(), u, in.Email, in.Role)
+	if err != nil {
 		return back(c, "/workspace", err)
+	}
+
+	// A personal installation usually has no mail server, so nobody gets the
+	// email: show the owner the link once. It is a secret, flashed to the
+	// next page only.
+	if h.WS.Edition.Personal() {
+		inertia.Flash(c, "inviteLink", link)
 	}
 
 	return done(c, "/workspace", "Invitation sent.")

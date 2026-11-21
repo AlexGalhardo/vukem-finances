@@ -10,15 +10,16 @@ import (
 
 // The typed pages of the finance app. Dashboard is declared in auth.go.
 var (
-	Transactions = inertia.Define[TransactionsProps]("Transactions")
-	Accounts     = inertia.Define[AccountsProps]("Accounts")
-	Categories   = inertia.Define[CategoriesProps]("Categories")
-	Budgets      = inertia.Define[BudgetsProps]("Budgets")
-	Import       = inertia.Define[ImportProps]("Import")
-	Workspace    = inertia.Define[WorkspaceProps]("Workspace")
-	InviteAccept = inertia.Define[InviteAcceptProps]("InviteAccept")
-	Billing      = inertia.Define[BillingProps]("Billing")
-	AdminRevenue = inertia.Define[AdminRevenueProps]("Admin/Revenue")
+	Transactions   = inertia.Define[TransactionsProps]("Transactions")
+	Accounts       = inertia.Define[AccountsProps]("Accounts")
+	Categories     = inertia.Define[CategoriesProps]("Categories")
+	Budgets        = inertia.Define[BudgetsProps]("Budgets")
+	Import         = inertia.Define[ImportProps]("Import")
+	Workspace      = inertia.Define[WorkspaceProps]("Workspace")
+	InviteAccept   = inertia.Define[InviteAcceptProps]("InviteAccept")
+	InviteRegister = inertia.Define[InviteRegisterProps]("InviteRegister")
+	Billing        = inertia.Define[BillingProps]("Billing")
+	AdminRevenue   = inertia.Define[AdminRevenueProps]("Admin/Revenue")
 )
 
 // WorkspaceView is a workspace as the switcher shows it.
@@ -102,6 +103,13 @@ type WorkspaceProps struct {
 // InviteAcceptProps are the props of InviteAccept.
 type InviteAcceptProps struct {
 	Token string `json:"token"`
+}
+
+// InviteRegisterProps are the props of InviteRegister: the address is the
+// one the invite was sent to and cannot be changed.
+type InviteRegisterProps struct {
+	Token string `json:"token"`
+	Email string `json:"email"`
 }
 
 // BillingProps are the props of Billing.

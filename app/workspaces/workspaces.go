@@ -312,38 +312,46 @@ func (s *Service) Invites(ctx context.Context) ([]models.Invite, error) {
 	return Scoped[models.Invite](ctx, s.DB).WhereNull("accepted_at").OrderBy("id", orm.Asc).Get(ctx)
 }
 
-// Invite emails a link that joins the workspace of ctx with role. Members
-// and pending invites count against the plan's member limit.
-func (s *Service) Invite(ctx context.Context, inviter models.User, email, role string) error {
+// InviteLink is the secret link of a new invite and when it stops working.
+// It is shown once to whoever created the invite: only a hash is stored.
+type InviteLink struct {
+	URL       string    `json:"url"`
+	ExpiresAt time.Time `json:"expiresAt"`
+}
+
+// Invite emails a link that joins the workspace of ctx with role, and
+// returns the link. Members and pending invites count against the plan's
+// member limit.
+func (s *Service) Invite(ctx context.Context, inviter models.User, email, role string) (InviteLink, error) {
 	if role != models.RoleAdmin && role != models.RoleMember {
-		return errBadRole
+		return InviteLink{}, errBadRole
 	}
 
 	email = strings.ToLower(strings.TrimSpace(email))
 
 	lim, err := s.Limits(ctx)
 	if err != nil {
-		return err
+		return InviteLink{}, err
 	}
 
 	// A new invite to the same address replaces the old one.
 	pendingFor := Scoped[models.Invite](ctx, s.DB).Where("email", email).WhereNull("accepted_at")
 	if _, err := pendingFor.Delete(ctx); err != nil {
-		return err
+		return InviteLink{}, err
 	}
 
 	members, err := Scoped[models.Membership](ctx, s.DB).Count(ctx)
 	if err != nil {
-		return err
+		return InviteLink{}, err
 	}
 
 	pending, err := Scoped[models.Invite](ctx, s.DB).WhereNull("accepted_at").Count(ctx)
 	if err != nil {
-		return err
+		return InviteLink{}, err
 	}
 
 	if err := lim.CheckMembers(int(members + pending)); err != nil {
-		return err
+		return InviteLink{}, err
 	}
 
 	token := rand.Text() + rand.Text()
@@ -352,16 +360,18 @@ func (s *Service) Invite(ctx context.Context, inviter models.User, email, role s
 
 	inv := models.Invite{Email: email, Role: role, TokenHash: hashToken(token), ExpiresAt: expires}
 	if err := orm.Create(ctx, s.DB, &inv); err != nil {
-		return err
+		return InviteLink{}, err
 	}
 
 	ws, err := s.Current(ctx)
 	if err != nil {
-		return err
+		return InviteLink{}, err
 	}
 
-	return s.Notify(ctx, appmail.WorkspaceInvite{
-		To: email, Inviter: inviter.Name, Workspace: ws.Name, Role: role, URL: s.URL + "/invites/" + token,
+	link := InviteLink{URL: s.URL + "/invites/" + token, ExpiresAt: expires.V}
+
+	return link, s.Notify(ctx, appmail.WorkspaceInvite{
+		To: email, Inviter: inviter.Name, Workspace: ws.Name, Role: role, URL: link.URL,
 	})
 }
 
