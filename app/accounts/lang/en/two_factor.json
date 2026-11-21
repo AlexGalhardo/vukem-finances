@@ -9,7 +9,9 @@
       "code_required": "Enter the code from your authenticator app or a recovery code.",
       "invalid_recovery_code": "The recovery code is invalid.",
       "wrong_password": "The password is incorrect.",
-      "login_expired": "Your login expired. Please log in again."
+      "login_expired": "Your login expired. Please log in again.",
+      "locked": "Too many wrong codes. Log in again with your password in a few minutes.",
+      "locked_subject": "Too many wrong two-factor codes"
     }
   }
 }

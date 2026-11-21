@@ -19,3 +19,11 @@ const (
 	InviteLimit  = 10
 	InviteWindow = time.Hour
 )
+
+// Two-factor codes: ten failed codes per account in TwoFactorAccountWindow,
+// whatever the IPs they come from, end the pending login. The per-IP limit of
+// the challenge route stays as the first line.
+const (
+	TwoFactorAccountLimit  = 10
+	TwoFactorAccountWindow = 15 * time.Minute
+)

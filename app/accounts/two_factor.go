@@ -14,6 +14,7 @@ import (
 	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/web"
 
+	"github.com/AlexGalhardo/vukem-finances/app/mail"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 )
 
@@ -288,6 +289,19 @@ func PendingTwoFactorID(r *http.Request) string {
 	}
 
 	return ""
+}
+
+// NotifyTwoFactorLocked mails the owner of u that too many wrong codes ended a
+// login. The mail is queued; a failure is logged, never returned: the lock
+// must hold whatever the mail server does.
+func (a *Accounts) NotifyTwoFactorLocked(ctx context.Context, u models.User, window time.Duration) {
+	err := a.Mailer.SendLater(ctx, mail.TwoFactorLocked{
+		User: u, ResetLink: a.URL + "/forgot-password", Minutes: int(window.Minutes()),
+		Subject: a.T(ctx, "auth.two_factor.locked_subject"),
+	})
+	if err != nil {
+		a.log.ErrorContext(ctx, "two-factor: lock notice not sent", "err", err)
+	}
 }
 
 // ClearTwoFactorChallenge forgets the pending login.

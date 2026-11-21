@@ -1,0 +1,10 @@
+{{/* layout: none */}}
+<!doctype html>
+<html lang="en">
+<body>
+	<p>Hello {{.User.Name}},</p>
+	<p>Someone who knows your password entered too many wrong two-factor codes for your account, so the sign-in was stopped. Nothing was changed, and your account stays protected by your authenticator app.</p>
+	<p>If it was you, wait {{.Minutes}} minutes and sign in again. If it was not you, reset your password now:</p>
+	<p><a href="{{.ResetLink}}">Reset password</a></p>
+</body>
+</html>
