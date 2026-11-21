@@ -1,0 +1,18 @@
+# Caddy in front of the app on a VPS: automatic HTTPS for APP_DOMAIN
+# (Let's Encrypt for a public name, Caddy's internal CA for localhost),
+# compression and the security headers the app does not send itself.
+{$APP_DOMAIN} {
+	encode zstd gzip
+
+	header {
+		# The app already sends CSP, X-Frame-Options, X-Content-Type-Options,
+		# Referrer-Policy and Permissions-Policy.
+		Strict-Transport-Security "max-age=31536000"
+		-Server
+	}
+
+	# Caddy replaces X-Forwarded-For with the real peer address and sets
+	# X-Forwarded-Proto; the app trusts both only from this network
+	# (TRUSTED_PROXIES in compose.prod.yaml).
+	reverse_proxy app:3000
+}
