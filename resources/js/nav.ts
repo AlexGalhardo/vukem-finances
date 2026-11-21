@@ -7,6 +7,7 @@ import {
   Sparkles,
   Tags,
   Upload,
+  WalletCards,
   Users,
   Wallet,
 } from "lucide-react";
@@ -30,6 +31,7 @@ export const navItems: readonly NavItem[] = [
   { id: "dashboard", labelKey: "dashboard", href: "/dashboard", icon: ChartNoAxesCombined, keys: "g d" },
   { id: "transactions", labelKey: "transactions", href: "/transactions", icon: ArrowLeftRight, keys: "g t" },
   { id: "accounts", labelKey: "accounts", href: "/accounts", icon: Wallet, keys: "g a" },
+  { id: "cards", labelKey: "cards", href: "/cards", icon: WalletCards, keys: "g k" },
   { id: "categories", labelKey: "categories", href: "/categories", icon: Tags, keys: "g c" },
   { id: "budgets", labelKey: "budgets", href: "/budgets", icon: PiggyBank, keys: "g b" },
   { id: "import", labelKey: "import", href: "/import", icon: Upload, keys: "g i" },
