@@ -120,6 +120,10 @@ func (s *Service) StartImport(ctx context.Context, accountID int64, filename str
 		return Preview{}, firstErr(err, errAccount)
 	}
 
+	if err := refuseArchived(ctx, s.DB, accountID); err != nil {
+		return Preview{}, err
+	}
+
 	headers, rows, err := readCSV(string(content))
 	if err != nil {
 		return Preview{}, err
@@ -151,6 +155,10 @@ func (s *Service) ConfirmImport(
 
 	if imp.Status != models.ImportUploaded {
 		return errImportState
+	}
+
+	if err := refuseArchived(ctx, s.DB, imp.AccountID); err != nil {
+		return err
 	}
 
 	headers, _, err := readCSV(imp.Content)
@@ -222,6 +230,18 @@ func (s *Service) RunImport(ctx context.Context, id int64) error {
 
 	if imp.Status != models.ImportQueued {
 		return nil // a retry of a job that already finished
+	}
+
+	// The account may have been archived while the job waited in the queue.
+	if err := refuseArchived(ctx, s.DB, imp.AccountID); err != nil {
+		if !errors.Is(err, errArchivedEntry) {
+			return err
+		}
+
+		_, uerr := workspaces.Scoped[models.Import](ctx, s.DB).Where("id", id).
+			Update(ctx, orm.Set{"status": models.ImportFailed, "error": err.Error(), "content": ""})
+
+		return uerr
 	}
 
 	made, bad, notes, err := s.importRows(ctx, imp)
