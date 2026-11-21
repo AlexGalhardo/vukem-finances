@@ -130,3 +130,17 @@ func (m AccessRevoked) Envelope() mail.Envelope {
 
 // Content implements mail.Mailable.
 func (m AccessRevoked) Content() mail.Content { return mail.React("access_revoked", m) }
+
+// PixReceipt confirms a PIX payment and says until when Pro lasts. Amount
+// ("R$ 9,00" style, formatted by the caller), Months and ValidUntil are text.
+type PixReceipt struct {
+	To, Workspace, Amount, Months, ValidUntil, URL string
+}
+
+// Envelope implements mail.Mailable.
+func (m PixReceipt) Envelope() mail.Envelope {
+	return mail.Envelope{To: []string{m.To}, Subject: "Your PIX payment of " + m.Amount, Tags: tag("pix_receipt")}
+}
+
+// Content implements mail.Mailable.
+func (m PixReceipt) Content() mail.Content { return mail.React("pix_receipt", m) }

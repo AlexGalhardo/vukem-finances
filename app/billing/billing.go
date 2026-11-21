@@ -66,6 +66,10 @@ type Billing struct {
 	// URL is the public base URL Stripe sends customers back to (APP_URL).
 	URL string
 	Log *slog.Logger
+	// Abacate is the PIX provider client; nil unless ABACATEPAY_API_KEY is set.
+	Abacate *AbacatePay
+	// Now is the app clock.
+	Now func() time.Time
 
 	webhook http.Handler
 }
@@ -84,9 +88,19 @@ func New(app *vukem.App, ws *workspaces.Service) (*Billing, error) {
 		}
 	}
 
-	b := &Billing{DB: ws.DB, WS: ws, Config: cfg, Log: app.Log, URL: ws.URL}
+	b := &Billing{DB: ws.DB, WS: ws, Config: cfg, Log: app.Log, URL: ws.URL, Now: app.Now}
 
 	var err error
+
+	if cfg.Pix.Enabled() {
+		// ABACATEPAY_API_BASE points the client at the fake server of the
+		// tests; it is ignored elsewhere, so the key only ever goes to AbacatePay.
+		if base := app.Source.Get("ABACATEPAY_API_BASE"); base != "" && app.Kind == vukem.KindTest {
+			b.Abacate = newAbacatePay(cfg.Pix.Key.Reveal(), base, &http.Client{Timeout: abacatePayTimeout})
+		} else {
+			b.Abacate = NewAbacatePay(cfg.Pix.Key.Reveal(), "")
+		}
+	}
 
 	if !cfg.Key.IsZero() {
 		var opts []stripe.Option

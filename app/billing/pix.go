@@ -1,0 +1,329 @@
+package billing
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net/http"
+	"strconv"
+	"time"
+
+	"github.com/AlexGalhardo/vukem/database"
+	"github.com/AlexGalhardo/vukem/errs"
+	"github.com/AlexGalhardo/vukem/orm"
+
+	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/timeutil"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
+)
+
+// PixExpirySeconds is how long a PIX charge can be paid (30 minutes).
+const PixExpirySeconds = 1800
+
+var (
+	errBadMonths = errs.New(http.StatusUnprocessableEntity, "Choose one of the offered periods.")
+	errPixOff    = errs.New(http.StatusServiceUnavailable, "PIX payments are not configured.")
+)
+
+// StartPix creates a PIX charge for months of Pro. The amount is the server's
+// price times the months; the request names only the months, and only one of
+// PIX_MONTHS_OPTIONS is accepted. The caller has checked billing.manage.
+func (b *Billing) StartPix(ctx context.Context, ws models.Workspace, actor int64, months int) (models.PixPayment, error) {
+	if b.Abacate == nil {
+		return models.PixPayment{}, errPixOff
+	}
+
+	cents, ok := b.Config.Pix.Amount(months)
+	if !ok {
+		return models.PixPayment{}, errBadMonths
+	}
+
+	ref := models.NewUID()
+
+	ch, err := b.Abacate.CreatePix(ctx, CreatePixRequest{
+		AmountCents: cents, Description: "Pro plan, " + strconv.Itoa(months) + " month(s)",
+		ExpiresInSeconds: PixExpirySeconds, Metadata: map[string]string{"ref": ref},
+	})
+	if err != nil {
+		return models.PixPayment{}, err
+	}
+
+	expires := ch.ExpiresAt.UTC()
+	if expires.IsZero() {
+		expires = b.Now().UTC().Add(PixExpirySeconds * time.Second)
+	}
+
+	p := models.PixPayment{
+		PublicRef: ref, ProviderRef: ch.ID, Status: models.PixPending, AmountCents: cents, Currency: "BRL",
+		Months: months, BRCode: ch.BRCode, QRPNGBase64: ch.BRCodeImage, ExpiresAt: expires, CreatedBy: actor,
+	}
+
+	err = b.DB.Tx(ctx, func(tx *database.Tx) error {
+		tctx := workspaces.WithTenant(ctx, ws.ID)
+		if err := orm.Create(tctx, tx, &p); err != nil {
+			return err
+		}
+
+		return record(ctx, tx, ws.ID, SourcePix, "pix_created", ref, fmt.Sprintf("PIX charge for %d month(s)", months))
+	})
+
+	return p, err
+}
+
+// PixPayment returns the payment with public reference ref of the workspace of
+// ctx; another workspace's reference is a 404.
+func (b *Billing) PixPayment(ctx context.Context, ref string) (models.PixPayment, error) {
+	p, err := workspaces.Scoped[models.PixPayment](ctx, b.DB).Where("public_ref", ref).First(ctx)
+	if errors.Is(err, orm.ErrNotFound) {
+		return p, errs.ErrNotFound
+	}
+
+	return p, err
+}
+
+// RefreshPix re-reads a pending or expired charge from the provider and applies
+// what it says; it is what a poll does. A paid, refunded or disputed payment
+// is returned as it is: the reconciliation job watches those.
+func (b *Billing) RefreshPix(ctx context.Context, p models.PixPayment) (models.PixPayment, error) {
+	if p.Status != models.PixPending && p.Status != models.PixExpired {
+		return p, nil
+	}
+
+	if err := b.applyPixState(ctx, p); err != nil {
+		return p, err
+	}
+
+	return b.pixByID(ctx, p.WorkspaceID, p.ID)
+}
+
+func (b *Billing) pixByID(ctx context.Context, workspaceID, id int64) (models.PixPayment, error) {
+	return workspaces.Scoped[models.PixPayment](workspaces.WithTenant(ctx, workspaceID), b.DB).Where("id", id).First(ctx)
+}
+
+// HandlePixEvent is what a webhook delivery causes: it looks the charge up by
+// the provider reference and re-reads it from the provider. The body of the
+// delivery is never trusted for the outcome, only for which charge to check.
+// An unknown charge is ignored.
+func (b *Billing) HandlePixEvent(ctx context.Context, providerRef string) error {
+	p, err := orm.QueryOf[models.PixPayment](b.DB).Where("provider_ref", providerRef).First(ctx)
+	if errors.Is(err, orm.ErrNotFound) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	return b.applyPixState(ctx, p)
+}
+
+// applyPixState reads the charge at the provider and moves the local payment to
+// match. Every move is a conditional UPDATE on the current status, so a repeat
+// finds nothing to change.
+func (b *Billing) applyPixState(ctx context.Context, p models.PixPayment) error {
+	if b.Abacate == nil {
+		return errPixOff
+	}
+
+	ch, err := b.Abacate.CheckPix(ctx, p.ProviderRef)
+	if errors.Is(err, ErrCharge) {
+		return nil
+	}
+
+	if err != nil {
+		return err
+	}
+
+	switch ch.Status {
+	case ProviderPaid:
+		switch p.Status {
+		case models.PixPending, models.PixExpired:
+			return b.activatePix(ctx, p)
+		case models.PixDisputed:
+			return b.restorePix(ctx, p)
+		}
+	case ProviderExpired, ProviderCancelled:
+		_, err := b.movePix(ctx, p, models.PixExpired, models.PixPending)
+
+		return err
+	case ProviderUnderDispute:
+		return b.disputePix(ctx, p)
+	case ProviderRefunded:
+		return b.RevokePixPayment(ctx, p, models.RevokedRefund, SourcePix)
+	}
+
+	return nil
+}
+
+// movePix sets the status of the payment when it is one of from, and reports
+// whether a row changed.
+func (b *Billing) movePix(ctx context.Context, p models.PixPayment, to string, from ...string) (bool, error) {
+	args := make([]any, len(from))
+	for i, s := range from {
+		args[i] = s
+	}
+
+	n, err := orm.QueryOf[models.PixPayment](b.DB).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
+		WhereIn("status", args...).Update(ctx, orm.Set{"status": to})
+
+	return n == 1, err
+}
+
+// activatePix marks the payment paid and extends the entitlement, in one
+// transaction. The conditional UPDATE is the idempotency key: only the delivery
+// that changes the row (RowsAffected == 1) extends the entitlement; every
+// other one returns success with no effect. The UPDATE comes first so the
+// transaction holds the write lock before it reads the entitlement.
+func (b *Billing) activatePix(ctx context.Context, p models.PixPayment) error {
+	now := b.Now().UTC()
+	activated := false
+
+	err := b.DB.Tx(ctx, func(tx *database.Tx) error {
+		n, err := orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
+			WhereIn("status", models.PixPending, models.PixExpired).
+			Update(ctx, orm.Set{"status": models.PixPaid, "paid_at": now})
+		if err != nil || n != 1 {
+			return err
+		}
+
+		activated = true
+
+		if err := b.changeMonths(ctx, tx, p.WorkspaceID, p.Months, now, ""); err != nil {
+			return err
+		}
+
+		return record(ctx, tx, p.WorkspaceID, SourcePix, "pix_paid", p.PublicRef,
+			fmt.Sprintf("PIX paid, %d month(s)", p.Months))
+	})
+	if err != nil || !activated {
+		return err
+	}
+
+	b.notifyPixPaid(ctx, p)
+
+	return nil
+}
+
+// restorePix gives the months of a payment back after a dispute was won.
+func (b *Billing) restorePix(ctx context.Context, p models.PixPayment) error {
+	now := b.Now().UTC()
+
+	return b.DB.Tx(ctx, func(tx *database.Tx) error {
+		n, err := orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
+			Where("status", models.PixDisputed).Update(ctx, orm.Set{"status": models.PixPaid})
+		if err != nil || n != 1 {
+			return err
+		}
+
+		if err := b.changeMonths(ctx, tx, p.WorkspaceID, p.Months, now, ""); err != nil {
+			return err
+		}
+
+		return record(ctx, tx, p.WorkspaceID, SourcePix, "pix_dispute_won", p.PublicRef, "PIX dispute won: access restored")
+	})
+}
+
+// disputePix marks a paid payment disputed and takes its months away.
+func (b *Billing) disputePix(ctx context.Context, p models.PixPayment) error {
+	return b.takeBack(ctx, p, models.PixDisputed, models.RevokedDispute, SourcePix, models.PixPaid)
+}
+
+// RevokePixPayment marks the payment refunded and subtracts its months from the
+// entitlement, so access ends only when no paid period is left. A payment
+// that was disputed already lost its months; one that never became paid has
+// none to lose. source is SourcePix (the provider said so) or SourceAdmin.
+// Calling it again changes nothing.
+func (b *Billing) RevokePixPayment(ctx context.Context, p models.PixPayment, reason, source string) error {
+	if err := b.takeBack(ctx, p, models.PixRefunded, reason, source, models.PixPaid); err != nil {
+		return err
+	}
+
+	// A disputed payment lost its months at the dispute; a payment that was
+	// never marked paid here has none to subtract.
+	_, err := b.movePix(ctx, p, models.PixRefunded, models.PixDisputed, models.PixPending, models.PixExpired)
+
+	return err
+}
+
+// takeBack moves a payment from the status "from" to "to" and subtracts its
+// months; only the call that changes the row subtracts.
+func (b *Billing) takeBack(ctx context.Context, p models.PixPayment, to, reason, source, from string) error {
+	now := b.Now().UTC()
+	changed := false
+
+	err := b.DB.Tx(ctx, func(tx *database.Tx) error {
+		n, err := orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID).
+			Where("status", from).Update(ctx, orm.Set{"status": to})
+		if err != nil || n != 1 {
+			return err
+		}
+
+		changed = true
+
+		if err := b.changeMonths(ctx, tx, p.WorkspaceID, -p.Months, now, reason); err != nil {
+			return err
+		}
+
+		return record(ctx, tx, p.WorkspaceID, source, "pix_"+to, p.PublicRef, "PIX payment "+to+": "+reason)
+	})
+	if err != nil || !changed {
+		return err
+	}
+
+	if ok, err := b.WS.Entitled(ctx, p.WorkspaceID, now); err == nil && !ok {
+		b.notifyRevoked(ctx, p.WorkspaceID, reason)
+	}
+
+	return nil
+}
+
+// changeMonths adds months to the entitlement of the workspace (negative to
+// subtract) and recomputes its end from the anchor, so stacked payments never
+// drift: valid_until = AddMonths(anchor_at, paid_months).
+//
+// Adding while the entitlement is still valid grows paid_months; adding after
+// it ended or was revoked starts again from now. Subtracting to zero revokes
+// with reason.
+func (b *Billing) changeMonths(
+	ctx context.Context, tx *database.Tx, workspaceID int64, months int, now time.Time, reason string,
+) error {
+	tctx := workspaces.WithTenant(ctx, workspaceID)
+
+	ent, err := workspaces.Scoped[models.PixEntitlement](tctx, tx).First(tctx)
+	if errors.Is(err, orm.ErrNotFound) {
+		if months <= 0 {
+			return nil
+		}
+
+		return orm.Create(tctx, tx, &models.PixEntitlement{
+			AnchorAt: now, PaidMonths: months, ValidUntil: timeutil.AddMonths(now, months),
+		})
+	}
+
+	if err != nil {
+		return err
+	}
+
+	set := orm.Set{}
+
+	switch {
+	case months > 0 && ent.Granting(now):
+		ent.PaidMonths += months
+	case months > 0:
+		ent.AnchorAt, ent.PaidMonths = now, months
+		set["anchor_at"] = ent.AnchorAt
+		set["revoked_at"], set["revoked_reason"] = nil, ""
+	default:
+		ent.PaidMonths = max(ent.PaidMonths+months, 0)
+		if ent.PaidMonths == 0 {
+			set["revoked_at"], set["revoked_reason"] = now, reason
+		}
+	}
+
+	set["paid_months"] = ent.PaidMonths
+	set["valid_until"] = timeutil.AddMonths(ent.AnchorAt, ent.PaidMonths)
+
+	_, err = workspaces.Scoped[models.PixEntitlement](tctx, tx).Where("id", ent.ID).Update(tctx, set)
+
+	return err
+}
