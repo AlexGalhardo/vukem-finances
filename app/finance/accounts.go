@@ -20,6 +20,8 @@ var errAccountKind = errs.New(
 	"The kind must be checking, savings, cash, investment or wallet.",
 )
 
+var errCardAccount = errs.New(http.StatusUnprocessableEntity, "This account is a credit card: edit it from the Cards page.")
+
 // Accounts lists the live accounts of the workspace of ctx in display order,
 // archived ones included: pickers hide them, histories and balances keep them.
 func (s *Service) Accounts(ctx context.Context) ([]models.Account, error) {
@@ -86,34 +88,43 @@ func (s *Service) CreateAccount(ctx context.Context, name, kind, opening string)
 			return err
 		}
 
-		n, err := liveAccounts(ctx, tx)
-		if err != nil {
-			return err
-		}
-
-		if err := lim.CheckAccounts(n + 1); err != nil {
-			return err
-		}
-
-		last, err := workspaces.Scoped[models.Account](ctx, tx).Max[int64](ctx, "position")
-		if err != nil && !errors.Is(err, orm.ErrNotFound) {
-			return err
-		}
-
-		a := models.Account{Name: strings.TrimSpace(name), Kind: kind, OpeningCents: cents, Position: int(last) + 1}
-		if err := orm.Create(ctx, tx, &a); err != nil {
-			return err
-		}
-
+		a, err := insertAccount(ctx, tx, lim, name, kind, cents)
 		id = a.ID
 
-		return nil
+		return err
 	})
 	if err != nil {
 		return models.Account{}, err
 	}
 
 	return reload[models.Account](ctx, s.DB, id)
+}
+
+// insertAccount adds an account inside a transaction that holds the workspace
+// lock, after the plan's account quota allows one more.
+func insertAccount(
+	ctx context.Context, tx *database.Tx, lim workspaces.Limits, name, kind string, opening int64,
+) (models.Account, error) {
+	n, err := liveAccounts(ctx, tx)
+	if err != nil {
+		return models.Account{}, err
+	}
+
+	if err := lim.CheckAccounts(n + 1); err != nil {
+		return models.Account{}, err
+	}
+
+	last, err := workspaces.Scoped[models.Account](ctx, tx).Max[int64](ctx, "position")
+	if err != nil && !errors.Is(err, orm.ErrNotFound) {
+		return models.Account{}, err
+	}
+
+	a := models.Account{Name: strings.TrimSpace(name), Kind: kind, OpeningCents: opening, Position: int(last) + 1}
+	if err := orm.Create(ctx, tx, &a); err != nil {
+		return models.Account{}, err
+	}
+
+	return a, nil
 }
 
 // UpdateAccount changes the name, the kind and the opening balance of an
@@ -126,6 +137,15 @@ func (s *Service) UpdateAccount(ctx context.Context, id int64, name, kind, openi
 	cents, err := parseOpening(opening)
 	if err != nil {
 		return models.Account{}, err
+	}
+
+	current, err := reload[models.Account](ctx, s.DB, id)
+	if err != nil {
+		return models.Account{}, errs.ErrNotFound
+	}
+
+	if current.Kind == models.AccountCreditCard {
+		return models.Account{}, errCardAccount
 	}
 
 	n, err := workspaces.Scoped[models.Account](ctx, s.DB).Where("id", id).Update(ctx, orm.Set{
