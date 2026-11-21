@@ -1,8 +1,31 @@
 # vukem-finances
 
-A personal finance SaaS built with [Vukem](https://vukem.dev): Go on the server, React with Inertia and Tailwind in the browser, SQLite out of the box.
+A personal finance application built with [Vukem](https://vukem.dev): Go on the server, React with Inertia and Tailwind in the browser, SQLite out of the box.
 
-It has sign-up, password reset and optional two-factor authentication, workspaces with roles and invitations, Stripe billing (Free and Pro, 14-day trial), email through Resend with React Email templates, and the finance itself: accounts, categories, transactions, monthly budgets, a dashboard with charts and CSV import.
+It has password reset and optional two-factor authentication, workspaces with roles and invitations, email through Resend with React Email templates, and the finance itself: accounts, categories, transactions, monthly budgets, a dashboard with charts and CSV import. One binary runs in two editions, chosen by `APP_EDITION`.
+
+## Editions
+
+| | `personal` (the default) | `saas` |
+| --- | --- | --- |
+| For | a person or a family on their own machine or server | the multi-tenant service |
+| Workspaces | one implicit workspace | many, one per user plus created ones |
+| Sign-up | closed; `/setup` creates the first owner, invite links add the others | public `/register` with email verification |
+| Billing and limits | none, every limit is unlimited | Stripe, Free and Pro plans |
+| Landing page | none: `/` redirects | yes |
+
+Any other value of `APP_EDITION` stops the boot and names the two valid ones.
+
+### Start the personal edition
+
+1. Leave `APP_EDITION` unset or set it to `personal`, and run `vukem migrate` and `vukem serve`.
+2. Open <http://localhost:3000>. With no user yet it goes to `/setup`, which asks for a setup secret: the value of `SETUP_TOKEN` or, when that is unset, the one-time code the server prints once in its boot log (`setup code: ...`; a restart before setup prints a new one).
+3. Create the owner. `/setup` answers 404 from then on.
+4. To add a family member, invite them from the Workspace page. With no mail server the page shows the invite link once, with its expiry: it is a secret, send it privately. The person registers at `/invites/<token>/register`.
+
+### Start the SaaS edition
+
+Set `APP_EDITION=saas`, the Stripe settings (see below) and a working mail setup, then run `vukem serve`. Sign-up is public at `/register`, and every account must verify its email: a self-asserted address is never treated as verified, and production refuses `AUTH_REQUIRE_EMAIL_VERIFICATION=false`.
 
 ## Run it
 
@@ -14,11 +37,13 @@ vukem serve        # http://localhost:3000, with reload
 go test ./...
 ```
 
-Register at <http://localhost:3000/register>. New accounts can sign in immediately. Set `AUTH_REQUIRE_EMAIL_VERIFICATION=true` to send a confirmation link and require verification before dashboard access. Development writes emails to the log (`MAIL_MAILER=log`).
+Development writes emails to the log (`MAIL_MAILER=log`). In `saas`, register at <http://localhost:3000/register> and open the verification link from the log.
 
 Set `ADMIN_EMAILS=you@example.com` in `.env` to open the admin panel at `/admin` (users, workspaces, subscriptions) and the revenue page at `/admin/revenue`.
 
 ## Plans
+
+The plan limits apply to the `saas` edition; `personal` has none.
 
 | | Free | Pro |
 | --- | --- | --- |
@@ -31,6 +56,8 @@ Set `ADMIN_EMAILS=you@example.com` in `.env` to open the admin panel at `/admin`
 The workspace is what pays, not the user: only its owner can start or manage a subscription. The first subscription of a workspace gets a 14-day trial. The limits live in `app/workspaces/limits.go`.
 
 ## Stripe
+
+Only the `saas` edition reads these settings; `personal` registers no billing route.
 
 1. Create a sandbox with `stripe sandbox create`, and a recurring price for Pro.
 2. Put a restricted key (`rk_...`) in `STRIPE_KEY` and the price id in `STRIPE_PRICE_PRO`.
