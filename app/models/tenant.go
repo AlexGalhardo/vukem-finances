@@ -20,26 +20,42 @@ func tenantID(id tenancy.ID) int64 {
 // SetTenant implements tenancy.Scoped.
 func (m *Account) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
-// BeforeCreate stamps the tenant.
-func (m *Account) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
+// BeforeCreate stamps the tenant and, for a row made by the web UI, its uid.
+func (m *Account) BeforeCreate(ctx context.Context) error {
+	m.UID = stampUID(m.UID)
+
+	return tenancy.Assign(ctx, m)
+}
 
 // SetTenant implements tenancy.Scoped.
 func (m *Category) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant.
-func (m *Category) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
+func (m *Category) BeforeCreate(ctx context.Context) error {
+	m.UID = stampUID(m.UID)
+
+	return tenancy.Assign(ctx, m)
+}
 
 // SetTenant implements tenancy.Scoped.
 func (m *Transaction) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant.
-func (m *Transaction) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
+func (m *Transaction) BeforeCreate(ctx context.Context) error {
+	m.UID = stampUID(m.UID)
+
+	return tenancy.Assign(ctx, m)
+}
 
 // SetTenant implements tenancy.Scoped.
 func (m *Budget) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant.
-func (m *Budget) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
+func (m *Budget) BeforeCreate(ctx context.Context) error {
+	m.UID = stampUID(m.UID)
+
+	return tenancy.Assign(ctx, m)
+}
 
 // SetTenant implements tenancy.Scoped.
 func (m *Import) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }

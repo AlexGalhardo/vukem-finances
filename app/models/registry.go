@@ -33,5 +33,8 @@ func TenantModels() []TenantModel {
 		tenantModel[Invite](),
 		tenantModel[MonthlySummarySent](),
 		tenantModel[AuditEvent](),
+		tenantModel[Change](),
+		tenantModel[SyncState](),
+		tenantModel[SyncConflict](),
 	}
 }
