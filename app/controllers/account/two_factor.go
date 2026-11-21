@@ -13,6 +13,7 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
 	"github.com/AlexGalhardo/vukem-finances/app/requests"
+	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
 // Show renders the two-factor settings page.
@@ -180,6 +181,21 @@ func (h *TwoFactorHandlers) Challenge(c *web.Ctx) error {
 		return h.expiredChallenge(c, err)
 	}
 
+	// The budget is per account, not per IP: someone who has the password can
+	// spread guesses over many addresses. It is reached only here, after a
+	// correct password (there is a pending login), so a stranger cannot spend
+	// it, and only wrong codes spend it.
+	key := "2fa-account:" + u.AuthID()
+
+	left, err := h.failed.Peek(c.Context(), key)
+	if err != nil {
+		return err
+	}
+
+	if !left.Allowed {
+		return h.endChallenge(c, u, false)
+	}
+
 	in, err := web.Parse(c, requests.TwoFactorChallengeSchema)
 	if err != nil {
 		return err
@@ -192,6 +208,15 @@ func (h *TwoFactorHandlers) Challenge(c *web.Ctx) error {
 
 	if !ok {
 		web.SecurityEvent(c.Request(), "auth.2fa_failed", "user_id", u.AuthID(), "stage", "challenge")
+
+		spent, err := h.failed.Allow(c.Context(), key)
+		if err != nil {
+			return err
+		}
+
+		if !spent.Allowed || spent.Remaining == 0 {
+			return h.endChallenge(c, u, true)
+		}
 
 		if in.Code == "" {
 			msg := h.a.T(c.Context(), "auth.two_factor.invalid_recovery_code")
@@ -211,6 +236,23 @@ func (h *TwoFactorHandlers) Challenge(c *web.Ctx) error {
 	target, _ := c.Session().Pull(auth.IntendedKey).(string)
 
 	return c.Redirect(web.SafeRedirect(c.Request(), target, "/dashboard"))
+}
+
+// endChallenge drops the pending login: a new password login is needed, and
+// the budget stays spent until its window ends. notify mails the owner; it is
+// true only when this request used up the budget, so a locked account is not
+// a way to flood the mailbox.
+func (h *TwoFactorHandlers) endChallenge(c *web.Ctx, u models.User, notify bool) error {
+	accounts.ClearTwoFactorChallenge(c)
+	web.SecurityEvent(c.Request(), "auth.2fa_locked", "user_id", u.AuthID())
+
+	if notify {
+		h.a.NotifyTwoFactorLocked(c.Context(), u, config.TwoFactorAccountWindow)
+	}
+
+	inertia.Flash(c, "status", h.a.T(c.Context(), "auth.two_factor.locked"))
+
+	return c.Redirect("/login")
 }
 
 func (h *TwoFactorHandlers) expiredChallenge(c *web.Ctx, err error) error {

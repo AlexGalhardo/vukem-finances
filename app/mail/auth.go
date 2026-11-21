@@ -60,3 +60,21 @@ func (m AccountExists) Envelope() mail.Envelope {
 
 // Content implements mail.Mailable.
 func (m AccountExists) Content() mail.Content { return mail.View("mail/account_exists", m) }
+
+// TwoFactorLocked tells the owner that too many wrong two-factor codes
+// ended a login: only someone who knows the password can get that far.
+type TwoFactorLocked struct {
+	User      models.User
+	ResetLink string
+	// Minutes is how long the account waits before codes are tried again.
+	Minutes int
+	Subject string
+}
+
+// Envelope implements mail.Mailable.
+func (m TwoFactorLocked) Envelope() mail.Envelope {
+	return mail.Envelope{To: []string{m.User.Email}, Subject: cmp.Or(m.Subject, "Too many wrong two-factor codes")}
+}
+
+// Content implements mail.Mailable.
+func (m TwoFactorLocked) Content() mail.Content { return mail.View("mail/two_factor_locked", m) }

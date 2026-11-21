@@ -1,6 +1,7 @@
 package routes
 
 import (
+	"errors"
 	"time"
 
 	"github.com/AlexGalhardo/vukem"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/controllers/account"
+	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
 // TwoFactor registers the two-factor settings page and the login
@@ -26,7 +28,12 @@ func TwoFactor(r *router.Router, app *vukem.App) error {
 		return err
 	}
 
-	h := account.NewTwoFactor(acc, app.Config.Name)
+	failed, ok := limiters("two-factor.account", config.TwoFactorAccountLimit, config.TwoFactorAccountWindow).(ratelimit.Peeker)
+	if !ok {
+		return errors.New("routes: the two-factor limiter cannot be read without spending")
+	}
+
+	h := account.NewTwoFactor(acc, app.Config.Name, failed)
 	required := auth.Required(acc.Web)
 	verified := auth.Verified(acc.Web)
 	// 5 codes per minute per user and IP: 6-digit codes cannot be guessed.
