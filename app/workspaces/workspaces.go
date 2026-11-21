@@ -36,6 +36,7 @@ var (
 	errBadRole     = errs.New(http.StatusUnprocessableEntity, "The role must be admin or member.")
 	errBadCurrency = errs.New(http.StatusUnprocessableEntity, "The currency must be an ISO 4217 code, such as USD.")
 	errOwner       = errs.New(http.StatusConflict, "The owner cannot be removed.")
+	errNoWorkspace = errs.New(http.StatusForbidden, "This account belongs to no workspace: ask its owner for an invitation.")
 )
 
 // Service holds the workspace rules.
@@ -120,8 +121,10 @@ func (s *Service) roleOf(ctx context.Context, userID, workspaceID string) (strin
 	return m.Role, err == nil, err
 }
 
-// Ensure returns the first workspace of u, creating a personal one (and
-// sending the welcome email) when u has none.
+// Ensure returns the first workspace of u. In saas it creates a personal one
+// (and sends the welcome email) when u has none. The personal edition has
+// one implicit workspace, made by the setup: a user without a membership has
+// no business there and gets a 403, never a second workspace.
 func (s *Service) Ensure(ctx context.Context, u models.User) (models.Workspace, error) {
 	m, err := orm.QueryOf[models.Membership](s.DB).Where("user_id", u.ID).OrderBy("id", orm.Asc).First(ctx)
 	if err == nil {
@@ -130,6 +133,10 @@ func (s *Service) Ensure(ctx context.Context, u models.User) (models.Workspace, 
 
 	if !errors.Is(err, orm.ErrNotFound) {
 		return models.Workspace{}, err
+	}
+
+	if s.Edition.Personal() {
+		return models.Workspace{}, errNoWorkspace
 	}
 
 	ws, err := s.Create(ctx, u, u.Name+"'s workspace", DefaultCurrency)
