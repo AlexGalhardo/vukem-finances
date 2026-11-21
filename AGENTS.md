@@ -46,6 +46,7 @@ bun run typecheck
 bun run lint:js
 bun run format:check
 bun run test:js
+bunx playwright test
 bun run lint:md
 bun run build
 ```
@@ -61,7 +62,7 @@ Read `docs/design.md` and `docs/shortcuts.md` before touching the UI. The design
 - **Shortcuts never fire while the person types** (`shortcuts/guard.ts`). Mark a custom widget that takes text with `role="textbox"`, `combobox` or `searchbox`, or `data-shortcuts="off"`.
 - **Add translations.** Add `resources/js/i18n/en/<domain>.ts`, `pt-BR/<domain>.ts` and `es/<domain>.ts` (the last two use `satisfies Record<keyof typeof en, string>`), then add one `typeof` line for the new domain to `resources/js/i18n/keys.ts`. `bun test resources/js/i18n` fails when a locale misses a key.
 - **Page structure.** A signed-in page renders `PageHeader` for its one `h1`; the shell moves focus there after a navigation. Show money with `MoneyText` (sign or label, never color alone) and lists with `DataTable`.
-- **Tests.** `bun run test:js` runs the unit tests (`bun test resources/js`; the path is required). `@types/bun` is not installed: `resources/js/bun-test.d.ts` holds the few ambient types the tests use; extend it when a test needs another matcher.
+- **Tests.** `bunx playwright test` runs the browser specs in `e2e/` against the real server (`e2e/prepare.mjs` builds the app and seeds a throwaway database; set `E2E_CHANNEL=chrome` to use the installed Chrome, otherwise run `bunx playwright install chromium` once). `bun run test:js` runs the unit tests (`bun test resources/js`; the path is required). `@types/bun` is not installed: `resources/js/bun-test.d.ts` holds the few ambient types the tests use; extend it when a test needs another matcher.
 
 ## Rules that never bend
 
