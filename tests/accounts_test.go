@@ -3,6 +3,7 @@ package tests
 import (
 	"errors"
 	"net/http"
+	"strings"
 	"testing"
 
 	"github.com/AlexGalhardo/vukem/errs"
@@ -174,4 +175,41 @@ func TestArchivedDoesNotCountForQuota(t *testing.T) {
 	if _, err := fin.UnarchiveAccount(ctx, second.ID); err != nil {
 		t.Errorf("Pro has no account limit: %v", err)
 	}
+}
+
+// TestQuickAddOptions proves the dialogs' pickers hide archived accounts and
+// other workspaces' rows, and that a viewer may read them.
+func TestQuickAddOptions(t *testing.T) {
+	t.Parallel()
+
+	app := newApp(t)
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	bob := signUp(t, app, "Bob", "bob@example.com")
+	vera := viewerOf(t, app, ana)
+	fin := softService(t, app)
+	ctx := workspaces.WithTenant(t.Context(), ana.Workspace.ID)
+
+	insertAccount(t, app, ana, "Open", 0)
+	old := insertAccount(t, app, ana, "Old", 0)
+	insertAccount(t, app, bob, "Bob only", 0)
+
+	if _, err := fin.ArchiveAccount(ctx, old.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	for name, c := range map[string]who{"owner": ana, "viewer": vera} {
+		body := c.Client.AcceptJSON().Get("/transactions/options").AssertOK().Body()
+		for _, want := range []string{`"Open"`, `"Groceries"`, `"today":"` + today()[:4], `"currency":"USD"`} {
+			if !strings.Contains(body, want) {
+				t.Errorf("%s: options lack %s: %s", name, want, body)
+			}
+		}
+
+		for _, banned := range []string{`"Old"`, `"Bob only"`} {
+			if strings.Contains(body, banned) {
+				t.Errorf("%s: options hold %s: %s", name, banned, body)
+			}
+		}
+	}
+
 }

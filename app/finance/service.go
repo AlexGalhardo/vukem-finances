@@ -156,6 +156,7 @@ type TxRow struct {
 	// account on the other side of it.
 	TransferID          *string `json:"transferId"`
 	TransferAccountName string  `json:"transferAccountName"`
+	TransferAccountID   *int64  `json:"transferAccountId"`
 }
 
 func validDate(s string) bool {
@@ -228,6 +229,8 @@ func (s *Service) Transactions(ctx context.Context, f TxFilter) ([]TxRow, error)
 		if t.TransferUID.Valid {
 			rows[i].TransferID = &t.TransferUID.V
 			rows[i].TransferAccountName = an[other[t.TransferUID.V][t.ID]]
+			otherID := other[t.TransferUID.V][t.ID]
+			rows[i].TransferAccountID = &otherID
 		}
 	}
 

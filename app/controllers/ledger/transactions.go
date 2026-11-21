@@ -113,3 +113,14 @@ func (h *Handlers) DestroyTransaction(c *web.Ctx) error {
 
 	return done(c, "/transactions", "Transaction deleted.")
 }
+
+// TransactionOptions answers the pickers of the new transaction and new
+// transfer dialogs, which any page can open.
+func (h *Handlers) TransactionOptions(c *web.Ctx) error {
+	opts, err := h.Fin.QuickAddOptions(c.Context())
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, opts)
+}
