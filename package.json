@@ -5,6 +5,8 @@
   "type": "module",
   "scripts": {
     "format": "biome format --write --no-errors-on-unmatched .",
+    "format:check": "biome format --no-errors-on-unmatched .",
+    "test:js": "bun test resources/js",
     "lint:js": "biome lint --no-errors-on-unmatched .",
     "secrets:scan": "betterleaks git --no-banner --redact",
     "lint:md": "markdownlint-cli2 \"**/*.md\"",
