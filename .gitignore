@@ -20,3 +20,6 @@ node_modules/
 /resources/public/hot
 /resources/public/build/
 /bootstrap/ssr/
+e2e/.tmp/
+test-results/
+playwright-report/
