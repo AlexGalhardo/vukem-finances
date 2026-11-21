@@ -32,4 +32,11 @@ type Transaction struct {
 	// TransferUID is the ULID both legs of a transfer share; null on an
 	// ordinary income or expense.
 	TransferUID sql.Null[string] `json:"transfer_uid"`
+
+	// TagUIDs is a JSON array of the uids of the tags of the transaction: the
+	// synced image of the transaction_tags rows, written with them.
+	TagUIDs string `db:"tag_uids" json:"tag_uids"`
+
+	// ImportHash is the duplicate key of an imported row; server only.
+	ImportHash sql.Null[string] `json:"-"`
 }

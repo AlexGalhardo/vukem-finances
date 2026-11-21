@@ -18,6 +18,7 @@ func All() []schema.Migration {
 		m20261121200100InstallChangeTriggers(),
 		m20261121200000CreateAITables(),
 		m20261121210000AddAccountArchiveAndTransfers(),
+		m20261121220000AddCategoriesTagsAndImportHash(),
 		m20261122100000CreateBillingTables(),
 		m20261122100100AddPixEntitlementPeriod(),
 		m20261122100200AddPixMonthsWithheld(),
