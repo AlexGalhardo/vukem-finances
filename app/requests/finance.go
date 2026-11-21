@@ -129,3 +129,41 @@ type Transfer struct {
 var TransferSchema = z.Struct[Transfer](z.Shape{
 	"userId": z.String().Trim().Min(1).Max(20),
 })
+
+// AIKey is the input of the AI key form. The key field is named apiSecret so
+// the framework never flashes it back as old input after a validation error
+// (its secret-field rule matches "secret").
+type AIKey struct {
+	Provider  string `json:"provider"  form:"provider"`
+	APISecret string `json:"apiSecret" form:"apiSecret"`
+	Label     string `json:"label"     form:"label"`
+	BaseURL   string `json:"baseUrl"   form:"baseUrl"`
+	Model     string `json:"model"     form:"model"`
+}
+
+// AIKeySchema validates AIKey.
+var AIKeySchema = z.Struct[AIKey](z.Shape{
+	"provider":  z.String().Trim().Min(1).Max(30),
+	"apiSecret": z.String().Trim().Min(1).Max(512),
+	"label":     z.String().Trim().Max(80).Optional(),
+	"baseUrl":   z.String().Trim().Max(500).Optional(),
+	"model":     z.String().Trim().Max(100).Optional(),
+})
+
+// AISettings is the input of the AI switches form.
+type AISettings struct {
+	Enabled    bool   `json:"enabled"    form:"enabled"`
+	Categorize bool   `json:"categorize" form:"categorize"`
+	Assistant  bool   `json:"assistant"  form:"assistant"`
+	Limit      string `json:"limit"      form:"limit"`
+	Consent    bool   `json:"consent"    form:"consent"`
+}
+
+// AISettingsSchema validates AISettings.
+var AISettingsSchema = z.Struct[AISettings](z.Shape{
+	"enabled":    z.Bool().Optional(),
+	"categorize": z.Bool().Optional(),
+	"assistant":  z.Bool().Optional(),
+	"limit":      z.String().Trim().Min(1).Max(9),
+	"consent":    z.Bool().Optional(),
+})

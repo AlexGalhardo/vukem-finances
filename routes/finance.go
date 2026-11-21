@@ -109,6 +109,8 @@ func Finance(r *router.Router, app *vukem.App) error {
 	imports := ratelimit.Middleware(limiters("workspace.import", config.ImportLimit, config.ImportWindow), byWorkspace)
 	invites := ratelimit.Middleware(limiters("workspace.invite", config.InviteLimit, config.InviteWindow), byWorkspace)
 
+	var aiErr error
+
 	// Everything else lives in a workspace: the tenant middleware picks the
 	// current one from the session and answers 404 for one the user is not in.
 	// The limits come after it: they need the signed-in user and the workspace.
@@ -136,6 +138,8 @@ func Finance(r *router.Router, app *vukem.App) error {
 		g.Post("/workspace/owner", h.TransferOwnership).Name("workspace.transfer")
 		g.Post("/workspace/leave", h.Leave).Name("workspace.leave")
 
+		aiErr = financeAI(g, app, h)
+
 		if b != nil {
 			bh := ledger.NewBilling(h, b)
 			g.Get("/billing", bh.Show).Name("billing.show")
@@ -143,6 +147,10 @@ func Finance(r *router.Router, app *vukem.App) error {
 			g.Post("/billing/portal", bh.Portal).Name("billing.portal")
 		}
 	})
+
+	if aiErr != nil {
+		return aiErr
+	}
 
 	if ws.Edition.SaaS() {
 		// The business overview of the admins (ADMIN_EMAILS): across workspaces.

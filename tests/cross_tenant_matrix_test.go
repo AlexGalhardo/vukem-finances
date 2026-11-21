@@ -49,6 +49,7 @@ var crossTenantCases = map[string]crossTenantCase{
 			}
 		},
 	},
+	"ai.key.destroy":            {method: http.MethodDelete, table: "ai_credentials", param: "credential"},
 	"workspace.members.destroy": {method: http.MethodDelete, table: "memberships", param: "user"},
 	"workspace.members.role": {
 		method: http.MethodPatch, table: "memberships", param: "user",
@@ -78,12 +79,15 @@ func TestCrossTenantMatrix(t *testing.T) {
 		"categoryId": {strconv.FormatInt(categoryID(t, app, ana, "Groceries"), 10)}, "limit": {"100.00"},
 	}).AssertRedirect("/budgets")
 	upload(t, ana, accAna, statement).AssertOK()
+	ana.Client.PostForm("/ai/key", map[string][]string{"provider": {"anthropic"}, "apiSecret": {"sk-placeholder-matrix-0123456789"}}).
+		AssertRedirect("/ai")
 
 	ids := map[string]int64{
 		"transaction": firstOf[models.Transaction](t, app, ana, "").ID,
 		"account":     accAna,
 		"budget":      firstOf[models.Budget](t, app, ana, "").ID,
 		"import":      firstOf[models.Import](t, app, ana, "").ID,
+		"credential":  firstOf[models.AICredential](t, app, ana, "").ID,
 		"user":        cara.ID,
 		"bobAccount":  firstAccount(t, app, bob),
 	}
@@ -94,7 +98,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
 
 	tables := map[string]int64{}
-	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true} {
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true} {
 		tables[table] = rowCount(t, app, table)
 	}
 
