@@ -203,6 +203,59 @@ func TestPixDisputeWonOnUsedMonthsGrantsNothing(t *testing.T) {
 	}
 }
 
+func TestPixDisputeWonKeepsTheOriginalTerm(t *testing.T) {
+	t.Parallel()
+
+	clock := newPixClock(time.Date(2027, 3, 1, 10, 0, 0, 0, time.UTC))
+	f, app := pixApp(t, clock)
+	b := pixBilling(t, app)
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	p := paidPix(t, f, b, ana, 1)
+	original := pixEntitlementOf(t, app, ana.Workspace.ID)
+
+	cycle := func() {
+		t.Helper()
+
+		for _, status := range []string{"UNDER_DISPUTE", "PAID"} {
+			f.setStatus(p.ProviderRef, status)
+
+			if err := b.HandlePixEvent(t.Context(), p.ProviderRef); err != nil {
+				t.Fatal(err)
+			}
+		}
+	}
+
+	// Won inside the term, repeatedly: the end date never moves.
+	for range 3 {
+		clock.Advance(5 * 24 * time.Hour)
+		cycle()
+
+		e := pixEntitlementOf(t, app, ana.Workspace.ID)
+		if !e.ValidUntil.Equal(original.ValidUntil) || e.PaidMonths != 1 || !e.Granting(clock.Now()) {
+			t.Fatalf("after a won dispute: %+v, want the original term %s", e, original.ValidUntil)
+		}
+	}
+
+	// Disputed inside the term and won after it: nothing is left to give.
+	f.setStatus(p.ProviderRef, "UNDER_DISPUTE")
+
+	if err := b.HandlePixEvent(t.Context(), p.ProviderRef); err != nil {
+		t.Fatal(err)
+	}
+
+	clock.Advance(30 * 24 * time.Hour)
+	f.setStatus(p.ProviderRef, "PAID")
+
+	if err := b.HandlePixEvent(t.Context(), p.ProviderRef); err != nil {
+		t.Fatal(err)
+	}
+
+	e := pixEntitlementOf(t, app, ana.Workspace.ID)
+	if e.Granting(clock.Now()) || !e.ValidUntil.Equal(original.ValidUntil) {
+		t.Errorf("a dispute won after the term granted access: %+v", e)
+	}
+}
+
 func TestPixRefundAfterDisputeWonRevokes(t *testing.T) {
 	t.Parallel()
 

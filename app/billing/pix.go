@@ -204,11 +204,11 @@ func (b *Billing) activatePix(ctx context.Context, p models.PixPayment) error {
 	return nil
 }
 
-// restorePix gives back what the dispute withheld after it was won. A payment
-// whose months were already used when disputed gets nothing back.
+// restorePix undoes what the dispute withheld after it was won, on the original
+// anchor: time that passed during the dispute is not given again, so repeated
+// disputes cannot extend access. A payment whose months were already used when
+// disputed gets nothing back.
 func (b *Billing) restorePix(ctx context.Context, p models.PixPayment) error {
-	now := b.Now().UTC()
-
 	return b.DB.Tx(ctx, func(tx *database.Tx) error {
 		query := func() orm.Query[models.PixPayment] {
 			return orm.QueryOf[models.PixPayment](tx).Where("id", p.ID).Where("workspace_id", p.WorkspaceID)
@@ -224,11 +224,16 @@ func (b *Billing) restorePix(ctx context.Context, p models.PixPayment) error {
 			return err
 		}
 
-		if row.MonthsWithheld > 0 {
-			p.Months = row.MonthsWithheld
+		summary := "PIX dispute won: no months to restore"
 
-			if err := b.grantMonths(ctx, tx, p, now); err != nil {
+		if row.MonthsWithheld > 0 {
+			restored, err := restoreMonths(ctx, tx, row)
+			if err != nil {
 				return err
+			}
+
+			if restored {
+				summary = "PIX dispute won: access restored"
 			}
 
 			if _, err := query().Update(ctx, orm.Set{"months_withheld": 0}); err != nil {
@@ -236,8 +241,36 @@ func (b *Billing) restorePix(ctx context.Context, p models.PixPayment) error {
 			}
 		}
 
-		return record(ctx, tx, p.WorkspaceID, SourcePix, "pix_dispute_won", p.PublicRef, "PIX dispute won: access restored")
+		return record(ctx, tx, p.WorkspaceID, SourcePix, "pix_dispute_won", p.PublicRef, summary)
 	})
+}
+
+// restoreMonths puts the withheld months back in the period they came from. It
+// reports false when a newer period has started: the old term is not added to it.
+func restoreMonths(ctx context.Context, tx *database.Tx, row models.PixPayment) (bool, error) {
+	tctx := workspaces.WithTenant(ctx, row.WorkspaceID)
+
+	ent, err := workspaces.Scoped[models.PixEntitlement](tctx, tx).First(tctx)
+	if errors.Is(err, orm.ErrNotFound) {
+		return false, nil
+	}
+
+	if err != nil {
+		return false, err
+	}
+
+	if ent.Period != row.EntitlementPeriod {
+		return false, nil
+	}
+
+	months := ent.PaidMonths + row.MonthsWithheld
+
+	_, err = workspaces.Scoped[models.PixEntitlement](tctx, tx).Where("id", ent.ID).Update(tctx, orm.Set{
+		"paid_months": months, "valid_until": timeutil.AddMonths(ent.AnchorAt, months),
+		"revoked_at": nil, "revoked_reason": "",
+	})
+
+	return err == nil, err
 }
 
 // grantMonths adds the months of p and records the period they count in.
