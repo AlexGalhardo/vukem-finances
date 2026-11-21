@@ -93,14 +93,26 @@ func Since(ctx context.Context, ex database.Executor, workspaceID, cursor int64,
 	return page, nil
 }
 
-// Cursor is the seq of the newest change of the workspace, 0 when it has none.
+// Cursor is the position of a client that has seen everything: the newest
+// change of the workspace, or the compacted seq when compaction removed the
+// newest ones. Below that, Since would send a fresh snapshot back to resync
+// forever.
 func Cursor(ctx context.Context, ex database.Executor, workspaceID int64) (int64, error) {
-	seq, err := orm.QueryOf[models.Change](ex).Where("workspace_id", workspaceID).Max[int64](ctx, "seq")
-	if errors.Is(err, orm.ErrNotFound) {
-		return 0, nil
+	compacted, err := compactedThrough(ctx, ex, workspaceID)
+	if err != nil {
+		return 0, err
 	}
 
-	return seq, err
+	seq, err := orm.QueryOf[models.Change](ex).Where("workspace_id", workspaceID).Max[int64](ctx, "seq")
+	if errors.Is(err, orm.ErrNotFound) {
+		return compacted, nil
+	}
+
+	if err != nil {
+		return 0, err
+	}
+
+	return max(seq, compacted), nil
 }
 
 func compactedThrough(ctx context.Context, ex database.Executor, workspaceID int64) (int64, error) {
