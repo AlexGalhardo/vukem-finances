@@ -49,6 +49,8 @@ type Billing struct {
 	// the price's default currency. One Stripe price per plan serves them
 	// all when it lists the other currencies in currency_options.
 	Currencies []string
+	// Pix is the one-off PIX payment (AbacatePay), optional.
+	Pix Pix
 }
 
 // LoadBilling reads the billing settings from src (app.Source).
@@ -61,6 +63,7 @@ func LoadBilling(src vconfig.Lookuper) Billing {
 	b := Billing{
 		Key:           vconfig.NewSecret(get("STRIPE_KEY")),
 		WebhookSecret: vconfig.NewSecret(get("STRIPE_WEBHOOK_SECRET")),
+		Pix:           loadPix(get),
 	}
 
 	for _, p := range plans() {
@@ -99,6 +102,12 @@ func (b Billing) Validate() error {
 	for _, c := range b.Currencies {
 		if !currencyRe.MatchString(c) {
 			errs = append(errs, errors.New("STRIPE_CURRENCIES: "+c+" is not a three-letter currency code"))
+		}
+	}
+
+	if b.Pix.Enabled() {
+		if err := b.Pix.validate(); err != nil {
+			errs = append(errs, err)
 		}
 	}
 
