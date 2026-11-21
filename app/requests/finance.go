@@ -224,3 +224,42 @@ var AccountTransferSchema = z.Struct[AccountTransfer](z.Shape{
 	"description":   z.String().Trim().Max(200).Optional(),
 	"date":          z.String().Trim().Min(10).Max(10),
 })
+
+// Card is the input of the credit card form. Days arrive as text and the
+// finance service checks them (1 to 31); only the last four digits of the
+// card are ever sent.
+type Card struct {
+	Name             string `json:"name"             form:"name"`
+	Limit            string `json:"limit"            form:"limit"`
+	ClosingDay       string `json:"closingDay"       form:"closingDay"`
+	DueDay           string `json:"dueDay"           form:"dueDay"`
+	PaymentAccountID string `json:"paymentAccountId" form:"paymentAccountId"`
+	Brand            string `json:"brand"            form:"brand"`
+	Last4            string `json:"last4"            form:"last4"`
+}
+
+// CardSchema validates Card.
+var CardSchema = z.Struct[Card](z.Shape{
+	"name":             z.String().Trim().Min(1).Max(80),
+	"limit":            z.String().Trim().Min(1).Max(30),
+	"closingDay":       z.String().Trim().Min(1).Max(2),
+	"dueDay":           z.String().Trim().Min(1).Max(2),
+	"paymentAccountId": z.String().Trim().Max(20).Optional(),
+	"brand":            z.String().Trim().Max(20).Optional(),
+	"last4":            z.String().Trim().Max(16).Optional(),
+})
+
+// StatementPayment is the input of the pay statement form. An empty amount
+// pays what is left; an empty date means today.
+type StatementPayment struct {
+	FromAccountID string `json:"fromAccountId" form:"fromAccountId"`
+	Amount        string `json:"amount"        form:"amount"`
+	Date          string `json:"date"          form:"date"`
+}
+
+// StatementPaymentSchema validates StatementPayment.
+var StatementPaymentSchema = z.Struct[StatementPayment](z.Shape{
+	"fromAccountId": z.String().Trim().Min(1).Max(20),
+	"amount":        z.String().Trim().Max(30).Optional(),
+	"date":          z.String().Trim().Max(10).Optional(),
+})

@@ -13,6 +13,8 @@ import (
 var (
 	Transactions   = inertia.Define[TransactionsProps]("Transactions")
 	Accounts       = inertia.Define[AccountsProps]("Accounts")
+	Cards          = inertia.Define[CardsProps]("Cards")
+	CardStatement  = inertia.Define[CardStatementProps]("CardStatement")
 	Categories     = inertia.Define[CategoriesProps]("Categories")
 	Budgets        = inertia.Define[BudgetsProps]("Budgets")
 	Import         = inertia.Define[ImportProps]("Import")
@@ -84,6 +86,27 @@ type AccountsProps struct {
 	Balances      []finance.AccountBalance `json:"balances"`
 	NetWorthCents int64                    `json:"netWorthCents"`
 	Kinds         []string                 `json:"kinds"`
+}
+
+// CardsProps are the props of Cards.
+type CardsProps struct {
+	Cards []finance.CardOverview `json:"cards"`
+	// Accounts are the accounts a statement can be paid from and a card can
+	// name as its default (no credit cards, no archived accounts).
+	Accounts []models.Account  `json:"accounts"`
+	Brands   []string          `json:"brands"`
+	Limits   workspaces.Limits `json:"limits"`
+}
+
+// CardStatementProps are the props of CardStatement: one card, its
+// statements newest first and the one selected with its rows.
+type CardStatementProps struct {
+	Card       finance.CardOverview       `json:"card"`
+	Statements []finance.StatementSummary `json:"statements"`
+	Statement  finance.StatementDetail    `json:"statement"`
+	Accounts   []models.Account           `json:"accounts"`
+	Brands     []string                   `json:"brands"`
+	Today      string                     `json:"today"`
 }
 
 // CategoriesProps are the props of Categories.
