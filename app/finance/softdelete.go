@@ -84,6 +84,18 @@ func (s *Service) DeleteAccount(ctx context.Context, id int64) error {
 			return err
 		}
 
+		// The card of the account goes with it; a card that paid from this
+		// account (live or trashed) falls back to no default account.
+		if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).Where("account_id", id).
+			Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+			return err
+		}
+
+		if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).WithTrashed().Where("payment_account_id", id).
+			Update(ctx, orm.Set{"payment_account_id": nil}); err != nil {
+			return err
+		}
+
 		if len(uids) > 0 {
 			if _, err := workspaces.Scoped[models.Transaction](ctx, tx).WhereIn("transfer_uid", anys(uids)...).
 				Update(ctx, orm.Set{"deleted_at": at}); err != nil {
@@ -190,6 +202,11 @@ func (s *Service) RestoreAccount(ctx context.Context, id int64) (models.Account,
 		_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("account_id", id).
 			Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil})
 		if err != nil {
+			return err
+		}
+
+		if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).OnlyTrashed().Where("account_id", id).
+			Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
 			return err
 		}
 

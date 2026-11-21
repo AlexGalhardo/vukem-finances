@@ -129,34 +129,43 @@ func (s *Service) CreateTransfer(ctx context.Context, in TransferInput) (Transfe
 			return err
 		}
 
-		f, err := checkTransfer(ctx, tx, in)
-		if err != nil {
-			return err
-		}
-
-		uid := models.NewUID()
-		leg := func(account int64, kind string) models.Transaction {
-			return models.Transaction{
-				AccountID: account, Kind: kind, AmountCents: f.cents, Description: f.description,
-				OccurredOn: f.date, TransferUID: sql.Null[string]{V: uid, Valid: true},
-			}
-		}
-
-		source, dest := leg(f.from.ID, models.KindExpense), leg(f.to.ID, models.KindIncome)
-		if err := orm.Create(ctx, tx, &source); err != nil {
-			return err
-		}
-
-		if err := orm.Create(ctx, tx, &dest); err != nil {
-			return err
-		}
-
-		out, err = readTransfer(ctx, tx, uid)
+		out, err = insertTransfer(ctx, tx, in, "")
 
 		return err
 	})
 
 	return out, err
+}
+
+// insertTransfer writes the two legs of a transfer inside a transaction that
+// holds the workspace lock. statementRef, when set, tags the leg on the
+// destination account: the payment of a card statement.
+func insertTransfer(ctx context.Context, tx *database.Tx, in TransferInput, statementRef string) (Transfer, error) {
+	f, err := checkTransfer(ctx, tx, in)
+	if err != nil {
+		return Transfer{}, err
+	}
+
+	uid := models.NewUID()
+	leg := func(account int64, kind string) models.Transaction {
+		return models.Transaction{
+			AccountID: account, Kind: kind, AmountCents: f.cents, Description: f.description,
+			OccurredOn: f.date, TransferUID: sql.Null[string]{V: uid, Valid: true},
+		}
+	}
+
+	source, dest := leg(f.from.ID, models.KindExpense), leg(f.to.ID, models.KindIncome)
+	dest.StatementRef = sql.Null[string]{V: statementRef, Valid: statementRef != ""}
+
+	if err := orm.Create(ctx, tx, &source); err != nil {
+		return Transfer{}, err
+	}
+
+	if err := orm.Create(ctx, tx, &dest); err != nil {
+		return Transfer{}, err
+	}
+
+	return readTransfer(ctx, tx, uid)
 }
 
 // readTransfer reads the two live legs of a transfer; anything but exactly
@@ -225,10 +234,19 @@ func (s *Service) UpdateTransfer(ctx context.Context, id int64, in TransferInput
 		for _, leg := range []struct {
 			id      int64
 			account int64
-		}{{current.From.ID, f.from.ID}, {current.To.ID, f.to.ID}} {
-			if _, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("id", leg.id).Update(ctx, orm.Set{
+			was     models.Transaction
+		}{{current.From.ID, f.from.ID, current.From}, {current.To.ID, f.to.ID, current.To}} {
+			set := orm.Set{
 				"account_id": leg.account, "amount_cents": f.cents, "description": f.description, "occurred_on": f.date,
-			}); err != nil {
+			}
+
+			// A statement payment stays a payment of its statement while it
+			// stays on the same card; moved to another account it is no longer one.
+			if leg.was.StatementRef.Valid && leg.was.AccountID != leg.account {
+				set["statement_ref"] = nil
+			}
+
+			if _, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("id", leg.id).Update(ctx, set); err != nil {
 				return err
 			}
 		}

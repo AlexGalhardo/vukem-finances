@@ -46,6 +46,11 @@ func transactionInput(ctx context.Context, ex database.Executor, in TxInput, kee
 		Description: strings.TrimSpace(in.Description),
 		OccurredOn:  in.Date,
 	}
+	ref, err := refForRow(ctx, ex, in.AccountID, in.Date)
+	if err != nil {
+		return models.Transaction{}, err
+	}
+	out.StatementRef = ref
 	if in.CategoryID > 0 {
 		q := workspaces.Scoped[models.Category](ctx, ex).
 			Where("id", in.CategoryID).
@@ -192,18 +197,23 @@ func checkMonthQuota(ctx context.Context, tx *database.Tx, lim workspaces.Limits
 }
 
 func updateTransaction(ctx context.Context, tx *database.Tx, id int64, row models.Transaction) error {
-	var category any
+	var category, ref any
 	if row.CategoryID.Valid {
 		category = row.CategoryID.V
 	}
 
+	if row.StatementRef.Valid {
+		ref = row.StatementRef.V
+	}
+
 	_, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("id", id).Update(ctx, orm.Set{
-		"account_id":   row.AccountID,
-		"category_id":  category,
-		"kind":         row.Kind,
-		"amount_cents": row.AmountCents,
-		"description":  row.Description,
-		"occurred_on":  row.OccurredOn,
+		"account_id":    row.AccountID,
+		"category_id":   category,
+		"kind":          row.Kind,
+		"amount_cents":  row.AmountCents,
+		"description":   row.Description,
+		"occurred_on":   row.OccurredOn,
+		"statement_ref": ref,
 	})
 
 	return err

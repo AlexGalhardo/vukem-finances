@@ -653,6 +653,15 @@ func (s *Service) importRows(
 		made = append(made, rowToTransaction(c, imp, byName))
 	}
 
+	if card, ok, err := cardOfAccount(ctx, tx, imp.AccountID); err != nil {
+		return nil, err
+	} else if ok {
+		for i := range made {
+			ref := statementRefFor(made[i].OccurredOn, card.ClosingDay)
+			made[i].StatementRef = sql.Null[string]{V: ref, Valid: ref != ""}
+		}
+	}
+
 	if err := checkImportQuota(ctx, tx, lim, made); err != nil {
 		return nil, err
 	}
