@@ -8,6 +8,7 @@ import (
 	"github.com/AlexGalhardo/vukem"
 	vukemapi "github.com/AlexGalhardo/vukem/api"
 	"github.com/AlexGalhardo/vukem/auth"
+	"github.com/AlexGalhardo/vukem/errs"
 	"github.com/AlexGalhardo/vukem/openapi"
 	"github.com/AlexGalhardo/vukem/ratelimit"
 	"github.com/AlexGalhardo/vukem/router"
@@ -110,6 +111,12 @@ func API(r *router.Router, app *vukem.App) error {
 
 		return err
 	}).Name("api.openapi").Doc(openapi.Skip{})
+
+	// A path or a method the API does not have is a JSON 404, not the HTML page of the web app.
+	r.Handle(api.BasePath+"/{rest...}", http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
+		req.Header.Set("Accept", "application/problem+json")
+		web.Fail(w, req, errs.New(http.StatusNotFound, "Not found.").WithExtension("code", api.CodeNotFound))
+	}))
 
 	r.Group(api.BasePath, func(g *router.Group) {
 		g.Use(auth.ProblemJSON, a.Authenticate(failed), reads, writes)
