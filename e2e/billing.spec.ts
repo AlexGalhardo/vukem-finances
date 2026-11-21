@@ -1,14 +1,10 @@
-import { createHmac } from "node:crypto";
-import { readFileSync } from "node:fs";
 import { type APIRequestContext, expect, test } from "@playwright/test";
 import { E2E_FAKE_PORT, E2E_SAAS_PORT, PIX_WEBHOOK_SECRET } from "./env";
+import { signPixBody } from "./pix-signature.mjs";
 
 // The saas server of this spec talks to a fake AbacatePay (e2e/fake-abacatepay.mjs) and to nothing else: no real
 // provider is called and every credential here is a made-up placeholder.
 const control = `http://127.0.0.1:${E2E_FAKE_PORT}/__control`;
-// The public key AbacatePay documents for the body signature: read from the code that checks it, so they cannot drift.
-const publicKey = /pixPublicKey = "([^"]+)"/.exec(readFileSync("app/billing/abacatepay.go", "utf8"))?.[1] ?? "";
-
 type Charge = { id: string; amount: number; status: string };
 
 async function lastCharge(): Promise<Charge> {
@@ -27,7 +23,7 @@ async function deliver(request: APIRequestContext, event: string, id: string) {
     headers: {
       "Content-Type": "application/json",
       "X-Webhook-Secret": PIX_WEBHOOK_SECRET,
-      "X-Webhook-Signature": createHmac("sha256", publicKey).update(body).digest("base64"),
+      "X-Webhook-Signature": signPixBody(body),
     },
     data: body,
   });
