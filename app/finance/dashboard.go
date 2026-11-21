@@ -60,24 +60,10 @@ func (s *Service) Dashboard(ctx context.Context, month string) (Dashboard, error
 
 	d := Dashboard{Currency: ws.Currency, Month: month, Categories: []CategorySpend{}}
 
-	opening, err := workspaces.Scoped[models.Account](ctx, s.DB).Sum[int64](ctx, "opening_cents")
+	d.BalanceCents, err = s.NetWorth(ctx, "")
 	if err != nil {
 		return d, err
 	}
-
-	txs := workspaces.Scoped[models.Transaction](ctx, s.DB)
-
-	income, err := txs.Where("kind", models.KindIncome).Sum[int64](ctx, "amount_cents")
-	if err != nil {
-		return d, err
-	}
-
-	expense, err := txs.Where("kind", models.KindExpense).Sum[int64](ctx, "amount_cents")
-	if err != nil {
-		return d, err
-	}
-
-	d.BalanceCents = opening + income - expense
 
 	months := monthsBack(month, 6)
 	points := map[string]*MonthPoint{}
