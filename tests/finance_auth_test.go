@@ -87,7 +87,7 @@ func TestSecurity_FinanceLocalSeedPreservesCredentialsAndData(t *testing.T) {
 	}
 	vukemtest.AssertDatabaseCount(t, app, "users", 1)
 	vukemtest.AssertDatabaseCount(t, app, "workspaces", 1)
-	vukemtest.AssertDatabaseCount(t, app, "transactions", 26) // 24 entries plus the two legs of the demo transfer
+	vukemtest.AssertDatabaseCount(t, app, "transactions", 32) // 24 entries, the demo transfer (2 legs), 4 card purchases and the card payment (2 legs)
 	vukemtest.AssertDatabaseCount(t, app, "budgets", 3)
 	// The local account is verified and uses the same native password login.
 	app.Client(t).PostForm("/login", url.Values{
