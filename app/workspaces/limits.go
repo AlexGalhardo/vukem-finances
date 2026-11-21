@@ -7,8 +7,6 @@ import (
 	"net/http"
 
 	"github.com/AlexGalhardo/vukem/errs"
-
-	"github.com/AlexGalhardo/vukem-finances/app/models"
 )
 
 // Unlimited marks a limit the plan does not have.
@@ -103,15 +101,18 @@ func (s *Service) Limits(ctx context.Context) (Limits, error) {
 		return Personal, nil
 	}
 
-	subs, err := Scoped[models.WorkspaceSubscription](ctx, s.DB).Get(ctx)
+	id, ok := TenantID(ctx)
+	if !ok {
+		return Free, nil
+	}
+
+	pro, err := s.Entitled(ctx, id, s.now().UTC())
 	if err != nil {
 		return Limits{}, err
 	}
 
-	for i := range subs {
-		if subs[i].Valid() {
-			return Pro, nil
-		}
+	if pro {
+		return Pro, nil
 	}
 
 	return Free, nil
