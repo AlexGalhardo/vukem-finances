@@ -75,7 +75,7 @@ export default function PixDialog({ charge, onClose, onPaid }: Props) {
 
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="sm:max-w-xl" showCloseButton={false}>
         <DialogHeader>
           <DialogTitle>{t("billingPixDialogTitle")}</DialogTitle>
           <DialogDescription>

@@ -35,6 +35,25 @@ run("bun", ["run", "build"]);
 run("go", ["build", "-o", binary, "./cmd/app"]);
 run(binary, ["migrate"], appEnv);
 run(binary, ["db:seed", "FinanceAdminSeeder", "FinanceDemoSeeder"], appEnv);
+
+// The billing spec runs against the saas edition on its own port and database, with PIX pointed at a fake
+// AbacatePay (e2e/fake-abacatepay.mjs, started by run.mjs). No real provider is ever called and no real
+// credential is used: the values below are made up.
+const saasPort = process.env.E2E_SAAS_PORT ?? "3918";
+export const saasEnv = {
+  ...appEnv,
+  APP_EDITION: "saas",
+  PORT: saasPort,
+  APP_URL: `http://localhost:${saasPort}`,
+  DATABASE_URL: `file:${join(dir, "db-saas.sqlite").replaceAll("\\", "/")}`,
+  ABACATEPAY_API_KEY: "abc_dev_e2e_placeholder_key",
+  ABACATEPAY_WEBHOOK_SECRET: "e2e-placeholder-webhook-secret",
+  ABACATEPAY_API_BASE: `http://127.0.0.1:${process.env.E2E_FAKE_PORT ?? "3919"}`,
+  PIX_PRICE_PRO_MONTHLY_CENTS: "1990",
+};
+run(binary, ["migrate"], saasEnv);
+run(binary, ["db:seed", "FinanceAdminSeeder"], saasEnv);
+
 // The key and database are shared with run.mjs through this file, so both use the same ones.
 import { writeFileSync } from "node:fs";
-writeFileSync(join(dir, "env.json"), JSON.stringify({ binary, appEnv }));
+writeFileSync(join(dir, "env.json"), JSON.stringify({ binary, appEnv, saasEnv }));
