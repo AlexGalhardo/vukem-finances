@@ -95,12 +95,6 @@ func (h *Handlers) Register(c *web.Ctx) error {
 		return err
 	}
 
-	if !h.a.RequireEmailVerification {
-		inertia.Flash(c, "success", h.a.T(c.Context(), "auth.account_created"))
-
-		return c.Redirect("/login")
-	}
-
 	return c.Redirect("/register/check-email")
 }
 

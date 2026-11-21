@@ -22,6 +22,7 @@ import (
 	"github.com/AlexGalhardo/vukem/signed"
 
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
 // Accounts holds the authentication services.
@@ -41,12 +42,34 @@ type Accounts struct {
 	// ResetTTL is how long password reset links work.
 	ResetTTL time.Duration
 	// VerifyTTL is how long email verification links work.
-	VerifyTTL                time.Duration
-	RequireEmailVerification bool
-	now                      func() time.Time
-	sessions                 func() (*session.Manager, error)
-	cache                    func() (*cache.Cache, error)
-	log                      *slog.Logger
+	VerifyTTL time.Duration
+	now       func() time.Time
+	sessions  func() (*session.Manager, error)
+	cache     func() (*cache.Cache, error)
+	log       *slog.Logger
+}
+
+// CheckEmailVerification enforces the email verification policy of the
+// edition. In saas a sign-up is a self-asserted address, so verification is
+// always on and never marked from the form: AUTH_REQUIRE_EMAIL_VERIFICATION
+// set to anything but true is refused in production, and ignored (with a
+// warning) elsewhere. Personal accounts come from the setup secret or an
+// invite link and are verified when created, so the flag has no effect there.
+func CheckEmailVerification(edition config.Edition, flag string, production bool, log *slog.Logger) error {
+	flag = strings.TrimSpace(flag)
+	if !edition.SaaS() || flag == "" || strings.EqualFold(flag, "true") {
+		return nil
+	}
+
+	if production {
+		return errors.New("AUTH_REQUIRE_EMAIL_VERIFICATION=" + flag + " is refused with APP_EDITION=saas in production: " +
+			"a self-asserted email would pass as verified; unset it or set it to true")
+	}
+
+	log.Warn("AUTH_REQUIRE_EMAIL_VERIFICATION is ignored with APP_EDITION=saas: sign-ups always verify their email",
+		"value", flag)
+
+	return nil
 }
 
 // RevokeOtherSessions signs userID out of every browser session except
@@ -98,6 +121,16 @@ func (a *Accounts) revokeServerSessions(ctx context.Context, userID int64, keep 
 
 // New builds Accounts from the app.
 func New(app *vukem.App) (*Accounts, error) {
+	edition, err := config.LoadEdition(app.Source)
+	if err != nil {
+		return nil, err
+	}
+
+	flag, _ := app.Source.Lookup("AUTH_REQUIRE_EMAIL_VERIFICATION")
+	if err := CheckEmailVerification(edition, flag, app.Config.IsProduction(), app.Log); err != nil {
+		return nil, err
+	}
+
 	db, err := app.DB()
 	if err != nil {
 		return nil, err
@@ -141,14 +174,13 @@ func New(app *vukem.App) (*Accounts, error) {
 		Signer: signed.New(signingKey).
 			WithPreviousKeys(app.DerivePreviousKeys("signed.urls", 32)...).
 			WithClock(app.Now),
-		Messages:                 messages,
-		URL:                      strings.TrimSuffix(app.Config.URL, "/"),
-		ResetTTL:                 time.Hour,
-		VerifyTTL:                time.Hour,
-		RequireEmailVerification: strings.EqualFold(app.Source.Get("AUTH_REQUIRE_EMAIL_VERIFICATION"), "true"),
-		now:                      time.Now,
-		sessions:                 app.Sessions,
-		cache:                    app.Cache,
-		log:                      app.Log,
+		Messages:  messages,
+		URL:       strings.TrimSuffix(app.Config.URL, "/"),
+		ResetTTL:  time.Hour,
+		VerifyTTL: time.Hour,
+		now:       time.Now,
+		sessions:  app.Sessions,
+		cache:     app.Cache,
+		log:       app.Log,
 	}, nil
 }

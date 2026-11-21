@@ -21,9 +21,10 @@ import (
 
 // Register signs in.Email up without revealing whether it already has an
 // account: the caller gives the same response to new and existing addresses
-// and never logs in. A new address gets an account. Verification mail is
-// sent only when AUTH_REQUIRE_EMAIL_VERIFICATION is true; otherwise the
-// address is marked verified. An existing address gets a notice ("sign in
+// and never logs in. A new address gets an unverified account and a
+// verification mail: a self-asserted address is never marked verified, or
+// anyone could register an ADMIN_EMAILS address or squat another person's.
+// An existing address gets a notice ("sign in
 // or reset your password", at most one per hour per address) and nothing
 // is created or changed. It reports whether an account was created.
 func (a *Accounts) Register(ctx context.Context, in requests.Register) (bool, error) {
@@ -51,10 +52,6 @@ func (a *Accounts) Register(ctx context.Context, in requests.Register) (bool, er
 		}
 
 		return false, err
-	}
-
-	if !a.RequireEmailVerification {
-		return true, a.MarkVerified(ctx, a.DB, &u)
 	}
 
 	return true, a.SendVerification(ctx, u)

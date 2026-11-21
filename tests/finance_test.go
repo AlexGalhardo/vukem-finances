@@ -13,7 +13,6 @@ import (
 	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/vukemtest"
 
-	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
@@ -52,38 +51,6 @@ func authTestApp(t *testing.T, opts ...vukemtest.Options) *vukemtest.App {
 	options.Env["AUTH_REQUIRE_EMAIL_VERIFICATION"] = "true"
 	options.Env["APP_EDITION"] = "saas"
 	return vukemtest.New(t, bootstrap.New, options)
-}
-
-func TestSecurity_A07_RegistrationWithoutVerificationMail(t *testing.T) {
-	t.Parallel()
-	app := newApp(t, map[string]string{"AUTH_REQUIRE_EMAIL_VERIFICATION": "false"})
-	c := app.Client(t).Inertia("")
-	form := map[string]any{
-		"name": "Alexandra", "email": "alexandra@example.com",
-		"password": testPassword, "password_confirmation": testPassword,
-	}
-	c.PostJSON("/register", form).AssertRedirect("/login").
-		AssertFlash("success", "Account created. Log in to continue.")
-	if sent := app.Mails().SentTo("alexandra@example.com"); len(sent) != 0 {
-		t.Fatalf("registration sent %d mails, want none", len(sent))
-	}
-	acc, err := accounts.New(app.App)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	u, err := acc.Users.ByCredentials(t.Context(), map[string]string{"email": "alexandra@example.com"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if !u.EmailVerified() {
-		t.Fatal("new account must be ready to sign in")
-	}
-
-	c.PostJSON("/login", map[string]any{
-		"email": "alexandra@example.com", "password": testPassword,
-	}).AssertRedirect("/dashboard")
 }
 
 func newVerifiedUser(t *testing.T, app *vukemtest.App, name, email string) models.User {
