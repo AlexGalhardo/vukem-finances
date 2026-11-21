@@ -131,14 +131,52 @@ type BillingProps struct {
 	Configured   bool              `json:"configured"`
 	Currencies   []string          `json:"currencies"`
 	Checkout     bool              `json:"checkout"`
+	// Pix is nil while PIX is not configured.
+	Pix *PixOffer `json:"pix"`
+	// PixAccess is the PIX period of the workspace; nil when it never paid by PIX.
+	PixAccess *PixAccess `json:"pixAccess"`
 }
 
-// BillingStatus is the Stripe subscription of the workspace.
+// BillingStatus is the Stripe subscription of the workspace. RevokedReason is
+// refund, dispute, dispute_lost or admin when access was taken away.
 type BillingStatus struct {
 	Status            string `json:"status"`
 	Valid             bool   `json:"valid"`
 	CurrentPeriodEnd  string `json:"currentPeriodEnd"`
 	CancelAtPeriodEnd bool   `json:"cancelAtPeriodEnd"`
+	RevokedReason     string `json:"revokedReason"`
+}
+
+// PixOffer is what the PIX dialog may sell: the months on offer and their
+// total in cents, computed by the server.
+type PixOffer struct {
+	Currency string      `json:"currency"`
+	Options  []PixOption `json:"options"`
+}
+
+// PixOption is one period and its price.
+type PixOption struct {
+	Months     int   `json:"months"`
+	TotalCents int64 `json:"totalCents"`
+}
+
+// PixAccess is the PIX period of a workspace. It never renews by itself.
+type PixAccess struct {
+	Active        bool   `json:"active"`
+	ValidUntil    string `json:"validUntil"`
+	RevokedReason string `json:"revokedReason"`
+}
+
+// PixView is a PIX charge as the dialog shows and polls it.
+type PixView struct {
+	Ref         string `json:"ref"`
+	Status      string `json:"status"`
+	Months      int    `json:"months"`
+	AmountCents int64  `json:"amountCents"`
+	BRCode      string `json:"brCode,omitempty"`
+	QR          string `json:"qr,omitempty"`
+	ExpiresAt   string `json:"expiresAt"`
+	Plan        string `json:"plan,omitempty"`
 }
 
 // AdminRevenueProps are the props of Admin/Revenue.
