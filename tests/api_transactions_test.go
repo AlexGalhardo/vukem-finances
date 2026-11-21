@@ -217,7 +217,8 @@ func TestAPITransfers(t *testing.T) {
 	c().Get("/api/v1/accounts/"+f.savings.UID).AssertOK().AssertJSONPath("balance_cents", float64(50000))
 
 	// A transfer is neither income nor expense, and not an ordinary entry to edit.
-	//SUMMARY
+	c().Get("/api/v1/summary?month=2026-11").AssertOK().AssertJSONPath("income_cents", float64(0)).AssertJSONPath("expense_cents", float64(0))
+
 	legUID := uidOf(t, res, "from.uid")
 	assertProblem(t, c().PatchJSON("/api/v1/transactions/"+legUID, map[string]any{"amount_cents": 1}), 422, "validation_failed")
 

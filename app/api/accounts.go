@@ -241,4 +241,10 @@ func (a *API) Routes(g *router.Group, idem router.Middleware) {
 
 	register(g, idem, "transfers.create", a.transfersCreate)
 	register(g, idem, "transfers.delete", a.transfersDelete)
+
+	register(g, idem, "budgets.list", a.budgetsList)
+	register(g, idem, "budgets.set", a.budgetsSet)
+	register(g, idem, "budgets.delete", a.budgetsDelete)
+
+	register(g, idem, "summary.show", a.summaryShow)
 }
