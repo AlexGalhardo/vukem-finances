@@ -398,11 +398,27 @@ func recomputeStatements(ctx context.Context, tx *database.Tx, c models.CreditCa
 		return err
 	}
 
-	var open []any
+	paid := map[string]bool{}
 
 	for _, st := range list {
-		if st.Status != StatementPaid {
-			open = append(open, st.Ref)
+		paid[st.Ref] = st.Status == StatementPaid
+	}
+
+	// From the rows, trashed ones included: a statement left with only trashed
+	// rows is not in list, and they must still follow the new closing day.
+	refs, err := workspaces.Scoped[models.Transaction](ctx, tx).WithTrashed().Where("account_id", c.AccountID).
+		WhereNotNull("statement_ref").Pluck[string](ctx, "statement_ref")
+	if err != nil {
+		return err
+	}
+
+	slices.Sort(refs)
+
+	var open []any
+
+	for _, ref := range slices.Compact(refs) {
+		if !paid[ref] {
+			open = append(open, ref)
 		}
 	}
 
