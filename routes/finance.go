@@ -98,7 +98,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 	// Everything else lives in a workspace: the tenant middleware picks the
 	// current one from the session and answers 404 for one the user is not in.
 	r.Group("", func(g *router.Group) {
-		g.Use(required, verified, ws.Middleware(), shareWorkspace(ws, acc, admins))
+		g.Use(required, verified, ws.Middleware(), ws.Require(workspaces.AbilityRead), shareWorkspace(ws, acc, admins))
 
 		g.Get("/dashboard", h.Dashboard).Name("dashboard")
 		g.Get("/transactions", h.Transactions).Name("transactions.index")

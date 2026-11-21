@@ -171,3 +171,5 @@ func rowCount(t *testing.T, app *vukemtest.App, table string) int64 {
 
 	return n
 }
+
+func idString(id int64) string { return strconv.FormatInt(id, 10) }
