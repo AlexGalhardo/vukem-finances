@@ -53,8 +53,13 @@ type TransactionsProps struct {
 	Transactions []finance.TxRow   `json:"transactions"`
 	Accounts     []models.Account  `json:"accounts"`
 	Categories   []models.Category `json:"categories"`
+	Tags         []models.Tag      `json:"tags"`
 	Filters      TxFilters         `json:"filters"`
 	Today        string            `json:"today"`
+	// Total is the size of the whole filtered result; Page and PageSize say which slice Transactions is.
+	Total    int64 `json:"total"`
+	Page     int   `json:"page"`
+	PageSize int   `json:"pageSize"`
 }
 
 // TxFilters echoes the filters of the list.
@@ -64,6 +69,10 @@ type TxFilters struct {
 	CategoryID string `json:"categoryId"`
 	AccountID  string `json:"accountId"`
 	Kind       string `json:"kind"`
+	Q          string `json:"q"`
+	TagID      string `json:"tagId"`
+	Min        string `json:"min"`
+	Max        string `json:"max"`
 }
 
 // AccountsProps are the props of Accounts.
@@ -80,6 +89,11 @@ type AccountsProps struct {
 // CategoriesProps are the props of Categories.
 type CategoriesProps struct {
 	Categories []models.Category `json:"categories"`
+	Tags       []models.Tag      `json:"tags"`
+	// Colors and Icons are the lists a category may pick from; MaxTags is the tag limit of a workspace.
+	Colors  []string `json:"colors"`
+	Icons   []string `json:"icons"`
+	MaxTags int      `json:"maxTags"`
 }
 
 // BudgetsProps are the props of Budgets.

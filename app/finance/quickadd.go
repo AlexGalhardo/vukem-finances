@@ -28,8 +28,10 @@ type QuickAddCategory struct {
 type QuickAddOptions struct {
 	Accounts   []QuickAddAccount  `json:"accounts"`
 	Categories []QuickAddCategory `json:"categories"`
-	Today      string             `json:"today"`
-	Currency   string             `json:"currency"`
+	// Tags are the names of the tags of the workspace, for the suggestions of the tag field.
+	Tags     []string `json:"tags"`
+	Today    string   `json:"today"`
+	Currency string   `json:"currency"`
 }
 
 // QuickAddOptions lists the live, not archived accounts and the categories.
@@ -50,13 +52,22 @@ func (s *Service) QuickAddOptions(ctx context.Context) (QuickAddOptions, error) 
 		return QuickAddOptions{}, err
 	}
 
+	tags, err := s.Tags(ctx)
+	if err != nil {
+		return QuickAddOptions{}, err
+	}
+
 	out := QuickAddOptions{
 		Accounts: make([]QuickAddAccount, len(accounts)), Categories: make([]QuickAddCategory, len(categories)),
-		Today: s.nowIn(ws).Format(isoDate), Currency: ws.Currency,
+		Tags: make([]string, len(tags)), Today: s.nowIn(ws).Format(isoDate), Currency: ws.Currency,
 	}
 
 	for i, a := range accounts {
 		out.Accounts[i] = QuickAddAccount{ID: a.ID, Name: a.Name, Kind: a.Kind}
+	}
+
+	for i, g := range tags {
+		out.Tags[i] = g.Name
 	}
 
 	for i, c := range categories {

@@ -14,13 +14,25 @@ import (
 // Transactions lists the transactions with the filters of the query string.
 func (h *Handlers) Transactions(c *web.Ctx) error {
 	f := pages.TxFilters{
-		From: c.Query("from"), To: c.Query("to"), CategoryID: c.Query("categoryId"),
-		AccountID: c.Query("accountId"), Kind: c.Query("kind"),
+		From: c.Query("from"), To: c.Query("to"), CategoryID: first(c.Query("category"), c.Query("categoryId")),
+		AccountID: first(c.Query("account"), c.Query("accountId")), Kind: c.Query("kind"),
+		Q: c.Query("q"), TagID: c.Query("tag"), Min: c.Query("min"), Max: c.Query("max"),
 	}
 
-	rows, err := h.Fin.Transactions(c.Context(), finance.TxFilter{
+	var tagIDs []int64
+	if tid := id(f.TagID); tid > 0 {
+		tagIDs = []int64{tid}
+	}
+
+	page, err := h.Fin.TransactionPage(c.Context(), finance.TxFilter{
 		From: f.From, To: f.To, CategoryID: id(f.CategoryID), AccountID: id(f.AccountID), Kind: f.Kind,
+		Q: f.Q, TagIDs: tagIDs, Min: f.Min, Max: f.Max, Page: int(id(c.Query("page"))),
 	})
+	if err != nil {
+		return back(c, "/transactions", err)
+	}
+
+	tags, err := h.Fin.Tags(c.Context())
 	if err != nil {
 		return err
 	}
@@ -36,7 +48,8 @@ func (h *Handlers) Transactions(c *web.Ctx) error {
 	}
 
 	return pages.Transactions.Render(c, pages.TransactionsProps{
-		Transactions: rows, Accounts: accounts, Categories: cats, Filters: f, Today: h.Fin.Today(c.Context()),
+		Transactions: page.Rows, Accounts: accounts, Categories: cats, Tags: tags, Filters: f,
+		Today: h.Fin.Today(c.Context()), Total: page.Total, Page: page.Page, PageSize: page.PageSize,
 	})
 }
 
@@ -53,7 +66,7 @@ func (h *Handlers) StoreTransaction(c *web.Ctx) error {
 
 	t, err := h.Fin.CreateTransaction(c.Context(), finance.TxInput{
 		AccountID: id(in.AccountID), CategoryID: id(in.CategoryID), Kind: in.Kind, Amount: in.Amount,
-		Description: in.Description, Date: in.Date,
+		Description: in.Description, Date: in.Date, Tags: in.Tags,
 	})
 	if err != nil {
 		return transactionError(c, err)
@@ -86,6 +99,7 @@ func (h *Handlers) UpdateTransaction(c *web.Ctx) error {
 		Amount:      in.Amount,
 		Description: in.Description,
 		Date:        in.Date,
+		Tags:        in.Tags,
 	})
 	if err != nil {
 		return transactionError(c, err)
