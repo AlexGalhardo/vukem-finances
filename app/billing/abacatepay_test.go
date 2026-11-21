@@ -124,3 +124,21 @@ func TestAbacatePayWebhookHelpers(t *testing.T) {
 		t.Error("SecretEqual is wrong")
 	}
 }
+
+func TestNormalizeQR(t *testing.T) {
+	t.Parallel()
+
+	for in, want := range map[string]string{
+		"data:image/png;base64,iVBORw0KGgo=": "data:image/png;base64,iVBORw0KGgo=",
+		"iVBORw0KGgo=":                       "data:image/png;base64,iVBORw0KGgo=",
+		"":                                   "",
+		"javascript:alert(1)":                "",
+		"data:text/html;base64,PHNjcmlwdD4=": "",
+		"https://evil.example/x.png":         "",
+		"data:image/png;base64,AA\"onerror=": "",
+	} {
+		if got := normalizeQR(in); got != want {
+			t.Errorf("normalizeQR(%q) = %q, want %q", in, got, want)
+		}
+	}
+}

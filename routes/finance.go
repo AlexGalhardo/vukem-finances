@@ -147,6 +147,11 @@ func Finance(r *router.Router, app *vukem.App) error {
 			g.Get("/billing", bh.Show).Name("billing.show")
 			g.Post("/billing/checkout/{plan}", bh.Checkout).Name("billing.checkout")
 			g.Post("/billing/portal", bh.Portal).Name("billing.portal")
+
+			pixStart := ratelimit.Middleware(limiters("billing.pix.start", config.PixStartLimit, config.PixStartWindow), byWorkspace)
+			pixPoll := ratelimit.Middleware(limiters("billing.pix.poll", config.PixPollLimit, config.PixPollWindow), user)
+			g.Post("/billing/pix", bh.PixStart).Name("billing.pix.start").Use(pixStart)
+			g.Get("/billing/pix/{ref}", bh.PixShow).Name("billing.pix.show").Use(pixPoll)
 		}
 	})
 

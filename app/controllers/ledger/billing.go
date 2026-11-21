@@ -1,10 +1,14 @@
 package ledger
 
 import (
+	"errors"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/AlexGalhardo/vukem/auth"
+	"github.com/AlexGalhardo/vukem/errs"
 	"github.com/AlexGalhardo/vukem/inertia"
 	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/web"
@@ -43,6 +47,11 @@ func (bh *BillingHandlers) Show(c *web.Ctx) error {
 	props := pages.BillingProps{
 		Limits: lim, TrialDays: billing.TrialDays, CanManage: bh.h.can(c, workspaces.AbilityManageBilling) == nil,
 		Configured: bh.b.Stripe != nil, Currencies: bh.b.Config.Currencies, Checkout: c.Query("checkout") == "success",
+		Pix: bh.pixOffer(),
+	}
+
+	if props.PixAccess, err = bh.pixAccess(c); err != nil {
+		return err
 	}
 
 	if sub, ok, err := bh.b.Subscription(c.Context(), ws.ID); err != nil {
@@ -51,12 +60,121 @@ func (bh *BillingHandlers) Show(c *web.Ctx) error {
 		props.Subscription = &pages.BillingStatus{
 			Status: sub.Status, Valid: sub.Valid(), CancelAtPeriodEnd: sub.CancelAtPeriodEnd,
 		}
+		if sub.AccessRevokedAt.Valid {
+			props.Subscription.RevokedReason = sub.RevokedReason
+		}
 		if sub.CurrentPeriodEnd.Valid {
 			props.Subscription.CurrentPeriodEnd = sub.CurrentPeriodEnd.V.Format("January 2, 2006")
 		}
 	}
 
 	return pages.Billing.Render(c, props)
+}
+
+// pixOffer lists the months on sale with the server's totals; nil without PIX.
+func (bh *BillingHandlers) pixOffer() *pages.PixOffer {
+	if bh.b.Abacate == nil {
+		return nil
+	}
+
+	offer := &pages.PixOffer{Currency: "BRL", Options: []pages.PixOption{}}
+
+	for _, months := range bh.b.Config.Pix.Months {
+		if cents, ok := bh.b.Config.Pix.Amount(months); ok {
+			offer.Options = append(offer.Options, pages.PixOption{Months: months, TotalCents: cents})
+		}
+	}
+
+	return offer
+}
+
+// pixAccess is the PIX period of the current workspace, or nil.
+func (bh *BillingHandlers) pixAccess(c *web.Ctx) (*pages.PixAccess, error) {
+	ent, err := workspaces.Scoped[models.PixEntitlement](c.Context(), bh.h.WS.DB).First(c.Context())
+	if errors.Is(err, orm.ErrNotFound) {
+		return nil, nil
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	view := &pages.PixAccess{
+		Active: ent.Granting(bh.b.Now().UTC()), ValidUntil: ent.ValidUntil.UTC().Format("January 2, 2006"),
+	}
+	if ent.RevokedAt.Valid {
+		view.RevokedReason = ent.RevokedReason
+	}
+
+	return view, nil
+}
+
+// PixStart creates a PIX charge for the "months" form field and answers the
+// charge as JSON for the dialog: the QR image, the copy-and-paste code and the
+// timer. The amount is the server's price for those months, never a request value.
+func (bh *BillingHandlers) PixStart(c *web.Ctx) error {
+	if err := bh.h.can(c, workspaces.AbilityManageBilling); err != nil {
+		return err
+	}
+
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	ws, err := bh.h.WS.Current(c.Context())
+	if err != nil {
+		return err
+	}
+
+	months, err := strconv.Atoi(c.FormValue("months"))
+	if err != nil {
+		return errs.New(http.StatusUnprocessableEntity, "Choose one of the offered periods.")
+	}
+
+	p, err := bh.b.StartPix(c.Context(), ws, u.ID, months)
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusCreated, pixView(p, true, ""))
+}
+
+// PixShow answers the state of a charge of the current workspace for the
+// dialog's poll: it re-reads a pending charge from the provider. Another
+// workspace's reference is a 404.
+func (bh *BillingHandlers) PixShow(c *web.Ctx) error {
+	if err := bh.h.can(c, workspaces.AbilityManageBilling); err != nil {
+		return err
+	}
+
+	p, err := bh.b.PixPayment(c.Context(), c.Param("ref"))
+	if err != nil {
+		return err
+	}
+
+	if p, err = bh.b.RefreshPix(c.Context(), p); err != nil {
+		return err
+	}
+
+	lim, err := bh.h.WS.Limits(c.Context())
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, pixView(p, false, lim.Plan))
+}
+
+func pixView(p models.PixPayment, withCode bool, plan string) pages.PixView {
+	v := pages.PixView{
+		Ref: p.PublicRef, Status: p.Status, Months: p.Months, AmountCents: p.AmountCents,
+		ExpiresAt: p.ExpiresAt.UTC().Format(time.RFC3339), Plan: plan,
+	}
+	if withCode {
+		v.BRCode, v.QR = p.BRCode, p.QRPNGBase64
+	}
+
+	return v
 }
 
 // Checkout sends the owner to Stripe Checkout for the plan in the URL, in

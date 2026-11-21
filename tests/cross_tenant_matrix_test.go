@@ -27,6 +27,7 @@ type crossTenantCase struct {
 var crossTenantExempt = map[string]string{
 	"workspaces.switch": "answers a redirect and the next request re-checks the membership; see TestTenancyIsolatesWorkspaces",
 	"billing.checkout":  "the parameter is a plan name, not an id",
+	"billing.pix.show":  "the parameter is a ULID reference, not a row id; TestPixPaymentOfAnotherWorkspaceIsNotFound proves the 404",
 }
 
 var crossTenantCases = map[string]crossTenantCase{

@@ -12,6 +12,7 @@ import (
 	"io"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -175,7 +176,25 @@ func (a *AbacatePay) charge(ctx context.Context, method, path string, body any) 
 		return PixCharge{}, &providerError{Provider: "abacatepay", Status: res.StatusCode, Kind: "bad_response"}
 	}
 
+	ch.BRCodeImage = normalizeQR(ch.BRCodeImage)
+
 	return ch, nil
+}
+
+const pngDataURL = "data:image/png;base64,"
+
+var base64Body = regexp.MustCompile(`^[A-Za-z0-9+/]+={0,2}$`)
+
+// normalizeQR returns the QR image as a PNG data URL, or "" when the provider's
+// value is anything else: the value goes into an <img src>, so only a PNG made
+// of base64 characters is passed on.
+func normalizeQR(v string) string {
+	body := strings.TrimPrefix(v, pngDataURL)
+	if body == "" || !base64Body.MatchString(body) {
+		return ""
+	}
+
+	return pngDataURL + body
 }
 
 // signBody is the X-Webhook-Signature of body: HMAC-SHA256 with the public
