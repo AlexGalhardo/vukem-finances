@@ -27,6 +27,7 @@ type WorkspaceView struct {
 	ID       int64  `json:"id"`
 	Name     string `json:"name"`
 	Currency string `json:"currency"`
+	Timezone string `json:"timezone"`
 }
 
 // SharedWorkspace is the workspace data every page of a signed-in user

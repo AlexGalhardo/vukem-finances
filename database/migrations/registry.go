@@ -12,5 +12,6 @@ func All() []schema.Migration {
 		m20261121154435CreateAuthTables(),
 		m20261121154437AddTwoFactorColumns(),
 		m20261121154434CreateAdminAuditLogsTable(),
+		m20261121190000AddWorkspaceTimezone(),
 	}
 }

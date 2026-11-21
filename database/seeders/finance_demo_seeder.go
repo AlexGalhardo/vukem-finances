@@ -57,7 +57,7 @@ func demoFixtures() []demoFixture {
 }
 
 func seedDemoWorkspace(ctx context.Context, tx *database.Tx, userID int64) error {
-	ws := models.Workspace{Name: "My finances", Currency: "USD"}
+	ws := models.Workspace{Name: "My finances", Currency: "USD", Timezone: workspaces.DefaultTimezone}
 	if err := orm.Create(ctx, tx, &ws); err != nil {
 		return err
 	}
