@@ -9,6 +9,7 @@ import (
 
 	appmail "github.com/AlexGalhardo/vukem-finances/app/mail"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/timeutil"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
@@ -41,7 +42,7 @@ func monthsBack(month string, n int) []string {
 
 	out := make([]string, n)
 	for i := range n {
-		out[n-1-i] = t.AddDate(0, -i, 0).Format("2006-01")
+		out[n-1-i] = timeutil.AddMonths(t, -i).Format("2006-01")
 	}
 
 	return out
@@ -204,5 +205,5 @@ func (s *Service) SendAllMonthlySummaries(ctx context.Context, month string) err
 
 // PreviousMonth is the "YYYY-MM" before the month of t.
 func PreviousMonth(t time.Time) string {
-	return time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC).AddDate(0, -1, 0).Format("2006-01")
+	return timeutil.AddMonths(time.Date(t.Year(), t.Month(), 1, 0, 0, 0, 0, time.UTC), -1).Format("2006-01")
 }
