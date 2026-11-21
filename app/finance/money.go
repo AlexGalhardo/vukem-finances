@@ -8,6 +8,8 @@ import (
 	"errors"
 	"strconv"
 	"strings"
+
+	"github.com/AlexGalhardo/vukem-finances/app/models"
 )
 
 // ErrAmount is the answer to text that is not an amount.
@@ -16,7 +18,8 @@ var ErrAmount = errors.New("finance: not a valid amount")
 // ParseAmount reads a decimal amount ("12.34", "12,34", "1,234.56",
 // "1.234,56", "-$5", "(5.00)") into cents. A single separator is the decimal
 // one; with two kinds the last one is. More than two decimals is an error
-// rather than a rounding.
+// rather than a rounding. Amounts beyond +-models.MaxCents (2^53 - 1 cents, what
+// any client can hold exactly) are refused.
 func ParseAmount(s string) (int64, error) {
 	s = strings.TrimSpace(s)
 	neg := strings.HasPrefix(s, "-") || (strings.HasPrefix(s, "(") && strings.HasSuffix(s, ")"))
@@ -57,7 +60,7 @@ func ParseAmount(s string) (int64, error) {
 	}
 
 	units, err := strconv.ParseInt(whole, 10, 64)
-	if err != nil || units > (1<<62)/100 {
+	if err != nil || units > models.MaxCents/100 {
 		return 0, ErrAmount
 	}
 
@@ -67,6 +70,10 @@ func ParseAmount(s string) (int64, error) {
 	}
 
 	total := units*100 + cents
+	if total > models.MaxCents {
+		return 0, ErrAmount
+	}
+
 	if neg {
 		total = -total
 	}
