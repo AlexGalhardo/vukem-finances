@@ -52,6 +52,11 @@ Install the JavaScript dependencies with `bun install --frozen-lockfile`. Run ev
 
 - Money is `int64` cents (D-005). Amounts are stored in clear so SQL can sum and filter. Never use floats for money.
 - Every domain table carries `workspace_id`, and every query goes through the workspace scope (D-004). A query that skips the scope is a bug.
+- Isolation is tested, not trusted. A new domain model joins `models.TenantModels` (with `SetTenant` and `BeforeCreate`) and its table has an index that starts with `workspace_id`; a table with no `workspace_id` goes on the allow-list of `tests/isolation_guard_test.go`, with a reason. A new workspace route that takes an id needs a case in `tests/cross_tenant_matrix_test.go` (the foreign id answers 404, never 403 or 200). Both tests fail until it is done.
+- Roles are enforced on the server: `owner`, `admin`, `member`, `viewer` (`app/workspaces/policy.go` holds the table of abilities). Every write handler starts with `h.can(c, ability)`; hiding a button is never the check. The workspace has exactly one owner: only `TransferOwnership` moves it, and every change of members runs under `lockWorkspace`.
+- "Today" and "this month" come from the workspace timezone (`finance.Service.Today(ctx)`, `Month(ctx)`). Month arithmetic goes through `app/timeutil` (`AddMonths`); `AddDate` with a month argument is banned elsewhere (a test enforces it).
+- Workspace routes are rate limited (`config/limits.go`: reads and writes per user, imports and invites per workspace). The Stripe and Resend webhooks are not limited by IP; their signatures are the check. Failed two-factor codes are limited per account as well as per IP.
+- Sensitive workspace actions (roles, ownership, members, invites, settings) write `audit_events` through `Service.record`.
 - Commits follow Conventional Commits with a scope from `.github/scopes.txt`; see `.agents/rules/commits.md`.
 - Branches and releases follow `.agents/rules/git-and-branches.md`: never commit to `main`, never push, never edit `CHANGELOG.md` by hand.
 - Everything in the repository is in English.
