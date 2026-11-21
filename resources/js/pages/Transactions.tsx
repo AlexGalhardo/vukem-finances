@@ -1,10 +1,14 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
-import { ArrowLeftRight, Pencil, Trash2, Upload } from "lucide-react";
+import { ArrowLeftRight, Pencil, Search, Trash2, Upload } from "lucide-react";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import ConfirmDelete from "../components/ConfirmDelete";
+import { Mark } from "../components/categories/look";
 import PageHeader from "../components/PageHeader";
+import Pagination from "../components/Pagination";
 import { centsToInput } from "../components/transactions/entryForm";
 import { useQuickAdd } from "../components/transactions/QuickAdd";
+import { setSearchFocus } from "../components/transactions/searchFocus";
+import TagsField from "../components/transactions/TagsField";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
@@ -23,7 +27,25 @@ import { NativeSelect, NativeSelectOption } from "../components/ui/native-select
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
 import { useFinanceI18n } from "../lib/i18n";
 import type { Page, SharedProps } from "../page-props";
-export default function Transactions({ transactions, accounts, categories, filters, today }: Page<"Transactions">) {
+/** The query string of the list: only the filters that are set, with their URL names. */
+function queryOf(filters: Record<string, string>, page = 1): Record<string, string> {
+  const query: Record<string, string> = {};
+  for (const [key, value] of Object.entries(filters)) if (value !== "") query[key] = value;
+  if (page > 1) query.page = String(page);
+  return query;
+}
+
+export default function Transactions({
+  transactions,
+  accounts,
+  categories,
+  tags,
+  filters,
+  today,
+  total,
+  page: pageNumber,
+  pageSize,
+}: Page<"Transactions">) {
   const { t, money, date } = useFinanceI18n();
   const page = usePage<SharedProps>();
   const currency = page.props.workspace?.current.currency ?? "USD";
@@ -31,6 +53,28 @@ export default function Transactions({ transactions, accounts, categories, filte
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const asked = useRef(false);
+  const searchRef = useRef<HTMLInputElement>(null);
+  const [draft, setDraft] = useState({
+    q: filters.q,
+    category: filters.categoryId,
+    tag: filters.tagId,
+    account: filters.accountId,
+    kind: filters.kind,
+    from: filters.from,
+    to: filters.to,
+    min: filters.min,
+    max: filters.max,
+  });
+  const setFilter = (key: keyof typeof draft, value: string): void =>
+    setDraft((current) => ({ ...current, [key]: value }));
+
+  // The `search-transactions` action (`/`) focuses the search field here; /transactions#search does it on arrival.
+  useEffect(() => {
+    const focus = (): void => searchRef.current?.focus();
+    // The shell moves focus to the page heading one frame after a navigation: arrive after it.
+    if (window.location.hash === "#search") requestAnimationFrame(() => requestAnimationFrame(focus));
+    return setSearchFocus(focus);
+  }, []);
 
   // The dashboard links here with ?create=1: open the shared new transaction dialog once.
   useEffect(() => {
@@ -45,6 +89,7 @@ export default function Transactions({ transactions, accounts, categories, filte
     amount: "",
     description: "",
     date: today,
+    tags: [] as string[],
   });
   function edit(item: (typeof transactions)[number]) {
     if (item.transferId !== null && item.transferAccountId !== null) {
@@ -71,6 +116,7 @@ export default function Transactions({ transactions, accounts, categories, filte
       amount: centsToInput(item.amount_cents),
       description: item.description,
       date: item.occurred_on.slice(0, 10),
+      tags: item.tags.map((tag) => tag.name),
     });
     setOpen(true);
   }
@@ -86,13 +132,15 @@ export default function Transactions({ transactions, accounts, categories, filte
     };
     if (editing !== null) form.patch(`/transactions/${editing}`, options);
   }
-  function filter(name: string, value: string) {
-    const next = { ...filters, [name]: value };
-    router.get("/transactions", Object.fromEntries(Object.entries(next).filter(([, v]) => v)), {
-      preserveState: true,
-      replace: true,
-    });
+  function applyFilters(event: FormEvent): void {
+    event.preventDefault();
+    router.get("/transactions", queryOf(draft), { preserveState: true, replace: true });
   }
+  const pageCount = Math.max(1, Math.ceil(total / pageSize));
+  const pageHref = (target: number): string => {
+    const query = new URLSearchParams(queryOf(draft, target)).toString();
+    return query === "" ? "/transactions" : `/transactions?${query}`;
+  };
   const kindCategories = categories.filter((c) => c.kind === form.data.kind);
   return (
     <>
@@ -172,14 +220,22 @@ export default function Transactions({ transactions, accounts, categories, filte
                   onChange={(e) => form.setData("categoryId", e.target.value)}
                 >
                   <NativeSelectOption value="">{t("none")}</NativeSelectOption>
-                  {kindCategories.map((c) => (
-                    <NativeSelectOption key={c.id} value={c.id}>
-                      {c.name}
-                    </NativeSelectOption>
-                  ))}
+                  {kindCategories
+                    .filter((c) => !c.archived_at || String(c.id) === form.data.categoryId)
+                    .map((c) => (
+                      <NativeSelectOption key={c.id} value={c.id}>
+                        {c.name}
+                      </NativeSelectOption>
+                    ))}
                 </NativeSelect>
                 <FieldError>{form.errors.categoryId}</FieldError>
               </Field>
+              <TagsField
+                tags={form.data.tags}
+                onChange={(next) => form.setData("tags", next)}
+                suggestions={tags.map((tag) => tag.name)}
+                error={form.errors.tags}
+              />
             </FieldGroup>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
@@ -197,41 +253,136 @@ export default function Transactions({ transactions, accounts, categories, filte
           <CardTitle>{t("activity")}</CardTitle>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
-          <FieldGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-            {(["from", "to"] as const).map((key) => (
-              <Field key={key}>
-                <FieldLabel htmlFor={`filter-${key}`}>{t(key)}</FieldLabel>
-                <Input
-                  id={`filter-${key}`}
-                  type="date"
-                  value={filters[key]}
-                  onChange={(e) => filter(key, e.target.value)}
-                />
+          <search>
+            <form onSubmit={applyFilters} aria-label={t("filters")} className="flex flex-col gap-4">
+              <Field>
+                <FieldLabel htmlFor="filter-q">{t("searchLabel")}</FieldLabel>
+                <div className="relative">
+                  <Search
+                    aria-hidden="true"
+                    className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+                  />
+                  <Input
+                    id="filter-q"
+                    ref={searchRef}
+                    name="q"
+                    type="search"
+                    className="ps-9"
+                    maxLength={200}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    autoCapitalize="none"
+                    spellCheck={false}
+                    enterKeyHint="search"
+                    placeholder={t("searchPlaceholder")}
+                    value={draft.q}
+                    onChange={(e) => setFilter("q", e.target.value)}
+                  />
+                </div>
               </Field>
-            ))}
-            {(["categoryId", "accountId", "kind"] as const).map((key) => (
-              <Field key={key}>
-                <FieldLabel htmlFor={`filter-${key}`}>
-                  {t(key === "categoryId" ? "category" : key === "accountId" ? "account" : "kind")}
-                </FieldLabel>
-                <NativeSelect id={`filter-${key}`} value={filters[key]} onChange={(e) => filter(key, e.target.value)}>
-                  <NativeSelectOption value="">{t("any")}</NativeSelectOption>
-                  {key === "kind" ? (
-                    <>
-                      <NativeSelectOption value="expense">{t("expense")}</NativeSelectOption>
-                      <NativeSelectOption value="income">{t("income")}</NativeSelectOption>
-                    </>
-                  ) : (
-                    (key === "categoryId" ? categories : accounts).map((item) => (
-                      <NativeSelectOption key={item.id} value={item.id}>
-                        {item.name}
+              <FieldGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+                <Field>
+                  <FieldLabel htmlFor="filter-category">{t("category")}</FieldLabel>
+                  <NativeSelect
+                    id="filter-category"
+                    name="category"
+                    value={draft.category}
+                    onChange={(e) => setFilter("category", e.target.value)}
+                  >
+                    <NativeSelectOption value="">{t("any")}</NativeSelectOption>
+                    {categories.map((c) => (
+                      <NativeSelectOption key={c.id} value={c.id}>
+                        {c.parent_id.Valid ? "– " : ""}
+                        {c.name}
+                        {c.archived_at ? ` (${t("archived")})` : ""}
                       </NativeSelectOption>
-                    ))
-                  )}
-                </NativeSelect>
-              </Field>
-            ))}
-          </FieldGroup>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="filter-tag">{t("tag")}</FieldLabel>
+                  <NativeSelect
+                    id="filter-tag"
+                    name="tag"
+                    value={draft.tag}
+                    onChange={(e) => setFilter("tag", e.target.value)}
+                  >
+                    <NativeSelectOption value="">{t("any")}</NativeSelectOption>
+                    {tags.map((tag) => (
+                      <NativeSelectOption key={tag.id} value={tag.id}>
+                        {tag.name}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="filter-account">{t("account")}</FieldLabel>
+                  <NativeSelect
+                    id="filter-account"
+                    name="account"
+                    value={draft.account}
+                    onChange={(e) => setFilter("account", e.target.value)}
+                  >
+                    <NativeSelectOption value="">{t("any")}</NativeSelectOption>
+                    {accounts.map((a) => (
+                      <NativeSelectOption key={a.id} value={a.id}>
+                        {a.name}
+                      </NativeSelectOption>
+                    ))}
+                  </NativeSelect>
+                </Field>
+                <Field>
+                  <FieldLabel htmlFor="filter-kind">{t("kind")}</FieldLabel>
+                  <NativeSelect
+                    id="filter-kind"
+                    name="kind"
+                    value={draft.kind}
+                    onChange={(e) => setFilter("kind", e.target.value)}
+                  >
+                    <NativeSelectOption value="">{t("any")}</NativeSelectOption>
+                    <NativeSelectOption value="expense">{t("expense")}</NativeSelectOption>
+                    <NativeSelectOption value="income">{t("income")}</NativeSelectOption>
+                  </NativeSelect>
+                </Field>
+                {(["from", "to"] as const).map((key) => (
+                  <Field key={key}>
+                    <FieldLabel htmlFor={`filter-${key}`}>{t(key)}</FieldLabel>
+                    <Input
+                      id={`filter-${key}`}
+                      name={key}
+                      type="date"
+                      value={draft[key]}
+                      onChange={(e) => setFilter(key, e.target.value)}
+                    />
+                  </Field>
+                ))}
+                {(["min", "max"] as const).map((key) => (
+                  <Field key={key}>
+                    <FieldLabel htmlFor={`filter-${key}`}>{t(key === "min" ? "minAmount" : "maxAmount")}</FieldLabel>
+                    <Input
+                      id={`filter-${key}`}
+                      name={key}
+                      type="text"
+                      inputMode="decimal"
+                      autoComplete="off"
+                      placeholder="0.00"
+                      value={draft[key]}
+                      onChange={(e) => setFilter(key, e.target.value)}
+                    />
+                  </Field>
+                ))}
+              </FieldGroup>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button type="submit">{t("applyFilters")}</Button>
+                <Button type="button" variant="outline" onClick={() => router.get("/transactions")}>
+                  {t("clearFilters")}
+                </Button>
+                <p role="status" className="ms-auto text-sm text-muted-foreground tabular-nums">
+                  {total} {t("transactionsWord")}
+                </p>
+              </div>
+            </form>
+          </search>
           {transactions.length === 0 ? (
             <Empty>
               <EmptyHeader>
@@ -275,7 +426,15 @@ export default function Transactions({ transactions, accounts, categories, filte
                           )}
                         </span>
                       ) : (
-                        item.description || t(item.kind === "income" ? "income" : "expense")
+                        <span className="flex flex-wrap items-center gap-2">
+                          <span>{item.description || t(item.kind === "income" ? "income" : "expense")}</span>
+                          {item.tags.map((tag) => (
+                            <Badge key={tag.id} variant="outline" className="gap-1 font-normal">
+                              <Mark color={tag.color} icon="tag" />
+                              {tag.name}
+                            </Badge>
+                          ))}
+                        </span>
                       )}
                     </TableCell>
                     <TableCell>{item.categoryName || "—"}</TableCell>
@@ -316,11 +475,7 @@ export default function Transactions({ transactions, accounts, categories, filte
               </TableBody>
             </Table>
           )}
-          <div>
-            <Button variant="outline" onClick={() => router.get("/transactions")}>
-              {t("clearFilters")}
-            </Button>
-          </div>
+          <Pagination page={pageNumber} pageCount={pageCount} hrefFor={pageHref} />
         </CardContent>
       </Card>
     </>

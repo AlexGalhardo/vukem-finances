@@ -19,6 +19,8 @@ export interface QuickAddOptions {
   categories: PickerCategory[];
   today: string;
   currency: string;
+  /** Names of the tags of the workspace, for the suggestions of the tag field. */
+  tags: string[];
 }
 
 export type EntryKind = "expense" | "income";
@@ -30,6 +32,19 @@ export interface TransactionDraft {
   categoryId: string;
   description: string;
   date: string;
+  /** Tag names; the server creates the ones that do not exist yet. */
+  tags: string[];
+}
+
+/** A transaction takes at most this many tags. */
+export const MAX_TAGS = 10;
+
+/** Adds `name` to `tags` unless a tag with the same name, in any letter case, is there already or the limit is reached. */
+export function addTag(tags: readonly string[], name: string): string[] {
+  const clean = name.trim();
+  if (clean === "" || tags.length >= MAX_TAGS) return [...tags];
+  if (tags.some((tag) => tag.toLowerCase() === clean.toLowerCase())) return [...tags];
+  return [...tags, clean];
 }
 
 export interface TransferDraft {
@@ -48,6 +63,7 @@ export function emptyTransactionDraft(kind: EntryKind, options: QuickAddOptions)
     categoryId: "",
     description: "",
     date: options.today,
+    tags: [],
   };
 }
 

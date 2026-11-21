@@ -4,6 +4,7 @@ import { useFinanceI18n } from "../../lib/i18n";
 import type { SharedProps } from "../../page-props";
 import { useAction } from "../../shortcuts/useAction";
 import { type EntryKind, loadOptions, type QuickAddOptions } from "./entryForm";
+import { focusTransactionSearch } from "./searchFocus";
 import TransactionDialog from "./TransactionDialog";
 import TransferDialog, { type TransferEdit } from "./TransferDialog";
 
@@ -81,6 +82,17 @@ export default function QuickAdd({ children }: { children: ReactNode }) {
     keys: "n t",
     run: () => api.openTransfer(),
     enabled: () => canRecord,
+  });
+
+  // `/` focuses the search field of the transactions page, and takes the person there from any other page.
+  useAction({
+    id: "search-transactions",
+    labelKey: "searchTransactions",
+    group: "actions",
+    keys: "/",
+    run: () => {
+      if (!focusTransactionSearch()) router.visit("/transactions#search");
+    },
   });
 
   const returnFocus = (): void => {

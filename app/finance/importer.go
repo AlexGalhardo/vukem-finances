@@ -137,7 +137,7 @@ func (s *Service) StartImport(ctx context.Context, accountID int64, filename str
 		return Preview{}, err
 	}
 
-	out := Preview{Filename: strings.TrimSpace(filename), Format: format}
+	out := Preview{Filename: strings.TrimSpace(filename), Format: format, Headers: []string{}, Rows: [][]string{}}
 
 	var rows []StatementRow
 
@@ -200,7 +200,7 @@ func (s *Service) PreviewImport(ctx context.Context, id int64, m Mapping) (Previ
 		return Preview{}, err
 	}
 
-	out := Preview{ImportID: imp.ID, Filename: imp.Filename, Format: imp.Format}
+	out := Preview{ImportID: imp.ID, Filename: imp.Filename, Format: imp.Format, Headers: []string{}, Rows: [][]string{}}
 
 	if imp.Format == FormatCSV {
 		var raw [][]string
