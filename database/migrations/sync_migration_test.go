@@ -61,17 +61,17 @@ func TestSyncMigration(t *testing.T) {
 	}
 
 	for _, ws := range []string{"One", "Two"} {
-		exec(t, db, "INSERT INTO workspaces (name, currency, created_at, updated_at) VALUES (?, 'USD', '2026-01-02 03:04:05', '2026-01-02 03:04:05')", ws)
+		exec(t, db, "INSERT INTO workspaces (name, currency, created_at, updated_at) VALUES (?, 'USD', '2026-01-02T03:04:05.006Z', '2026-01-02T03:04:05.006Z')", ws)
 	}
 
 	for ws := 1; ws <= 2; ws++ {
 		for i := range 1500 {
-			exec(t, db, "INSERT INTO categories (workspace_id, name, kind, created_at, updated_at) VALUES (?, ?, 'expense', '2026-01-02 03:04:05', '2026-01-02 03:04:05')", ws, "cat"+string(rune('a'+i%26))+strings.Repeat("x", i/26))
+			exec(t, db, "INSERT INTO categories (workspace_id, name, kind, created_at, updated_at) VALUES (?, ?, 'expense', '2026-01-02T03:04:05.006Z', '2026-01-02T03:04:05.006Z')", ws, "cat"+string(rune('a'+i%26))+strings.Repeat("x", i/26))
 		}
 
-		exec(t, db, "INSERT INTO accounts (workspace_id, name, kind, created_at, updated_at) VALUES (?, 'Main', 'checking', '2026-01-02 03:04:05', '2026-01-02 03:04:05')", ws)
-		exec(t, db, "INSERT INTO transactions (workspace_id, account_id, category_id, kind, amount_cents, description, occurred_on, created_at, updated_at) VALUES (?, (SELECT id FROM accounts WHERE workspace_id = ?), (SELECT MIN(id) FROM categories WHERE workspace_id = ?), 'expense', 1234, 'lunch', '2026-01-02', '2026-01-02 03:04:05', '2026-01-02 03:04:05')", ws, ws, ws)
-		exec(t, db, "INSERT INTO budgets (workspace_id, category_id, limit_cents, created_at, updated_at) VALUES (?, (SELECT MIN(id) FROM categories WHERE workspace_id = ?), 50000, '2026-01-02 03:04:05', '2026-01-02 03:04:05')", ws, ws)
+		exec(t, db, "INSERT INTO accounts (workspace_id, name, kind, created_at, updated_at) VALUES (?, 'Main', 'checking', '2026-01-02T03:04:05.006Z', '2026-01-02T03:04:05.006Z')", ws)
+		exec(t, db, "INSERT INTO transactions (workspace_id, account_id, category_id, kind, amount_cents, description, occurred_on, created_at, updated_at) VALUES (?, (SELECT id FROM accounts WHERE workspace_id = ?), (SELECT MIN(id) FROM categories WHERE workspace_id = ?), 'expense', 1234, 'lunch', '2026-01-02', '2026-01-02T03:04:05.006Z', '2026-01-02T03:04:05.006Z')", ws, ws, ws)
+		exec(t, db, "INSERT INTO budgets (workspace_id, category_id, limit_cents, created_at, updated_at) VALUES (?, (SELECT MIN(id) FROM categories WHERE workspace_id = ?), 50000, '2026-01-02T03:04:05.006Z', '2026-01-02T03:04:05.006Z')", ws, ws)
 	}
 
 	all, err := schema.NewMigrator(db, migrations.All())
