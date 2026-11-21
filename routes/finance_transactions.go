@@ -8,6 +8,7 @@ import (
 
 func financeTransactions(g *router.Group, h *ledger.Handlers) {
 	g.Get("/transactions", h.Transactions).Name("transactions.index")
+	g.Get("/transactions/options", h.TransactionOptions).Name("transactions.options")
 	g.Post("/transactions", h.StoreTransaction).Name("transactions.store")
 	g.Patch("/transactions/{transaction}", h.UpdateTransaction).Name("transactions.update")
 	g.Delete("/transactions/{transaction}", h.DestroyTransaction).Name("transactions.destroy")

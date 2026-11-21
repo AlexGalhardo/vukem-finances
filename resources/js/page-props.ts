@@ -212,6 +212,7 @@ export type TxRow = {
   id: number;
   kind: string;
   occurred_on: string;
+  transferAccountId?: number | null;
   transferAccountName: string;
   transferId?: string | null;
   transfer_uid: NullString;
