@@ -117,7 +117,18 @@ func (s *Service) persistTransaction(
 	if id == 0 {
 		*out = row
 
-		return orm.Create(ctx, tx, out)
+		if err := orm.Create(ctx, tx, out); err != nil {
+			return err
+		}
+
+		saved, err := reload[models.Transaction](ctx, tx, out.ID)
+		if err != nil {
+			return err
+		}
+
+		*out = saved
+
+		return nil
 	}
 
 	if err := updateTransaction(ctx, tx, id, row); err != nil {

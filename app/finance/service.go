@@ -123,19 +123,11 @@ func (s *Service) CreateAccount(ctx context.Context, name, kind, opening string)
 	}
 
 	a := models.Account{Name: strings.TrimSpace(name), Kind: kind, OpeningCents: cents}
-	err = orm.Create(ctx, s.DB, &a)
-
-	return a, err
-}
-
-// DeleteAccount removes an account of the workspace and its transactions.
-func (s *Service) DeleteAccount(ctx context.Context, id int64) error {
-	n, err := workspaces.Scoped[models.Account](ctx, s.DB).Where("id", id).Delete(ctx)
-	if err == nil && n == 0 {
-		return errs.ErrNotFound
+	if err := orm.Create(ctx, s.DB, &a); err != nil {
+		return models.Account{}, err
 	}
 
-	return err
+	return reload[models.Account](ctx, s.DB, a.ID)
 }
 
 // CreateCategory adds a category; names are unique per workspace.
@@ -156,9 +148,17 @@ func (s *Service) CreateCategory(ctx context.Context, name, kind string) (models
 	}
 
 	c := models.Category{Name: name, Kind: kind}
-	err = orm.Create(ctx, s.DB, &c)
+	if err := orm.Create(ctx, s.DB, &c); err != nil {
+		// Two devices that create the same name at once: the partial unique
+		// index on live names settles it, and the loser gets the same answer.
+		if s.DB.UniqueViolation(err) {
+			return models.Category{}, errName
+		}
 
-	return c, err
+		return models.Category{}, err
+	}
+
+	return reload[models.Category](ctx, s.DB, c.ID)
 }
 
 // ---- transactions ----
@@ -271,16 +271,6 @@ func firstErr(err, fallback error) error {
 	return fallback
 }
 
-// DeleteTransaction removes a transaction of the workspace.
-func (s *Service) DeleteTransaction(ctx context.Context, id int64) error {
-	n, err := workspaces.Scoped[models.Transaction](ctx, s.DB).Where("id", id).Delete(ctx)
-	if err == nil && n == 0 {
-		return errs.ErrNotFound
-	}
-
-	return err
-}
-
 // ---- budgets ----
 
 // BudgetStatus is a budget with what the month has spent against it.
@@ -325,14 +315,11 @@ func (s *Service) SetBudget(ctx context.Context, categoryID int64, limit string)
 		return err
 	}
 
-	return orm.Create(ctx, s.DB, &models.Budget{CategoryID: categoryID, LimitCents: cents})
-}
-
-// DeleteBudget removes the budget of a category.
-func (s *Service) DeleteBudget(ctx context.Context, id int64) error {
-	n, err := workspaces.Scoped[models.Budget](ctx, s.DB).Where("id", id).Delete(ctx)
-	if err == nil && n == 0 {
-		return errs.ErrNotFound
+	err = orm.Create(ctx, s.DB, &models.Budget{CategoryID: categoryID, LimitCents: cents})
+	if s.DB.UniqueViolation(err) {
+		// A concurrent writer created the budget first: this one is an edit.
+		_, err = workspaces.Scoped[models.Budget](ctx, s.DB).Where("category_id", categoryID).
+			Update(ctx, orm.Set{"limit_cents": cents})
 	}
 
 	return err
