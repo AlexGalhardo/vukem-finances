@@ -101,6 +101,10 @@ func (v *Vault) Save(ctx context.Context, actor int64, in SaveInput) (models.AIC
 		return cred, errKeyTooLong
 	}
 
+	if err := CheckBaseURL(in.Provider, in.BaseURL, v.AllowPrivate); err != nil {
+		return cred, err
+	}
+
 	err := v.DB.Tx(ctx, func(tx *database.Tx) error {
 		_, err := workspaces.Scoped[models.AICredential](ctx, tx).WhereNull("revoked_at").
 			Update(ctx, orm.Set{"revoked_at": v.clock(), "key_ciphertext": ""})

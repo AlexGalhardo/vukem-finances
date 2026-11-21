@@ -30,8 +30,9 @@ type Request struct {
 	System   string
 	Messages []Message
 	// JSONSchema, when set, asks for structured output.
-	JSONSchema  []byte
-	MaxTokens   int
+	JSONSchema []byte
+	MaxTokens  int
+	// Temperature 0 leaves the provider's default: some models refuse any other value.
 	Temperature float64
 	// Feature names the caller for the usage meter ("categorize", "assistant").
 	Feature string

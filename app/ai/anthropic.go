@@ -79,8 +79,9 @@ func (a *Anthropic) Complete(ctx context.Context, req Request) (Response, error)
 		body.Messages = append(body.Messages, anthropicMessage{Role: m.Role, Content: m.Content})
 	}
 
-	t := req.Temperature
-	body.Temperature = &t
+	if req.Temperature > 0 {
+		body.Temperature = &req.Temperature
+	}
 
 	if len(req.JSONSchema) > 0 {
 		body.OutputConfig = &anthropicOutput{}
