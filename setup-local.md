@@ -74,8 +74,8 @@ instances must share their OAuth state cache (database or Redis).
 Every finance app includes `Dockerfile`, `.dockerignore` and `compose.yaml`.
 The image needs the JavaScript lockfile from `bun install`. Compose publishes the app on 127.0.0.1:3000,
 keeps storage in the `storage` volume, and starts Mailpit at
-`http://localhost:8025`. PostgreSQL is defined for an optional switch; the
-default database is the SQLite file in that storage volume.
+`http://localhost:8025`. The
+database is the SQLite file in that storage volume.
 
 Run these commands in the generated project. Keep the generated `.env` and
 APP_KEY; use a separate ignored `app.env` for runtime configuration:

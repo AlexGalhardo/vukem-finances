@@ -71,9 +71,13 @@ Production sends with Resend: set `MAIL_MAILER=resend`, `MAIL_FROM` (a verified 
 
 The templates are React Email components in `resources/js/emails`. Run `bun run build:emails` after you change one: it writes `resources/emails`, which the app embeds and fills with Go values when it sends.
 
-## PostgreSQL
+## Database
 
-SQLite is the default. For PostgreSQL install the driver and set `DATABASE_URL` as in the [database docs](https://vukem.dev/docs/database/overview). Money is stored as integer cents (`BIGINT`) and each workspace has an ISO 4217 currency, so no amount is ever a float. Dates are `YYYY-MM-DD` text, which sorts and compares the same on both databases.
+SQLite is the database: one file, in WAL mode with a busy timeout, on a persistent volume in Docker. There is no PostgreSQL support and no database container. Money is stored as integer cents (`BIGINT`) and each workspace has an ISO 4217 currency, so no amount is ever a float. Dates are `YYYY-MM-DD` text.
+
+## Docker
+
+`docker compose up -d --build --wait` runs the app and a mail catcher on your computer; `compose.prod.yaml` runs the app behind Caddy with automatic HTTPS on a VPS. Backup, restore, update and the firewall are in [deploy/README.md](deploy/README.md).
 
 ## How it fits together
 
@@ -112,7 +116,8 @@ The six-month income and expense series retains every month's totals, including 
 | `CHANGELOG.md` | [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), generated from the commits by `git cliff --config .config/cliff.toml` |
 | `.githooks/` | a `commit-msg` hook that enforces [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/) and a `pre-commit` hook that scans the staged changes for secrets (when [Betterleaks](https://github.com/betterleaks/betterleaks) is installed), then runs `gofmt` and `go vet` |
 | `.betterleaks.toml` | secret scanning rules (`APP_KEY`, `vk_` API tokens, Stripe keys) on top of Betterleaks' defaults; scan the history with `npm run secrets:scan` |
-| `compose.yaml` | the local stack: the app, PostgreSQL and a mail catcher (`docker compose up --build`) |
+| `compose.yaml` | the local stack: the app on SQLite and a mail catcher (`docker compose up --build`) |
+| `compose.prod.yaml`, `deploy/` | the VPS stack with Caddy, and the [deployment guide](deploy/README.md) |
 
 Releases use [Semantic Versioning](https://semver.org/spec/v2.0.0.html): tag
 them `vMAJOR.MINOR.PATCH` and regenerate the changelog from the commits.
