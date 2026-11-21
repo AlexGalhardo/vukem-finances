@@ -52,11 +52,32 @@ func New(app *vukem.App, ws *workspaces.Service) (*Service, error) {
 	return &Service{DB: ws.DB, WS: ws, Mailer: ws.Mailer, Queue: q, URL: ws.URL, now: app.Now}, nil
 }
 
-// Month is the current "YYYY-MM"; Today the current ISO date.
-func (s *Service) Month() string { return s.now().UTC().Format("2006-01") }
+// Today is the current ISO date where the people of the workspace of ctx
+// live: the clock read in the workspace timezone, UTC when it has none.
+func (s *Service) Today(ctx context.Context) string { return s.localNow(ctx).Format(isoDate) }
 
-// Today is the current ISO date (UTC).
-func (s *Service) Today() string { return s.now().UTC().Format(isoDate) }
+// Month is the current "YYYY-MM" in the timezone of the workspace of ctx.
+func (s *Service) Month(ctx context.Context) string { return s.localNow(ctx).Format("2006-01") }
+
+func (s *Service) localNow(ctx context.Context) time.Time {
+	ws, err := s.WS.Current(ctx)
+	if err != nil {
+		return s.now().UTC()
+	}
+
+	return s.nowIn(ws)
+}
+
+// nowIn is the clock read in the timezone of ws; a name that no longer loads
+// (it was validated on save) falls back to UTC.
+func (s *Service) nowIn(ws models.Workspace) time.Time {
+	loc, err := workspaces.LoadZone(ws.Timezone)
+	if err != nil {
+		loc = time.UTC
+	}
+
+	return s.now().In(loc)
+}
 
 // MonthOf returns the "YYYY-MM" of an ISO date.
 func MonthOf(date string) string { return date[:7] }
