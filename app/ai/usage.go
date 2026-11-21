@@ -23,6 +23,11 @@ const (
 	UsageReserved = "reserved"
 	UsageOK       = "ok"
 	UsageFailed   = "failed"
+	// UsageAborted is a call whose outcome is unknown (canceled or cut off after
+	// it may have been sent): the provider may have billed it, so it stays counted.
+	UsageAborted = "aborted"
+
+	closeTimeout = 5 * time.Second
 )
 
 // CallsPerMinute is the per-workspace rate limit.
@@ -120,14 +125,15 @@ func (c *Client) Call(ctx context.Context, workspace int64, req Request) (Respon
 		return Response{}, err
 	}
 
-	// A client that disconnects cancels ctx: the reservation must still close,
-	// or it would count against the monthly limit forever.
-	closing := context.WithoutCancel(ctx)
-
 	resp, err := c.run(ctx, cred, req)
+
+	// A client that disconnects cancels ctx, and the row must still close.
+	closing, release := context.WithTimeout(context.WithoutCancel(ctx), closeTimeout)
+	defer release()
+
 	if err != nil {
-		c.finish(closing, id, UsageFailed, Response{})
-		c.logFailure(ctx, cred.Provider, req.Feature, err)
+		c.finish(closing, id, failureStatus(ctx, err), resp)
+		c.logFailure(closing, cred.Provider, req.Feature, err)
 
 		return Response{}, publicError(err)
 	}
@@ -254,9 +260,9 @@ func (c *Client) reserve(
 	res, err := c.DB.ExecContext(ctx, `INSERT INTO ai_usage
 		(workspace_id, month, feature, provider, model, input_tokens, output_tokens, status, created_at, updated_at)
 		SELECT ?, ?, ?, ?, ?, 0, 0, ?, ?, ?
-		WHERE (SELECT COUNT(*) FROM ai_usage WHERE workspace_id = ? AND month = ? AND status IN (?, ?)) < ?`,
+		WHERE (SELECT COUNT(*) FROM ai_usage WHERE workspace_id = ? AND month = ? AND status IN (?, ?, ?)) < ?`,
 		workspace, month, feature, cred.Provider, cred.DefaultModel, UsageReserved, now, now,
-		workspace, month, UsageReserved, UsageOK, limit)
+		workspace, month, UsageReserved, UsageOK, UsageAborted, limit)
 	if err != nil {
 		return 0, err
 	}
@@ -276,6 +282,26 @@ func (c *Client) reserve(
 	}
 
 	return id, nil
+}
+
+// failureStatus gives a call back to the monthly limit only when the provider
+// certainly did no billable work: a 2xx it answered, or a call that may have
+// reached it, stays counted.
+func failureStatus(ctx context.Context, err error) string {
+	if pe, ok := errors.AsType[*ProviderError](err); ok {
+		switch {
+		case pe.Status >= 200 && pe.Status < 300:
+			return UsageOK
+		case pe.Type == "transport":
+			return UsageAborted
+		}
+	}
+
+	if ctx.Err() != nil {
+		return UsageAborted
+	}
+
+	return UsageFailed
 }
 
 func (c *Client) finish(ctx context.Context, id int64, status string, resp Response) {
@@ -361,7 +387,7 @@ func (c *Client) Usage(ctx context.Context) (MonthUsage, error) {
 	}
 
 	rows, err := workspaces.Scoped[models.AIUsage](ctx, c.DB).Where("month", month).
-		WhereIn("status", UsageReserved, UsageOK).Get(ctx)
+		WhereIn("status", UsageReserved, UsageOK, UsageAborted).Get(ctx)
 	if err != nil {
 		return MonthUsage{}, err
 	}

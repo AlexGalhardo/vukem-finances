@@ -99,8 +99,14 @@ func (a *Anthropic) Complete(ctx context.Context, req Request) (Response, error)
 		return Response{}, err
 	}
 
+	resp := Response{
+		InputTokens: out.Usage.InputTokens, OutputTokens: out.Usage.OutputTokens,
+		Model: out.Model, Provider: KindAnthropic,
+	}
+
+	// The provider billed these: the usage goes back with the error, the text does not.
 	if out.StopReason == "refusal" || out.StopReason == stopMaxTokens {
-		return Response{}, &ProviderError{Status: http.StatusOK, Type: out.StopReason, Class: ErrBadRequest}
+		return resp, &ProviderError{Status: http.StatusOK, Type: out.StopReason, Class: ErrBadRequest}
 	}
 
 	var text strings.Builder
@@ -111,10 +117,9 @@ func (a *Anthropic) Complete(ctx context.Context, req Request) (Response, error)
 		}
 	}
 
-	return Response{
-		Text: text.String(), InputTokens: out.Usage.InputTokens, OutputTokens: out.Usage.OutputTokens,
-		Model: out.Model, Provider: KindAnthropic,
-	}, nil
+	resp.Text = text.String()
+
+	return resp, nil
 }
 
 // Check implements Provider with a one-turn, 16-token request. Hitting those

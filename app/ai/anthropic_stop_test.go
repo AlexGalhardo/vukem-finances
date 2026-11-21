@@ -104,12 +104,39 @@ func TestCanceledCallReleasesItsReservation(t *testing.T) {
 		t.Fatal("the canceled call must fail")
 	}
 
-	open, err := orm.QueryOf[models.AIUsage](mustDB(t, r.site)).Where("status", ai.UsageReserved).Exists(r.ctx)
+	row, err := orm.QueryOf[models.AIUsage](mustDB(t, r.site)).First(r.ctx)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	if open {
-		t.Error("a canceled call left a reservation that counts against the monthly limit")
+	if row.Status != ai.UsageAborted {
+		t.Errorf("status = %q, want %q: the provider may have billed a canceled call", row.Status, ai.UsageAborted)
+	}
+
+	usage, err := r.client.Usage(r.ctx)
+	if err != nil || usage.Calls != 1 {
+		t.Errorf("counted calls = %d, %v, want 1", usage.Calls, err)
+	}
+}
+
+func TestBilledRefusalStaysCounted(t *testing.T) {
+	t.Parallel()
+
+	r := newRig(t)
+	saveTestKey(t, r.client.Vault, r.site)
+	r.enable(t, 5)
+
+	r.provider.Reply = func(ai.Request) (ai.Response, error) {
+		return ai.Response{InputTokens: 7, OutputTokens: 3, Model: "m"},
+			&ai.ProviderError{Status: http.StatusOK, Type: "refusal", Class: ai.ErrBadRequest}
+	}
+
+	if err := r.call(); !errors.Is(err, ai.ErrBadRequest) {
+		t.Fatalf("err = %v", err)
+	}
+
+	usage, err := r.client.Usage(r.ctx)
+	if err != nil || usage.Calls != 1 || usage.InputTokens != 7 || usage.OutputTokens != 3 {
+		t.Errorf("usage = %+v, %v, want one call with its real tokens", usage, err)
 	}
 }
