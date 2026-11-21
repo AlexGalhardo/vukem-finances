@@ -19,9 +19,9 @@ Each synced row has `version` (int64, starts at 1, plus 1 on every change, inclu
 Synced models embed `orm.SoftDeletes` (`deleted_at`). A delete sets `deleted_at`; nothing is removed physically by a request.
 
 - Deleting an account soft-deletes its transactions in the same database transaction, each one logged.
-- Deleting a category leaves transactions in place with their category reference, which reads as uncategorized once the category is deleted; its budget is soft-deleted with it.
+- Deleting a category soft-deletes its budget and clears the category of its transactions (each change is logged), so they read as uncategorized.
 - A deleted row disappears from every read, total, budget, report and export. The only readers of deleted rows are `Restore` and the sync reader.
-- Restore (`deleted_at` back to null) is allowed for 30 days after the delete.
+- Restore (`deleted_at` back to null) is allowed for 30 days after the delete. Restoring an account also restores the transactions deleted together with it (the same `deleted_at`); restoring a category restores its budget the same way but not the cleared transaction categories. A transaction needs a live account and a budget a live category, otherwise the restore is refused; a restore over a live row with the same name is a conflict.
 - A row is purged physically only by compaction, after the retention window.
 - Unique indexes are partial: `categories (workspace_id, name) WHERE deleted_at IS NULL` and `budgets (workspace_id, category_id) WHERE deleted_at IS NULL`, so a deleted name can be reused, and two devices that create the same name offline get a clear `duplicate_name` conflict instead of a database error.
 
