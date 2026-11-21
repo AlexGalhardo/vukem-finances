@@ -258,8 +258,21 @@ func (s *Service) RestoreTransaction(ctx context.Context, id int64) (models.Tran
 			return restoreTransfer(ctx, tx, t)
 		}
 
-		_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("id", id).
-			Update(ctx, orm.Set{"deleted_at": nil})
+		set := orm.Set{"deleted_at": nil}
+
+		// Its category may have been deleted while it was in the trash.
+		if t.CategoryID.Valid {
+			live, err := workspaces.Scoped[models.Category](ctx, tx).Where("id", t.CategoryID.V).Exists(ctx)
+			if err != nil {
+				return err
+			}
+
+			if !live {
+				set["category_id"] = nil
+			}
+		}
+
+		_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("id", id).Update(ctx, set)
 
 		return err
 	})
