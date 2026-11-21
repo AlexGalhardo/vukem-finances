@@ -1,9 +1,10 @@
 import { type FormEvent, useRef, useState } from "react";
 import { useFinanceI18n } from "../../lib/i18n";
+import { installmentDates, previewCents, splitInstallments } from "../../lib/recurrence";
 import AmountInput from "../AmountInput";
 import { Button } from "../ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "../ui/dialog";
-import { Field, FieldError, FieldGroup, FieldLabel } from "../ui/field";
+import { Field, FieldDescription, FieldError, FieldGroup, FieldLabel } from "../ui/field";
 import { Input } from "../ui/input";
 import {
   categoriesFor,
@@ -89,7 +90,9 @@ function TransactionForm({
   onCancel: () => void;
   onSaved: () => void;
 }) {
-  const { t } = useFinanceI18n();
+  const { t, money, date: formatDate } = useFinanceI18n();
+  const [split, setSplit] = useState(false);
+  const [parts, setParts] = useState("3");
   const [draft, setDraft] = useState<TransactionDraft>(() => emptyTransactionDraft(kind, options));
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState("");
@@ -104,7 +107,23 @@ function TransactionForm({
     setBusy(true);
     setMessage("");
     setFields({});
-    const result = await sendJSON("/transactions", "POST", draft, t("quickAddSaveError"));
+    const installments = split && draft.kind === "expense";
+    const result = installments
+      ? await sendJSON(
+          "/installments",
+          "POST",
+          {
+            accountId: draft.accountId,
+            categoryId: draft.categoryId,
+            total: draft.amount,
+            parts,
+            firstDate: draft.date,
+            description: draft.description,
+            tags: draft.tags,
+          },
+          t("quickAddSaveError"),
+        )
+      : await sendJSON("/transactions", "POST", draft, t("quickAddSaveError"));
     setBusy(false);
     if (result.ok) {
       onSaved();
@@ -178,6 +197,40 @@ function TransactionForm({
           />
           <FieldError>{fields.description}</FieldError>
         </Field>
+        {draft.kind === "expense" && (
+          <>
+            <label className="flex items-center gap-2 text-sm">
+              <input type="checkbox" checked={split} onChange={(event) => setSplit(event.target.checked)} />
+              {t("installmentsToggle")}
+            </label>
+            {split && (
+              <Field data-invalid={!!fields.parts}>
+                <FieldLabel htmlFor="quick-parts">{t("installmentsParts")}</FieldLabel>
+                <Input
+                  id="quick-parts"
+                  name="parts"
+                  inputMode="numeric"
+                  maxLength={2}
+                  value={parts}
+                  aria-invalid={!!fields.parts}
+                  onChange={(event) => setParts(event.target.value)}
+                />
+                <FieldDescription>{t("installmentsHelp")}</FieldDescription>
+                <FieldError>{fields.parts}</FieldError>
+                <InstallmentPreview
+                  total={draft.amount}
+                  parts={parts}
+                  first={draft.date}
+                  currency={options.currency}
+                  money={money}
+                  formatDate={formatDate}
+                  title={t("installmentsPreview")}
+                  label={t("installmentLabel")}
+                />
+              </Field>
+            )}
+          </>
+        )}
         <TagsField
           tags={draft.tags}
           onChange={(tags) => set("tags", tags)}
@@ -190,9 +243,50 @@ function TransactionForm({
           {t("cancel")}
         </Button>
         <Button type="submit" disabled={busy}>
-          {t(busy ? "working" : "add")}
+          {t(busy ? "working" : split && draft.kind === "expense" ? "installmentsAdd" : "add")}
         </Button>
       </DialogFooter>
     </form>
+  );
+}
+
+/** The parts the server will make, worked out with the same integer rules (docs/specs/recurrence.md). */
+function InstallmentPreview({
+  total,
+  parts,
+  first,
+  currency,
+  money,
+  formatDate,
+  title,
+  label,
+}: {
+  total: string;
+  parts: string;
+  first: string;
+  currency: string;
+  money: (cents: number, currency: string) => string;
+  formatDate: (date: string) => string;
+  title: string;
+  label: string;
+}) {
+  const cents = previewCents(total);
+  const count = Number(parts);
+  if (cents === null || !Number.isInteger(count) || count < 2 || count > 60 || cents < count) return null;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(first)) return null;
+  const amounts = splitInstallments(cents, count);
+  const dates = installmentDates(first, count);
+  return (
+    <div aria-live="polite" className="text-sm">
+      <p className="font-medium">{title}</p>
+      <ol className="max-h-32 overflow-y-auto text-muted-foreground">
+        {amounts.map((amount, i) => (
+          <li key={dates[i]}>
+            {label.replace("{no}", String(i + 1)).replace("{total}", String(count))}: {formatDate(dates[i] as string)} ·{" "}
+            {money(amount, currency)}
+          </li>
+        ))}
+      </ol>
+    </div>
   );
 }

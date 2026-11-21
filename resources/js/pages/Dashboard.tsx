@@ -1,6 +1,7 @@
 import { Head, Link } from "@inertiajs/react";
 import PageHeader from "../components/PageHeader";
 import { ArrowDownLeft, ArrowUpRight, Wallet, Plus, PiggyBank } from "lucide-react";
+import UpcomingList from "../components/recurrences/UpcomingList";
 import BarChart from "../components/charts/BarChart";
 import DonutChart from "../components/charts/DonutChart";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "../components/ui/card";
@@ -8,7 +9,7 @@ import { Button } from "../components/ui/button";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle } from "../components/ui/empty";
 import { useFinanceI18n } from "../lib/i18n";
 import type { Page } from "../page-props";
-export default function Dashboard({ dashboard }: Page<"Dashboard">) {
+export default function Dashboard({ dashboard, upcoming }: Page<"Dashboard">) {
   const { t, money, month: monthText } = useFinanceI18n();
   const { currency, month, balanceCents, months, categories, budgets } = dashboard;
   const current = months[months.length - 1];
@@ -67,6 +68,18 @@ export default function Dashboard({ dashboard }: Page<"Dashboard">) {
           </CardContent>
         </Card>
       </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("upcoming")}</CardTitle>
+          <CardDescription>{t("upcomingDescription")}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-3">
+          <UpcomingList items={upcoming} currency={currency} />
+          <Link href="/recurrences" className="text-sm text-primary hover:underline">
+            {t("upcomingAll")}
+          </Link>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle>{t("budgets")}</CardTitle>
