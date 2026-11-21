@@ -17,6 +17,18 @@
 	--vf-expense: #b3261e;
 	--vf-focus: #1c7448;
 
+	/* Category and tag colors: 3:1 against every surface, for the swatch (never the only signal). */
+	--vf-cat-slate: #566574;
+	--vf-cat-blue: #2563b8;
+	--vf-cat-teal: #0b7a75;
+	--vf-cat-green: #1f7a3d;
+	--vf-cat-olive: #6b7a12;
+	--vf-cat-amber: #9a6200;
+	--vf-cat-orange: #b3541a;
+	--vf-cat-red: #c03030;
+	--vf-cat-pink: #b83280;
+	--vf-cat-violet: #7a4fc4;
+
 	--vf-radius: 0.625rem;
 	--vf-space-1: 0.25rem;
 	--vf-space-2: 0.5rem;
@@ -50,6 +62,17 @@
 	--vf-income: #6fdc9f;
 	--vf-expense: #ff8f86;
 	--vf-focus: #7fe3ae;
+
+	--vf-cat-slate: #9aabb8;
+	--vf-cat-blue: #7ab0ff;
+	--vf-cat-teal: #4fd1c5;
+	--vf-cat-green: #6fdc9f;
+	--vf-cat-olive: #bfd35a;
+	--vf-cat-amber: #f0b94a;
+	--vf-cat-orange: #ff9d5c;
+	--vf-cat-red: #ff8f86;
+	--vf-cat-pink: #ff8ccf;
+	--vf-cat-violet: #b79cff;
 }
 
 /* The shadcn-style primitives read these names; they now come from the tokens. */

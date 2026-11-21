@@ -70,11 +70,15 @@ export type BudgetStatus = {
 };
 
 export type Category = {
+  archived_at: string | null;
+  color: string;
   created_at: string;
   deleted_at?: string | null;
+  icon: string;
   id: number;
   kind: string;
   name: string;
+  parent_id: NullInt64;
   uid: string;
   updated_at: string;
   version: number;
@@ -103,12 +107,20 @@ export type FeatureUse = {
   provider: string;
 };
 
-export type Import = {
+export type ImportFailure = {
+  line: number;
+  reason: string;
+};
+
+export type ImportView = {
   account_id: number;
   created_at: string;
+  duplicates: number;
   error: string;
   failed: number;
+  failures: ImportFailure[];
   filename: string;
+  format: string;
   id: number;
   imported: number;
   status: string;
@@ -134,6 +146,18 @@ export type Limits = {
   members: number;
   plan: string;
   transactionsPerMonth: number;
+};
+
+export type MappedPreview = {
+  allowDuplicates: boolean;
+  duplicates: number;
+  failed: number;
+  failures: ImportFailure[];
+  from: string;
+  new: number;
+  read: number;
+  rows: PreviewRow[];
+  to: string;
 };
 
 export type Member = {
@@ -185,9 +209,21 @@ export type PixOption = {
 
 export type Preview = {
   filename: string;
+  format: string;
   headers: string[];
   importId: number;
+  mapped?: MappedPreview | null;
   rows: string[][];
+};
+
+export type PreviewRow = {
+  category: string;
+  cents: number;
+  date: string;
+  description: string;
+  duplicate: boolean;
+  line: number;
+  problem: string;
 };
 
 export type Settings = {
@@ -217,11 +253,34 @@ export type SharedWorkspace = {
   role: string;
 };
 
+export type Tag = {
+  color: string;
+  created_at: string;
+  deleted_at?: string | null;
+  id: number;
+  name: string;
+  uid: string;
+  updated_at: string;
+  version: number;
+  workspace_id: number;
+};
+
+export type TagRef = {
+  color: string;
+  id: number;
+  name: string;
+  uid: string;
+};
+
 export type TxFilters = {
   accountId: string;
   categoryId: string;
   from: string;
   kind: string;
+  max: string;
+  min: string;
+  q: string;
+  tagId: string;
   to: string;
 };
 
@@ -238,6 +297,8 @@ export type TxRow = {
   id: number;
   kind: string;
   occurred_on: string;
+  tag_uids: string;
+  tags: TagRef[];
   transferAccountId?: number | null;
   transferAccountName: string;
   transferId?: string | null;
@@ -346,6 +407,10 @@ export type BudgetsProps = {
 
 export type CategoriesProps = {
   categories: Category[];
+  colors: string[];
+  icons: string[];
+  maxTags: number;
+  tags: Tag[];
 };
 
 export type DashboardProps = {
@@ -358,7 +423,7 @@ export type ImportProps = {
   accounts: Account[];
   dateFormats: string[];
   enabled: boolean;
-  imports: Import[];
+  imports: ImportView[];
   preview?: Preview | null;
 };
 
@@ -389,7 +454,11 @@ export type TransactionsProps = {
   accounts: Account[];
   categories: Category[];
   filters: TxFilters;
+  page: number;
+  pageSize: number;
+  tags: Tag[];
   today: string;
+  total: number;
   transactions: TxRow[];
 };
 

@@ -14,6 +14,7 @@ import {
   type TransactionDraft,
 } from "./entryForm";
 import PickerField from "./PickerField";
+import TagsField from "./TagsField";
 
 export interface TransactionDialogProps {
   open: boolean;
@@ -177,6 +178,12 @@ function TransactionForm({
           />
           <FieldError>{fields.description}</FieldError>
         </Field>
+        <TagsField
+          tags={draft.tags}
+          onChange={(tags) => set("tags", tags)}
+          suggestions={options.tags}
+          error={fields.tags}
+        />
       </FieldGroup>
       <DialogFooter>
         <Button type="button" variant="outline" onClick={onCancel}>

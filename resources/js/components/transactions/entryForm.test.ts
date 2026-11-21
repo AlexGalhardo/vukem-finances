@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import {
+  addTag,
   categoriesFor,
   centsToInput,
   emptyTransactionDraft,
@@ -21,6 +22,7 @@ const options: QuickAddOptions = {
   ],
   today: "2026-11-21",
   currency: "USD",
+  tags: ["Trip"],
 };
 
 describe("drafts", () => {
@@ -32,6 +34,7 @@ describe("drafts", () => {
       categoryId: "",
       description: "",
       date: "2026-11-21",
+      tags: [],
     });
   });
 
@@ -135,5 +138,21 @@ describe("sendJSON", () => {
         expect(result).toEqual({ ok: false, message: "fallback", fields: {} });
       },
     );
+  });
+});
+
+describe("addTag", () => {
+  test("trims, keeps the typed case and ignores an empty name", () => {
+    expect(addTag([], "  Trip ")).toEqual(["Trip"]);
+    expect(addTag(["Trip"], "   ")).toEqual(["Trip"]);
+  });
+
+  test("a name that is there in another letter case is not added twice", () => {
+    expect(addTag(["Trip"], "trip")).toEqual(["Trip"]);
+  });
+
+  test("stops at ten tags", () => {
+    const ten = Array.from({ length: 10 }, (_, i) => `t${i}`);
+    expect(addTag(ten, "one more")).toEqual(ten);
   });
 });

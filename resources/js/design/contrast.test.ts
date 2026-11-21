@@ -34,7 +34,10 @@ export function contrast(a: string, b: string): number {
 
 const surfaces = ["vf-bg", "vf-surface", "vf-surface-muted"] as const;
 const textOnSurface = ["vf-text", "vf-text-muted", "vf-brand", "vf-income", "vf-expense"] as const;
-const nonText = ["vf-control-border", "vf-focus"] as const;
+const categoryColors = ["slate", "blue", "teal", "green", "olive", "amber", "orange", "red", "pink", "violet"].map(
+  (name) => `vf-cat-${name}`,
+);
+const nonText = ["vf-control-border", "vf-focus", ...categoryColors] as const;
 
 describe("contrast", () => {
   test("the helper matches known values", () => {
