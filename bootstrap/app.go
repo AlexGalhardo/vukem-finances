@@ -7,10 +7,12 @@ import (
 
 	vukem "github.com/AlexGalhardo/vukem"
 	"github.com/AlexGalhardo/vukem/inertia"
+	"github.com/AlexGalhardo/vukem/router"
 
 	"github.com/AlexGalhardo/vukem-finances/app/jobs"
 	"github.com/AlexGalhardo/vukem-finances/app/listeners"
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
+	"github.com/AlexGalhardo/vukem-finances/config"
 	"github.com/AlexGalhardo/vukem-finances/database/migrations"
 	"github.com/AlexGalhardo/vukem-finances/database/seeders"
 	"github.com/AlexGalhardo/vukem-finances/resources"
@@ -35,6 +37,10 @@ func New(opts ...vukem.Option) (*vukem.App, error) {
 		vukem.WithInertia(inertia.Config{Pages: pages.All(), SharedType: reflect.TypeFor[pages.Shared]()}),
 	}
 
+	// First, before any route reads the edition: a typo in APP_EDITION must
+	// stop every command and the server, not boot the wrong edition.
+	base = append(base, vukem.WithRoutes(checkEdition))
+
 	for _, fn := range routes.All() {
 		base = append(base, vukem.WithRoutes(fn))
 	}
@@ -47,4 +53,10 @@ func New(opts ...vukem.Option) (*vukem.App, error) {
 	app.AddCommand(Commands()...)
 
 	return app, nil
+}
+
+func checkEdition(_ *router.Router, app *vukem.App) error {
+	_, err := config.LoadEdition(app.Source)
+
+	return err
 }
