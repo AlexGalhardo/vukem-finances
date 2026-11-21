@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/AlexGalhardo/vukem"
@@ -24,6 +25,7 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
+	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
 // Finance registers the personal finance app: the dashboard, transactions,
@@ -95,10 +97,24 @@ func Finance(r *router.Router, app *vukem.App) error {
 
 	r.Post("/invites/{token}", h.AcceptInvite).Name("invites.accept").Use(required, verified).SecretParams("token")
 
+	// RATE_LIMIT_STORE=cache shares the limits between servers.
+	limiters, err := app.RateLimiters()
+	if err != nil {
+		return err
+	}
+
+	user := ratelimit.ByUser("web")
+	reads := ratelimit.Middleware(limiters("workspace.read", config.ReadLimit, config.ReadWindow), onMethods(user, true))
+	writes := ratelimit.Middleware(limiters("workspace.write", config.WriteLimit, config.WriteWindow), onMethods(user, false))
+	imports := ratelimit.Middleware(limiters("workspace.import", config.ImportLimit, config.ImportWindow), byWorkspace)
+	invites := ratelimit.Middleware(limiters("workspace.invite", config.InviteLimit, config.InviteWindow), byWorkspace)
+
 	// Everything else lives in a workspace: the tenant middleware picks the
 	// current one from the session and answers 404 for one the user is not in.
+	// The limits come after it: they need the signed-in user and the workspace.
 	r.Group("", func(g *router.Group) {
-		g.Use(required, verified, ws.Middleware(), ws.Require(workspaces.AbilityRead), shareWorkspace(ws, acc, admins))
+		g.Use(required, verified, ws.Middleware(), ws.Require(workspaces.AbilityRead), reads, writes,
+			shareWorkspace(ws, acc, admins))
 
 		g.Get("/dashboard", h.Dashboard).Name("dashboard")
 		g.Get("/transactions", h.Transactions).Name("transactions.index")
@@ -114,8 +130,8 @@ func Finance(r *router.Router, app *vukem.App) error {
 		g.Post("/budgets", h.StoreBudget).Name("budgets.store")
 		g.Delete("/budgets/{budget}", h.DestroyBudget).Name("budgets.destroy")
 		g.Get("/import", h.Import).Name("import.index")
-		g.Post("/import", h.UploadImport).Name("import.upload")
-		g.Post("/import/{import}", h.ConfirmImport).Name("import.confirm")
+		g.Post("/import", h.UploadImport).Name("import.upload").Use(imports)
+		g.Post("/import/{import}", h.ConfirmImport).Name("import.confirm").Use(imports)
 		g.Get("/workspace", h.Workspace).Name("workspace.show")
 		g.Put("/workspace", h.UpdateWorkspace).Name("workspace.update")
 
@@ -125,7 +141,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 			g.Post("/workspaces/{workspace}/switch", h.SwitchWorkspace).Name("workspaces.switch")
 		}
 
-		g.Post("/workspace/invites", h.Invite).Name("workspace.invite")
+		g.Post("/workspace/invites", h.Invite).Name("workspace.invite").Use(invites)
 		g.Delete("/workspace/members/{user}", h.RemoveMember).Name("workspace.members.destroy")
 		g.Patch("/workspace/members/{user}", h.ChangeRole).Name("workspace.members.role")
 		g.Post("/workspace/owner", h.TransferOwnership).Name("workspace.transfer")
@@ -148,6 +164,29 @@ func Finance(r *router.Router, app *vukem.App) error {
 	}
 
 	return nil
+}
+
+// onMethods applies key to reads (GET, HEAD) when reads is true, else to
+// every other method; the other requests pass this limiter.
+func onMethods(key ratelimit.KeyFunc, reads bool) ratelimit.KeyFunc {
+	return func(r *http.Request) string {
+		if (r.Method == http.MethodGet || r.Method == http.MethodHead) != reads {
+			return ""
+		}
+
+		return key(r)
+	}
+}
+
+// byWorkspace keys a limit by the workspace of the request, so the members of
+// one workspace share it; the tenant middleware has already put it there.
+func byWorkspace(r *http.Request) string {
+	id, ok := workspaces.TenantID(r.Context())
+	if !ok {
+		return ratelimit.ByIP(r)
+	}
+
+	return "workspace:" + strconv.FormatInt(id, 10)
 }
 
 func onlyAdmins(admins admin.Admins) func(http.Handler) http.Handler {
