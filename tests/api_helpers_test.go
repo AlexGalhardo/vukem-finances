@@ -6,6 +6,8 @@ import (
 	"testing"
 
 	"github.com/AlexGalhardo/vukem/vukemtest"
+
+	"github.com/AlexGalhardo/vukem-finances/app/api"
 )
 
 // makeToken creates an API token through the Tokens page, as a person would,
@@ -31,4 +33,33 @@ func apiClient(t *testing.T, app *vukemtest.App, token string) *vukemtest.Client
 	t.Helper()
 
 	return app.Client(t).WithToken(token)
+}
+
+// allScopes is every scope of the API.
+func allScopes() []string {
+	var out []string
+	for _, s := range api.Scopes() {
+		out = append(out, s.Name)
+	}
+
+	return out
+}
+
+// fullToken makes a token with every scope.
+func fullToken(t *testing.T, app *vukemtest.App, w who) string {
+	t.Helper()
+
+	return makeToken(t, app, w, 90, allScopes()...)
+}
+
+// uidOf reads the uid of a JSON answer.
+func uidOf(t *testing.T, res *vukemtest.Response, path string) string {
+	t.Helper()
+
+	v, ok := res.JSONPath(path)
+	if !ok {
+		t.Fatalf("no %s in %s", path, res.Body())
+	}
+
+	return v.(string)
 }
