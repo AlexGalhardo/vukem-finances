@@ -64,7 +64,7 @@ test("a tag typed in the new expense dialog is created, shown, and filters the l
   await expect(page).toHaveURL(/tag=\d+/);
   await expect(page.getByRole("row").filter({ hasText: note })).toBeVisible();
 
-  await page.goto(`/transactions?q=${encodeURIComponent(note.slice(0, 6) + "%")}`);
+  await page.goto(`/transactions?q=${encodeURIComponent(`${note.slice(0, 6)}%`)}`);
   await expect(page.getByRole("row").filter({ hasText: note })).toHaveCount(0);
   await page.goto(`/transactions?q=${encodeURIComponent(note.toUpperCase())}`);
   await expect(page.getByRole("row").filter({ hasText: note })).toBeVisible();
