@@ -4,14 +4,18 @@
 # Print the section for the next release and paste it under the header of
 # CHANGELOG.md, replacing "[Unreleased]":
 #
-#   git cliff --config .config/cliff.toml --unreleased --tag vX.Y.Z --strip header
+#   git cliff --config .config/cliff.toml --offline --unreleased --tag vX.Y.Z --strip header
+#
+# Always pass --offline. With [remote.github] set, git-cliff otherwise calls
+# the GitHub API for every run (and panics on an empty repository or without
+# network); the template builds the commit links itself and needs none of it.
 #
 # CHANGELOG.md stays hand-editable that way, which Keep a Changelog expects:
 # entries that no commit message explains still belong in it. `--output
 # CHANGELOG.md` rewrites the whole file instead, and loses them.
 #
-# Add a [remote.github] section with your owner and repo to turn the commit
-# hashes into links: https://git-cliff.org/docs/configuration/remote
+# The [remote.github] section below names the repository; every entry links
+# its commit to https://github.com/AlexGalhardo/vukem-finances/commit/<id>.
 
 [changelog]
 header = """
@@ -33,12 +37,16 @@ body = """
 ### {{ group | striptags | trim }}
 
 {% for commit in commits %}\
-- {% if commit.breaking %}**BREAKING:** {% endif %}{% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }} (`{{ commit.id | truncate(length=7, end="") }}`)
+- {% if commit.breaking %}**BREAKING:** {% endif %}{% if commit.scope %}**{{ commit.scope }}:** {% endif %}{{ commit.message | upper_first }} ([`{{ commit.id | truncate(length=7, end="") }}`](https://github.com/{{ remote.github.owner }}/{{ remote.github.repo }}/commit/{{ commit.id }}))
 {% endfor %}\
 {% endfor %}
 """
 footer = ""
 trim = true
+
+[remote.github]
+owner = "AlexGalhardo"
+repo = "vukem-finances"
 
 [git]
 conventional_commits = true
