@@ -31,7 +31,8 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `config/`, `bootstrap/` | configuration and application start-up |
 | `.agents/rules/` | the rules of the team: read them before editing |
 | `.github/` | CI workflows and `scopes.txt`, the list of commit scopes |
-| `scripts/` | the release train script |
+| `scripts/` | the release train script and the Docker smoke tests (`docker-persist-test.sh`, `docker-clientip-test.sh`; they need Docker and are not part of `go test`) |
+| `Dockerfile`, `compose.yaml`, `compose.prod.yaml`, `deploy/` | the image, the local stack, the VPS stack with Caddy and the [deployment guide](deploy/README.md) |
 
 ## Commands
 
@@ -55,3 +56,13 @@ Install the JavaScript dependencies with `bun install --frozen-lockfile`. Run ev
 - Branches and releases follow `.agents/rules/git-and-branches.md`: never commit to `main`, never push, never edit `CHANGELOG.md` by hand.
 - Everything in the repository is in English.
 - Never commit secrets. `.env` is ignored; `.env.example` holds placeholders only.
+
+## Docker and deployment
+
+- The database is SQLite only, one file in WAL mode (`/app/storage/database.sqlite` in the `storage` volume), and the app is one replica. There is no PostgreSQL and no database container; do not add one.
+- The reverse proxy and static server is Caddy, never nginx. Every `image:` and `FROM` carries an exact version tag and a digest, never `latest`. The Caddy image is pinned in `compose.prod.yaml`.
+- `compose.yaml` is the local stack (app on `127.0.0.1:3000`, Mailpit, edition `personal` unless `APP_EDITION` says otherwise). `compose.prod.yaml` is the VPS stack: no published port on `app`, `TRUSTED_PROXIES` set to the compose subnet so rate limits see the real client address.
+- The version is `config.Version`, set by the Dockerfile `ARG VERSION`; the `about` command (`bootstrap/about.go`) shows it and `/up` must not.
+- Backup and restore use the framework's `db:backup`; never copy the live file. `user:reset-password -email <address>` recovers a locked-out owner from the server console.
+- `.github/workflows/image.yml` publishes to GHCR and Docker Hub when a release is published; it needs the secrets `DOCKERHUB_USERNAME` and `DOCKERHUB_TOKEN`.
+- On Windows with Git Bash, prefix `docker ... exec` commands that carry `/app/...` paths with `MSYS_NO_PATHCONV=1`.
