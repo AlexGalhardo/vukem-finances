@@ -37,6 +37,11 @@ type Transaction struct {
 	// synced image of the transaction_tags rows, written with them.
 	TagUIDs string `db:"tag_uids" json:"tag_uids"`
 
+	// StatementRef is the closing date (ISO) of the card statement the row
+	// belongs to: set on a purchase made on a credit card account and on the
+	// card leg of a statement payment, null everywhere else.
+	StatementRef sql.Null[string] `json:"statement_ref"`
+
 	// ImportHash is the duplicate key of an imported row; server only.
 	ImportHash sql.Null[string] `json:"-"`
 }
