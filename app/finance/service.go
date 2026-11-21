@@ -141,6 +141,12 @@ type TxInput struct {
 	// UID is the id a client chose for a new transaction (a ULID, checked by
 	// the caller); empty makes the service generate one. Ignored on an edit.
 	UID string
+
+	// Set only by the service (a generated occurrence, an installment part):
+	// unexported, so no request can claim a recurrence or a group.
+	recurrenceUID string
+	occurrenceOn  string
+	installment   installmentMark
 }
 
 // TxRow is a transaction with the names the list shows.

@@ -52,6 +52,17 @@ func transactionInput(ctx context.Context, ex database.Executor, in TxInput, kee
 		return models.Transaction{}, err
 	}
 	out.StatementRef = ref
+
+	if in.recurrenceUID != "" {
+		out.RecurrenceUID = sql.Null[string]{V: in.recurrenceUID, Valid: true}
+		out.OccurrenceOn = sql.Null[string]{V: in.occurrenceOn, Valid: true}
+	}
+
+	if in.installment.group != "" {
+		out.InstallmentGroupUID = sql.Null[string]{V: in.installment.group, Valid: true}
+		out.InstallmentNo = sql.Null[int64]{V: int64(in.installment.no), Valid: true}
+		out.InstallmentTotal = sql.Null[int64]{V: int64(in.installment.total), Valid: true}
+	}
 	if in.CategoryID > 0 {
 		q := workspaces.Scoped[models.Category](ctx, ex).
 			Where("id", in.CategoryID).
