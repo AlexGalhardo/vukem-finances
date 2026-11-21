@@ -15,6 +15,11 @@ import (
 // on the workspace they are looking at: any role may call them.
 var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leave"}
 
+// ownerOnlyReads are GET routes that are not open to a viewer: polling a PIX
+// payment re-reads it at the provider and can activate it, so it is billing
+// management, which only the owner does.
+var ownerOnlyReads = []string{"billing.pix.show"}
+
 func viewerOf(t *testing.T, app *vukemtest.App, owner who) who {
 	t.Helper()
 
@@ -47,6 +52,14 @@ func TestViewerIsReadOnly(t *testing.T) {
 		target := pathParam.ReplaceAllString(route.Path, "1")
 
 		t.Run(route.Name, func(t *testing.T) {
+			if route.Method == http.MethodGet && slices.Contains(ownerOnlyReads, route.Name) {
+				writes++
+
+				vera.Client.Get(target).AssertForbidden()
+
+				return
+			}
+
 			if route.Method == http.MethodGet {
 				reads++
 
