@@ -127,6 +127,9 @@ func Finance(r *router.Router, app *vukem.App) error {
 
 		g.Post("/workspace/invites", h.Invite).Name("workspace.invite")
 		g.Delete("/workspace/members/{user}", h.RemoveMember).Name("workspace.members.destroy")
+		g.Patch("/workspace/members/{user}", h.ChangeRole).Name("workspace.members.role")
+		g.Post("/workspace/owner", h.TransferOwnership).Name("workspace.transfer")
+		g.Post("/workspace/leave", h.Leave).Name("workspace.leave")
 
 		if b != nil {
 			bh := ledger.NewBilling(h, b)

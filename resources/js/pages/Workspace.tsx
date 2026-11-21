@@ -1,4 +1,4 @@
-import { Head, Link, useForm, usePage } from "@inertiajs/react";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import { type FormEvent, useState } from "react";
 
 import Field from "../components/Field";
@@ -37,6 +37,8 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
   const page = usePage<SharedProps>();
   const inviteLink = page.flash?.inviteLink as InviteLink | undefined;
   const personal = page.props.workspace?.edition === "personal";
+  const role = page.props.workspace?.role;
+  const isOwner = role === "owner";
   const settings = useForm({ name: workspaceDetails.name, currency: workspaceDetails.currency });
   const invite = useForm({ email: "", role: "member" });
   const create = useForm({ name: "", currency: "USD" });
@@ -80,11 +82,38 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
               <span>
                 {m.name} <span className="text-sm text-zinc-500">{m.email}, {m.role}</span>
               </span>
-              {canManage && m.role !== "owner" && (
-                <Link href={`/workspace/members/${m.userId}`} method="delete" as="button" className={danger}>
-                  Remove
-                </Link>
-              )}
+              <span className="flex items-center gap-3">
+                {canManage && m.role !== "owner" && (
+                  <select
+                    aria-label={`Role of ${m.name}`}
+                    value={m.role}
+                    onChange={(e) => router.patch(`/workspace/members/${m.userId}`, { role: e.target.value })}
+                    className="rounded-lg border bg-background px-2 py-1 text-sm"
+                  >
+                    <option value="admin">Admin</option>
+                    <option value="member">Member</option>
+                    <option value="viewer">Viewer</option>
+                  </select>
+                )}
+                {isOwner && m.role !== "owner" && (
+                  <button
+                    type="button"
+                    className={danger}
+                    onClick={() => {
+                      if (confirm(`Make ${m.name} the owner? You become an admin.`)) {
+                        router.post("/workspace/owner", { userId: m.userId });
+                      }
+                    }}
+                  >
+                    Make owner
+                  </button>
+                )}
+                {canManage && m.role !== "owner" && (
+                  <Link href={`/workspace/members/${m.userId}`} method="delete" as="button" className={danger}>
+                    Remove
+                  </Link>
+                )}
+              </span>
             </li>
           ))}
           {invites.map((i) => (
@@ -93,6 +122,11 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
             </li>
           ))}
         </ul>
+        {role && !isOwner && (
+          <Link href="/workspace/leave" method="post" as="button" className={`${danger} mt-3`}>
+            Leave this workspace
+          </Link>
+        )}
         {!personal && limits.members >= 0 && (
           <p className="mt-3 text-sm text-zinc-500">
             The {limits.plan} plan allows {limits.members} member.{" "}

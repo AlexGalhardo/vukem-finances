@@ -106,3 +106,23 @@ var ImportMappingSchema = z.Struct[ImportMapping](z.Shape{
 	"dateFormat":  z.String().Trim().Max(20).Optional(),
 	"invert":      z.String().Trim().Max(5).Optional(),
 })
+
+// MemberRole is the input of the change-role form.
+type MemberRole struct {
+	Role string `json:"role" form:"role"`
+}
+
+// MemberRoleSchema validates MemberRole.
+var MemberRoleSchema = z.Struct[MemberRole](z.Shape{
+	"role": z.String().Trim().Min(1).Max(20),
+})
+
+// Transfer is the input of the ownership transfer form.
+type Transfer struct {
+	UserID string `json:"userId" form:"userId"`
+}
+
+// TransferSchema validates Transfer.
+var TransferSchema = z.Struct[Transfer](z.Shape{
+	"userId": z.String().Trim().Min(1).Max(20),
+})

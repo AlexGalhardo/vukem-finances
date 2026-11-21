@@ -13,7 +13,7 @@ import (
 
 // ownScope are the workspace routes that act on the caller's own account, not
 // on the workspace they are looking at: any role may call them.
-var ownScope = []string{"workspaces.store", "workspaces.switch"}
+var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leave"}
 
 func viewerOf(t *testing.T, app *vukemtest.App, owner who) who {
 	t.Helper()

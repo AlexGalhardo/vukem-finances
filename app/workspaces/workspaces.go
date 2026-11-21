@@ -441,18 +441,24 @@ func (s *Service) Accept(ctx context.Context, u models.User, token string) (mode
 
 // RemoveMember takes userID out of the workspace of ctx; the owner stays.
 func (s *Service) RemoveMember(ctx context.Context, userID int64) error {
-	m, err := Scoped[models.Membership](ctx, s.DB).Where("user_id", userID).First(ctx)
-	if err != nil {
+	return s.DB.Tx(ctx, func(tx *database.Tx) error {
+		if err := lockWorkspace(ctx, tx); err != nil {
+			return err
+		}
+
+		m, err := Scoped[models.Membership](ctx, tx).Where("user_id", userID).First(ctx)
+		if err != nil {
+			return err
+		}
+
+		if m.Role == models.RoleOwner {
+			return errOwner
+		}
+
+		_, err = Scoped[models.Membership](ctx, tx).Where("id", m.ID).Delete(ctx)
+
 		return err
-	}
-
-	if m.Role == models.RoleOwner {
-		return errOwner
-	}
-
-	_, err = Scoped[models.Membership](ctx, s.DB).Where("id", m.ID).Delete(ctx)
-
-	return err
+	})
 }
 
 // Rename changes the name and currency of the workspace of ctx.

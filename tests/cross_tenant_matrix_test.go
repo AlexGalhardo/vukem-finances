@@ -50,6 +50,10 @@ var crossTenantCases = map[string]crossTenantCase{
 		},
 	},
 	"workspace.members.destroy": {method: http.MethodDelete, table: "memberships", param: "user"},
+	"workspace.members.role": {
+		method: http.MethodPatch, table: "memberships", param: "user",
+		body: func(map[string]int64) map[string]any { return map[string]any{"role": "viewer"} },
+	},
 }
 
 // tenantMiddleware is how Router.Routes names the workspace middleware: a route
