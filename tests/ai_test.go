@@ -71,7 +71,7 @@ func dumpTables(t *testing.T, app *vukemtest.App, tables ...string) string {
 			t.Fatal(err)
 		}
 
-		rows.Close()
+		_ = rows.Close()
 	}
 
 	return out.String()
@@ -229,7 +229,7 @@ func newAIFakeServer(t *testing.T, status int) *aiFakeServer {
 		if code := int(f.status.Load()); code != http.StatusOK {
 			w.WriteHeader(code)
 			// The upstream echoes the key and the prompt, as a bad provider might.
-			fmt.Fprintf(w, `{"error":{"type":"invalid_request_error","message":"bad key %s in %s"}}`, aiKey, body)
+			_, _ = fmt.Fprintf(w, `{"error":{"type":"invalid_request_error","message":"bad key %s in %s"}}`, aiKey, body)
 
 			return
 		}

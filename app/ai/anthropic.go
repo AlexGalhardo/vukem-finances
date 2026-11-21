@@ -76,7 +76,7 @@ func (a *Anthropic) Complete(ctx context.Context, req Request) (Response, error)
 	}
 
 	for _, m := range req.Messages {
-		body.Messages = append(body.Messages, anthropicMessage{Role: m.Role, Content: m.Content})
+		body.Messages = append(body.Messages, anthropicMessage(m))
 	}
 
 	if req.Temperature > 0 {
