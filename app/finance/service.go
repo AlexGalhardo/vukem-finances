@@ -88,46 +88,9 @@ func monthBounds(month string) (from, to string) { return month + "-01", month +
 
 // ---- accounts and categories ----
 
-// Accounts lists the accounts of the workspace of ctx.
-func (s *Service) Accounts(ctx context.Context) ([]models.Account, error) {
-	return workspaces.Scoped[models.Account](ctx, s.DB).OrderBy("id", orm.Asc).Get(ctx)
-}
-
 // Categories lists the categories of the workspace of ctx.
 func (s *Service) Categories(ctx context.Context) ([]models.Category, error) {
 	return workspaces.Scoped[models.Category](ctx, s.DB).OrderBy("kind", orm.Asc).OrderBy("name", orm.Asc).Get(ctx)
-}
-
-// CreateAccount adds an account; the Free plan allows one.
-func (s *Service) CreateAccount(ctx context.Context, name, kind, opening string) (models.Account, error) {
-	lim, err := s.WS.Limits(ctx)
-	if err != nil {
-		return models.Account{}, err
-	}
-
-	n, err := workspaces.Scoped[models.Account](ctx, s.DB).Count(ctx)
-	if err != nil {
-		return models.Account{}, err
-	}
-
-	if err := lim.CheckAccounts(int(n) + 1); err != nil {
-		return models.Account{}, err
-	}
-
-	var cents int64
-
-	if strings.TrimSpace(opening) != "" {
-		if cents, err = ParseAmount(opening); err != nil {
-			return models.Account{}, errAmountIn
-		}
-	}
-
-	a := models.Account{Name: strings.TrimSpace(name), Kind: kind, OpeningCents: cents}
-	if err := orm.Create(ctx, s.DB, &a); err != nil {
-		return models.Account{}, err
-	}
-
-	return reload[models.Account](ctx, s.DB, a.ID)
 }
 
 // CreateCategory adds a category; names are unique per workspace.
