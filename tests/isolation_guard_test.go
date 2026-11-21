@@ -15,6 +15,7 @@ import (
 	"github.com/AlexGalhardo/vukem/schema"
 	"github.com/AlexGalhardo/vukem/tenancy"
 
+	"github.com/AlexGalhardo/vukem-finances/app/changes"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 )
 
@@ -32,6 +33,10 @@ var sharedTables = []string{
 	"migrations", "jobs", "failed_jobs", "cache", "cache_locks", "sessions",
 }
 
+// uidTables carry a uid column without being synced entities: the log tables
+// refer to the uid of the row they describe, they are not rows to sync.
+var uidTables = []string{"changes", "sync_conflicts"}
+
 // guardProblems checks a schema against the isolation rules and returns one
 // line per violation, each naming the table.
 func guardProblems(snap schema.Snapshot) []string {
@@ -42,8 +47,18 @@ func guardProblems(snap schema.Snapshot) []string {
 		scoped[m.Table] = true
 	}
 
+	synced := map[string]bool{}
+	for _, e := range changes.Entities() {
+		synced[e.Table] = true
+	}
+
 	for _, tbl := range snap.Tables {
 		has := slices.ContainsFunc(tbl.Columns, func(c schema.ColumnInfo) bool { return c.Name == "workspace_id" })
+
+		if slices.ContainsFunc(tbl.Columns, func(c schema.ColumnInfo) bool { return c.Name == "uid" }) &&
+			!synced[tbl.Name] && !slices.Contains(uidTables, tbl.Name) {
+			problems = append(problems, tbl.Name+": has a uid column but is not registered with changes.Register (synced tables need triggers and a registry entry)")
+		}
 
 		switch {
 		case !has && (scoped[tbl.Name] || slices.Contains(workspaceTables, tbl.Name)):
@@ -85,6 +100,20 @@ func TestIsolationGuard(t *testing.T) {
 
 	for _, p := range guardProblems(snap) {
 		t.Error(p)
+	}
+
+	if err := changes.VerifyTriggers(t.Context(), db); err != nil {
+		t.Error(err)
+	}
+
+	for _, e := range changes.Entities() {
+		tbl, ok := tableOf(snap, e.Table)
+		switch {
+		case !ok:
+			t.Errorf("%s: registered with changes.Register but the table does not exist", e.Table)
+		case !hasColumns(tbl, "uid", "version", "deleted_at", "workspace_id"):
+			t.Errorf("%s: a synced table needs uid, version, deleted_at and workspace_id", e.Table)
+		}
 	}
 
 	t.Run("models stamp the tenant", func(t *testing.T) {
@@ -146,6 +175,22 @@ func TestIsolationGuard(t *testing.T) {
 				t.Errorf("the guard did not name %s: %q", want, got)
 			}
 		}
+	})
+}
+
+func tableOf(snap schema.Snapshot, name string) (schema.TableInfo, bool) {
+	for _, t := range snap.Tables {
+		if t.Name == name {
+			return t, true
+		}
+	}
+
+	return schema.TableInfo{}, false
+}
+
+func hasColumns(tbl schema.TableInfo, names ...string) bool {
+	return !slices.ContainsFunc(names, func(n string) bool {
+		return !slices.ContainsFunc(tbl.Columns, func(c schema.ColumnInfo) bool { return c.Name == n })
 	})
 }
 
