@@ -263,7 +263,18 @@ func restoreMonths(ctx context.Context, tx *database.Tx, row models.PixPayment) 
 		return false, nil
 	}
 
-	months := ent.PaidMonths + row.MonthsWithheld
+	// Summed from the payments because a refund during a lapse subtracts
+	// nothing, so the running paid_months may still include refunded months.
+	paid, err := workspaces.Scoped[models.PixPayment](tctx, tx).
+		Where("status", models.PixPaid).Where("entitlement_period", ent.Period).Get(tctx)
+	if err != nil {
+		return false, err
+	}
+
+	months := 0
+	for i := range paid {
+		months += paid[i].Months
+	}
 
 	_, err = workspaces.Scoped[models.PixEntitlement](tctx, tx).Where("id", ent.ID).Update(tctx, orm.Set{
 		"paid_months": months, "valid_until": timeutil.AddMonths(ent.AnchorAt, months),

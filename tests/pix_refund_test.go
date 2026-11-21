@@ -256,6 +256,36 @@ func TestPixDisputeWonKeepsTheOriginalTerm(t *testing.T) {
 	}
 }
 
+func TestPixDisputeWonDoesNotReviveARefundedPayment(t *testing.T) {
+	t.Parallel()
+
+	clock := newPixClock(time.Date(2027, 3, 1, 10, 0, 0, 0, time.UTC))
+	f, app := pixApp(t, clock)
+	b := pixBilling(t, app)
+	ana := signUp(t, app, "Ana", "ana@example.com")
+	disputed := paidPix(t, f, b, ana, 3)
+	refunded := paidPix(t, f, b, ana, 1)
+
+	apply := func(p models.PixPayment, status string) {
+		t.Helper()
+		f.setStatus(p.ProviderRef, status)
+
+		if err := b.HandlePixEvent(t.Context(), p.ProviderRef); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	apply(disputed, "UNDER_DISPUTE")
+	clock.Advance(40 * 24 * time.Hour) // past the one month left
+	apply(refunded, "REFUNDED")
+	apply(disputed, "PAID")
+
+	e := pixEntitlementOf(t, app, ana.Workspace.ID)
+	if e.PaidMonths != 3 || e.ValidUntil.UTC().Format("2006-01-02") != "2027-06-01" {
+		t.Errorf("entitlement = %d months until %s, want 3 months until 2027-06-01", e.PaidMonths, e.ValidUntil)
+	}
+}
+
 func TestPixRefundAfterDisputeWonRevokes(t *testing.T) {
 	t.Parallel()
 
