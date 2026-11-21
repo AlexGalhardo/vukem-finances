@@ -1,6 +1,6 @@
 # Sync data model
 
-This is the contract every synced table of vukem-finances follows (decisions D-004, D-005, D-008, D-013). The server protocol and the mobile client build on it; no later epic may add a synced table that skips it. Synced entities today: `account`, `category`, `tag`, `transaction`, `budget`. Not synced: imports (a server-side artifact), subscriptions, invites, users and memberships.
+This is the contract every synced table of vukem-finances follows (decisions D-004, D-005, D-008, D-013). The server protocol and the mobile client build on it; no later epic may add a synced table that skips it. Synced entities today: `account`, `category`, `tag`, `transaction`, `budget`, `credit_card`, `recurrence`. Not synced: imports (a server-side artifact), subscriptions, invites, users and memberships.
 
 ## Stable ids
 
@@ -89,3 +89,11 @@ Last-writer-wins can overwrite an edit of an amount. The lost value is kept 30 d
 ## Money limit
 
 `amount_cents`, `opening_cents` and `limit_cents` are limited to plus or minus 9007199254740991 (2^53 - 1) at every write path and in `ParseAmount`, so any client can hold them exactly. Values are plain JSON numbers.
+
+## Recurrences
+
+The `recurrence` entity holds the rule of a repeating transaction (`docs/specs/recurrence.md`). A transaction made from a rule carries `recurrence_uid` (the `uid` of the rule) and `occurrence_on` (an ISO date), the natural key of the occurrence: `(workspace_id, recurrence_uid, occurrence_on)` is unique among all rows, soft-deleted ones included.
+
+- Two devices that generate the same occurrence offline produce two rows with different `uid` and the same natural key. The server answers the second with a unique-key hit; the sync layer (epic 18) must treat a hit as the same record, and a delete wins over an edit. An occurrence the person deleted is never created again.
+- `generated_through` is the rule's watermark. When two copies of a rule meet, the merged watermark is the later of the two dates (it is not a last-writer-wins field).
+- `last_error` is server state and is not synced. The installment fields (`installment_group_uid`, `installment_no`, `installment_total`) are plain writable fields of `transaction`.
