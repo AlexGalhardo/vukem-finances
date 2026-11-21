@@ -27,6 +27,8 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `admin.go`, ...) registered by `registry.go` |
 | `database/migrations/` | Go migrations, registered in `registry.go` |
 | `resources/js/` | React pages, components, layouts and React Email templates |
+| `resources/js/shortcuts/`, `resources/js/nav.ts`, `resources/js/i18n/` | the shortcut registry, the sidebar items, the translation files (see "The application shell") |
+| `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation) |
 | `cmd/app/` | the binary entry point |
 | `config/`, `bootstrap/` | configuration and application start-up |
 | `.agents/rules/` | the rules of the team: read them before editing |
@@ -42,11 +44,24 @@ go vet ./...
 go test ./...
 bun run typecheck
 bun run lint:js
+bun run format:check
+bun run test:js
 bun run lint:md
 bun run build
 ```
 
 Install the JavaScript dependencies with `bun install --frozen-lockfile`. Run every command above before a hand-off.
+
+## The application shell
+
+Read `docs/design.md` and `docs/shortcuts.md` before touching the UI. The design is original (D-011, D-012): never copy code, assets or layout from another product.
+
+- **Add a sidebar item.** Append an entry to `resources/js/nav.ts` (`id`, `labelKey`, `href`, `icon`, optional `keys`, optional `edition: "saas" | "personal"`). The sidebar, the palette and a `go-<id>` action come from it. Billing is `edition: "saas"`: the personal edition must never show billing, workspace creation or workspace switching.
+- **Register an action.** Call `useAction({ id, labelKey, group, keys, run, enabled })` from `resources/js/shortcuts/useAction.ts` in the component that owns the behavior. Never add a `keydown` listener. The action appears in the command palette and in the shortcut help by itself. Pick `keys` from the free ones in `docs/shortcuts.md` and add the row there; `registerAction` throws on a duplicate id or key, on a key a longer sequence starts with, and on a browser-reserved combination (`shortcuts/reserved.ts`).
+- **Shortcuts never fire while the person types** (`shortcuts/guard.ts`). Mark a custom widget that takes text with `role="textbox"`, `combobox` or `searchbox`, or `data-shortcuts="off"`.
+- **Add translations.** Add `resources/js/i18n/en/<domain>.ts`, `pt-BR/<domain>.ts` and `es/<domain>.ts` (the last two use `satisfies Record<keyof typeof en, string>`), then add one `typeof` line for the new domain to `resources/js/i18n/keys.ts`. `bun test resources/js/i18n` fails when a locale misses a key.
+- **Page structure.** A signed-in page renders `PageHeader` for its one `h1`; the shell moves focus there after a navigation. Show money with `MoneyText` (sign or label, never color alone) and lists with `DataTable`.
+- **Tests.** `bun run test:js` runs the unit tests (`bun test resources/js`; the path is required). `@types/bun` is not installed: `resources/js/bun-test.d.ts` holds the few ambient types the tests use; extend it when a test needs another matcher.
 
 ## Rules that never bend
 
