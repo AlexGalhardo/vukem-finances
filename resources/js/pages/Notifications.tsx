@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from "@inertiajs/react";
+import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import type { FormEvent } from "react";
 
 import PageHeader from "../components/PageHeader";
@@ -18,7 +18,7 @@ const kindLabel: Record<string, Key> = {
   recurrence_failed: "alertKindRecurrenceFailed",
 };
 
-export default function Notifications({ items, preferences }: Page<"Notifications">) {
+export default function Notifications({ items, preferences, telegramEnabled }: Page<"Notifications">) {
   const currency = usePage<SharedProps>().props.workspace?.current.currency ?? "USD";
   const { t, money, date } = useFinanceI18n();
   const formats = { money, date, currency };
@@ -125,6 +125,13 @@ export default function Notifications({ items, preferences }: Page<"Notification
             </tbody>
           </table>
           {!emailAllowed && <p className="text-xs text-muted-foreground">{t("notificationsEmailViewer")}</p>}
+          {telegramEnabled && (
+            <p className="text-sm">
+              <Link href="/settings/telegram" className="underline">
+                {t("telegramSettings")}
+              </Link>
+            </p>
+          )}
           <div>
             <button type="submit" disabled={form.processing} className={primary}>
               {t("notificationsSave")}
