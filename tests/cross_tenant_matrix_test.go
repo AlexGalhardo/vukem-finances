@@ -138,6 +138,11 @@ var crossTenantCases = map[string]crossTenantCase{
 			}
 		},
 	},
+	"suggestions.accept":        {method: http.MethodPost, table: "suggestions", param: "suggestion"},
+	"suggestions.reject":        {method: http.MethodPost, table: "suggestions", param: "suggestion"},
+	"suggestions.undo":          {method: http.MethodPost, table: "suggestions", param: "suggestion"},
+	"assistant.show":            {method: http.MethodGet, table: "assistant_messages", param: "conversation"},
+	"assistant.destroy":         {method: http.MethodDelete, table: "assistant_conversations", param: "conversation"},
 	"ai.key.destroy":            {method: http.MethodDelete, table: "ai_credentials", param: "credential"},
 	"tokens.destroy":            {method: http.MethodDelete, table: "access_tokens", param: "token"},
 	"devices.destroy":           {method: http.MethodDelete, table: "sync_devices", param: "device"},
@@ -188,7 +193,28 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PostForm("/ai/key", map[string][]string{"provider": {"anthropic"}, "apiSecret": {"sk-placeholder-matrix-0123456789"}}).
 		AssertRedirect("/ai")
 
+	anaCategory := firstOf[models.Category](t, app, ana, "Groceries")
+	anaTx := firstOf[models.Transaction](t, app, ana, "")
+	sug := models.Suggestion{TransactionUID: anaTx.UID, CategoryUID: anaCategory.UID, Confidence: 80, Source: models.SuggestionAI, Status: models.SuggestionPending}
+	conv := models.AssistantConversation{UserID: ana.User.ID, Title: "private"}
+
+	if err := orm.Create(wsCtx(t, ana), mustDB(t, app), &sug); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := orm.Create(wsCtx(t, ana), mustDB(t, app), &conv); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := orm.Create(wsCtx(t, ana), mustDB(t, app), &models.AssistantMessage{
+		ConversationID: conv.ID, UserID: ana.User.ID, Role: models.AssistantRoleUser, Content: "private",
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	ids := map[string]int64{
+		"suggestion":   sug.ID,
+		"conversation": conv.ID,
 		"transaction":  firstOf[models.Transaction](t, app, ana, "").ID,
 		"account":      accAna,
 		"budget":       firstOf[models.Budget](t, app, ana, "").ID,
@@ -219,7 +245,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
 
 	tables := map[string]int64{}
-	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "recurrences": true, "access_tokens": true, "goals": true, "goal_contributions": true, "notifications": true, "sync_devices": true} {
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "recurrences": true, "access_tokens": true, "goals": true, "goal_contributions": true, "notifications": true, "sync_devices": true, "suggestions": true, "assistant_conversations": true, "assistant_messages": true} {
 		tables[table] = rowCount(t, app, table)
 	}
 

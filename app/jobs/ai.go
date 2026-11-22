@@ -6,6 +6,7 @@ import (
 	vukem "github.com/AlexGalhardo/vukem"
 
 	"github.com/AlexGalhardo/vukem-finances/app/ai"
+	"github.com/AlexGalhardo/vukem-finances/app/ai/assistant"
 	"github.com/AlexGalhardo/vukem-finances/app/ai/categorize"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
@@ -77,4 +78,25 @@ func Categorizer(app *vukem.App) (*categorize.Service, error) {
 	}
 
 	return categorize.New(fin.DB, shared.Client, fin, app.Log, app.Now), nil
+}
+
+// AssistantPrune deletes the assistant conversations nobody touched for 90
+// days, in every workspace. routes/schedule.go runs it daily.
+type AssistantPrune struct{}
+
+// Kind names the job's handler; keep it stable across deploys.
+func (AssistantPrune) Kind() string { return "assistant_prune" }
+
+// HandleAssistantPrune removes the expired conversations and their messages.
+func HandleAssistantPrune(app *vukem.App) func(ctx context.Context, j AssistantPrune) error {
+	return func(ctx context.Context, _ AssistantPrune) error {
+		db, err := app.DB()
+		if err != nil {
+			return err
+		}
+
+		_, err = assistant.Prune(ctx, db, app.Now())
+
+		return err
+	}
 }

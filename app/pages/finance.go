@@ -4,6 +4,7 @@ import (
 	"github.com/AlexGalhardo/vukem/inertia"
 
 	"github.com/AlexGalhardo/vukem-finances/app/ai"
+	"github.com/AlexGalhardo/vukem-finances/app/ai/categorize"
 	"github.com/AlexGalhardo/vukem-finances/app/alerts"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
@@ -316,4 +317,19 @@ type AIProps struct {
 	CanManage  bool              `json:"canManage"`
 	// PrivateHosts says whether this server lets the compatible provider reach a local network.
 	PrivateHosts bool `json:"privateHosts"`
+}
+
+// Suggestions is the review list of category suggestions.
+var Suggestions = inertia.Define[SuggestionsProps]("Suggestions")
+
+// SuggestionsProps are the props of Suggestions. Pending are best first;
+// Applied are the ones applied without a review that can still be undone.
+type SuggestionsProps struct {
+	Pending []categorize.Pending `json:"pending"`
+	Applied []categorize.Pending `json:"applied"`
+	// AIOn says whether AI categorization is on; the memory of descriptions works either way.
+	AIOn      bool   `json:"aiOn"`
+	AutoApply bool   `json:"autoApply"`
+	CanRecord bool   `json:"canRecord"`
+	Currency  string `json:"currency"`
 }
