@@ -1,0 +1,105 @@
+version: '3'
+
+# `wails3 package` (or `task package`) in this folder builds the installers of
+# the host OS into bin/. Builds are unsigned: see docs/desktop.md.
+#
+# Variables: VERSION (default 0.0.0-dev) is linked into config.Version.
+
+vars:
+  APP_NAME: vukem-finances
+  BIN_DIR: bin
+  VERSION: '{{.VERSION | default "0.0.0-dev"}}'
+  # NSIS and Info.plist want three numeric parts: drop any pre-release suffix.
+  VERSION_NUM: '{{.VERSION | splitList "-" | first}}'
+  LDFLAGS: '-X github.com/AlexGalhardo/vukem-finances/config.Version={{.VERSION}}'
+  # The web assets are built at the repo root and embedded by the binary.
+  GOOS: '{{.GOOS | default OS}}'
+
+tasks:
+  web:
+    summary: Builds the web assets that the binary embeds
+    dir: ..
+    sources:
+      - resources/js/**/*
+      - resources/css/**/*
+      - package.json
+      - vite.config.ts
+    generates:
+      - resources/public/build/.vite/manifest.json
+    cmds:
+      - bun install --frozen-lockfile
+      - bun run build
+
+  build:
+    summary: Builds the desktop binary for the host OS
+    deps: [web]
+    cmds:
+      - task: '{{.GOOS}}:build'
+
+  package:
+    summary: Packages the desktop app for the host OS into bin/
+    cmds:
+      - task: '{{.GOOS}}:package'
+
+  windows:build:
+    cmds:
+      - wails3 generate syso -arch amd64 -icon build/windows/icon.ico -manifest build/windows/wails.exe.manifest -info build/windows/info.json -out wails_windows_amd64.syso
+      - go build -tags production -trimpath -buildvcs=false -ldflags "-w -s -H windowsgui {{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.APP_NAME}}.exe .
+    env:
+      CGO_ENABLED: '0'
+      GOOS: windows
+      GOARCH: amd64
+
+  windows:package:
+    deps: [windows:build]
+    cmds:
+      - cmd: wails3 tool cp {{.BIN_DIR}}/{{.APP_NAME}}.exe {{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-windows-amd64-portable.exe
+      - cmd: wails3 generate webview2bootstrapper -dir build/windows/nsis
+      - cmd: makensis -DINFO_PRODUCTVERSION={{.VERSION_NUM}} -DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user -DARG_WAILS_AMD64_BINARY="{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.APP_NAME}}.exe" build/windows/nsis/project.nsi
+        platforms: [linux, darwin]
+      - cmd: makensis -DINFO_PRODUCTVERSION={{.VERSION_NUM}} -DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user -DARG_WAILS_AMD64_BINARY="{{.ROOT_DIR}}\{{.BIN_DIR}}\{{.APP_NAME}}.exe" build\windows\nsis\project.nsi
+        platforms: [windows]
+      - cmd: wails3 tool cp {{.BIN_DIR}}/{{.APP_NAME}}-amd64-installer.exe {{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-windows-amd64-setup.exe
+
+  linux:build:
+    cmds:
+      - go build -tags production -trimpath -buildvcs=false -ldflags "-w -s {{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.APP_NAME}} .
+    env:
+      CGO_ENABLED: '1'
+
+  linux:package:
+    deps: [linux:build]
+    cmds:
+      - wails3 generate .desktop -name "{{.APP_NAME}}" -exec "{{.APP_NAME}}" -icon "{{.APP_NAME}}" -outputfile build/linux/{{.APP_NAME}}.desktop -categories "Office;Finance;"
+      - wails3 tool package -name "{{.APP_NAME}}" -format deb -config build/linux/nfpm/nfpm.yaml -out {{.BIN_DIR}}
+      - cp build/appicon.png build/linux/appimage/{{.APP_NAME}}.png
+      - cp {{.BIN_DIR}}/{{.APP_NAME}} build/linux/appimage/{{.APP_NAME}}
+      - wails3 generate appimage -binary build/linux/appimage/{{.APP_NAME}} -icon build/linux/appimage/{{.APP_NAME}}.png -desktopfile build/linux/{{.APP_NAME}}.desktop -outputdir {{.BIN_DIR}} -builddir build/linux/appimage/build
+    env:
+      GOARCH:
+        sh: go env GOARCH
+      GIT_COMMITTER_NAME: vukem-finances
+      GIT_COMMITTER_EMAIL: noreply@vukem.dev
+      VERSION: '{{.VERSION_NUM}}'
+
+  darwin:build:
+    cmds:
+      - go build -tags production -trimpath -buildvcs=false -ldflags "-w -s {{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.APP_NAME}} .
+    env:
+      CGO_ENABLED: '1'
+      MACOSX_DEPLOYMENT_TARGET: '12.0'
+
+  darwin:package:
+    deps: [darwin:build]
+    cmds:
+      - rm -rf {{.BIN_DIR}}/{{.APP_NAME}}.app
+      - mkdir -p {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/MacOS {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources
+      - cp build/darwin/icons.icns {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Resources/
+      - cp {{.BIN_DIR}}/{{.APP_NAME}} {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/MacOS/
+      - sed 's/0\.1\.0/{{.VERSION_NUM}}/g' build/darwin/Info.plist > {{.BIN_DIR}}/{{.APP_NAME}}.app/Contents/Info.plist
+      # Ad-hoc signature only: macOS refuses to run an unsigned arm64 binary. It is not a Developer ID signature.
+      - codesign --force --deep --sign - {{.BIN_DIR}}/{{.APP_NAME}}.app
+      - ditto -c -k --keepParent {{.BIN_DIR}}/{{.APP_NAME}}.app {{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-macos-{{.ARCH}}.zip
+    vars:
+      ARCH:
+        sh: go env GOARCH
