@@ -439,7 +439,34 @@ func (s *Service) AddContribution(ctx context.Context, goalID int64, in Contribu
 
 var errGoalArchived = errs.New(http.StatusConflict, "Unarchive the goal before adding to it.")
 
-// DeleteContribution deletes one contribution of a goal of the workspace.
-func (s *Service) DeleteContribution(ctx context.Context, id int64) error {
-	return softDelete[models.GoalContribution](ctx, s.DB, id, s.now().UTC())
+// DeleteContribution deletes one contribution of a goal of the workspace; a
+// contribution that belongs to another goal is not found.
+func (s *Service) DeleteContribution(ctx context.Context, goalID, id int64) error {
+	n, err := workspaces.Scoped[models.GoalContribution](ctx, s.DB).Where("id", id).Where("goal_id", goalID).
+		Update(ctx, orm.Set{"deleted_at": s.now().UTC()})
+	if err == nil && n == 0 {
+		return errs.ErrNotFound
+	}
+
+	return err
+}
+
+// RecentContributions returns, for each goal of the workspace, its newest
+// contributions (at most perGoal), keyed by goal id.
+func (s *Service) RecentContributions(ctx context.Context, perGoal int) (map[int64][]models.GoalContribution, error) {
+	rows, err := workspaces.Scoped[models.GoalContribution](ctx, s.DB).
+		OrderBy("on_date", orm.Desc).OrderBy("id", orm.Desc).Get(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := map[int64][]models.GoalContribution{}
+
+	for _, r := range rows {
+		if len(out[r.GoalID]) < perGoal {
+			out[r.GoalID] = append(out[r.GoalID], r)
+		}
+	}
+
+	return out, nil
 }

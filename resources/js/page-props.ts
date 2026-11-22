@@ -61,12 +61,17 @@ export type BillingStatus = {
 };
 
 export type BudgetStatus = {
+  availableCents: number;
+  carryCents: number;
   category: string;
   categoryId: number;
   id: number;
   limitCents: number;
+  overall: boolean;
   percent: number;
+  rollover: boolean;
   spentCents: number;
+  uid: string;
 };
 
 export type CardOverview = {
@@ -135,6 +140,38 @@ export type FeatureUse = {
   inputTokens: number;
   outputTokens: number;
   provider: string;
+};
+
+export type GoalContribution = {
+  amount_cents: number;
+  created_at: string;
+  deleted_at?: string | null;
+  goal_id: number;
+  id: number;
+  note: string;
+  on_date: string;
+  uid: string;
+  updated_at: string;
+  version: number;
+  workspace_id: number;
+};
+
+export type GoalStatus = {
+  archived: boolean;
+  contributions: number;
+  id: number;
+  monthsLeft: number;
+  name: string;
+  overdue: boolean;
+  percent: number;
+  projectedDate: string;
+  reached: boolean;
+  remainingCents: number;
+  requiredMonthlyCents: number;
+  savedCents: number;
+  targetCents: number;
+  targetDate: string;
+  uid: string;
 };
 
 export type ImportFailure = {
@@ -237,6 +274,13 @@ export type PixOption = {
   totalCents: number;
 };
 
+export type PreferenceRow = {
+  email: boolean;
+  emailAllowed: boolean;
+  inApp: boolean;
+  kind: string;
+};
+
 export type Preview = {
   filename: string;
   format: string;
@@ -288,6 +332,11 @@ export type Settings = {
 
 export type SharedAuth = {
   user?: SharedUser | null;
+};
+
+export type SharedNotifications = {
+  recent: View[];
+  unread: number;
 };
 
 export type SharedUser = {
@@ -416,6 +465,15 @@ export type UpcomingItem = {
   transactionId: number;
 };
 
+export type View = {
+  createdAt: string;
+  id: number;
+  kind: string;
+  params: unknown;
+  read: boolean;
+  titleKey: string;
+};
+
 export type WorkspaceView = {
   currency: string;
   id: number;
@@ -541,6 +599,12 @@ export type DashboardProps = {
   upcoming: UpcomingItem[];
 };
 
+export type GoalsProps = {
+  contributions: GoalContribution[];
+  goals: GoalStatus[];
+  today: string;
+};
+
 export type HomeProps = Record<string, never>;
 
 export type ImportProps = {
@@ -558,6 +622,11 @@ export type InviteAcceptProps = {
 export type InviteRegisterProps = {
   email: string;
   token: string;
+};
+
+export type NotificationsProps = {
+  notifications: View[];
+  preferences: PreferenceRow[];
 };
 
 export type RecurrencesProps = {
@@ -579,6 +648,7 @@ export type SharedProps = {
   errors: Record<string, string | Record<string, string>>;
   googleEnabled: boolean;
   locale: string;
+  notifications?: SharedNotifications | null;
   workspace?: SharedWorkspace | null;
 };
 
@@ -613,8 +683,8 @@ export type WorkspaceProps = {
 
 /** PageProps maps every typed page component to its props. */
 export interface PageProps {
-  AI: AIProps;
-  Accounts: AccountsProps;
+  "AI": AIProps;
+  "Accounts": AccountsProps;
   "Admin/Dashboard": AdminDashboardProps;
   "Admin/ResourceList": AdminResourceListProps;
   "Admin/ResourceShow": AdminResourceShowProps;
@@ -627,21 +697,23 @@ export interface PageProps {
   "Auth/TwoFactorChallenge": AuthTwoFactorChallengeProps;
   "Auth/TwoFactor": AuthTwoFactorProps;
   "Auth/VerifyEmail": AuthVerifyEmailProps;
-  Billing: BillingProps;
-  Budgets: BudgetsProps;
-  CardStatement: CardStatementProps;
-  Cards: CardsProps;
-  Categories: CategoriesProps;
-  Dashboard: DashboardProps;
-  Home: HomeProps;
-  Import: ImportProps;
-  InviteAccept: InviteAcceptProps;
-  InviteRegister: InviteRegisterProps;
-  Recurrences: RecurrencesProps;
-  Setup: SetupProps;
-  Tokens: TokensProps;
-  Transactions: TransactionsProps;
-  Workspace: WorkspaceProps;
+  "Billing": BillingProps;
+  "Budgets": BudgetsProps;
+  "CardStatement": CardStatementProps;
+  "Cards": CardsProps;
+  "Categories": CategoriesProps;
+  "Dashboard": DashboardProps;
+  "Goals": GoalsProps;
+  "Home": HomeProps;
+  "Import": ImportProps;
+  "InviteAccept": InviteAcceptProps;
+  "InviteRegister": InviteRegisterProps;
+  "Notifications": NotificationsProps;
+  "Recurrences": RecurrencesProps;
+  "Setup": SetupProps;
+  "Tokens": TokensProps;
+  "Transactions": TransactionsProps;
+  "Workspace": WorkspaceProps;
 }
 
 export type PageName = keyof PageProps;

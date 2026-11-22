@@ -17,6 +17,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/admin"
+	"github.com/AlexGalhardo/vukem-finances/app/alerts"
 	"github.com/AlexGalhardo/vukem-finances/app/billing"
 	"github.com/AlexGalhardo/vukem-finances/app/controllers"
 	"github.com/AlexGalhardo/vukem-finances/app/controllers/ledger"
@@ -71,7 +72,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 
 	r.UseServer(resend)
 
-	h := ledger.New(ws, fin)
+	h := ledger.New(ws, fin, alerts.New(app, ws, fin))
 	admins := admin.NewAdmins(app.Source.Get("ADMIN_EMAILS"))
 	required := auth.Required(acc.Web)
 	verified := auth.Verified(acc.Web)
@@ -118,7 +119,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 	// The limits come after it: they need the signed-in user and the workspace.
 	r.Group("", func(g *router.Group) {
 		g.Use(required, verified, ws.Middleware(), ws.Require(workspaces.AbilityRead), reads, writes,
-			shareWorkspace(ws, acc, admins))
+			shareWorkspace(ws, acc, admins, h.Alerts))
 
 		financeDashboard(g, h)
 		financeTransactions(g, h)
@@ -126,6 +127,8 @@ func Finance(r *router.Router, app *vukem.App) error {
 		financeCards(g, h)
 		financeCategories(g, h)
 		financeBudgets(g, h)
+		financeGoals(g, h)
+		financeNotifications(g, h)
 		financeRecurrences(g, h)
 		financeImports(g, h, imports)
 		financeWorkspace(g, h)
@@ -215,7 +218,7 @@ func onlyAdmins(admins admin.Admins) func(http.Handler) http.Handler {
 // shareWorkspace shares the current workspace, the user's other ones, their
 // role and the plan with every page (usePage().props.workspace).
 func shareWorkspace(
-	ws *workspaces.Service, acc *accounts.Accounts, admins admin.Admins,
+	ws *workspaces.Service, acc *accounts.Accounts, admins admin.Admins, al *alerts.Service,
 ) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -256,7 +259,31 @@ func shareWorkspace(
 				}, nil
 			})
 
+			inertia.Share(ctx, "notifications", func(context.Context) (any, error) {
+				c := web.NewCtx(w, r, web.ServicesFrom(ctx))
+
+				u, err := acc.Web.User(c)
+				if err != nil {
+					return nil, nil //nolint:nilerr // signed out
+				}
+
+				unread, err := al.Unread(ctx, u.ID)
+				if err != nil {
+					return nil, err
+				}
+
+				recent, err := al.Views(ctx, u.ID, recentNotifications)
+				if err != nil {
+					return nil, err
+				}
+
+				return pages.SharedNotifications{Unread: unread, Recent: recent}, nil
+			})
+
 			next.ServeHTTP(w, r)
 		})
 	}
 }
+
+// recentNotifications is how many notifications the bell of the header lists.
+const recentNotifications = 8
