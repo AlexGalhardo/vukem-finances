@@ -101,6 +101,13 @@ tasks:
       # Ad-hoc signature only: macOS refuses to run an unsigned arm64 binary. It is not a Developer ID signature.
       - codesign --force --deep --sign - {{.BIN_DIR}}/{{.APP_NAME}}.app
       - ditto -c -k --keepParent {{.BIN_DIR}}/{{.APP_NAME}}.app {{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-macos-{{.ARCH}}.zip
+      # The disk image holds the same ad-hoc-signed app plus an Applications link to drag it onto.
+      - rm -rf {{.BIN_DIR}}/dmg-stage {{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-macos-{{.ARCH}}.dmg
+      - mkdir -p {{.BIN_DIR}}/dmg-stage
+      - ditto {{.BIN_DIR}}/{{.APP_NAME}}.app {{.BIN_DIR}}/dmg-stage/{{.APP_NAME}}.app
+      - ln -s /Applications {{.BIN_DIR}}/dmg-stage/Applications
+      - hdiutil create -volname "{{.APP_NAME}}" -srcfolder {{.BIN_DIR}}/dmg-stage -format UDZO -ov {{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-macos-{{.ARCH}}.dmg
+      - rm -rf {{.BIN_DIR}}/dmg-stage
     vars:
       ARCH:
         sh: go env GOARCH
