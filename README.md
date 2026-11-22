@@ -45,6 +45,10 @@ Vukem Finances is an open source (MIT) personal finance application built with [
 
 New here? Start with the [guide](docs/guide.md) and the [deployment guide](deploy/README.md).
 
+## Desktop app
+
+The personal edition also ships as a desktop application for Windows, macOS and Linux: your data stays in your own user folder, it works offline and needs no Docker or terminal. The installers are unsigned, so your system will warn you once. See [docs/desktop.md](docs/desktop.md).
+
 ## Stability
 
 Versions follow SemVer. Vukem Finances is in `0.x`: a minor release may break. See the [changelog](CHANGELOG.md) for what changed in each release.

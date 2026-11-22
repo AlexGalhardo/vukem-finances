@@ -85,6 +85,11 @@ jobs:
           case "$v" in *[!0-9A-Za-z.-]* | "") echo "bad version: $v" >&2; exit 1 ;; esac
           echo "version=$v" >> "$GITHUB_OUTPUT"
 
+      - name: Test the desktop module
+        shell: bash
+        working-directory: desktop
+        run: go test ./... -count=1
+
       - name: Package
         shell: bash
         working-directory: desktop
