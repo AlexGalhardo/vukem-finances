@@ -132,3 +132,15 @@ func TestRecurrenceVeryFarWindow(t *testing.T) {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }
+
+// QA-004: an end date of 0001-01-01 is the zero time, and it was read as "no
+// end date".
+func TestRecurrenceEndDateInYearOne(t *testing.T) {
+	t.Parallel()
+
+	r := Rule{Frequency: FreqWeekly, Interval: 3, StartDate: "0001-01-01", EndDate: "0001-01-01"}
+
+	if got := r.Occurrences("0001-01-01", "0001-03-01", 0); !slices.Equal(got, []string{"0001-01-01"}) {
+		t.Fatalf("occurrences = %v, want only the start date", got)
+	}
+}

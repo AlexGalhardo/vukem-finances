@@ -117,9 +117,10 @@ func (r Rule) Occurrences(from, to string, limit int) []string {
 		return nil
 	}
 
-	end := time.Time{}
+	var end time.Time
 
-	if r.EndDate != "" {
+	hasEnd := r.EndDate != ""
+	if hasEnd {
 		if end, err = time.Parse(isoDate, r.EndDate); err != nil {
 			return nil
 		}
@@ -135,7 +136,7 @@ func (r Rule) Occurrences(from, to string, limit int) []string {
 		}
 
 		d, ok := r.nth(start, k)
-		if !ok || d.After(hi) || (!end.IsZero() && d.After(end)) {
+		if !ok || d.After(hi) || (hasEnd && d.After(end)) {
 			break
 		}
 
