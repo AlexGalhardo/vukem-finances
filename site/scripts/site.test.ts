@@ -320,6 +320,14 @@ describe("search", () => {
     expect(read(normal, "index.html")).not.toContain("data-docs-search");
   });
 
+  test("the header marks Docs as current on the documentation only", () => {
+    const docsLink = /<a href="\/docs\/"([^>]*)>Docs<\/a>/;
+    expect(docsIndex(normal).match(docsLink)?.[1]).toContain('aria-current="true"');
+    expect(read(normal, "index.html").match(/<a href="\/docs\/"([^>]*)>[^<]*<\/a>/)?.[1] ?? "").not.toContain(
+      "aria-current",
+    );
+  });
+
   test("the Pagefind files may read their own index, nothing else may call the network", () => {
     expect(fs.readFileSync(pagefind(normal, "pagefind.js"), "utf8")).toMatch(/\bfetch\s*\(/);
     expect(checkBuilt(normal, { origin, termsApproved: false })).toEqual([]);

@@ -5,8 +5,10 @@ import { basePath, docsPath, htmlLang, localeNames, localePath, locales, type Lo
 interface Props {
 	locale: Locale;
 	copy: Copy;
+	/** The section the current page belongs to, marked with aria-current. */
+	current?: "docs";
 }
-const { locale, copy } = Astro.props;
+const { locale, copy, current } = Astro.props;
 const home = localePath(locale);
 ---
 <header class="site-header">
@@ -21,7 +23,7 @@ const home = localePath(locale);
 				<li><a href={`${home}#editions`}>{copy.nav.editions}</a></li>
 				<li><a href={`${home}#install`}>{copy.nav.install}</a></li>
 				<li><a href={`${home}#faq`}>{copy.nav.faq}</a></li>
-				<li><a href={`${basePath}${docsPath}`}>{copy.footer.docs}</a></li>
+				<li><a href={`${basePath}${docsPath}`} aria-current={current === "docs" ? "true" : undefined}>{copy.footer.docs}</a></li>
 			</ul>
 		</nav>
 		<nav aria-label={copy.a11y.language}>

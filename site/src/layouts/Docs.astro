@@ -33,7 +33,7 @@ const source = `${repoUrl}/blob/main/${page.file}`;
 	ogAlt={copy.meta.ogAlt}
 >
 	<a class="skip" href="#content">{copy.a11y.skip}</a>
-	<SiteHeader locale="en" copy={copy} />
+	<SiteHeader locale="en" copy={copy} current="docs" />
 	<div class="wrap docs-layout">
 		<aside class="docs-side">
 		<div class="docs-search" role="search" data-docs-search data-base={basePath} hidden>
