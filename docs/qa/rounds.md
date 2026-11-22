@@ -68,7 +68,8 @@ carries a test written first, in its own commit, with `Refs: epic 24 task N` and
 - **Actual:** `audit_events.subject` still holds the address in the inviting workspace, for as long as that workspace lives.
 - **Evidence:** `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson` (it scans every column of every table for the address).
 - **Severity:** Medium (personal data kept after a deletion; the row is visible to the owner and admins of the other workspace only).
-- **Status:** open.
+- **Status:** fixed. `PurgeAccount` rewrites the subject of the `invite.created` rows that name the address to `[removed]` (the row stays, so
+  the log still shows an invitation was made). Regression test: `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson`.
 
 ### QA-011: a session opened while the account waited for deletion outlives the purge
 
