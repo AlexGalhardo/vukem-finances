@@ -44,7 +44,13 @@ func CheckBaseURL(kind, raw string, allowPrivate bool) error {
 		return badURL("The base URL cannot hold a user, a query or a fragment.")
 	}
 
-	host := strings.ToLower(u.Hostname())
+	// A trailing dot names the same host ("localhost." is localhost).
+	host := strings.TrimRight(strings.ToLower(u.Hostname()), ".")
+	if numericName(host) {
+		// "2130706433", "0x7f.0.0.1" and "127.1" are 127.0.0.1 to some resolvers and a name to others.
+		return badURL("Write an IP address as four decimal numbers, such as 10.0.0.5.")
+	}
+
 	local := isLocalHost(host)
 
 	var literal netip.Addr
@@ -98,4 +104,30 @@ func isLocalHost(host string) bool {
 	}
 
 	return false
+}
+
+// numericName is true for a host made only of decimal or 0x labels that is not
+// a canonical IP literal: an alternative spelling of an IPv4 address.
+func numericName(host string) bool {
+	if _, err := netip.ParseAddr(host); err == nil {
+		return false
+	}
+
+	for _, label := range strings.Split(host, ".") {
+		digits := strings.TrimPrefix(strings.TrimPrefix(label, "0x"), "0X")
+
+		if digits == "" && label != "0x" && label != "0X" {
+			return false
+		}
+
+		hex := digits != label
+
+		for _, r := range digits {
+			if r < '0' || r > '9' && (!hex || (r < 'a' || r > 'f') && (r < 'A' || r > 'F')) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
