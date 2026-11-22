@@ -56,6 +56,16 @@ func (s *Service) PurgeAccount(ctx context.Context, id int64) error {
 	ref := s.Ref("user", id)
 
 	err = s.DB.Tx(ctx, func(tx *database.Tx) error {
+		// A cancel that committed just before the grace period ended wins.
+		still, err := orm.QueryOf[models.User](tx).Where("id", id).Where("purge_at", "<=", s.now().UTC()).Count(ctx)
+		if err != nil {
+			return err
+		}
+
+		if still == 0 {
+			return errPurgeBlocked
+		}
+
 		uid := strconv.FormatInt(id, 10)
 
 		statements := []struct {

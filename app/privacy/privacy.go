@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"log/slog"
 	"strconv"
+	"sync/atomic"
 	"time"
 
 	"github.com/AlexGalhardo/vukem"
@@ -64,6 +65,8 @@ type Service struct {
 	Restart     func()
 	// EraseDelay is the wait between the answer and the erase.
 	EraseDelay time.Duration
+
+	erasing atomic.Bool
 
 	key []byte
 	now func() time.Time
