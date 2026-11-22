@@ -45,7 +45,6 @@ const es = {
 	kind: "Tipo",
 	errorGeneric: "Algo salió mal. Inténtalo de nuevo.",
 
-	spokenMoney: "{sign}{major} {majorUnit} {minor} {minorUnit}",
 	spokenMinus: "menos ",
 	spokenPlus: "más ",
 	incomeSign: "Ingreso {amount}",
