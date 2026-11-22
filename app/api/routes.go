@@ -69,11 +69,11 @@ func (a *API) Routes(g *router.Group, idem router.Middleware) {
 	route(a, g, a.Ops.Transactions.Transfer)
 	route(a, g, a.Ops.Transactions.Untransfer)
 
-	register(a, g, idem, "budgets.list", a.budgetsList)
-	register(a, g, idem, "budgets.set", a.budgetsSet)
-	register(a, g, idem, "budgets.delete", a.budgetsDelete)
+	route(a, g, a.Ops.Budgets.List)
+	route(a, g, a.Ops.Budgets.Set)
+	route(a, g, a.Ops.Budgets.Delete)
 
-	register(a, g, idem, "summary.show", a.summaryShow)
+	route(a, g, a.Ops.Budgets.Summary)
 
 	a.syncRoutes(g, idem)
 }
