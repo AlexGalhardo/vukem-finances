@@ -119,6 +119,26 @@ func TestOpenAI(t *testing.T) {
 		}
 	})
 
+	t.Run("a provider nobody answers for is unreachable, and still unavailable", func(t *testing.T) {
+		t.Parallel()
+
+		srv := httptest.NewServer(http.NotFoundHandler())
+		url := srv.URL
+		srv.Close()
+
+		p := ai.NewOpenAI(ai.NewKey(testKey), "gpt-test", localHTTP())
+		p.Endpoint = url + "/v1/chat/completions"
+
+		_, err := p.Complete(t.Context(), chatRequest())
+		if !errors.Is(err, ai.ErrUnreachable) || !errors.Is(err, ai.ErrUnavailable) {
+			t.Errorf("err = %v, want ErrUnreachable and ErrUnavailable", err)
+		}
+
+		if strings.Contains(err.Error(), url) {
+			t.Errorf("the error names the address: %v", err)
+		}
+	})
+
 	t.Run("an answer with no choices is an error", func(t *testing.T) {
 		t.Parallel()
 

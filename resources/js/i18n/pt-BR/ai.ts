@@ -104,5 +104,8 @@ const dict = {
   draftFill: "Preencher o formulário",
   draftError: "Não foi possível ler essa frase.",
   aiAutoApply: "Aplicar sugestões com confiança de pelo menos 90% sem revisão (você pode desfazer por 7 dias)",
+  aiOffline: "Sem conexão com o provedor de IA. Este recurso precisa de internet; o resto do app continua funcionando.",
+  aiNeedsInternet:
+    "Esta instalação funciona offline. A IA é a exceção: ela envia o seu pedido ao provedor escolhido, então precisa de internet (um servidor de modelo neste computador ou na sua rede não precisa).",
 } satisfies Record<keyof typeof en, string>;
 export default dict;

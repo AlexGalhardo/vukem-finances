@@ -319,7 +319,7 @@ func (c *Client) finish(ctx context.Context, id int64, status string, resp Respo
 // else (a transport error, a decryption failure) becomes ErrUnavailable, so no
 // text from upstream or from a failed request travels on.
 func publicError(err error) error {
-	for _, known := range []error{ErrRejected, ErrRateLimited, ErrBadRequest, ErrUnavailable} {
+	for _, known := range []error{ErrRejected, ErrRateLimited, ErrBadRequest, ErrUnreachable, ErrUnavailable} {
 		if errors.Is(err, known) {
 			return known
 		}

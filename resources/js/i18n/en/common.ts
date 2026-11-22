@@ -93,5 +93,6 @@ const dict = {
   inviteRegisterTitle: "Join the workspace",
   inviteRegisterDescription:
     "You were invited. Choose your name and a password; your email is the one the invitation was sent to.",
+  googleNeedsInternet: "Google sign-in needs the internet. Without it, use your email and password.",
 } as const;
 export default dict;

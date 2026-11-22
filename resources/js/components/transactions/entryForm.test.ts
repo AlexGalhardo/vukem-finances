@@ -86,6 +86,13 @@ describe("readProblem", () => {
     expect(problem.message).toBe("Too short");
   });
 
+  test("shows the offline text for the offline code only when one is given", () => {
+    const body = { code: "offline", detail: "No connection to the AI provider." };
+    expect(readProblem(body, "x", "Sem conexão").message).toBe("Sem conexão");
+    expect(readProblem(body, "x").message).toBe("No connection to the AI provider.");
+    expect(readProblem({ code: "other", detail: "d" }, "x", "Sem conexão").message).toBe("d");
+  });
+
   test("falls back when the answer is not a problem", () => {
     expect(readProblem(null, "fallback").message).toBe("fallback");
     expect(readProblem("<html>", "fallback").message).toBe("fallback");

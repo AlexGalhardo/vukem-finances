@@ -94,5 +94,6 @@ const dict = {
   setupSubmit: "Crear al propietario",
   inviteRegisterTitle: "Unirse al espacio de trabajo",
   inviteRegisterDescription: "Te invitaron. Elige tu nombre y una contraseña; el email es el de la invitación.",
+  googleNeedsInternet: "El acceso con Google necesita internet. Sin ella, usa tu email y contraseña.",
 } satisfies Record<keyof typeof en, string>;
 export default dict;

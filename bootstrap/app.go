@@ -11,6 +11,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/jobs"
 	"github.com/AlexGalhardo/vukem-finances/app/listeners"
+	"github.com/AlexGalhardo/vukem-finances/app/offline"
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
 	"github.com/AlexGalhardo/vukem-finances/config"
 	"github.com/AlexGalhardo/vukem-finances/database/migrations"
@@ -21,9 +22,13 @@ import (
 
 // New builds the application; cmd/app and the tests call it.
 func New(opts ...vukem.Option) (*vukem.App, error) {
+	// The one place the offline rules of the personal edition are applied (D-027).
+	gate := offline.NewGate()
+
 	base := []vukem.Option{
 		vukem.WithName("vukem-finances"),
-		vukem.WithProviders(Providers()...),
+		vukem.WithProviders(append([]vukem.Provider{gate.Provider()}, Providers()...)...),
+		vukem.WithViewFuncs(gate.ViewFuncs()),
 		vukem.WithMigrations(migrations.All()),
 		vukem.WithSeeders(seeders.All()...),
 		vukem.WithAppSeeders(seeders.AllApp()...),

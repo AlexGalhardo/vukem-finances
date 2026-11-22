@@ -162,6 +162,8 @@ func (a *AIHandlers) Check(c *web.Ctx) error {
 		message = "The provider rejected the key."
 	case errors.Is(err, ai.ErrNoCredential):
 		message = "Save a key first."
+	case errors.Is(err, ai.ErrUnreachable):
+		message = "No connection to the AI provider: this feature needs the internet."
 	case errors.Is(err, ai.ErrTooManyCalls), errors.Is(err, ai.ErrRateLimited):
 		message = "Too many requests: try again in a minute."
 	default:

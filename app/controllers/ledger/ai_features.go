@@ -68,6 +68,11 @@ func aiError(err error) error {
 		return errs.New(http.StatusTooManyRequests, "The monthly AI limit of the workspace is reached.")
 	case errors.Is(err, ai.ErrRejected):
 		return errs.New(http.StatusBadGateway, "The provider rejected the key.")
+	case errors.Is(err, ai.ErrUnreachable):
+		// The code lets the page say it in the person's language: the personal edition
+		// works offline, and only this feature needs the internet.
+		return errs.New(http.StatusBadGateway, "No connection to the AI provider: this feature needs the internet.").
+			WithExtension("code", "offline").WithExtensionsOn5xx()
 	case errors.Is(err, ai.ErrBadRequest), errors.Is(err, ai.ErrUnavailable):
 		return errs.New(http.StatusBadGateway, "The provider is unavailable.")
 	}
