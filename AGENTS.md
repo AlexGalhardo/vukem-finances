@@ -29,6 +29,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `app/telegram/` | the Telegram bot: Bot API client, updates, polling and webhook, linking, commands, rate limits, alert channel, texts in `lang/` (see "The Telegram bot") |
 | `app/operations/` | the operation registry: every action on the finances, declared once, with `Invoke` as the only way in (see "The operation registry") |
 | `app/api/` | the public JSON API: scoped tokens, the middleware chain and the REST adapter over the registry (see "The public API") |
+| `app/cli/` | the command line over the registry: `<resource> <verb>` commands, local and remote mode, table, JSON and CSV output, completion (see "The operation registry") |
 | `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `api.go`, `admin.go`, ...) registered by `registry.go` |
 | `database/migrations/` | Go migrations, registered in `registry.go` |
 | `resources/js/` | React pages, components, layouts and React Email templates |
@@ -102,6 +103,7 @@ Read `docs/api.md` ("Adding an operation") first. `app/operations/` is where eve
 - Errors carry a stable code (`not_found`, `forbidden`, `validation_failed`, `conflict`, `rate_limited`, `plan_limit`, `internal`, plus `missing_scope` and `version_conflict`). `Error.Err` is the cause, which a REST client has always received as the problem+json; an internal error has a generic message and its detail stays on the server.
 - A list that pages uses the opaque `operations.Cursor`. The lists of epic 14 keep their public contract (`?page=N`); the page links are built by the REST adapter, because a URL belongs to the surface.
 - `resources/operations.json` is the inventory, written by `go run ./cmd/app operations:inventory` (no APP_KEY, no database) and checked by `TestOperationInventoryIsFresh`. `TestSurfaceParity` iterates the registry and fails when an operation has no route on a surface it is offered on (epics 31 and 32 add their surfaces to it); `TestOperationIsolation` runs every entry of the inventory in another workspace with the first one's ids; `TestOpenAPIOperationsOfEpic14DidNotChange` holds the published operations to `testdata/openapi/epic14.json`.
+- The CLI (`app/cli/`, epic 31) builds a command from every operation offered on the CLI surface; flags come from the input type. Local mode runs through `Invoke` as the personal owner; remote mode calls REST with a token (`FINANCES_TOKEN`, `auth login`, never a flag). Table and CSV text passes through `cleanText` and the formula guard (`csvSafe`); a destructive command needs `--yes` without a terminal. `docs/reference/cli.md` is generated: `go run ./cmd/app cli:reference` (checked by `TestCLIReferenceIsFresh`); `TestSurfaceParity` fails when an operation loses its command.
 
 ## The AI layer
 
