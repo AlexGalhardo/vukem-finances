@@ -4,6 +4,7 @@ import { useEffect } from "react";
 import { useFinanceI18n } from "../lib/i18n";
 import { setSingleKeyEnabled, useSingleKeyShortcuts } from "../shortcuts/singleKey";
 import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { NativeSelect, NativeSelectOption } from "./ui/native-select";
 
 export default function Preferences({ withShortcuts = false }: { withShortcuts?: boolean }) {
@@ -24,16 +25,20 @@ export default function Preferences({ withShortcuts = false }: { withShortcuts?:
         <NativeSelectOption value="es">Español</NativeSelectOption>
       </NativeSelect>
       {withShortcuts && (
-        <Button
-          variant={singleKeys ? "secondary" : "ghost"}
-          size="icon"
-          aria-pressed={singleKeys}
-          aria-label={t("singleKey")}
-          title={t("singleKey")}
-          onClick={() => setSingleKeyEnabled(!singleKeys)}
-        >
-          <Zap aria-hidden="true" />
-        </Button>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant={singleKeys ? "secondary" : "ghost"}
+              size="icon"
+              aria-pressed={singleKeys}
+              aria-label={t("singleKey")}
+              onClick={() => setSingleKeyEnabled(!singleKeys)}
+            >
+              <Zap aria-hidden="true" />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>{t("singleKey")}</TooltipContent>
+        </Tooltip>
       )}
     </div>
   );

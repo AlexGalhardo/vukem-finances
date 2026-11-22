@@ -1,12 +1,14 @@
 import { Link, usePage } from "@inertiajs/react";
-import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
+import Mark from "../components/Mark";
 import Preferences from "../components/Preferences";
 import ThemeToggle from "../components/ThemeToggle";
+import { Alert, AlertDescription } from "../components/ui/alert";
 import { Button } from "../components/ui/button";
 import { TooltipProvider } from "../components/ui/tooltip";
 import { useFinanceI18n } from "../lib/i18n";
 import type { SharedProps } from "../page-props";
+import AuthLayout from "./AuthLayout";
 import Shell from "./Shell";
 
 /** Chooses the frame: the panel's own layout, the signed-in Shell, or the public header. */
@@ -19,14 +21,14 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   const notices = (
     <>
       {typeof success === "string" && (
-        <p role="status" className="rounded-lg border bg-muted p-4 text-sm">
-          {success}
-        </p>
+        <Alert variant="success">
+          <AlertDescription>{success}</AlertDescription>
+        </Alert>
       )}
       {typeof error === "string" && (
-        <p role="alert" className="rounded-lg border border-destructive p-4 text-sm text-destructive">
-          {error}
-        </p>
+        <Alert variant="error">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
       )}
     </>
   );
@@ -37,17 +39,22 @@ export default function AppLayout({ children }: { children: ReactNode }) {
   if (auth?.user && workspace) return <Shell notices={notices}>{children}</Shell>;
 
   const brand = (
-    <Link href="/" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-      <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-        <ArrowUpRight aria-hidden="true" className="size-5" />
-      </span>
+    <Link href="/" className="flex items-center gap-2 text-h2">
+      <Mark />
       {page.props.appName}
     </Link>
   );
   const landing = page.url.split("?")[0] === "/";
+  if (!landing) {
+    return (
+      <TooltipProvider>
+        <AuthLayout notices={notices}>{children}</AuthLayout>
+      </TooltipProvider>
+    );
+  }
   return (
     <TooltipProvider>
-      <header className="flex h-20 items-center justify-between border-b px-5 md:px-12">
+      <header className="flex h-20 items-center justify-between border-b border-border px-5 md:px-12">
         {brand}
         <div className="flex items-center gap-3">
           <Preferences />
@@ -57,17 +64,10 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <ThemeToggle />
         </div>
       </header>
-      {landing ? (
-        <main>
-          {notices}
-          {children}
-        </main>
-      ) : (
-        <main className="mx-auto flex min-h-[calc(100svh-5rem)] max-w-md flex-col justify-center gap-6 px-5 py-12">
-          {notices}
-          {children}
-        </main>
-      )}
+      <main>
+        {notices}
+        {children}
+      </main>
     </TooltipProvider>
   );
 }

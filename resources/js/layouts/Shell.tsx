@@ -1,7 +1,8 @@
 import { Link, router, usePage } from "@inertiajs/react";
 import {
-  ArrowUpRight,
   BookOpen,
+  ChevronRight,
+  CircleHelp,
   CircleUser,
   Keyboard,
   LogOut,
@@ -13,7 +14,8 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import AssistantHost from "../components/assistant/AssistantHost";
 import CommandPalette from "../components/CommandPalette";
-import { Shortcut } from "../components/Kbd";
+import { Kbd, ShortcutHint } from "../components/Kbd";
+import Mark from "../components/Mark";
 import NotificationBell from "../components/NotificationBell";
 import Preferences from "../components/Preferences";
 import ShortcutHelp from "../components/ShortcutHelp";
@@ -26,6 +28,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "../components/ui/dropdown-menu";
 import { NativeSelect, NativeSelectOption } from "../components/ui/native-select";
@@ -43,12 +46,13 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "../components/ui/sidebar";
-import { TooltipProvider } from "../components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip";
+import { HelpSheet } from "../help/HelpSheet";
 import { useFinanceI18n } from "../lib/i18n";
-import { isActivePath, navItemsFor } from "../nav";
+import { isActivePath, type NavItem, navGroups, navHintActionId, navItemsFor } from "../nav";
 import type { SharedProps } from "../page-props";
 import ShellKeyboard from "../shortcuts/ShellKeyboard";
-import { useIsMac } from "../shortcuts/useIsMac";
+import { useActionHint } from "../shortcuts/useActionHint";
 
 const DOCS_URL = "https://finances.vukem.dev/docs/";
 
@@ -77,13 +81,114 @@ function useRouteFocus(): string {
   return announcement;
 }
 
+/** The key caps of an action inside a menu item, read from the registry. */
+function ActionKeys({ actionId }: { actionId: string }) {
+  const hint = useActionHint(actionId);
+  if (!hint) return null;
+  return (
+    <DropdownMenuShortcut aria-hidden="true" className="inline-flex gap-0.5">
+      {hint.parts.map((part, index) => (
+        // biome-ignore lint/suspicious/noArrayIndexKey: the same cap can repeat in a sequence
+        <Kbd key={index}>{part}</Kbd>
+      ))}
+    </DropdownMenuShortcut>
+  );
+}
+
+/** An icon-only header button: its name and shortcut show in a tooltip, never in a native title. */
+function HeaderIconButton({
+  label,
+  actionId,
+  onClick,
+  children,
+}: {
+  label: string;
+  actionId?: string;
+  onClick: () => void;
+  children: ReactNode;
+}) {
+  const hint = useActionHint(actionId ?? "");
+  const { t } = useFinanceI18n();
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-haspopup="dialog"
+          aria-label={label}
+          aria-keyshortcuts={hint?.ariaKeyShortcuts}
+          onClick={onClick}
+        >
+          {children}
+        </Button>
+      </TooltipTrigger>
+      <TooltipContent>
+        {label}
+        {hint?.parts.map((part, index) => (
+          // biome-ignore lint/suspicious/noArrayIndexKey: the same cap can repeat in a sequence
+          <span key={index} className="inline-flex items-center gap-1">
+            {index > 0 && <span>{t("shortcutThen")}</span>}
+            <Kbd>{part}</Kbd>
+          </span>
+        ))}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+/** One sidebar link: active bar and aria-current, and in the collapsed rail a tooltip with its shortcut. */
+function NavEntry({ item, active }: { item: NavItem; active: boolean }) {
+  const { t } = useFinanceI18n();
+  const hint = useActionHint(navHintActionId(item));
+  const label = t(item.labelKey);
+  return (
+    <SidebarMenuItem>
+      <SidebarMenuButton
+        asChild
+        isActive={active}
+        tooltip={{
+          children: (
+            <>
+              {label}
+              {hint?.parts.map((part, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: the same cap can repeat in a sequence
+                <Kbd key={index}>{part}</Kbd>
+              ))}
+            </>
+          ),
+        }}
+        className="relative data-[active=true]:font-medium data-[active=true]:before:absolute data-[active=true]:before:inset-y-1.5 data-[active=true]:before:start-0 data-[active=true]:before:w-0.5 data-[active=true]:before:rounded-full data-[active=true]:before:bg-brand"
+      >
+        <Link href={item.href} aria-current={active ? "page" : undefined}>
+          <item.icon aria-hidden="true" />
+          <span>{label}</span>
+          {hint && (
+            <ShortcutHint
+              parts={hint.parts}
+              className="ms-auto opacity-0 group-focus-within/menu-item:opacity-100 group-hover/menu-item:opacity-100 group-data-[collapsible=icon]:hidden!"
+            />
+          )}
+        </Link>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+}
+
 /** Header button of the new transaction dialog; viewers cannot record, so they do not get it. */
 function NewTransactionButton() {
   const { t } = useFinanceI18n();
   const { openTransaction, canRecord } = useQuickAdd();
   if (!canRecord) return null;
   return (
-    <Button type="button" aria-haspopup="dialog" onClick={() => openTransaction("expense")}>
+    <Button
+      type="button"
+      variant="brand"
+      aria-haspopup="dialog"
+      shortcutAction="new-expense"
+      onClick={() => openTransaction("expense")}
+    >
       <Plus aria-hidden="true" />
       <span className="hidden sm:inline">{t("newTransaction")}</span>
       <span className="sm:hidden sr-only">{t("newTransaction")}</span>
@@ -95,9 +200,9 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
   const page = usePage<SharedProps>();
   const { auth, workspace } = page.props;
   const { t } = useFinanceI18n();
-  const isMac = useIsMac();
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [pageHelpOpen, setPageHelpOpen] = useState(false);
   const announcement = useRouteFocus();
 
   // A dialog left open would cover the page the person just asked for.
@@ -106,6 +211,7 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
       router.on("navigate", () => {
         setPaletteOpen(false);
         setHelpOpen(false);
+        setPageHelpOpen(false);
       }),
     [],
   );
@@ -113,13 +219,14 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
   if (!auth?.user || !workspace) return null;
   const saas = workspace.edition !== "personal";
   const items = navItemsFor(workspace.edition);
+  const current = items.find((item) => isActivePath(page.url, item.href));
 
   return (
     <TooltipProvider>
       <a
         data-print="hide"
         href="#content"
-        className="fixed top-2 left-2 z-[70] -translate-y-20 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground focus:translate-y-0"
+        className="fixed top-2 left-2 z-(--vf-z-skip) -translate-y-20 rounded-md bg-primary px-4 py-2 text-label text-primary-foreground focus:translate-y-0"
       >
         {t("skipToContent")}
       </a>
@@ -136,13 +243,15 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
               setPaletteOpen(false);
               setHelpOpen(true);
             }}
+            onOpenPageHelp={() => {
+              setPaletteOpen(false);
+              setPageHelpOpen(true);
+            }}
           />
           <Sidebar>
-            <SidebarHeader className="gap-6 p-5">
-              <Link href="/dashboard" className="flex items-center gap-2 text-lg font-semibold tracking-tight">
-                <span className="flex size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <ArrowUpRight aria-hidden="true" className="size-5" />
-                </span>
+            <SidebarHeader className="gap-4 p-4">
+              <Link href="/dashboard" className="flex items-center gap-2 text-h2">
+                <Mark />
                 {page.props.appName}
               </Link>
               <div className="flex flex-col gap-2">
@@ -165,28 +274,35 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
               </div>
             </SidebarHeader>
             <SidebarContent>
-              <SidebarGroup>
-                <SidebarGroupLabel>{t("personalFinance")}</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <nav aria-label={t("mainNavigation")}>
+              <nav aria-label={t("mainNavigation")} className="flex flex-col gap-2">
+                <SidebarGroup>
+                  <SidebarGroupContent>
                     <SidebarMenu>
-                      {items.map((item) => {
-                        const active = isActivePath(page.url, item.href);
-                        return (
-                          <SidebarMenuItem key={item.id}>
-                            <SidebarMenuButton asChild isActive={active} tooltip={t(item.labelKey)}>
-                              <Link href={item.href} aria-current={active ? "page" : undefined}>
-                                <item.icon aria-hidden="true" />
-                                <span>{t(item.labelKey)}</span>
-                              </Link>
-                            </SidebarMenuButton>
-                          </SidebarMenuItem>
-                        );
-                      })}
+                      {items
+                        .filter((item) => item.group === undefined)
+                        .map((item) => (
+                          <NavEntry key={item.id} item={item} active={isActivePath(page.url, item.href)} />
+                        ))}
                     </SidebarMenu>
-                  </nav>
-                </SidebarGroupContent>
-              </SidebarGroup>
+                  </SidebarGroupContent>
+                </SidebarGroup>
+                {navGroups.map((group) => {
+                  const members = items.filter((item) => item.group === group.id);
+                  if (members.length === 0) return null;
+                  return (
+                    <SidebarGroup key={group.id}>
+                      <SidebarGroupLabel>{t(group.labelKey)}</SidebarGroupLabel>
+                      <SidebarGroupContent>
+                        <SidebarMenu>
+                          {members.map((item) => (
+                            <NavEntry key={item.id} item={item} active={isActivePath(page.url, item.href)} />
+                          ))}
+                        </SidebarMenu>
+                      </SidebarGroupContent>
+                    </SidebarGroup>
+                  );
+                })}
+              </nav>
             </SidebarContent>
             <SidebarFooter className="p-4">
               <SidebarMenu>
@@ -237,10 +353,20 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
           <div className="relative flex min-w-0 flex-1 flex-col bg-background">
             <header
               data-print="hide"
-              className="sticky top-0 z-10 flex min-h-14 flex-wrap items-center gap-2 border-b bg-background px-4 py-2 lg:px-6"
+              className="sticky top-0 z-(--vf-z-header) flex min-h-14 flex-wrap items-center gap-2 border-b border-border bg-background px-4 py-2 lg:px-6"
             >
               <SidebarTrigger aria-label={t("toggleSidebar")} />
-              <span className="truncate text-sm text-muted-foreground">{workspace.current.name}</span>
+              <nav aria-label={t("breadcrumb")} className="min-w-0">
+                <ol className="flex min-w-0 items-center gap-1.5 text-body text-muted-foreground">
+                  <li className="truncate">{workspace.current.name}</li>
+                  {current && (
+                    <li className="flex items-center gap-1.5 text-foreground">
+                      <ChevronRight aria-hidden="true" className="size-3.5 text-subtle" />
+                      <span aria-current="page">{t(current.labelKey)}</span>
+                    </li>
+                  )}
+                </ol>
+              </nav>
               <div className="ml-auto flex flex-wrap items-center gap-2">
                 <NewTransactionButton />
                 <Button
@@ -248,32 +374,45 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
                   variant="outline"
                   aria-haspopup="dialog"
                   aria-label={t("openPalette")}
+                  shortcutAction="open-palette"
                   onClick={() => setPaletteOpen(true)}
                 >
                   <Search aria-hidden="true" />
                   <span className="hidden sm:inline">{t("openPalette")}</span>
-                  <span className="hidden sm:inline" aria-hidden="true">
-                    <Shortcut keys="mod+k" isMac={isMac} />
-                  </span>
                 </Button>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon"
-                  aria-haspopup="dialog"
-                  aria-label={t("openShortcutHelp")}
-                  title={t("openShortcutHelp")}
+                <HeaderIconButton
+                  label={t("openShortcutHelp")}
+                  actionId="open-shortcut-help"
                   onClick={() => setHelpOpen(true)}
                 >
                   <Keyboard aria-hidden="true" />
-                </Button>
+                </HeaderIconButton>
+                <DropdownMenu>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <DropdownMenuTrigger asChild>
+                        <Button type="button" variant="ghost" size="icon" aria-label={t("helpMenu")}>
+                          <CircleHelp aria-hidden="true" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                    </TooltipTrigger>
+                    <TooltipContent>{t("helpMenu")}</TooltipContent>
+                  </Tooltip>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onSelect={() => setPageHelpOpen(true)}>
+                      <CircleHelp aria-hidden="true" />
+                      {t("helpThisPage")}
+                      <ActionKeys actionId="open-page-help" />
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
                 <NotificationBell />
                 <Preferences withShortcuts />
                 <ThemeToggle />
               </div>
             </header>
             <main id="content" tabIndex={-1} className="outline-none">
-              <div className="finance-page mx-auto flex w-full max-w-7xl flex-col gap-7 p-5 lg:p-8">
+              <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-4 py-6 md:px-8 md:py-8">
                 {notices}
                 {children}
               </div>
@@ -284,6 +423,12 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
           </div>
           <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
           <ShortcutHelp open={helpOpen} onOpenChange={setHelpOpen} />
+          <HelpSheet
+            open={pageHelpOpen}
+            onOpenChange={setPageHelpOpen}
+            title={current ? t(current.labelKey) : workspace.current.name}
+            shortcutActions={["open-palette", "open-shortcut-help", "open-page-help"]}
+          />
         </QuickAdd>
       </SidebarProvider>
     </TooltipProvider>

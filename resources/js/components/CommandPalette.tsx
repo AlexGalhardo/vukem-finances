@@ -10,7 +10,7 @@ import { useActions } from "../shortcuts/useAction";
 import { useIsMac } from "../shortcuts/useIsMac";
 import { useReturnFocus } from "../shortcuts/useReturnFocus";
 import Combobox, { type ComboboxItem } from "./Combobox";
-import { Shortcut } from "./Kbd";
+import { Kbd, Shortcut } from "./Kbd";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "./ui/dialog";
 
 const SEARCH_ID = "__search-transactions";
@@ -71,7 +71,7 @@ export default function CommandPalette({
       <DialogContent
         data-vf-overlay=""
         showCloseButton={false}
-        className="top-[15%] translate-y-0 gap-0 p-0 sm:max-w-xl"
+        className="top-[15vh] translate-y-0 gap-0 overflow-hidden p-0 sm:max-w-160 max-sm:top-0 max-sm:h-dvh max-sm:max-h-dvh max-sm:w-full max-sm:max-w-none max-sm:rounded-none"
         onCloseAutoFocus={(event) => {
           event.preventDefault();
           returnFocus();
@@ -87,7 +87,7 @@ export default function CommandPalette({
         <div className="relative">
           <Search
             aria-hidden="true"
-            className="pointer-events-none absolute top-3 left-3 size-4 text-muted-foreground"
+            className="pointer-events-none absolute top-4 left-3 size-4 text-muted-foreground"
           />
           <Combobox
             alwaysOpen
@@ -98,9 +98,30 @@ export default function CommandPalette({
             label={t("paletteTitle")}
             placeholder={t("palettePlaceholder")}
             resultsLabel={(count) => `${count} ${t(count === 1 ? "resultOne" : "resultMany")}`}
-            inputClassName="rounded-none border-0 border-b bg-transparent py-3 pl-9 focus-visible:ring-0"
+            inputClassName="h-12 rounded-none border-0 border-b border-border bg-transparent py-3 pr-14 pl-9"
             listClassName="px-2"
           />
+          <Kbd aria-hidden="true" className="pointer-events-none absolute top-3.5 right-3">
+            Esc
+          </Kbd>
+        </div>
+        <div
+          aria-hidden="true"
+          className="flex items-center gap-4 border-t border-border px-3 py-2 text-caption text-muted-foreground [@media(hover:none)]:hidden"
+        >
+          <span className="flex items-center gap-1.5">
+            <Kbd>↑</Kbd>
+            <Kbd>↓</Kbd>
+            {t("paletteHintMove")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Kbd>Enter</Kbd>
+            {t("paletteHintRun")}
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Kbd>Esc</Kbd>
+            {t("paletteHintClose")}
+          </span>
         </div>
       </DialogContent>
     </Dialog>
