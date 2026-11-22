@@ -29,6 +29,11 @@ var workspaceTables = []string{"memberships", "workspace_subscriptions"}
 var sharedTables = []string{
 	"workspaces", "users", "email_suppressions", "admin_audit_logs", "social_accounts",
 	"remember_tokens", "access_tokens", "password_resets",
+	// The Telegram bot (epic 17): a link belongs to a person and the workspace is
+	// resolved from the live membership at every message; codes, drafts, update
+	// ids, the polling state and the rate counters are keyed by chat, code or id.
+	"telegram_links", "telegram_link_codes", "telegram_pending", "telegram_updates", "telegram_state",
+	"telegram_counters",
 	// Framework tables (queue, cache, sessions, locks, migrations).
 	"migrations", "jobs", "failed_jobs", "cache", "cache_locks", "sessions",
 }
