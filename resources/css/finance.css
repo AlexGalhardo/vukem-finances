@@ -252,6 +252,19 @@
 	}
 }
 
+/* Keyboard hints show only where a keyboard is likely: CSS-only, so server and client markup match. */
+[data-slot="shortcut-hint"] {
+	display: none;
+}
+@media (hover: hover) and (pointer: fine) and (min-width: 40rem) {
+	[data-slot="shortcut-hint"] {
+		display: inline-flex;
+	}
+	[data-size="xs"] [data-slot="shortcut-hint"] {
+		display: none;
+	}
+}
+
 /* Forced colors: series lose their hue, so the hatch and the legend carry the difference. */
 @media (forced-colors: active) {
 	svg [class*="fill-chart"],

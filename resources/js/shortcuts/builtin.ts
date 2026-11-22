@@ -8,6 +8,8 @@ export const shellActionSpecs: readonly ActionSpec[] = [
   { id: "open-palette", labelKey: "openPalette", group: "actions", keys: "mod+k" },
   { id: "open-shortcut-help", labelKey: "openShortcutHelp", group: "actions", keys: "?" },
   { id: "toggle-sidebar", labelKey: "toggleSidebar", group: "actions", keys: "[" },
+  { id: "open-tutorial", labelKey: "openTutorial", group: "actions", keys: "h t" },
+  { id: "open-page-help", labelKey: "openPageHelp", group: "actions", keys: "h p" },
 ];
 
 export function navActionSpecs(items = navItems): ActionSpec[] {

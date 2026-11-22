@@ -2,9 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { createDispatcher, type DispatchEvent } from "./dispatcher";
 import { type GuardElement, isTypingTarget } from "./guard";
 import { normalizeBinding, parseBinding } from "./keys";
+import { formatAriaKeyShortcuts, formatHintLabel } from "./format";
 import { createSequenceMatcher, type Timers } from "./matcher";
 import { type Action, createRegistry } from "./registry";
 import { isReserved } from "./reserved";
+import { resolveActionHint } from "./useActionHint";
 import { readSingleKey, SINGLE_KEY_STORAGE_KEY } from "./singleKey";
 
 function el(
@@ -320,5 +322,56 @@ describe("keys and preference", () => {
     storage.setItem(SINGLE_KEY_STORAGE_KEY, "off");
     expect(readSingleKey(storage)).toBe(false);
     expect(readSingleKey(null)).toBe(true);
+  });
+});
+
+describe("action hints", () => {
+  const actions: Action[] = [
+    { id: "open-palette", labelKey: "dashboard", group: "actions", keys: "mod+k", run() {} },
+    { id: "go-dashboard", labelKey: "dashboard", group: "navigation", keys: "g d", run() {} },
+    { id: "toggle-sidebar", labelKey: "dashboard", group: "actions", keys: "[", run() {} },
+    { id: "export", labelKey: "dashboard", group: "actions", keys: "x", run() {} },
+    { id: "help", labelKey: "dashboard", group: "actions", keys: "?", run() {} },
+    { id: "palette-only", labelKey: "dashboard", group: "actions", run() {} },
+    { id: "off", labelKey: "dashboard", group: "actions", keys: "n e", run() {}, enabled: () => false },
+  ];
+  const on = { isMac: false, singleKeys: true };
+
+  test("formats a chord for Windows and for macOS", () => {
+    expect(resolveActionHint(actions, "open-palette", on)).toEqual({
+      parts: ["Ctrl+K"],
+      ariaKeyShortcuts: "Control+K",
+    });
+    expect(resolveActionHint(actions, "open-palette", { ...on, isMac: true })).toEqual({
+      parts: ["⌘+K"],
+      ariaKeyShortcuts: "Meta+K",
+    });
+  });
+
+  test("a sequence has one cap per key and no aria-keyshortcuts", () => {
+    expect(resolveActionHint(actions, "go-dashboard", on)).toEqual({ parts: ["G", "D"], ariaKeyShortcuts: undefined });
+    expect(formatHintLabel(["G", "D"], "then")).toBe("G then D");
+    expect(formatHintLabel(["Ctrl+K"], "then")).toBe("Ctrl+K");
+  });
+
+  test("single symbols and letters keep their own aria form", () => {
+    expect(formatAriaKeyShortcuts("?", false)).toBe("Shift+?");
+    expect(formatAriaKeyShortcuts("[", false)).toBe("[");
+    expect(formatAriaKeyShortcuts("x", false)).toBe("X");
+    expect(formatAriaKeyShortcuts("g d", false)).toBeUndefined();
+  });
+
+  test("nothing is shown for a missing action, no keys or a disabled action", () => {
+    expect(resolveActionHint(actions, "nope", on)).toBeNull();
+    expect(resolveActionHint(actions, "palette-only", on)).toBeNull();
+    expect(resolveActionHint(actions, "off", on)).toBeNull();
+  });
+
+  test("with single-key shortcuts off only chords keep a hint", () => {
+    const off = { isMac: false, singleKeys: false };
+    expect(resolveActionHint(actions, "export", off)).toBeNull();
+    expect(resolveActionHint(actions, "go-dashboard", off)).toBeNull();
+    expect(resolveActionHint(actions, "open-palette", off)).not.toBeNull();
+    expect(resolveActionHint(actions, "export", on)?.parts).toEqual(["X"]);
   });
 });
