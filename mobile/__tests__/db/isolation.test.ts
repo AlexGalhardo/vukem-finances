@@ -185,6 +185,55 @@ describe("isolation of transactions on one connection", () => {
     expect(await names(db)).toEqual(["after"]);
   });
 
+  it("does not let a waiting UI write land in the next queued transaction", async () => {
+    const db = await open();
+    const started = deferred();
+    const release = deferred();
+
+    const first = db.transaction(async (tx) => {
+      await insertTag(tx, "first");
+      started.resolve();
+      await release.promise;
+    });
+    await started.promise;
+
+    const ui = insertTag(db, "from-ui");
+    const second = db.transaction(async (tx) => {
+      await insertTag(tx, "second");
+      await tick();
+      throw new Error("the second one failed");
+    });
+    const secondFailed = expect(second).rejects.toThrow("the second one failed");
+
+    release.resolve();
+    await Promise.all([first, ui, secondFailed]);
+
+    expect(await names(db)).toEqual(["first", "from-ui"]);
+  });
+
+  it("does not start a transaction over one still open after another timed out in the queue", async () => {
+    const db = await open(25);
+    const started = deferred();
+    const release = deferred();
+
+    const first = db.transaction(async (tx) => {
+      await insertTag(tx, "first");
+      started.resolve();
+      await release.promise;
+    });
+    await started.promise;
+
+    await expect(db.transaction(async () => undefined)).rejects.toBeInstanceOf(DeadlockError);
+
+    const third = db.transaction((tx) => insertTag(tx, "third"));
+    await tick();
+    release.resolve();
+    const outcomes = await Promise.allSettled([first, third]);
+
+    expect(outcomes.map((o) => o.status)).toEqual(["fulfilled", "fulfilled"]);
+    expect(await names(db)).toEqual(["first", "third"]);
+  });
+
   it("refuses a tx used after its transaction ended", async () => {
     const db = await open();
     let leaked: Database | null = null;
