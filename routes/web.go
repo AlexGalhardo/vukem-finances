@@ -23,8 +23,10 @@ func Web(r *router.Router, app *vukem.App) error {
 	// The API authenticates with a bearer token only: no session is read, so a cookie is
 	// ignored, and no CSRF check applies (nothing the browser sends by itself authenticates).
 	apiPrefix := api.BasePath + "/"
+	// The Telegram webhook is not a browser route either: the secret header is its credential.
+	hookPrefix := config.WebhookPath + "/"
 	if err := vukem.DefaultMiddlewareWith(app, r, vukem.MiddlewareOptions{
-		SessionBypass: []string{apiPrefix}, CSRFBypass: []string{apiPrefix},
+		SessionBypass: []string{apiPrefix, hookPrefix}, CSRFBypass: []string{apiPrefix, hookPrefix},
 	}); err != nil {
 		return err
 	}
