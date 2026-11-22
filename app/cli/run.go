@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"bytes"
 	"context"
 	"encoding/json"
@@ -180,6 +181,10 @@ func (c *CLI) runCommand(ctx context.Context, cmd Command, args []string) error 
 		return err
 	}
 
+	if err := c.confirm(cmd, body, g.yes); err != nil {
+		return err
+	}
+
 	back, err := c.backend(ctx, &g)
 	if err != nil {
 		return err
@@ -193,6 +198,34 @@ func (c *CLI) runCommand(ctx context.Context, cmd Command, args []string) error 
 	}
 
 	return c.write(cmd, res, format, g.out)
+}
+
+// confirm asks before a destructive command runs. It runs before the backend
+// is opened, so a refusal touches neither the app nor the server. Without a
+// terminal there is no one to ask, and --yes is the only way.
+func (c *CLI) confirm(cmd Command, body map[string]any, yes bool) error {
+	if !cmd.Destructive() || yes {
+		return nil
+	}
+
+	if !c.Env.StdinTTY {
+		return usagef("%s removes data: pass --yes to run it without a terminal", cmd.Name())
+	}
+
+	target := ""
+	for _, p := range cmd.Params {
+		target += fmt.Sprintf(" %v", body[p])
+	}
+
+	fmt.Fprintf(c.Env.Stderr, "%s%s removes data. Continue? [y/N] ", cmd.Name(), cleanText(target))
+
+	line, _ := bufio.NewReader(io.LimitReader(c.Env.Stdin, 4096)).ReadString('\n')
+
+	if answer := strings.ToLower(strings.TrimSpace(line)); answer != "y" && answer != "yes" {
+		return &Failure{Code: ExitFailure, Msg: "cancelled: nothing was changed"}
+	}
+
+	return nil
 }
 
 // parseInterleaved parses flags that may come after the positional arguments.

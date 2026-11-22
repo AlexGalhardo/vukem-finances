@@ -3,6 +3,7 @@ package cli_test
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"net/url"
 	"strconv"
 	"strings"
@@ -131,3 +132,17 @@ func run(t *testing.T, c *cli.CLI, tm *term, args ...string) int {
 
 // unusable is a password hash no one can log in with.
 func unusable() string { return strings.Repeat("!", 8) }
+
+// jsonField reads one string field of a JSON object.
+func jsonField(t *testing.T, raw []byte, name string) string {
+	t.Helper()
+
+	var m map[string]any
+	if err := json.Unmarshal(raw, &m); err != nil {
+		t.Fatalf("not JSON: %v: %s", err, raw)
+	}
+
+	s, _ := m[name].(string)
+
+	return s
+}
