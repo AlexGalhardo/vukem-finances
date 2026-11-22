@@ -95,7 +95,9 @@ func (s *Service) checkTransfers(ctx context.Context, tx *database.Tx, ws int64,
 	}
 
 	for _, t := range slices.Sorted(maps.Keys(affected)) {
-		if deleted[t] {
+		// A leg that leaves in the same batch is still checked: otherwise it
+		// would survive alone while the delete of its partner finds no pair.
+		if deleted[t] && len(left[t]) == 0 {
 			continue
 		}
 
