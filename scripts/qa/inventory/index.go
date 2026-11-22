@@ -50,6 +50,9 @@ type index struct {
 	requests []request
 	// tests are the names of the test functions that exist.
 	tests map[string]bool
+	// consts are the path constants of the app (`PixWebhookPath`), by name, so a
+	// test that posts to one covers its route.
+	consts map[string]string
 	// scheduleFiles are the files that mention Schedule.
 	scheduleFiles map[string]bool
 }
@@ -72,7 +75,14 @@ var skipDirs = map[string]bool{
 func buildIndex(root string, hidden map[string]bool) (*index, error) {
 	ix := newIndex()
 
-	err := filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
+	consts, err := pathConstants(root)
+	if err != nil {
+		return nil, err
+	}
+
+	ix.consts = consts
+
+	err = filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
@@ -87,6 +97,11 @@ func buildIndex(root string, hidden map[string]bool) (*index, error) {
 
 		rel, _ := filepath.Rel(root, path)
 		rel = filepath.ToSlash(rel)
+
+		// The tests of this tool hold made-up samples, not coverage.
+		if strings.HasPrefix(rel, "scripts/qa/inventory/") {
+			return nil
+		}
 
 		switch {
 		case strings.HasSuffix(rel, "_test.go"):
@@ -154,14 +169,25 @@ func (ix *index) addGo(path, rel string, hidden map[string]bool) error {
 		// A path kept in a variable (`base := "/cards/" + id`) is followed
 		// through the function, in source order.
 		env := map[string]string{}
+		inner := map[ast.Node]bool{}
 
 		ast.Inspect(decl, func(n ast.Node) bool {
 			switch v := n.(type) {
+			case *ast.BinaryExpr:
+				// "GET /admin/users/" + id + "/edit" is a request pattern when
+				// read whole; its parts are not.
+				if v.Op == token.ADD && !inner[v] {
+					if m := routeLiteral.FindStringSubmatch(constString(v, env, ix.consts)); m != nil {
+						ix.addRoute(m[1], m[2], u)
+					}
+
+					markInner(v, inner)
+				}
 			case *ast.AssignStmt:
 				if len(v.Lhs) == len(v.Rhs) {
 					for i, l := range v.Lhs {
 						if id, ok := l.(*ast.Ident); ok {
-							if s := constString(v.Rhs[i], env); strings.Contains(s, "/") {
+							if s := constString(v.Rhs[i], env, ix.consts); strings.Contains(s, "/") {
 								env[id.Name] = s
 							}
 						}
@@ -173,7 +199,7 @@ func (ix *index) addGo(path, rel string, hidden map[string]bool) error {
 						ix.noteString(s, u)
 
 						if m := routeLiteral.FindStringSubmatch(s); m != nil {
-							ix.requests = append(ix.requests, request{method: m[1], path: m[2], unit: u})
+							ix.addRoute(m[1], m[2], u)
 						}
 					}
 				}
@@ -200,6 +226,22 @@ func (ix *index) addGo(path, rel string, hidden map[string]bool) error {
 	return nil
 }
 
+// addRoute records a "METHOD /path" pattern, without its query.
+func (ix *index) addRoute(method, path string, u unit) {
+	if p, ok := pathOf(path); ok {
+		ix.requests = append(ix.requests, request{method: method, path: p, unit: u})
+	}
+}
+
+func markInner(e ast.Expr, inner map[ast.Node]bool) {
+	if b, ok := e.(*ast.BinaryExpr); ok && b.Op == token.ADD {
+		inner[b.X], inner[b.Y] = true, true
+
+		markInner(b.X, inner)
+		markInner(b.Y, inner)
+	}
+}
+
 func isTestName(name string) bool {
 	return strings.HasPrefix(name, "Test") || strings.HasPrefix(name, "Fuzz")
 }
@@ -220,7 +262,7 @@ func (ix *index) addCall(call *ast.CallExpr, u unit, env map[string]string) {
 	{
 		if m := verbCall.FindStringSubmatch(name); m != nil {
 			for _, a := range call.Args[:min(len(call.Args), 3)] {
-				if p, ok := pathOf(constString(a, env)); ok {
+				if p, ok := pathOf(constString(a, env, ix.consts)); ok {
 					ix.requests = append(ix.requests, request{method: strings.ToUpper(m[1]), path: p, unit: u})
 
 					break
@@ -235,7 +277,7 @@ func (ix *index) addCall(call *ast.CallExpr, u unit, env map[string]string) {
 			continue
 		}
 
-		if p, ok := pathOf(constString(call.Args[i+1], env)); ok {
+		if p, ok := pathOf(constString(call.Args[i+1], env, ix.consts)); ok {
 			ix.requests = append(ix.requests, request{method: s, path: p, unit: u})
 		}
 	}
@@ -285,10 +327,18 @@ var verb = regexp.MustCompile(`%[-+# 0-9.*]*[a-zA-Z]`)
 
 // constString rebuilds the text of an expression, with a hole for every part
 // that is not constant: the template of a path a test builds.
-func constString(e ast.Expr, env map[string]string) string {
+func constString(e ast.Expr, env, consts map[string]string) string {
 	switch v := e.(type) {
 	case *ast.Ident:
 		if s, ok := env[v.Name]; ok {
+			return s
+		}
+
+		if s, ok := consts[v.Name]; ok {
+			return s
+		}
+	case *ast.SelectorExpr:
+		if s, ok := consts[v.Sel.Name]; ok {
 			return s
 		}
 	case *ast.BasicLit:
@@ -296,10 +346,10 @@ func constString(e ast.Expr, env map[string]string) string {
 			return s
 		}
 	case *ast.ParenExpr:
-		return constString(v.X, env)
+		return constString(v.X, env, consts)
 	case *ast.BinaryExpr:
 		if v.Op == token.ADD {
-			return constString(v.X, env) + constString(v.Y, env)
+			return constString(v.X, env, consts) + constString(v.Y, env, consts)
 		}
 	case *ast.CallExpr:
 		if sel, ok := v.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "Sprintf" && len(v.Args) > 0 {
