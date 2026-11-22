@@ -1,6 +1,6 @@
 import { readdirSync, readFileSync, statSync } from "node:fs";
 import { act, fireEvent, render, screen } from "@testing-library/react-native";
-import type { ReactElement } from "react";
+import { type ReactElement, type ReactNode, useMemo } from "react";
 import { PixelRatio, Pressable, Text, View } from "react-native";
 import { Button } from "../../src/components/Button";
 import { Chip } from "../../src/components/Chip";
@@ -8,6 +8,7 @@ import { EmptyState } from "../../src/components/EmptyState";
 import { ListRow } from "../../src/components/ListRow";
 import { MoneyText } from "../../src/components/MoneyText";
 import { Toast } from "../../src/components/Toast";
+import { useApp } from "../../src/core/state";
 import { createCard } from "../../src/domain/cards";
 import { newUid } from "../../src/domain/ids";
 import { createInstallments } from "../../src/domain/recurrence";
@@ -24,11 +25,19 @@ import { MoreScreen } from "../../src/screens/MoreScreen";
 import { RecurrencesScreen } from "../../src/screens/RecurrencesScreen";
 import { ReportsScreen } from "../../src/screens/ReportsScreen";
 import { SettingsScreen } from "../../src/screens/SettingsScreen";
+import { SyncConflictsScreen } from "../../src/screens/SyncConflictsScreen";
+import { SyncConnectScreen } from "../../src/screens/SyncConnectScreen";
+import { SyncMergeScreen } from "../../src/screens/SyncMergeScreen";
+import { SyncProblemsScreen } from "../../src/screens/SyncProblemsScreen";
+import { SyncStatusScreen } from "../../src/screens/SyncStatusScreen";
 import { TagsScreen } from "../../src/screens/TagsScreen";
 import { TransactionsScreen } from "../../src/screens/TransactionsScreen";
+import { SyncProvider } from "../../src/sync/context";
+import { SyncController } from "../../src/sync/controller";
 import { a11yViolations, hasHeading, layoutViolations, touchableCount } from "../helpers/a11y";
 import { renderApp } from "../helpers/app";
 import { ACCOUNT, type Env, openEnv, txFields } from "../helpers/fixtures";
+import { FakeTransport } from "../sync/fake-transport";
 
 async function settle(): Promise<void> {
   await act(async () => {
@@ -116,7 +125,36 @@ async function seed(): Promise<Env> {
     "transaction",
     txFields(card.account_uid, { amount_cents: 30000, occurred_on: "2027-02-20", statement_ref: ref }),
   );
+  // What the sync screens list: a conflict and a problem to review.
+  await env.db.run(
+    "INSERT INTO sync_conflicts (entity, uid, field, kind, lost_value, applied_value, created_at) VALUES ('tag', ?, 'name', 'field', '\"old\"', '\"work\"', 'x')",
+    [tag.uid],
+  );
+  await env.db.run(
+    "INSERT INTO sync_problems (entity, uid, op_id, op, code, message, created_at) VALUES ('account', ?, 'op1', 'upsert', 'forbidden', 'Your role cannot change that.', 'x')",
+    [main],
+  );
   return env;
+}
+
+/** The sync screens over the app's own database and a transport that is never called. */
+function WithSync(props: { children: ReactNode }): ReactNode {
+  const app = useApp();
+  const controller = useMemo(
+    () =>
+      new SyncController({
+        db: app.db,
+        repo: app.repo,
+        tokens: { get: async () => null, set: async () => undefined, clear: async () => undefined },
+        makeTransport: () => new FakeTransport(),
+        clock: { now: () => 0, setTimeout: () => 0, clearTimeout: () => undefined },
+        random: { next: () => 0.5 },
+        defaultDeviceName: "Test phone",
+        platform: "android",
+      }),
+    [app.db, app.repo],
+  );
+  return <SyncProvider controller={controller}>{props.children}</SyncProvider>;
 }
 
 const services = {
@@ -176,6 +214,73 @@ const cases: Case[] = [
   { name: "reports (chart)", element: <ReportsScreen /> },
   { name: "reports (table)", element: <ReportsScreen />, steps: () => press("Table", "radio") },
   { name: "reports (by category)", element: <ReportsScreen />, steps: () => press("By category", "radio") },
+  {
+    name: "sync status",
+    element: (
+      <WithSync>
+        <SyncStatusScreen
+          onConnect={() => undefined}
+          onChoose={() => undefined}
+          onConflicts={() => undefined}
+          onProblems={() => undefined}
+        />
+      </WithSync>
+    ),
+  },
+  {
+    name: "sync connect",
+    element: (
+      <WithSync>
+        <SyncConnectScreen onConnected={() => undefined} />
+      </WithSync>
+    ),
+  },
+  {
+    name: "sync connect (plain http confirmation)",
+    element: (
+      <WithSync>
+        <SyncConnectScreen onConnected={() => undefined} />
+      </WithSync>
+    ),
+    steps: async () => {
+      await fireEvent.changeText(screen.getByLabelText("Server address"), "http://192.168.1.20:3000");
+      await fireEvent.changeText(screen.getByLabelText("Pairing code"), "ABCD-EFGH");
+      await press("Connect");
+    },
+  },
+  {
+    name: "sync merge choice",
+    element: (
+      <WithSync>
+        <SyncMergeScreen sharer={services.sharer} onDone={() => undefined} />
+      </WithSync>
+    ),
+  },
+  {
+    name: "sync merge choice (replace confirmation)",
+    element: (
+      <WithSync>
+        <SyncMergeScreen sharer={services.sharer} onDone={() => undefined} />
+      </WithSync>
+    ),
+    steps: () => press("Replace this phone's data with the server's"),
+  },
+  {
+    name: "sync conflicts",
+    element: (
+      <WithSync>
+        <SyncConflictsScreen />
+      </WithSync>
+    ),
+  },
+  {
+    name: "sync problems",
+    element: (
+      <WithSync>
+        <SyncProblemsScreen />
+      </WithSync>
+    ),
+  },
   { name: "more", element: <MoreScreen onOpen={() => undefined} /> },
   { name: "settings", element: <SettingsScreen services={services} /> },
   {

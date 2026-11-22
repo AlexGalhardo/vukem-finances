@@ -17,6 +17,7 @@ import {
   resumeEntities,
   setDeviceId,
   setLastSyncAt,
+  takeResyncRequest,
 } from "./state";
 import type { TokenStore } from "./transport";
 import { type Clock, type DevicePlatform, type Random, type Transport, TransportError } from "./types";
@@ -240,6 +241,10 @@ export class SyncEngine {
       if ((await getMeta(db, "sync.first_sync_done")) !== "1" && (await this.hasLocalData())) {
         await this.setStatus("needs_merge_choice");
         return;
+      }
+
+      if (await takeResyncRequest(db)) {
+        await resync(db, transport, () => this.iso());
       }
 
       let repeats = 0;

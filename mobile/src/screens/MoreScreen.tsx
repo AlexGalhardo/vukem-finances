@@ -4,7 +4,7 @@ import { Page } from "../components/Page";
 import { useUi } from "../components/ui";
 import type { MessageKey } from "../i18n";
 
-export type MoreTarget = "cards" | "categories" | "tags" | "budgets" | "recurrences" | "reports" | "settings";
+export type MoreTarget = "cards" | "categories" | "tags" | "budgets" | "recurrences" | "reports" | "sync" | "settings";
 
 const ITEMS: { target: MoreTarget; label: MessageKey }[] = [
   { target: "cards", label: "titleCards" },
@@ -13,6 +13,7 @@ const ITEMS: { target: MoreTarget; label: MessageKey }[] = [
   { target: "budgets", label: "titleBudgets" },
   { target: "recurrences", label: "titleRecurrences" },
   { target: "reports", label: "titleReports" },
+  { target: "sync", label: "titleSync" },
   { target: "settings", label: "titleSettings" },
 ];
 
