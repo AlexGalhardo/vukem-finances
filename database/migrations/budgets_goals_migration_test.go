@@ -40,7 +40,7 @@ func TestBudgetsGoalsMigrationsRoundTrip(t *testing.T) {
 		t.Fatal("a second live overall budget was accepted")
 	}
 
-	if _, err := m.Rollback(t.Context(), 4); err != nil {
+	if _, err := m.Rollback(t.Context(), migrationsFrom(t, "20261122140000_add_budget_rollover_and_overall")); err != nil {
 		t.Fatalf("rollback: %v", err)
 	}
 
