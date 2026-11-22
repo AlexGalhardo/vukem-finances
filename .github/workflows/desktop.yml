@@ -111,12 +111,13 @@ jobs:
           if [ "$RUNNER_OS" = "Windows" ]; then bin="$bin.exe"; fi
           bash desktop/scripts/smoke.sh "$bin"
 
-      # The MSIX checks run on every run and need no secret. The package is signed
-      # with a throwaway certificate that lives only in this job, so it installs
-      # here and nowhere else: it goes to its own artifact, never into dist/ and
-      # never to the release. The Store package is built in the `store` job.
+      # Off until the repository variable MSIX_ENABLED is "true" (docs/desktop.md).
+      # The MSIX checks need no secret. The package is signed with a throwaway
+      # certificate that lives only in this job, so it installs here and nowhere
+      # else: it goes to its own artifact, never into dist/ and never to the
+      # release. The Store package is built in the `store` job.
       - name: MSIX (build)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && vars.MSIX_ENABLED == 'true'
         id: msix
         shell: bash
         working-directory: desktop
@@ -129,14 +130,14 @@ jobs:
           echo "path=$(cd ../msix-out && pwd -W)/$(ls ../msix-out | grep '\.msix$')" >> "$GITHUB_OUTPUT"
 
       - name: MSIX (sign with a throwaway certificate)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && vars.MSIX_ENABLED == 'true'
         shell: pwsh
         env:
           MSIX: ${{ steps.msix.outputs.path }}
         run: ./desktop/scripts/msix-ci.ps1 -Step Sign -Package $env:MSIX
 
       - name: MSIX (install, smoke test, uninstall)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && vars.MSIX_ENABLED == 'true'
         shell: pwsh
         env:
           MSIX: ${{ steps.msix.outputs.path }}
@@ -145,7 +146,7 @@ jobs:
       # Not a gate yet: whether the kit runs on a hosted runner was not proven
       # when this was written (docs/desktop.md). Make it blocking once it is.
       - name: MSIX (Windows App Certification Kit)
-        if: runner.os == 'Windows'
+        if: runner.os == 'Windows' && vars.MSIX_ENABLED == 'true'
         continue-on-error: true
         shell: pwsh
         env:
@@ -153,14 +154,14 @@ jobs:
         run: ./desktop/scripts/msix-ci.ps1 -Step Cert -Package $env:MSIX -ReportDir msix-out
 
       - name: MSIX (remove the throwaway certificate)
-        if: runner.os == 'Windows' && always()
+        if: always() && runner.os == 'Windows' && vars.MSIX_ENABLED == 'true'
         shell: pwsh
         env:
           MSIX: ${{ steps.msix.outputs.path }}
         run: ./desktop/scripts/msix-ci.ps1 -Step Cleanup -Package $env:MSIX
 
       - name: MSIX (upload, test-signed, not for users)
-        if: runner.os == 'Windows' && !cancelled()
+        if: "!cancelled() && runner.os == 'Windows' && vars.MSIX_ENABLED == 'true'"
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: msix-ci-test-signed
@@ -221,11 +222,11 @@ jobs:
   # Submits the exe that the Windows job built and smoke tested to the Microsoft
   # Store, as a new MSIX with the real identity of Partner Center. It runs only
   # for a published (not pre-release) release and only when the repository
-  # variable MSSTORE_ENABLED is "true"; otherwise the job is skipped. The first
-  # submission of an app is manual (docs/desktop.md).
+  # variables MSIX_ENABLED and MSSTORE_ENABLED are "true"; otherwise the job is
+  # skipped. The first submission of an app is manual (docs/desktop.md).
   store:
     name: Submit to the Microsoft Store
-    if: github.event_name == 'release' && !github.event.release.prerelease && vars.MSSTORE_ENABLED == 'true'
+    if: github.event_name == 'release' && !github.event.release.prerelease && vars.MSIX_ENABLED == 'true' && vars.MSSTORE_ENABLED == 'true'
     needs: build
     runs-on: windows-latest
     timeout-minutes: 300
