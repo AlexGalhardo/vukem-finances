@@ -17,15 +17,27 @@ import (
 // scope, role and input again.
 type ToolGate func(ctx context.Context, m Meta, in any) (Actor, error)
 
+// ToolDone is told how a tool call ended, for the surface's own audit: err is
+// nil for a success. It receives the metadata and never the input or the output.
+type ToolDone func(ctx context.Context, m Meta, err error)
+
 // AddTool registers the operation as an MCP tool on s. The input and output
 // schemas come from the operation types, so the tool and the REST endpoint
 // cannot disagree; the call goes through Invoke like every other surface.
-func (o *Op[In, Out]) AddTool(s *mcp.Server, t mcp.Tool, gate ToolGate) {
+func (o *Op[In, Out]) AddTool(s *mcp.Server, t mcp.Tool, gate ToolGate, done ToolDone) {
 	mcp.AddTool(s, t, func(ctx context.Context, in In) (Out, error) {
 		var zero Out
 
+		finish := func(err error) {
+			if done != nil {
+				done(ctx, o.meta, err)
+			}
+		}
+
 		actor, err := gate(ctx, o.meta, in)
 		if err != nil {
+			finish(err)
+
 			return zero, err
 		}
 
@@ -33,6 +45,8 @@ func (o *Op[In, Out]) AddTool(s *mcp.Server, t mcp.Tool, gate ToolGate) {
 		mcp.Progress(ctx, 0, 1, o.meta.Summary)
 
 		res, err := Invoke(ctx, o, actor, in)
+		finish(err)
+
 		if err != nil {
 			return zero, ToolError(err)
 		}

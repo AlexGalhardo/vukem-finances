@@ -37,6 +37,14 @@ type Options struct {
 	Logger *slog.Logger
 	// PageSize is how many items a list answers with; zero uses the default.
 	PageSize int
+	// Before runs for every tool call once the actor is known and before the
+	// operation is authorized: the remote endpoint limits the rate of a grant
+	// and keeps destructive tools from members who may not hold them. An error
+	// refuses the call.
+	Before func(ctx context.Context, m operations.Meta, actor operations.Actor) error
+	// Done hears how every tool call ended, for the audit of the surface. It
+	// never receives the input or the output.
+	Done operations.ToolDone
 }
 
 // instructions are shown to the client once. Every field a tool returns is the
@@ -62,7 +70,7 @@ func New(o Options) (*vmcp.Server, error) {
 		Instructions: instructions, Logger: o.Logger, PageSize: o.PageSize,
 	})
 
-	h := &host{cat: o.Catalog, actor: o.Actor, cfg: o.Config}
+	h := &host{cat: o.Catalog, actor: o.Actor, cfg: o.Config, before: o.Before, done: o.Done}
 
 	h.addTools(srv)
 	h.addResources(srv)
@@ -80,9 +88,11 @@ func cmpVersion(v string) string {
 }
 
 type host struct {
-	cat   *operations.Catalog
-	actor ActorFunc
-	cfg   config.MCP
+	cat    *operations.Catalog
+	actor  ActorFunc
+	cfg    config.MCP
+	before func(ctx context.Context, m operations.Meta, actor operations.Actor) error
+	done   operations.ToolDone
 }
 
 // resourceOf is the part of an operation name before the first dot.
@@ -167,7 +177,7 @@ func (h *host) addTools(srv *vmcp.Server) {
 			Description: m.Summary + "." + dataNote,
 			Annotations: Annotations(m),
 			Scopes:      []string{m.Scope},
-		}, h.gate)
+		}, h.gate, h.done)
 	}
 }
 
@@ -182,6 +192,12 @@ func (h *host) gate(ctx context.Context, m operations.Meta, in any) (operations.
 	actor, err := h.actor(ctx)
 	if err != nil {
 		return operations.Actor{}, operations.ToolError(err)
+	}
+
+	if h.before != nil {
+		if err := h.before(ctx, m, actor); err != nil {
+			return operations.Actor{}, operations.ToolError(err)
+		}
 	}
 
 	// Refuse what the actor may not do before asking the person anything.
