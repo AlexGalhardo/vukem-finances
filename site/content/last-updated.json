@@ -1,27 +1,27 @@
 {
 	"changelog": {
 		"date": "2026-11-22",
-		"hash": "7d85b1a23ac239d3"
+		"hash": "cfbec14609738ffc"
 	},
 	"changelog/v0.1.0": {
 		"date": "2026-11-22",
-		"hash": "aabffe54dfc4dfe4"
+		"hash": "a661152b0680b9cc"
 	},
 	"changelog/v0.2.0": {
 		"date": "2026-11-22",
-		"hash": "6ce75da1d7f37da3"
+		"hash": "8adc4137cfcfdff9"
 	},
 	"changelog/v0.3.0": {
 		"date": "2026-11-22",
-		"hash": "6b19295ec659d7a7"
+		"hash": "d021732efe4145ac"
 	},
 	"changelog/v0.4.0": {
 		"date": "2026-11-22",
-		"hash": "1cfc9eda3287e100"
+		"hash": "98e4b96bc8dd355d"
 	},
 	"changelog/v0.5.0": {
 		"date": "2026-11-22",
-		"hash": "363d9998eaaa4968"
+		"hash": "1428df0bb19616c3"
 	},
 	"changelog/v0.6.0": {
 		"date": "2026-11-22",
