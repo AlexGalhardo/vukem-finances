@@ -10,6 +10,7 @@ import type components from "./en/components";
 import type goals from "./en/goals";
 import type importPage from "./en/import";
 import type recurrences from "./en/recurrences";
+import type reports from "./en/reports";
 import type search from "./en/search";
 import type shell from "./en/shell";
 import type tokens from "./en/tokens";
@@ -29,6 +30,7 @@ export type Key =
   | keyof typeof goals
   | keyof typeof importPage
   | keyof typeof recurrences
+  | keyof typeof reports
   | keyof typeof search
   | keyof typeof shell
   | keyof typeof tokens

@@ -132,6 +132,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		financeNotifications(g, h)
 		financeRecurrences(g, h)
 		financeImports(g, h, imports)
+		financeReports(g, h)
 		financeWorkspace(g, h)
 		financeExports(g, h, exports, ws.Require(workspaces.AbilityManageData))
 		financeTokens(g, app, acc, h)

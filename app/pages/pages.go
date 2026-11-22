@@ -61,6 +61,7 @@ func All() []inertia.PageInfo {
 		Notifications.Info(),
 		Recurrences.Info(),
 		Import.Info(),
+		Reports.Info(),
 		Workspace.Info(),
 		InviteAccept.Info(),
 		InviteRegister.Info(),
