@@ -3,12 +3,10 @@ import { useId } from "react";
 import { buttonVariants } from "./ui/button";
 import { CardContent, CardHeader, CardTitle, Card as ShadcnCard } from "./ui/card";
 import { Field, FieldError, FieldLabel } from "./ui/field";
-import { inputVariants } from "./ui/input";
 import { NativeSelect } from "./ui/native-select";
 export const primary = buttonVariants();
 export const secondary = buttonVariants({ variant: "outline" });
 export const danger = buttonVariants({ variant: "destructive-outline", size: "sm" });
-export const input = inputVariants();
 export function Card({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <ShadcnCard>
