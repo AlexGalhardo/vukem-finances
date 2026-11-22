@@ -209,23 +209,34 @@ func (s *shell) save(w http.ResponseWriter, r *http.Request) {
 }
 
 // copyTo writes the whole of src to dest (created or replaced, owner-only: an
-// export holds private financial data).
-func copyTo(src *os.File, dest string) error {
+// export holds private financial data). It writes a file beside dest and
+// renames it, so a full disk cannot destroy the backup being replaced.
+func copyTo(src io.ReadSeeker, dest string) (err error) {
 	if _, err := src.Seek(0, io.SeekStart); err != nil {
 		return err
 	}
 
-	out, err := os.OpenFile(dest, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	out, err := os.CreateTemp(filepath.Dir(dest), ".vukem-finances-save-*")
 	if err != nil {
 		return err
 	}
 
+	defer func() {
+		if err != nil {
+			_ = out.Close()
+			_ = os.Remove(out.Name())
+		}
+	}()
+
 	if _, err := io.Copy(out, src); err != nil {
-		_ = out.Close()
 		return err
 	}
 
-	return out.Close()
+	if err := out.Close(); err != nil {
+		return err
+	}
+
+	return os.Rename(out.Name(), dest)
 }
 
 // safeFileName is the suggested name of a download: a plain file name, never a
