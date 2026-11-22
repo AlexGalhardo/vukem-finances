@@ -108,7 +108,15 @@ func TestMonthTotalsBackfillAndTriggers(t *testing.T) {
 	twoBefore := workspaceSummary(t, db, 2)
 
 	for i := range 600 {
-		switch rng.IntN(5) {
+		// One column at a time: each tracked column must move the bucket by itself.
+		single := []string{
+			"amount_cents = amount_cents + 1 + abs(random()) % 1000", "occurred_on = '2026-' || printf('%02d', 1 + abs(random()) % 12) || '-05'",
+			"kind = CASE kind WHEN 'income' THEN 'expense' ELSE 'income' END", "account_id = 1 + abs(random()) % 3",
+			"category_id = CASE WHEN random() % 2 = 0 THEN NULL ELSE 1 + abs(random()) % 3 END",
+			"transfer_uid = CASE WHEN transfer_uid IS NULL THEN 'z' END",
+		}
+
+		switch rng.IntN(6) {
 		case 0:
 			insertRandom(1)
 		case 1:
@@ -118,6 +126,8 @@ func TestMonthTotalsBackfillAndTriggers(t *testing.T) {
 			exec(t, db, "UPDATE transactions SET deleted_at = "+stamp+" WHERE id = (SELECT id FROM transactions WHERE workspace_id = 1 AND deleted_at IS NULL ORDER BY random() LIMIT 1)")
 		case 3:
 			exec(t, db, "UPDATE transactions SET deleted_at = NULL WHERE id = (SELECT id FROM transactions WHERE workspace_id = 1 AND deleted_at IS NOT NULL ORDER BY random() LIMIT 1)")
+		case 4:
+			exec(t, db, "UPDATE transactions SET "+single[rng.IntN(len(single))]+" WHERE id = (SELECT id FROM transactions WHERE workspace_id = 1 ORDER BY random() LIMIT 1)")
 		default:
 			exec(t, db, "UPDATE transactions SET account_id = 1 + abs(random()) % 3, kind = CASE kind WHEN 'income' THEN 'expense' ELSE 'income' END, "+
 				"transfer_uid = CASE WHEN random() % 2 = 0 THEN NULL ELSE 'x' END, category_id = NULL "+
