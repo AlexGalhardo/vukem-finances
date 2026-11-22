@@ -153,8 +153,8 @@ type GoalsProps struct {
 // NotificationsProps are the props of Notifications: the full list of the
 // signed-in person and their channel choices.
 type NotificationsProps struct {
-	Notifications []alerts.View          `json:"notifications"`
-	Preferences   []alerts.PreferenceRow `json:"preferences"`
+	Items       []alerts.View          `json:"items"`
+	Preferences []alerts.PreferenceRow `json:"preferences"`
 }
 
 // ImportProps are the props of Import.

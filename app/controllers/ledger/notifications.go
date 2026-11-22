@@ -38,7 +38,7 @@ func (h *Handlers) Notifications(c *web.Ctx) error {
 		return err
 	}
 
-	return pages.Notifications.Render(c, pages.NotificationsProps{Notifications: list, Preferences: prefs})
+	return pages.Notifications.Render(c, pages.NotificationsProps{Items: list, Preferences: prefs})
 }
 
 // ReadNotification marks one notification of the person as read.
