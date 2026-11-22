@@ -1,3 +1,4 @@
+import { HelpHint } from "../../help/HelpHint";
 import { type Key, useFinanceI18n } from "../../lib/i18n";
 import type { Account } from "../../page-props";
 import AmountInput from "../AmountInput";
@@ -75,7 +76,10 @@ export default function CardForm({ idPrefix, data, errors, setData, accounts, br
         <FieldError>{errors.limit}</FieldError>
       </Field>
       <Field data-invalid={!!errors.closingDay}>
-        <FieldLabel htmlFor={id("closing")}>{t("cardClosingDay")}</FieldLabel>
+        <span className="flex items-center gap-1">
+          <FieldLabel htmlFor={id("closing")}>{t("cardClosingDay")}</FieldLabel>
+          <HelpHint id="hintCardClosingDay" />
+        </span>
         <Input
           id={id("closing")}
           required
@@ -88,7 +92,10 @@ export default function CardForm({ idPrefix, data, errors, setData, accounts, br
         <FieldError>{errors.closingDay}</FieldError>
       </Field>
       <Field data-invalid={!!errors.dueDay}>
-        <FieldLabel htmlFor={id("due")}>{t("cardDueDay")}</FieldLabel>
+        <span className="flex items-center gap-1">
+          <FieldLabel htmlFor={id("due")}>{t("cardDueDay")}</FieldLabel>
+          <HelpHint id="hintCardDueDay" />
+        </span>
         <Input
           id={id("due")}
           required

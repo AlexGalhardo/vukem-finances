@@ -439,7 +439,10 @@ export default function Categories({ categories, tags, colors, icons, maxTags }:
             </p>
           ) : (
             <Field>
-              <FieldLabel htmlFor="reassign-to">{t("reassignTo")}</FieldLabel>
+              <span className="flex items-center gap-1">
+                <FieldLabel htmlFor="reassign-to">{t("reassignTo")}</FieldLabel>
+                <HelpHint id="hintCatReassign" />
+              </span>
               <NativeSelect id="reassign-to" value={reassign} onChange={(e) => setReassign(e.target.value)}>
                 <NativeSelectOption value="">{t("chooseCategory")}</NativeSelectOption>
                 {(deleting ? targets(deleting) : []).map((c) => (

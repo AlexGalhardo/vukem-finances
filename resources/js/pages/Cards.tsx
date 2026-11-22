@@ -62,7 +62,7 @@ export default function Cards({ cards, accounts, brands }: Page<"Cards">) {
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
                   <div data-tour={card.id === cards[0]?.id ? "cards-limit" : undefined}>
-                    <LimitBar card={card} currency={currency} />
+                    <LimitBar card={card} currency={currency} help={card.id === cards[0]?.id} />
                   </div>
                   <dl className="grid grid-cols-2 gap-2 text-sm">
                     <div>

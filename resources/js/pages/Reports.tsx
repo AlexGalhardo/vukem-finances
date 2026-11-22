@@ -303,7 +303,10 @@ export default function Reports(props: Page<"Reports">) {
         <TabsContent value="networth" forceMount data-report-panel className="data-[state=inactive]:hidden">
           <Card>
             <CardHeader>
-              <CardTitle>{t("rptTabNetWorth")}</CardTitle>
+              <div className="flex items-center gap-1.5">
+                <CardTitle>{t("rptTabNetWorth")}</CardTitle>
+                <HelpHint id="hintRptNetWorth" />
+              </div>
             </CardHeader>
             <CardContent>
               <ChartWithTable
@@ -341,7 +344,10 @@ export default function Reports(props: Page<"Reports">) {
         <TabsContent value="compare" forceMount data-report-panel className="data-[state=inactive]:hidden">
           <Card>
             <CardHeader>
-              <CardTitle>{t("rptTabCompare")}</CardTitle>
+              <div className="flex items-center gap-1.5">
+                <CardTitle>{t("rptTabCompare")}</CardTitle>
+                <HelpHint id="hintRptCompare" />
+              </div>
               <p className="text-body text-muted-foreground">
                 {fill(t("rptComparedWith"), { from: date(compare.previous.from), to: date(compare.previous.to) })}
               </p>

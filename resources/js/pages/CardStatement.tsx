@@ -148,7 +148,7 @@ export default function CardStatement({ card, statements, statement, accounts, b
       />
       <Card>
         <CardContent>
-          <LimitBar card={card} currency={currency} />
+          <LimitBar card={card} currency={currency} help />
         </CardContent>
       </Card>
       <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
