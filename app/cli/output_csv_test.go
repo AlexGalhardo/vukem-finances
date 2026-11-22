@@ -27,22 +27,30 @@ func startsFormula(cell string) bool {
 func TestOutputCSVDelimiterGuard(t *testing.T) {
 	t.Parallel()
 
-	payloads := []string{
-		"x;=1+1", "a\n=1+1;", "a;\"=1+1;", "a\t+b", "x;  @y", "a;＝1", "a;​-1",
-		"=1", "a;b", "a\tb", "-10.50", "a-b;c+d", "a,b", "say \"hi\"",
+	payloads := map[string]string{
+		"x;=1+1":     "x;'=1+1",
+		"a\n=1+1;":   "a\n'=1+1;",
+		"a;\"=1+1;":  "a;'\"=1+1;",
+		"a\t+b":      "a\t'+b",
+		"x;  @y":     "x;'  @y",
+		"a;＝1":       "a;'＝1",
+		"a;​-1":      "a;'​-1",
+		"=1":         "'=1",
+		"a;b":        "a;b",
+		"a\tb":       "a\tb",
+		"-10.50":     "-10.50",
+		"a-b;c+d":    "a-b;c+d",
+		"a,b":        "a,b",
+		"a,-b":       "a,-b",
+		"say \"hi\"": "say \"hi\"",
 	}
 
-	for _, cell := range payloads {
+	for cell, want := range payloads {
 		tm := &term{}
 		c := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
 
 		if err := c.WriteForTest([]any{map[string]any{"k": cell, "n": json.Number("-10.5")}}, "csv"); err != nil {
 			t.Fatal(err)
-		}
-
-		want := cell
-		if startsFormula(cell) && cell != "-10.50" {
-			want = "'" + cell
 		}
 
 		for _, comma := range []rune{',', ';', '\t'} {
