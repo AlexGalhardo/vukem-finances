@@ -34,6 +34,10 @@ var sharedTables = []string{
 	// ids, the polling state and the rate counters are keyed by chat, code or id.
 	"telegram_links", "telegram_link_codes", "telegram_pending", "telegram_updates", "telegram_state",
 	"telegram_counters",
+	// Remote MCP (epic 33): the OAuth protocol state of the framework. A grant is
+	// bound to its workspace by mcp_grants, the tenant table, and every call reads
+	// the live membership.
+	"oauth_grants", "oauth_codes", "oauth_refresh_tokens",
 	// Framework tables (queue, cache, sessions, locks, migrations).
 	"migrations", "jobs", "failed_jobs", "cache", "cache_locks", "sessions",
 }

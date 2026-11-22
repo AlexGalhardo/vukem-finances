@@ -35,5 +35,6 @@ func All() []schema.Migration {
 		m20261124163000CreateAIAssistantTables(),
 		m20261124170000CreatePairingCodes(),
 		m20261124170100IndexPairingCodesByWorkspace(),
+		m20261125100000CreateMCPOAuthTables(),
 	}
 }
