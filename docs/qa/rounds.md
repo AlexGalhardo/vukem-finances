@@ -82,7 +82,8 @@ carries a test written first, in its own commit, with `Refs: epic 24 task N` and
   of the request, and the purge does not revoke again.
 - **Evidence:** `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson`.
 - **Severity:** Low (the row holds an id that no user has any more, and it dies within a day).
-- **Status:** open.
+- **Status:** fixed. `PurgeAccount` ends every credential of the person again (`RevokeAllAccess`, outside the transaction) before it
+  deletes their rows, and the purge job gives it the accounts service. Regression test: `TestDataLifecycle_NoSessionOutlivesThePurge`.
 
 ### QA-012: the operator guide does not say that a backup keeps what was deleted
 

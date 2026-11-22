@@ -71,3 +71,36 @@ func TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson(t *testing.T) {
 		t.Errorf("the shared transaction was lost (%d rows)", n)
 	}
 }
+
+// TestDataLifecycle_NoSessionOutlivesThePurge: signing in while the account
+// waits for deletion opens a session; the purge must remove it with the person.
+func TestDataLifecycle_NoSessionOutlivesThePurge(t *testing.T) {
+	t.Parallel()
+
+	s := lifecycleApp(t)
+	ana := s.SignUp(t, "Ana Lifecycle", "ana-lifecycle@example.com")
+	w := withPassword(t, s.App, asWho(ana))
+
+	w.Client.PostForm("/account/deletion", accountDeletionForm("ana-lifecycle@example.com", knownPassword)).AssertRedirect("/login")
+
+	login := s.App.Client(t).WithHeader("Sec-Fetch-Site", "same-origin")
+	login.PostForm("/login", url.Values{"email": {"ana-lifecycle@example.com"}, "password": {knownPassword}}).AssertRedirect("/dashboard")
+	login.Get("/account/deletion").AssertOK()
+
+	if n := lifecycleCount(t, s.App, "SELECT COUNT(*) FROM sessions WHERE user_id = ?", "web:"+idString(w.User.ID)); n == 0 {
+		t.Fatal("the sign-in during the grace period opened no session row")
+	}
+
+	endSubscriptions(t, s.App)
+	dueNow(t, s.App, "workspaces SET purge_at = ? WHERE id = ?", w.Workspace.ID)
+	dueNow(t, s.App, "users SET purge_at = ? WHERE id = ?", w.User.ID)
+	runPurge(t, s.App)
+
+	if n := lifecycleCount(t, s.App, "SELECT COUNT(*) FROM users WHERE id = ?", w.User.ID); n != 0 {
+		t.Fatal("the user row is still there")
+	}
+
+	if n := lifecycleCount(t, s.App, "SELECT COUNT(*) FROM sessions WHERE user_id = ?", "web:"+idString(w.User.ID)); n != 0 {
+		t.Errorf("%d sessions of the person remain after the purge", n)
+	}
+}

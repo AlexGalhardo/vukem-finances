@@ -5,6 +5,7 @@ import (
 
 	vukem "github.com/AlexGalhardo/vukem"
 
+	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/billing"
 	"github.com/AlexGalhardo/vukem-finances/app/privacy"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
@@ -30,6 +31,11 @@ func HandlePrivacyPurge(app *vukem.App) func(ctx context.Context, j PrivacyPurge
 
 		svc, err := privacy.New(app, ws)
 		if err != nil {
+			return err
+		}
+
+		// An account that signed in during its grace period holds sessions the purge ends.
+		if svc.Access, err = accounts.New(app); err != nil {
 			return err
 		}
 
