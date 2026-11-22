@@ -39,10 +39,20 @@ export interface Batch {
  * write is queued, so a batch rebuilt after a timeout carries the same ids and
  * the server returns the stored results instead of writing twice.
  */
-export async function nextBatch(db: Database, limit = BATCH_SIZE): Promise<Batch> {
+export async function nextBatch(
+  db: Database,
+  limit = BATCH_SIZE,
+  exclude: ReadonlySet<number> = new Set(),
+): Promise<Batch> {
   const paused = [...(await pausedEntities(db)).keys()];
-  const where = paused.length === 0 ? "" : ` WHERE entity NOT IN (${paused.map(() => "?").join(", ")})`;
-  const rows = await db.all<RawRow>(`SELECT * FROM outbox${where} ORDER BY id LIMIT ?`, [...paused, limit]);
+  const skipped = [...exclude];
+  const where: string[] = [];
+  if (paused.length > 0) where.push(`entity NOT IN (${paused.map(() => "?").join(", ")})`);
+  if (skipped.length > 0) where.push(`id NOT IN (${skipped.map(() => "?").join(", ")})`);
+  const rows = await db.all<RawRow>(
+    `SELECT * FROM outbox${where.length === 0 ? "" : ` WHERE ${where.join(" AND ")}`} ORDER BY id LIMIT ?`,
+    [...paused, ...skipped, limit],
+  );
   const entries = rows.map(toEntry);
   return { entries, mutations: entries.map(toMutation) };
 }
