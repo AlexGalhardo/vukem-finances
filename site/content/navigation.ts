@@ -42,5 +42,32 @@ export const navigation: NavSection[] = [
       "use/mobile-sync",
       "use/billing"
     ]
+  },
+  {
+    "title": "Integrate",
+    "items": [
+      "integrate/rest-api",
+      "integrate/cli",
+      "integrate/mcp-stdio",
+      "integrate/mcp-remote",
+      "integrate/sync-protocol",
+      "integrate/export-format"
+    ]
+  },
+  {
+    "title": "Operate",
+    "items": [
+      "operate/security",
+      "operate/roles-workspaces"
+    ]
+  },
+  {
+    "title": "Contribute",
+    "items": [
+      "contribute/architecture",
+      "contribute/release-train",
+      "contribute/how-epics-work",
+      "contribute/tests"
+    ]
   }
 ];
