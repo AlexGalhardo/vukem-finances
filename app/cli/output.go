@@ -237,29 +237,41 @@ func writeCSV(w io.Writer, v any, tty bool) error {
 // csvSafe neutralizes formula injection: a spreadsheet runs a cell whose first
 // meaningful character is = + - @ (or its full-width form), and it skips the
 // whitespace, control and format characters in front of it, so those are
-// skipped here too before the first rune is judged. Such a cell gets a leading
-// quote. A real number is not text and stays as it is, so -10.50 is still a
-// number in the sheet; a text value is exempt only when the whole of it is a
-// plain negative decimal ("-10.50"), which no spreadsheet reads as a formula.
+// skipped here too before the first rune is judged. A reader whose delimiter
+// is ; or a tab (Excel in pt-BR) splits one cell into several, so every
+// segment is judged, not only the first. Such a cell gets a leading quote. A
+// real number is not text and stays as it is, so -10.50 is still a number in
+// the sheet; a text value is exempt only when the whole of it is a plain
+// negative decimal ("-10.50"), which no spreadsheet reads as a formula.
 func csvSafe(s string, numeric bool) string {
 	if s == "" || numeric || plainNegative(s) {
 		return s
 	}
 
-	for _, r := range s {
+	for _, seg := range strings.FieldsFunc(s, func(r rune) bool { return r == ';' || r == '	' }) {
+		if startsFormula(seg) {
+			return "'" + s
+		}
+	}
+
+	return s
+}
+
+func startsFormula(seg string) bool {
+	for _, r := range seg {
 		if unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
 			continue
 		}
 
 		switch r {
 		case '=', '+', '-', '@', '＝', '＋', '－', '＠':
-			return "'" + s
+			return true
 		}
 
-		break
+		return false
 	}
 
-	return s
+	return false
 }
 
 // plainNegative matches -123 and -123.45 and nothing else.
