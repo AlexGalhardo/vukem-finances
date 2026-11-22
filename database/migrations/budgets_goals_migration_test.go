@@ -12,7 +12,8 @@ import (
 // TestBudgetsGoalsMigrationsRoundTrip applies epic 11, rolls its three
 // migrations back with the change triggers installed (the rebuild of budgets
 // must survive them and a live overall budget has no place to go back to),
-// and applies them again.
+// and applies them again. Later migrations (the report index of epic 12) are
+// rolled back first, so the count of the rollback includes them.
 func TestBudgetsGoalsMigrationsRoundTrip(t *testing.T) {
 	t.Parallel()
 
@@ -39,7 +40,7 @@ func TestBudgetsGoalsMigrationsRoundTrip(t *testing.T) {
 		t.Fatal("a second live overall budget was accepted")
 	}
 
-	if _, err := m.Rollback(t.Context(), 3); err != nil {
+	if _, err := m.Rollback(t.Context(), 4); err != nil {
 		t.Fatalf("rollback: %v", err)
 	}
 
