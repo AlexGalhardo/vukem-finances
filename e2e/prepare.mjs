@@ -24,6 +24,11 @@ export const appEnv = {
   MAIL_MAILER: "log",
   // The AI spec points the openai_compatible provider at a fake server on this machine (personal edition only).
   AI_ALLOW_PRIVATE_HOSTS: "true",
+  // The Telegram spec runs the bot in polling mode (the personal default) against e2e/fake-telegram.mjs. The token
+  // is a made-up placeholder; nothing here reaches the real Bot API.
+  TELEGRAM_BOT_TOKEN: "123456:e2e-placeholder-token",
+  TELEGRAM_BOT_USERNAME: "e2e_finance_bot",
+  TELEGRAM_API_BASE: `http://127.0.0.1:${process.env.E2E_TELEGRAM_PORT ?? "3920"}`,
 };
 
 function run(cmd, args, env = process.env) {
@@ -43,6 +48,7 @@ const saasPort = process.env.E2E_SAAS_PORT ?? "3918";
 export const saasEnv = {
   ...appEnv,
   APP_EDITION: "saas",
+  TELEGRAM_BOT_TOKEN: "",
   PORT: saasPort,
   APP_URL: `http://localhost:${saasPort}`,
   DATABASE_URL: `file:${join(dir, "db-saas.sqlite").replaceAll("\\", "/")}`,
