@@ -333,6 +333,10 @@ func webhooks(root string) ([]string, error) {
 }
 
 func walkGo(dir string, fn func(path string, raw []byte)) error {
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		return nil
+	}
+
 	return filepath.WalkDir(dir, func(path string, d os.DirEntry, err error) error {
 		if err != nil || d.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
 			return err
@@ -392,4 +396,34 @@ func pages(root string) ([]string, error) {
 	sort.Strings(out)
 
 	return out, err
+}
+
+var (
+	pathConst  = regexp.MustCompile(`(?m)^\s*(?:const )?(\w+)\s*=\s*"(/[^"]*)"`)
+	pathConcat = regexp.MustCompile(`(?m)^\s*(?:const )?(\w+)\s*=\s*(\w+)\s*\+\s*"(/[^"]*)"`)
+)
+
+// pathConstants reads the constants of the app that hold a path, or a path made
+// of another one, by name.
+func pathConstants(root string) (map[string]string, error) {
+	out := map[string]string{}
+
+	for _, dir := range []string{"app", "config"} {
+		err := walkGo(filepath.Join(root, dir), func(_ string, raw []byte) {
+			for _, m := range pathConst.FindAllStringSubmatch(string(raw), -1) {
+				out[m[1]] = m[2]
+			}
+
+			for _, m := range pathConcat.FindAllStringSubmatch(string(raw), -1) {
+				if base, ok := out[m[2]]; ok {
+					out[m[1]] = base + m[3]
+				}
+			}
+		})
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return out, nil
 }

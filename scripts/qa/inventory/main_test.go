@@ -54,6 +54,7 @@ func TestSample(t *testing.T) {
 	c.Do(http.MethodPut, "/workspace", nil, "")
 	putForm(c, "/ai/settings", v)
 	_ = "POST /import"
+	_ = "DELETE /tags/" + id + "/x?y=1"
 }
 `
 
@@ -72,7 +73,7 @@ func TestIndexFindsRequestsAndStrings(t *testing.T) {
 
 	for _, c := range []struct{ method, route string }{
 		{"POST", "/cards/{card}/archive"}, {"POST", "/goals/{goal}/archive"}, {"PUT", "/workspace"},
-		{"PUT", "/ai/settings"}, {"POST", "/import"},
+		{"PUT", "/ai/settings"}, {"POST", "/import"}, {"DELETE", "/tags/{tag}/x"},
 	} {
 		if len(ix.coverRequest(c.method, c.route)) == 0 {
 			t.Errorf("%s %s is not covered", c.method, c.route)
