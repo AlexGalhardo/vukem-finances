@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/vukemtest"
 
 	"github.com/AlexGalhardo/vukem-finances/app/alerts"
@@ -218,6 +219,62 @@ func TestChannels(t *testing.T) {
 				t.Fatalf("%s sees a row of user %d", w.User.Email, n.UserID)
 			}
 		}
+	}
+}
+
+// A mail still owed (its send failed, or the run stopped) follows the choice
+// the person holds when it is sent, not the one held when the row was made.
+func TestPendingMailFollowsCurrentPreference(t *testing.T) {
+	t.Parallel()
+
+	app, _ := clockApp(t, "2027-03-18")
+	owner, admin, _, _ := allRoles(t, app)
+
+	svc := alertsService(t, app)
+	ctx := wsCtx(t, owner)
+	db := mustDB(t, app)
+
+	for _, w := range []who{owner, admin} {
+		n := models.Notification{
+			UserID: w.User.ID, Kind: alerts.KindBudget100, SubjectKey: "pending", TitleKey: alerts.TitleKey(alerts.KindBudget100),
+			Params: `{"name":"Groceries","threshold":100,"spent_cents":12000,"limit_cents":10000}`, InApp: true, Email: true,
+		}
+		if err := orm.Create(ctx, db, &n); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if err := svc.SetPreferences(ctx, owner.User.ID, models.RoleOwner, []alerts.PreferenceInput{
+		{Kind: alerts.KindBudget100, InApp: true, Email: false},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.Run(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	if n := mailCount(app, "ana@example.com", "budget at 100%"); n != 0 {
+		t.Errorf("mails after opting out = %d, want none", n)
+	}
+
+	if n := mailCount(app, "adm@example.com", "budget at 100%"); n != 1 {
+		t.Errorf("mails to the person who kept mail on = %d, want 1", n)
+	}
+
+	// Turning mail back on does not send the alert that was dropped.
+	if err := svc.SetPreferences(ctx, owner.User.ID, models.RoleOwner, []alerts.PreferenceInput{
+		{Kind: alerts.KindBudget100, InApp: true, Email: true},
+	}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.Run(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	if n := mailCount(app, "ana@example.com", "budget at 100%"); n != 0 {
+		t.Errorf("mails after opting back in = %d, want none", n)
 	}
 }
 
