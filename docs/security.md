@@ -50,7 +50,7 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| Session theft or fixation | The framework session rotates on login; cookie is `HttpOnly`, `SameSite`, `Secure` in production | `TestSecurity_Web_Sessions` (see QA-001 in `docs/qa/rounds.md`) |
+| Session theft or fixation | The session is a database row (`SESSION_DRIVER=database`, the default of the app) that rotates on login and is deleted on logout, so a copied cookie dies with it; the cookie is `HttpOnly`, `SameSite=Lax`, `__Host-` and `Secure` in production | `TestSecurity_Web_Sessions` (see QA-001 in `docs/qa/rounds.md`) |
 | Credential stuffing | Per-IP and per-account limits; failed two-factor codes limited per account | `TestSecurity_TwoFactorPerAccountLimit` |
 | User enumeration through login, reset and registration | The same answer for a known and an unknown address | `TestSecurity_Web_Enumeration` |
 | Self-asserted admin or unverified email | Verified email is required in saas; an address is never marked verified at sign-up | `TestSecurity_SaaSRequiresEmailVerification`, `TestSecurity_SelfAssertedAdminEmailIsNotAdmin` |
@@ -224,8 +224,9 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 Open and closed problems of the campaign are in `docs/qa/rounds.md`; problems the author accepted are in
 `docs/qa/accepted.md`. Known limits of this model:
 
-- **A copied session cookie survives logout** until it expires (QA-001): the default session is an encrypted cookie, so the
-  server holds no state to end. Open, waiting for the author's choice between a database session store and a session version bump.
+- **Session rows hold the session payload in clear** (the signed-in user id, the workspace in use, flash messages). The row id is
+  `hex(SHA-256(session id))`, so a copy of the database yields no cookie, but it does name who was signed in. Treat the database
+  file and its backups as secret. (QA-001 moved sessions from encrypted cookies to these rows.)
 - **Financial data is not encrypted at rest** (D-005: SQL must sum and filter it). Protect the host, the volume and the backups.
 - **Backups are retained until rotated**: `db:backup` files hold a full copy and live outside the controls of the app.
 - **Desktop builds are unsigned.**
