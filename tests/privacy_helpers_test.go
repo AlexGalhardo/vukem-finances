@@ -44,3 +44,20 @@ func withPassword(t *testing.T, app *vukemtest.App, w who) who {
 }
 
 func passwordForm(pw string) url.Values { return url.Values{"password": {pw}} }
+
+// workspaceRow reads the workspace of w again.
+func workspaceRow(t *testing.T, app *vukemtest.App, w who) models.Workspace {
+	t.Helper()
+
+	db, err := app.DB()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	row, err := orm.QueryOf[models.Workspace](db).Find(t.Context(), w.Workspace.ID)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	return row
+}

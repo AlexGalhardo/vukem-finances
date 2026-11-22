@@ -12,6 +12,7 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/privacy"
 	"github.com/AlexGalhardo/vukem-finances/app/requests"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
 // reauthKey is the session value that says the password was just confirmed for
@@ -111,4 +112,48 @@ func sessionInt64(v any) int64 {
 	}
 
 	return 0
+}
+
+// DeleteWorkspace schedules the deletion of the current workspace: the owner,
+// the password and the exact name.
+func (p *PrivacyHandlers) DeleteWorkspace(c *web.Ctx) error {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	in, err := web.Parse(c, requests.DeleteWorkspaceSchema)
+	if err != nil {
+		return err
+	}
+
+	// The role is checked first, so a member learns nothing from a wrong password.
+	if err := p.h.can(c, workspaces.AbilityTransfer); err != nil {
+		return err
+	}
+
+	if err := p.confirmPassword(c, u, in.Password); err != nil {
+		return err
+	}
+
+	if err := p.svc.RequestWorkspaceDeletion(c.Context(), u, in.Name); err != nil {
+		return back(c, "/account/privacy", err)
+	}
+
+	return done(c, "/account/privacy", "The workspace is scheduled for deletion.")
+}
+
+// CancelWorkspaceDeletion brings the current workspace back. The workspace is
+// read-only while it waits, so this is the one write the web stack lets through.
+func (p *PrivacyHandlers) CancelWorkspaceDeletion(c *web.Ctx) error {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	if err := p.svc.CancelWorkspaceDeletion(c.Context(), u); err != nil {
+		return back(c, "/account/privacy", err)
+	}
+
+	return done(c, "/account/privacy", "The deletion was cancelled.")
 }
