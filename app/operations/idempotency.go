@@ -51,8 +51,9 @@ func validKey(k string) bool {
 // invokeKeyed runs op once per key of the actor. The first call claims the
 // key, runs and stores its answer; a repeat while it runs is a conflict, a
 // repeat with other input is refused, and a repeat after it finished gets the
-// stored answer. A failed call frees the key (nothing was stored), and so does a
-// store that fails: the call is refused rather than risk a second effect.
+// stored answer. A failed call frees the key (it changed nothing). When the call
+// ran but its answer cannot be stored, the claim stays until idempotencyLock
+// ends, so a retry in that time is a conflict and not a second effect.
 func invokeKeyed[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor, in In, key string, st *call) (Result[Out], error) {
 	var zero Result[Out]
 
@@ -88,10 +89,10 @@ func invokeKeyed[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor,
 	// or its retry would run the operation a second time.
 	settle := context.WithoutCancel(ctx)
 
-	done := false
+	ran := false
 
 	defer func() {
-		if !done {
+		if !ran {
 			_ = store.Delete(settle, storeKey)
 		}
 	}()
@@ -100,6 +101,8 @@ func invokeKeyed[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor,
 	if err != nil {
 		return zero, asError(err)
 	}
+
+	ran = true
 
 	value, err := json.Marshal(out)
 	if err != nil {
@@ -110,8 +113,6 @@ func invokeKeyed[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor,
 	if err := store.Set(settle, storeKey, rec, idempotencyTTL); err != nil {
 		return zero, asError(err)
 	}
-
-	done = true
 
 	return Result[Out]{Value: out, Existing: st.existing}, nil
 }

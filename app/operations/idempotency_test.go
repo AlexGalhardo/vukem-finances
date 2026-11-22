@@ -48,6 +48,37 @@ func (r *rows) op(reg *operations.Registry) *operations.Op[rowIn, rowOut] {
 	})
 }
 
+// setFails is a store that takes the claim but cannot keep the answer.
+type setFails struct{ cache.Store }
+
+func (setFails) Set(context.Context, string, []byte, time.Duration) error {
+	return errors.New("store down")
+}
+
+// The operation already ran: a retry must not run it again.
+func TestIdempotencyKeepsTheClaimWhenTheAnswerCannotBeStored(t *testing.T) {
+	t.Parallel()
+
+	var r rows
+
+	reg := operations.NewRegistry(operations.Config{Edition: config.EditionSaaS, Store: setFails{cache.NewMemory(1000)}})
+	op := r.op(reg)
+	owner := actor(models.RoleOwner, operations.ScopeAccountsWrite)
+	key := operations.WithIdempotencyKey("key-store-down")
+
+	if _, err := operations.Invoke(t.Context(), op, owner, rowIn{Name: "a"}, key); err == nil {
+		t.Fatal("a call whose answer was not stored reported success")
+	}
+
+	if _, err := operations.Invoke(t.Context(), op, owner, rowIn{Name: "a"}, key); err == nil {
+		t.Fatal("the retry was not refused")
+	}
+
+	if got := r.n.Load(); got != 1 {
+		t.Fatalf("the operation ran %d times, want 1", got)
+	}
+}
+
 func TestIdempotency(t *testing.T) {
 	t.Parallel()
 
