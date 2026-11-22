@@ -57,5 +57,6 @@ func TenantModels() []TenantModel {
 		tenantModel[PixPayment](),
 		tenantModel[PixEntitlement](),
 		tenantModel[BillingEvent](),
+		tenantModel[MCPGrant](),
 	}
 }
