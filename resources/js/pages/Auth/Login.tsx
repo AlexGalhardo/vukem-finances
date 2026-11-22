@@ -35,6 +35,7 @@ export default function Login() {
               {t("google")}
             </a>
           </Button>
+          {edition === "personal" && <p className="text-sm text-muted-foreground">{t("googleNeedsInternet")}</p>}
           <FieldSeparator>{t("orEmail")}</FieldSeparator>
         </>
       )}

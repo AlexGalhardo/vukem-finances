@@ -1,4 +1,4 @@
-import { Head, router, useForm } from "@inertiajs/react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { type FormEvent, useEffect, useState } from "react";
 import ConfirmDelete from "../../components/ConfirmDelete";
 import PageHeader from "../../components/PageHeader";
@@ -15,6 +15,7 @@ function clock(seconds: number): string {
 
 export default function Telegram({ username, links, alertsOn, maxLinks, created }: Page<"Settings/Telegram">) {
   const { t, date } = useFinanceI18n();
+  const { edition } = usePage().props as { edition?: string };
   const connect = useForm({});
   const [dismissed, setDismissed] = useState(false);
   const [left, setLeft] = useState(created?.seconds ?? 0);
@@ -52,6 +53,7 @@ export default function Telegram({ username, links, alertsOn, maxLinks, created 
 
       <Card>
         <p className="text-sm text-muted-foreground">{t("telegramPrivacy")}</p>
+        {edition === "personal" && <p className="mt-2 text-sm text-muted-foreground">{t("telegramNeedsInternet")}</p>}
       </Card>
 
       {created && !dismissed && (

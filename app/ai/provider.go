@@ -66,4 +66,15 @@ var (
 	ErrRateLimited = errors.New("the provider is rate limiting this key")
 	// ErrBadRequest means the provider refused the request itself (other 4xx).
 	ErrBadRequest = errors.New("the provider could not handle the request")
+	// ErrUnreachable means no connection to the provider could be made: no
+	// internet, no DNS, a refused or timed out connection. It is also an
+	// ErrUnavailable, so a caller that only knows that one keeps working.
+	ErrUnreachable error = unreachableError{}
 )
+
+type unreachableError struct{}
+
+func (unreachableError) Error() string { return "the provider could not be reached" }
+
+// Is makes errors.Is(err, ErrUnavailable) true for ErrUnreachable.
+func (unreachableError) Is(target error) bool { return target == ErrUnavailable }

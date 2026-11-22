@@ -113,12 +113,20 @@ export function filterPicker<T extends { name: string }>(items: readonly T[], qu
 export type SubmitResult = { ok: true } | { ok: false; message: string; fields: Record<string, string> };
 
 interface ProblemBody {
+  code?: unknown;
   detail?: unknown;
   errors?: unknown;
 }
 
-/** Reads an RFC 9457 problem answer: its `detail` and, for a validation failure, the first message per field. */
-export function readProblem(body: unknown, fallback: string): { message: string; fields: Record<string, string> } {
+/**
+ * Reads an RFC 9457 problem answer: its `detail` and, for a validation failure, the first message per field.
+ * A problem with `code: "offline"` (the AI provider could not be reached) shows `offline` in the person's language.
+ */
+export function readProblem(
+  body: unknown,
+  fallback: string,
+  offline?: string,
+): { message: string; fields: Record<string, string> } {
   const problem: ProblemBody = typeof body === "object" && body !== null ? body : {};
   const fields: Record<string, string> = {};
   if (typeof problem.errors === "object" && problem.errors !== null) {
@@ -127,6 +135,7 @@ export function readProblem(body: unknown, fallback: string): { message: string;
       if (typeof first === "string") fields[name] = first;
     }
   }
+  if (offline !== undefined && problem.code === "offline") return { message: offline, fields };
   const message =
     Object.values(fields)[0] ??
     (typeof problem.detail === "string" && problem.detail !== "" ? problem.detail : fallback);

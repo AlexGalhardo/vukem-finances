@@ -1,4 +1,4 @@
-import { Head, router, useForm } from "@inertiajs/react";
+import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { type FormEvent, useId, useState } from "react";
 import ConfirmDelete from "../components/ConfirmDelete";
 import Field from "../components/Field";
@@ -33,6 +33,7 @@ function Check({ label, ...input }: { label: string } & React.InputHTMLAttribute
 
 export default function AI({ settings, credential, usage, providers, canManage, privateHosts }: Page<"AI">) {
   const { t } = useFinanceI18n();
+  const { edition } = usePage().props as { edition?: string };
   const consentId = useId();
   const [consentOpen, setConsentOpen] = useState(false);
   const [consent, setConsent] = useState(false);
@@ -80,6 +81,7 @@ export default function AI({ settings, credential, usage, providers, canManage, 
       <Card title={t("aiStatus")}>
         <p>{settings.enabled ? t("aiStatusOn") : t("aiStatusOff")}</p>
         {!canManage && <p className="mt-2 text-sm text-muted-foreground">{t("aiOwnerOnly")}</p>}
+        {edition === "personal" && <p className="mt-2 text-sm text-muted-foreground">{t("aiNeedsInternet")}</p>}
       </Card>
 
       {canManage && (

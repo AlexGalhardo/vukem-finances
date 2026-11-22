@@ -29,5 +29,7 @@ const dict = {
   telegramAlertsLabel: "Enviar las alertas de este workspace a mis chats conectados",
   telegramAlertsHint: "Alertas de presupuesto, tarjeta, meta y recurrencias. Desactivado hasta que lo actives.",
   telegramSettings: "Ajustes de Telegram",
+  telegramNeedsInternet:
+    "Esta instalación funciona sin conexión. Telegram es la excepción: el bot habla con los servidores de Telegram, así que necesita internet. Sin ella el bot espera y nada más se ve afectado.",
 } satisfies Record<keyof typeof en, string>;
 export default dict;

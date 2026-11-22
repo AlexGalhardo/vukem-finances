@@ -144,7 +144,7 @@ export default function AssistantHost() {
       void getJSON<Status>("/assistant/conversations").then(setStatus);
     } else {
       const body: unknown = await response?.json().catch(() => null);
-      setError(readProblem(body, t("assistantError")).message);
+      setError(readProblem(body, t("assistantError"), t("aiOffline")).message);
     }
     setBusy(false);
     inputRef.current?.focus();

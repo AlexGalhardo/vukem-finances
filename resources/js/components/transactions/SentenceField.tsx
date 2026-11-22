@@ -63,7 +63,7 @@ export default function SentenceField({ onDraft }: { onDraft: (draft: SentenceDr
         setText("");
       } else {
         const body: unknown = await response.json().catch(() => null);
-        setError(readProblem(body, t("draftError")).message);
+        setError(readProblem(body, t("draftError"), t("aiOffline")).message);
       }
     } catch {
       setError(t("draftError"));
