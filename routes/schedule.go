@@ -23,6 +23,12 @@ func Schedule(s *schedule.Schedule, _ *vukem.App) {
 	// the natural key make a doubled run harmless.
 	s.Job(jobs.RecurrencesGenerate{}).Hourly().WithoutOverlapping()
 
+	// Make the alerts that are due (budgets, cards, goals, failed rules) and
+	// send their mail, hourly; a write enqueues the same job for its own
+	// workspace. The notification key and the mail claim make a doubled run
+	// harmless.
+	s.Job(jobs.AlertsEvaluate{}).Hourly().WithoutOverlapping()
+
 	// Purge old tombstones and compact the change log, once a day at night.
 	s.Job(jobs.ChangesCompact{}).DailyAt("03:30").WithoutOverlapping()
 

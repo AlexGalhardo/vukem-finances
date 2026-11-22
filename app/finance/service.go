@@ -2,7 +2,7 @@ package finance
 
 import (
 	"context"
-	"errors"
+	"log/slog"
 	"net/http"
 	"strings"
 	"time"
@@ -14,7 +14,6 @@ import (
 	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/queue"
 
-	appmail "github.com/AlexGalhardo/vukem-finances/app/mail"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
@@ -38,6 +37,7 @@ type Service struct {
 	Mailer *mail.Mailer
 	Queue  *queue.Queue
 	URL    string
+	Log    *slog.Logger
 
 	now func() time.Time
 }
@@ -49,7 +49,7 @@ func New(app *vukem.App, ws *workspaces.Service) (*Service, error) {
 		return nil, err
 	}
 
-	return &Service{DB: ws.DB, WS: ws, Mailer: ws.Mailer, Queue: q, URL: ws.URL, now: app.Now}, nil
+	return &Service{DB: ws.DB, WS: ws, Mailer: ws.Mailer, Queue: q, URL: ws.URL, Log: app.Log, now: app.Now}, nil
 }
 
 // Today is the current ISO date where the people of the workspace of ctx
@@ -184,66 +184,6 @@ func firstErr(err, fallback error) error {
 	}
 
 	return fallback
-}
-
-// alertBudget emails the owners when delta (cents just added to the month's
-// spending of the category) made it cross 80% or 100% of the budget. It
-// compares the spending before and after, so no alert is ever sent twice.
-func (s *Service) alertBudget(ctx context.Context, categoryID int64, month string, delta int64) error {
-	b, err := workspaces.Scoped[models.Budget](ctx, s.DB).Where("category_id", categoryID).First(ctx)
-	if errors.Is(err, orm.ErrNotFound) {
-		return nil
-	}
-
-	if err != nil {
-		return err
-	}
-
-	spent, err := s.categorySpent(ctx, categoryID, month)
-	if err != nil {
-		return err
-	}
-
-	before := spent - delta
-	percent := 0
-
-	for _, p := range []int64{80, 100} {
-		if before*100 < p*b.LimitCents && spent*100 >= p*b.LimitCents {
-			percent = int(p)
-		}
-	}
-
-	if percent == 0 {
-		return nil
-	}
-
-	ws, err := s.WS.Current(ctx)
-	if err != nil {
-		return err
-	}
-
-	cat, err := workspaces.Scoped[models.Category](ctx, s.DB).Find(ctx, categoryID)
-	if err != nil {
-		return err
-	}
-
-	owners, err := s.WS.OwnerEmails(ctx, ws.ID)
-	if err != nil {
-		return err
-	}
-
-	for _, to := range owners {
-		err := s.WS.Notify(ctx, appmail.BudgetAlert{
-			To: to, Workspace: ws.Name, Category: cat.Name, Percent: percent,
-			Spent: FormatAmount(spent, ws.Currency), Limit: FormatAmount(b.LimitCents, ws.Currency),
-			URL: s.URL + "/budgets",
-		})
-		if err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 // otherLegAccounts maps each transfer uid among txs to, per leg id, the
