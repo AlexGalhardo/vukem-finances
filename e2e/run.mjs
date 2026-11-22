@@ -5,6 +5,7 @@ import { spawn } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { startFakeAbacatePay } from "./fake-abacatepay.mjs";
+import { startFakeTelegram } from "./fake-telegram.mjs";
 
 const saas = process.argv[2] === "saas";
 const file = "e2e/.tmp/env.json";
@@ -17,6 +18,8 @@ for (let i = 0; saas && i < 1800 && !(existsSync(file) && readFileSync(file, "ut
 const { binary, appEnv, saasEnv } = JSON.parse(readFileSync(file, "utf8"));
 let fake;
 if (saas) fake = await startFakeAbacatePay(Number(process.env.E2E_FAKE_PORT ?? 3919));
+// The personal server runs the Telegram bot in polling mode against a fake Bot API.
+if (!saas) fake = await startFakeTelegram(Number(process.env.E2E_TELEGRAM_PORT ?? 3920));
 
 const child = spawn(binary, [], { stdio: "inherit", env: saas ? saasEnv : appEnv });
 const stop = () => {
