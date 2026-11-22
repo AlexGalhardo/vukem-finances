@@ -1,12 +1,12 @@
 package cli
 
 import (
-	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -190,7 +190,9 @@ func writeTable(w io.Writer, v any) error {
 
 // writeCSV writes the answer as CSV. On a terminal (tty) the text also goes
 // through cleanText; redirected output is byte-exact apart from the formula
-// guard.
+// guard. Every header and text cell is wrapped in double quotes, so a reader
+// with another delimiter (; or a tab, as Excel in pt-BR) cannot split a cell
+// and make a formula of its tail; only a JSON number is bare.
 func writeCSV(w io.Writer, v any, tty bool) error {
 	g, err := gridOf(v)
 	if err != nil {
@@ -205,73 +207,75 @@ func writeCSV(w io.Writer, v any, tty bool) error {
 		return s
 	}
 
-	cw := csv.NewWriter(w)
+	var b strings.Builder
 
-	head := make([]string, len(g.cols))
 	for i, c := range g.cols {
-		head[i] = csvSafe(text(c), false)
+		if i > 0 {
+			b.WriteByte(',')
+		}
+
+		b.WriteString(quoteCSV(csvSafe(text(c), false)))
 	}
 
-	if err := cw.Write(head); err != nil {
-		return err
-	}
+	b.WriteByte('\n')
 
 	for _, row := range g.rows {
-		cells := make([]string, len(g.cols))
-
 		for i, c := range g.cols {
-			_, numeric := row[c].(json.Number)
-			cells[i] = csvSafe(text(cellText(row[c])), numeric)
+			if i > 0 {
+				b.WriteByte(',')
+			}
+
+			if n, ok := row[c].(json.Number); ok && plainNumber.MatchString(n.String()) {
+				b.WriteString(n.String())
+
+				continue
+			}
+
+			b.WriteString(quoteCSV(csvSafe(text(cellText(row[c])), false)))
 		}
 
-		if err := cw.Write(cells); err != nil {
-			return err
-		}
+		b.WriteByte('\n')
 	}
 
-	cw.Flush()
+	_, err = io.WriteString(w, b.String())
 
-	return cw.Error()
+	return err
+}
+
+// plainNumber is what a bare cell may hold: digits, a sign, a dot and an
+// exponent, no separator of any reader.
+var plainNumber = regexp.MustCompile(`^-?[0-9]+(\.[0-9]+)?([eE][+-]?[0-9]+)?$`)
+
+func quoteCSV(s string) string {
+	return `"` + strings.ReplaceAll(s, `"`, `""`) + `"`
 }
 
 // csvSafe neutralizes formula injection: a spreadsheet runs a cell whose first
 // meaningful character is = + - @ (or its full-width form), and it skips the
-// whitespace, control and format characters in front of it, so those are
-// skipped here too before the first rune is judged. A reader whose delimiter
-// is ; or a tab (Excel in pt-BR) splits one cell into several, so every
-// segment is judged, not only the first. Such a cell gets a leading quote. A
-// real number is not text and stays as it is, so -10.50 is still a number in
-// the sheet; a text value is exempt only when the whole of it is a plain
-// negative decimal ("-10.50"), which no spreadsheet reads as a formula.
-func csvSafe(s string, numeric bool) string {
-	if s == "" || numeric || plainNegative(s) {
+// whitespace, control and format characters (and a quote) in front of it, so
+// those are skipped here too before the first rune is judged. Such a cell gets
+// a leading apostrophe. A text value is exempt only when the whole of it is a
+// plain negative decimal ("-10.50"), which no spreadsheet reads as a formula;
+// a real number is written bare by writeCSV and never reaches here.
+func csvSafe(s string, _ bool) string {
+	if s == "" || plainNegative(s) {
 		return s
 	}
 
-	for _, seg := range strings.FieldsFunc(s, func(r rune) bool { return r == ';' || r == '	' }) {
-		if startsFormula(seg) {
-			return "'" + s
-		}
-	}
-
-	return s
-}
-
-func startsFormula(seg string) bool {
-	for _, r := range seg {
-		if unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
+	for _, r := range s {
+		if r == '"' || unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
 			continue
 		}
 
 		switch r {
 		case '=', '+', '-', '@', '＝', '＋', '－', '＠':
-			return true
+			return "'" + s
 		}
 
-		return false
+		return s
 	}
 
-	return false
+	return s
 }
 
 // plainNegative matches -123 and -123.45 and nothing else.
