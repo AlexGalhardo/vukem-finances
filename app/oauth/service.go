@@ -96,6 +96,7 @@ func New(app *vukem.App, ws *workspaces.Service, cfg Config) (*Service, error) {
 	}
 
 	store := NewGrantStore(ws.DB, now)
+	store.Role = ws.MemberRole
 
 	clients := cfg.Clients
 	if clients == nil {

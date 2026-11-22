@@ -50,10 +50,24 @@ func (c *Consent) Subject(w http.ResponseWriter, r *http.Request) (string, bool)
 		return "", false
 	}
 
-	if _, member, err := c.WS.MemberRole(r.Context(), u.ID, ws); err != nil || !member {
+	role, member, err := c.WS.MemberRole(r.Context(), u.ID, ws)
+	if err != nil || !member {
 		http.Error(w, "you are not a member of this workspace", http.StatusForbidden)
 
 		return "", false
+	}
+
+	// The screen shows what the role cannot grant; the decision is enforced here.
+	// The scopes of the POST are the ones the signed form carried, and the
+	// framework grants exactly those, so one the role lacks refuses the decision.
+	if r.Method == http.MethodPost {
+		for _, sc := range strings.Fields(r.PostFormValue("scope")) {
+			if !workspaces.RoleCan(role, operations.AbilityOf(sc)) {
+				http.Error(w, "your role cannot grant "+sc, http.StatusForbidden)
+
+				return "", false
+			}
+		}
 	}
 
 	return Subject{UserID: u.ID, WorkspaceID: ws}.String(), true
@@ -90,9 +104,7 @@ func (c *Consent) Render(w http.ResponseWriter, r *http.Request, req oauth.Conse
 		Role: role, Action: req.Action, ReturnTo: r.URL.RequestURI(),
 	}
 
-	if props.ClientName == "" {
-		props.ClientName = ClientName(req.Client.ID)
-	}
+	props.ClientName, props.ClaimedName = DisplayNames(req.Client)
 
 	for _, ws := range mine {
 		current := ws.ID == sub.WorkspaceID
@@ -127,6 +139,29 @@ func (c *Consent) Render(w http.ResponseWriter, r *http.Request, req oauth.Conse
 	w.Header().Set("Cache-Control", "no-store")
 
 	return pages.OAuthConsent.Render(web.NewCtx(w, r, web.ServicesFrom(ctx)), props)
+}
+
+// DisplayNames are what the screen calls a client. A client identified by the
+// address of a metadata document can claim any name, so its verified host is the
+// name and what it claims is returned apart, to be shown as unverified. A client
+// registered with an id that is not an address keeps the name it was registered
+// with.
+func DisplayNames(c *oauth.Client) (name, claimed string) {
+	host := ClientName(c.ID)
+
+	if host == c.ID {
+		if c.Name != "" {
+			return c.Name, ""
+		}
+
+		return c.ID, ""
+	}
+
+	if c.Name != "" && c.Name != host {
+		return host, c.Name
+	}
+
+	return host, ""
 }
 
 // redirectHost is the host the browser returns to, shown so the person can see

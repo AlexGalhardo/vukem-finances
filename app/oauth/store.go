@@ -10,12 +10,16 @@ import (
 	"errors"
 	"fmt"
 	"net/url"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/AlexGalhardo/vukem/database"
 	"github.com/AlexGalhardo/vukem/oauth"
+
+	"github.com/AlexGalhardo/vukem-finances/app/operations"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
 // Subject is who a grant acts as: the person and the workspace they chose on
@@ -60,6 +64,9 @@ type GrantStore struct {
 
 	ex  database.Executor
 	now func() time.Time
+	// Role is the role of a person in a workspace now, and whether they are a
+	// member; the scopes a grant may hold are cut to what it allows.
+	Role func(ctx context.Context, userID, workspaceID int64) (string, bool, error)
 }
 
 // NewGrantStore returns the store over ex.
@@ -90,16 +97,24 @@ func (s *GrantStore) CreateGrant(ctx context.Context, g oauth.Grant) error {
 		return fmt.Errorf("oauth: grant subject %q is not a person and a workspace", g.Subject)
 	}
 
+	// The framework cannot narrow what the client asked for, so a request the role
+	// cannot fully grant is refused here, whatever the form said: the approved set
+	// is what the role holds at this moment and nothing wider.
+	approved, err := s.approve(ctx, sub, g.Scopes)
+	if err != nil {
+		return err
+	}
+
 	if err := s.SQLStore.CreateGrant(ctx, g); err != nil {
 		return err
 	}
 
 	now := s.now().UTC()
 
-	_, err := s.ex.ExecContext(ctx,
-		"INSERT INTO mcp_grants (workspace_id, user_id, grant_id, client_id, client_name, created_at, updated_at) VALUES ("+
-			s.p(1)+", "+s.p(2)+", "+s.p(3)+", "+s.p(4)+", "+s.p(5)+", "+s.p(6)+", "+s.p(7)+")",
-		sub.WorkspaceID, sub.UserID, g.ID, g.ClientID, ClientName(g.ClientID), now, now)
+	_, err = s.ex.ExecContext(ctx,
+		"INSERT INTO mcp_grants (workspace_id, user_id, grant_id, client_id, client_name, scopes, created_at, updated_at) VALUES ("+
+			s.p(1)+", "+s.p(2)+", "+s.p(3)+", "+s.p(4)+", "+s.p(5)+", "+s.p(6)+", "+s.p(7)+", "+s.p(8)+")",
+		sub.WorkspaceID, sub.UserID, g.ID, g.ClientID, ClientName(g.ClientID), strings.Join(approved, " "), now, now)
 	if err != nil {
 		// Without its binding the grant is unusable: revoke it rather than leave it.
 		_ = s.SQLStore.RevokeGrant(ctx, g.ID)
@@ -108,6 +123,35 @@ func (s *GrantStore) CreateGrant(ctx context.Context, g oauth.Grant) error {
 	}
 
 	return nil
+}
+
+// ErrScopeBeyondRole is returned when the client asks for a scope the person's
+// role in the workspace cannot grant.
+var ErrScopeBeyondRole = errors.New("oauth: a requested scope is beyond the role of the person")
+
+// approve returns the scopes the role of the person may grant, or
+// ErrScopeBeyondRole when a requested one is not among them.
+func (s *GrantStore) approve(ctx context.Context, sub Subject, requested []string) ([]string, error) {
+	if s.Role == nil {
+		return nil, errors.New("oauth: the store has no role lookup")
+	}
+
+	role, member, err := s.Role(ctx, sub.UserID, sub.WorkspaceID)
+	if err != nil {
+		return nil, err
+	}
+
+	if !member {
+		return nil, ErrScopeBeyondRole
+	}
+
+	for _, sc := range requested {
+		if !workspaces.RoleCan(role, operations.AbilityOf(sc)) {
+			return nil, ErrScopeBeyondRole
+		}
+	}
+
+	return slices.Clone(requested), nil
 }
 
 // Grant returns the grant when its binding agrees with its subject. The last
@@ -126,11 +170,12 @@ func (s *GrantStore) Grant(ctx context.Context, id string) (oauth.Grant, error) 
 	var (
 		workspace, user int64
 		last            sql.NullTime
+		approved        string
 	)
 
 	err = s.ex.QueryRowContext(ctx,
-		"SELECT workspace_id, user_id, last_used_at FROM mcp_grants WHERE grant_id = "+s.p(1), id).
-		Scan(&workspace, &user, &last)
+		"SELECT workspace_id, user_id, last_used_at, scopes FROM mcp_grants WHERE grant_id = "+s.p(1), id).
+		Scan(&workspace, &user, &last, &approved)
 	if errors.Is(err, sql.ErrNoRows) {
 		return oauth.Grant{}, oauth.ErrNotFound
 	}
@@ -141,6 +186,14 @@ func (s *GrantStore) Grant(ctx context.Context, id string) (oauth.Grant, error) 
 
 	if workspace != sub.WorkspaceID || user != sub.UserID {
 		return oauth.Grant{}, oauth.ErrNotFound
+	}
+
+	// Every scope of the grant must be inside what was approved at consent.
+	within := strings.Fields(approved)
+	for _, sc := range g.Scopes {
+		if !slices.Contains(within, sc) {
+			return oauth.Grant{}, oauth.ErrNotFound
+		}
 	}
 
 	if now := s.now().UTC(); !g.Revoked && (!last.Valid || now.Sub(last.Time) >= touchEvery) {
