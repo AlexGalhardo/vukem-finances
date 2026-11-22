@@ -88,6 +88,10 @@ func Finance(r *router.Router, app *vukem.App) error {
 
 	priv.Fin = fin
 	priv.Access = acc
+
+	if b != nil {
+		priv.Billing = b
+	}
 	admins := admin.NewAdmins(app.Source.Get("ADMIN_EMAILS"))
 	required := auth.Required(acc.Web)
 	verified := auth.Verified(acc.Web)
