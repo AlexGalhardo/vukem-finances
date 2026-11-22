@@ -722,6 +722,17 @@ func replaceTags(ctx context.Context, tx *database.Tx, ws, txID int64, tagIDs []
 	return nil
 }
 
+// monthCountSQL counts the live, non-transfer transactions of a workspace
+// between two dates. It compares the column itself, never a function of it, so
+// the (workspace_id, occurred_on) index answers it (QA-500). Dates are
+// YYYY-MM-DD text, so a month is "YYYY-MM-01" to "YYYY-MM-31".
+const monthCountSQL = `SELECT COUNT(*) FROM transactions WHERE workspace_id = ? AND deleted_at IS NULL AND transfer_uid IS NULL
+	AND occurred_on >= ? AND occurred_on <= ?`
+
+func monthCountArgs(workspaceID int64, month string) []any {
+	return []any{workspaceID, month + "-01", month + "-31"}
+}
+
 // quota enforces the plan the way the services do, inside the batch
 // transaction and after the workspace lock, so two pushes cannot both pass.
 func (s *Service) quota(
@@ -781,9 +792,7 @@ func (s *Service) quota(
 		}
 
 		var n int
-		if err := tx.QueryRowContext(ctx,
-			`SELECT COUNT(*) FROM transactions WHERE workspace_id = ? AND deleted_at IS NULL AND transfer_uid IS NULL
-			 AND substr(occurred_on, 1, 7) = ?`, env.a.WorkspaceID, on[:7]).Scan(&n); err != nil {
+		if err := tx.QueryRowContext(ctx, monthCountSQL, monthCountArgs(env.a.WorkspaceID, on[:7])...).Scan(&n); err != nil {
 			return err
 		}
 
