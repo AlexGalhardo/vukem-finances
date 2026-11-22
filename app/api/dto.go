@@ -7,7 +7,7 @@ import (
 	"github.com/AlexGalhardo/vukem/orm"
 
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
-	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/operations"
 )
 
 // The wire format. Money is an integer *_cents in the workspace currency, a
@@ -48,74 +48,13 @@ type MeOut struct {
 }
 
 // AccountOut is an account with its balance as of today.
-type AccountOut struct {
-	UID          string  `json:"uid"           example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	Version      int64   `json:"version"       example:"1"`
-	Name         string  `json:"name"          example:"Checking"`
-	Kind         string  `json:"kind"          example:"checking"`
-	OpeningCents int64   `json:"opening_cents" example:"100000"`
-	BalanceCents int64   `json:"balance_cents" example:"123450"`
-	Currency     string  `json:"currency"      example:"USD"`
-	Archived     bool    `json:"archived"`
-	ArchivedAt   *string `json:"archived_at"`
-	Position     int     `json:"position"      example:"1"`
-	CreatedAt    string  `json:"created_at"    example:"2026-11-21T12:00:00Z"`
-	UpdatedAt    string  `json:"updated_at"    example:"2026-11-21T12:00:00Z"`
-}
-
-func accountOut(a models.Account, balance int64, currency string) AccountOut {
-	return AccountOut{
-		UID: a.UID, Version: a.Version, Name: a.Name, Kind: a.Kind, OpeningCents: a.OpeningCents,
-		BalanceCents: balance, Currency: currency, Archived: a.ArchivedAt.Valid, ArchivedAt: stampNull(a.ArchivedAt),
-		Position: a.Position, CreatedAt: stamp(a.CreatedAt), UpdatedAt: stamp(a.UpdatedAt),
-	}
-}
+type AccountOut = operations.AccountOut
 
 // CategoryOut is a category.
-type CategoryOut struct {
-	UID       string  `json:"uid"        example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	Version   int64   `json:"version"    example:"1"`
-	Name      string  `json:"name"       example:"Groceries"`
-	Kind      string  `json:"kind"       example:"expense"`
-	ParentUID *string `json:"parent_uid"`
-	Color     string  `json:"color"      example:"green"`
-	Icon      string  `json:"icon"       example:"cart"`
-	Archived  bool    `json:"archived"`
-	CreatedAt string  `json:"created_at" example:"2026-11-21T12:00:00Z"`
-	UpdatedAt string  `json:"updated_at" example:"2026-11-21T12:00:00Z"`
-}
-
-func categoryOut(c models.Category, uids map[int64]string) CategoryOut {
-	out := CategoryOut{
-		UID: c.UID, Version: c.Version, Name: c.Name, Kind: c.Kind, Color: c.Color, Icon: c.Icon,
-		Archived: c.ArchivedAt.Valid, CreatedAt: stamp(c.CreatedAt), UpdatedAt: stamp(c.UpdatedAt),
-	}
-
-	if c.ParentID.Valid {
-		if uid, ok := uids[c.ParentID.V]; ok {
-			out.ParentUID = &uid
-		}
-	}
-
-	return out
-}
+type CategoryOut = operations.CategoryOut
 
 // TagOut is a tag.
-type TagOut struct {
-	UID       string `json:"uid"        example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	Version   int64  `json:"version"    example:"1"`
-	Name      string `json:"name"       example:"work"`
-	Color     string `json:"color"      example:"blue"`
-	CreatedAt string `json:"created_at" example:"2026-11-21T12:00:00Z"`
-	UpdatedAt string `json:"updated_at" example:"2026-11-21T12:00:00Z"`
-}
-
-func tagOut(t models.Tag) TagOut {
-	return TagOut{
-		UID: t.UID, Version: t.Version, Name: t.Name, Color: t.Color,
-		CreatedAt: stamp(t.CreatedAt), UpdatedAt: stamp(t.UpdatedAt),
-	}
-}
+type TagOut = operations.TagOut
 
 // TagRefOut is a tag on a transaction.
 type TagRefOut struct {

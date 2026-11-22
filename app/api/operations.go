@@ -2,16 +2,22 @@ package api
 
 import (
 	"net/http"
-	"slices"
+	"sync"
+
+	"github.com/AlexGalhardo/vukem-finances/app/operations"
 )
 
 // BasePath is where the API lives.
 const BasePath = "/api/v1"
 
 // Operation is one operation of the API: its route, the scope a token needs
-// and what it does to the data. The table below is the single declaration
-// (decision D-017): the routes, the OpenAPI document and the scope matrix test
-// all read it, and a route or a row without the other fails a test.
+// and what it does to the data. The table below declares the REST side of each
+// operation (decision D-017): the method, the path and the status. An operation
+// of the registry (app/operations) takes its scope and summary from there, so
+// they are declared once; the few operations that are REST only (the token and
+// the sync protocol) carry their own. The routes, the OpenAPI document and the
+// scope matrix test all read it, and a route or a row without the other fails
+// a test.
 type Operation struct {
 	// Name is the route name and the OpenAPI operationId.
 	Name   string
@@ -19,9 +25,12 @@ type Operation struct {
 	// Path is relative to BasePath.
 	Path string
 	// Scope is the scope a token needs; "" for an operation of any valid token.
-	Scope   string
-	Summary string
-	Tag     string
+	// Left out for an operation of the registry.
+	Scope string
+	// Registered is set by Operations for an operation of the registry.
+	Registered bool
+	Summary    string
+	Tag        string
 	// Status is the success status; 0 takes the framework default.
 	Status int
 	// MaxBody caps the request body in bytes; 0 leaves the server default.
@@ -31,25 +40,25 @@ type Operation struct {
 // Read reports whether the operation only reads.
 func (o Operation) Read() bool { return o.Method == http.MethodGet }
 
-var operations = []Operation{ //nolint:gochecknoglobals // a constant table
+var table = []Operation{ //nolint:gochecknoglobals // a constant table
 	{Name: "me.show", Method: "GET", Path: "/me", Summary: "The token, its scopes and the workspace it works in", Tag: "Token"},
 
-	{Name: "accounts.list", Method: "GET", Path: "/accounts", Scope: ScopeAccountsRead, Summary: "List the accounts with their balances", Tag: "Accounts"},
-	{Name: "accounts.show", Method: "GET", Path: "/accounts/{uid}", Scope: ScopeAccountsRead, Summary: "Read an account", Tag: "Accounts"},
-	{Name: "accounts.create", Method: "POST", Path: "/accounts", Scope: ScopeAccountsWrite, Summary: "Create an account", Tag: "Accounts", Status: http.StatusCreated},
-	{Name: "accounts.update", Method: "PATCH", Path: "/accounts/{uid}", Scope: ScopeAccountsWrite, Summary: "Change the name, kind and opening balance of an account", Tag: "Accounts"},
-	{Name: "accounts.archive", Method: "POST", Path: "/accounts/{uid}/archive", Scope: ScopeAccountsWrite, Summary: "Archive an account", Tag: "Accounts", Status: http.StatusOK},
+	{Name: "accounts.list", Method: "GET", Path: "/accounts", Tag: "Accounts"},
+	{Name: "accounts.show", Method: "GET", Path: "/accounts/{uid}", Tag: "Accounts"},
+	{Name: "accounts.create", Method: "POST", Path: "/accounts", Tag: "Accounts", Status: http.StatusCreated},
+	{Name: "accounts.update", Method: "PATCH", Path: "/accounts/{uid}", Tag: "Accounts"},
+	{Name: "accounts.archive", Method: "POST", Path: "/accounts/{uid}/archive", Tag: "Accounts", Status: http.StatusOK},
 
-	{Name: "categories.list", Method: "GET", Path: "/categories", Scope: ScopeCategoriesRead, Summary: "List the categories", Tag: "Categories"},
-	{Name: "categories.show", Method: "GET", Path: "/categories/{uid}", Scope: ScopeCategoriesRead, Summary: "Read a category", Tag: "Categories"},
-	{Name: "categories.create", Method: "POST", Path: "/categories", Scope: ScopeCategoriesWrite, Summary: "Create a category", Tag: "Categories", Status: http.StatusCreated},
-	{Name: "categories.update", Method: "PATCH", Path: "/categories/{uid}", Scope: ScopeCategoriesWrite, Summary: "Change a category", Tag: "Categories"},
-	{Name: "categories.archive", Method: "POST", Path: "/categories/{uid}/archive", Scope: ScopeCategoriesWrite, Summary: "Archive a category", Tag: "Categories", Status: http.StatusOK},
+	{Name: "categories.list", Method: "GET", Path: "/categories", Tag: "Categories"},
+	{Name: "categories.show", Method: "GET", Path: "/categories/{uid}", Tag: "Categories"},
+	{Name: "categories.create", Method: "POST", Path: "/categories", Tag: "Categories", Status: http.StatusCreated},
+	{Name: "categories.update", Method: "PATCH", Path: "/categories/{uid}", Tag: "Categories"},
+	{Name: "categories.archive", Method: "POST", Path: "/categories/{uid}/archive", Tag: "Categories", Status: http.StatusOK},
 
-	{Name: "tags.list", Method: "GET", Path: "/tags", Scope: ScopeTagsRead, Summary: "List the tags", Tag: "Tags"},
-	{Name: "tags.create", Method: "POST", Path: "/tags", Scope: ScopeTagsWrite, Summary: "Create a tag", Tag: "Tags", Status: http.StatusCreated},
-	{Name: "tags.update", Method: "PATCH", Path: "/tags/{uid}", Scope: ScopeTagsWrite, Summary: "Rename or recolor a tag", Tag: "Tags"},
-	{Name: "tags.delete", Method: "DELETE", Path: "/tags/{uid}", Scope: ScopeTagsWrite, Summary: "Delete a tag and take it off its transactions", Tag: "Tags"},
+	{Name: "tags.list", Method: "GET", Path: "/tags", Tag: "Tags"},
+	{Name: "tags.create", Method: "POST", Path: "/tags", Tag: "Tags", Status: http.StatusCreated},
+	{Name: "tags.update", Method: "PATCH", Path: "/tags/{uid}", Tag: "Tags"},
+	{Name: "tags.delete", Method: "DELETE", Path: "/tags/{uid}", Tag: "Tags"},
 
 	{Name: "transactions.list", Method: "GET", Path: "/transactions", Scope: ScopeTransactionsRead, Summary: "List transactions, newest first, with filters", Tag: "Transactions"},
 	{Name: "transactions.show", Method: "GET", Path: "/transactions/{uid}", Scope: ScopeTransactionsRead, Summary: "Read a transaction", Tag: "Transactions"},
@@ -73,14 +82,38 @@ var operations = []Operation{ //nolint:gochecknoglobals // a constant table
 	{Name: "sync.push", Method: "POST", Path: "/sync/push", Scope: ScopeSync, Summary: "Send the mutations a device made offline", Tag: "Sync", Status: http.StatusOK, MaxBody: 1 << 20},
 }
 
+// described is the registry with no services: it only describes the operations.
+var described = sync.OnceValue(func() *operations.Catalog { //nolint:gochecknoglobals // built once
+	return operations.NewCatalog(operations.Config{}, operations.Services{})
+})
+
+// Describe returns the registry that names every operation: the REST table
+// reads its scopes and summaries, the inventory command its whole metadata.
+func Describe() *operations.Catalog { return described() }
+
+func resolve(o Operation) Operation {
+	if m, ok := described().Named(o.Name); ok {
+		o.Scope, o.Summary, o.Registered = m.Scope, m.Summary, true
+	}
+
+	return o
+}
+
 // Operations lists every operation of the API.
-func Operations() []Operation { return slices.Clone(operations) }
+func Operations() []Operation {
+	out := make([]Operation, 0, len(table))
+	for _, o := range table {
+		out = append(out, resolve(o))
+	}
+
+	return out
+}
 
 // OperationNamed finds an operation by its route name.
 func OperationNamed(name string) (Operation, bool) {
-	for _, o := range operations {
+	for _, o := range table {
 		if o.Name == name {
-			return o, true
+			return resolve(o), true
 		}
 	}
 
