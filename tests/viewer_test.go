@@ -20,8 +20,9 @@ var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leav
 
 // ownerOnlyReads are GET routes that are not open to a viewer: polling a PIX
 // payment re-reads it at the provider and can activate it, so it is billing
-// management, which only the owner does.
-var ownerOnlyReads = []string{"billing.pix.show"}
+// management, which only the owner does. The JSON export of the workspace holds
+// the budgets, goals and member names, so it needs data.manage (owner, admin).
+var ownerOnlyReads = []string{"billing.pix.show", "workspace.export"}
 
 func viewerOf(t *testing.T, app *vukemtest.App, owner who) who {
 	t.Helper()
