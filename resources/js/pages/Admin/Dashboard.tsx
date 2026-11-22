@@ -1,10 +1,13 @@
 import { Link } from "@inertiajs/react";
 import { useEffect, useState } from "react";
-
+import Stat from "../../components/Stat";
+import { Alert, AlertDescription } from "../../components/ui/alert";
 import AdminLayout from "../../layouts/AdminLayout";
 import { type DashboardData, getJSON } from "../../lib/adminApi";
+import { useFinanceI18n } from "../../lib/i18n";
 
 export default function Dashboard({ dataUrl }: { dataUrl: string }) {
+  const { t } = useFinanceI18n();
   const [data, setData] = useState<DashboardData | null>(null);
   const [error, setError] = useState("");
 
@@ -17,22 +20,25 @@ export default function Dashboard({ dataUrl }: { dataUrl: string }) {
   }, [dataUrl]);
 
   return (
-    <AdminLayout title="Dashboard">
+    <AdminLayout title={t("admDashboard")}>
       {error && (
-        <p role="alert" className="text-red-600">
-          {error}
+        <Alert variant="error">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {!data && !error && (
+        <p role="status" className="text-muted-foreground">
+          {t("admLoading")}
         </p>
       )}
-      {!data && !error && <p className="text-zinc-500">Loading…</p>}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div data-tour="admin-overview" className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {(data?.cards ?? []).map((card) => (
           <Link
             key={card.url}
             href={`/admin/${card.url.replace(`${dataUrl}/`, "")}`}
-            className="rounded-lg border border-zinc-200 p-5 hover:bg-zinc-50 dark:border-zinc-800 dark:hover:bg-zinc-900"
+            className="rounded-lg border border-border p-5 transition-colors duration-(--vf-duration-fast) hover:bg-muted"
           >
-            <div className="text-sm text-zinc-500">{card.label}</div>
-            <div className="mt-1 text-3xl font-semibold tabular-nums">{card.count}</div>
+            <Stat label={card.label} value={card.count} size="hero" />
           </Link>
         ))}
       </div>

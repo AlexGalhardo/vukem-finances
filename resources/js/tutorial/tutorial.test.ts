@@ -62,6 +62,18 @@ describe("the screen data", () => {
     expect(visibleScreens(props({ admin: true })).map((screen) => screen.id)).toContain("AdminDashboard");
   });
 
+  test("the panel's own pages, which carry no workspace, still offer the admin tour", () => {
+    const panel = { ...props(), workspace: undefined } as unknown as SharedProps;
+    const win = globalThis as { window?: unknown };
+    win.window = { location: { pathname: "/admin/revenue" } };
+    try {
+      expect(visibleScreens(panel).map((screen) => screen.id)).toContain("AdminDashboard");
+    } finally {
+      win.window = undefined;
+    }
+    expect(visibleScreens(panel).map((screen) => screen.id)).not.toContain("AdminDashboard");
+  });
+
   test("screens whose route has a parameter cannot be visited, so they stay out of the run", () => {
     expect(visibleScreens(props()).map((screen) => screen.id)).not.toContain("CardStatement");
   });

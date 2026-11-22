@@ -288,8 +288,3 @@
 	}
 }
 
-/* Landing rules stay until T16 of the migration plan. */
-.finance-landing { background: #bdfb6b; color: #102d1d; min-height: calc(100svh - 5rem); }
-.finance-landing-grid { background-image: linear-gradient(#163c2010 1px, transparent 1px), linear-gradient(90deg,#163c2010 1px,transparent 1px); background-size: 64px 64px; }
-.finance-hero-title { font-size: clamp(3.8rem,8vw,8rem); line-height: .98; letter-spacing: -.075em; font-weight: 600; }
-.finance-preview { background: #f9fff2; color: #163720; box-shadow: 0 30px 80px #18382026; transform: rotate(-3deg); }

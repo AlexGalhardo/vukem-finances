@@ -33,15 +33,16 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     </>
   );
 
-  // The panel's own screens bring AdminLayout (sidebar, title, sign-out): wrapping them here would stack a second header.
-  if (page.component.startsWith("Admin/") && page.component !== "Admin/Revenue") return <>{children}</>;
+  // The panel's own screens, Revenue included, bring AdminLayout (sidebar, title, theme): wrapping them here would
+  // stack a second header.
+  if (page.component.startsWith("Admin/")) return <>{children}</>;
 
   if (auth?.user && workspace) return <Shell notices={notices}>{children}</Shell>;
 
   const brand = (
-    <Link href="/" className="flex items-center gap-2 text-h2">
+    <Link href="/" className="flex min-w-0 items-center gap-2 text-h2">
       <Mark />
-      {page.props.appName}
+      <span className="truncate max-[359px]:sr-only">{page.props.appName}</span>
     </Link>
   );
   const landing = page.url.split("?")[0] === "/";
@@ -56,9 +57,9 @@ export default function AppLayout({ children }: { children: ReactNode }) {
     <TooltipProvider>
       <header className="flex h-20 items-center justify-between border-b border-border px-5 md:px-12">
         {brand}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Preferences />
-          <Button asChild variant="ghost">
+          <Button asChild variant="ghost" className="max-sm:hidden">
             <Link href="/login">{t("login")}</Link>
           </Button>
           <ThemeToggle />

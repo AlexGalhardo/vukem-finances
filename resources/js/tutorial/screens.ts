@@ -3,7 +3,10 @@ import type { TutorialScreen } from "./types";
 
 const canRecord = (props: SharedProps): boolean => props.workspace?.role !== "viewer";
 const isSaas = (props: SharedProps): boolean => props.edition !== "personal";
-const isAdmin = (props: SharedProps): boolean => props.workspace?.admin === true;
+// The admin screens are served outside the workspace routes, so their pages carry no `workspace` prop. Only an
+// administrator gets past their guard, so being on an /admin path says the person is one.
+const inPanel = (): boolean => typeof window !== "undefined" && window.location.pathname.startsWith("/admin");
+const isAdmin = (props: SharedProps): boolean => props.workspace?.admin === true || inPanel();
 const isAdminSaas = (props: SharedProps): boolean => isAdmin(props) && isSaas(props);
 // The Telegram bot is configured per deployment and no shared prop says so, so its screen is offered only from the
 // screen itself (the route exists only when the bot is configured).
