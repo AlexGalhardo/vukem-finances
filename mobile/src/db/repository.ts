@@ -119,7 +119,7 @@ export class Repository {
 
 	async list<E extends EntityName>(entity: E, includeDeleted = false): Promise<Row<E>[]> {
 		const rows = await this.db.all<RawRow>(
-			`SELECT * FROM ${ENTITIES[entity].table}${includeDeleted ? "" : " WHERE deleted_at IS NULL"} ORDER BY uid`,
+			`SELECT * FROM ${ENTITIES[entity].table}${includeDeleted ? "" : " WHERE deleted_at IS NULL"} ORDER BY ${ENTITIES[entity].order}`,
 		);
 		return rows.map((r) => toRow(entity, r));
 	}

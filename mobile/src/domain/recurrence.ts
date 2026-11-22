@@ -329,3 +329,91 @@ export async function createInstallments(db: Database, repo: Repository, input: 
 		return out;
 	});
 }
+
+const UPCOMING_CAP = 200;
+
+export interface UpcomingItem {
+	date: string;
+	kind: string;
+	amount_cents: number;
+	description: string;
+	source: "transaction" | "installment" | "recurrence";
+	account_uid: string;
+	/** Set for stored rows. */
+	transaction_uid: string | null;
+	/** Set for virtual occurrences: computed, never stored. */
+	recurrence_uid: string | null;
+	installment_no: number | null;
+	installment_total: number | null;
+}
+
+/**
+ * What is due in the next `days` days: stored transactions dated after today
+ * (installment parts included) and the occurrences of active rules, from
+ * today on, that no row holds yet (a row, even a deleted one, or the
+ * watermark of the rule hides the virtual occurrence, so nothing shows twice).
+ */
+export async function upcoming(db: Database, repo: Repository, today: string, days: number): Promise<UpcomingItem[]> {
+	const end = addDays(today, Math.max(days, 1));
+	const stored = await db.all<{
+		uid: string;
+		occurred_on: string;
+		kind: string;
+		amount_cents: number;
+		description: string;
+		account_uid: string;
+		installment_group_uid: string | null;
+		installment_no: number | null;
+		installment_total: number | null;
+		recurrence_uid: string | null;
+	}>(
+		`SELECT uid, occurred_on, kind, amount_cents, description, account_uid, installment_group_uid, installment_no,
+		        installment_total, recurrence_uid
+		 FROM transactions WHERE deleted_at IS NULL AND transfer_uid IS NULL AND occurred_on > ? AND occurred_on <= ?
+		 ORDER BY occurred_on, uid LIMIT ?`,
+		[today, end, UPCOMING_CAP],
+	);
+
+	const out: UpcomingItem[] = stored.map((r) => ({
+		date: r.occurred_on,
+		kind: r.kind,
+		amount_cents: r.amount_cents,
+		description: r.description,
+		source: r.installment_group_uid !== null ? "installment" : r.recurrence_uid !== null ? "recurrence" : "transaction",
+		account_uid: r.account_uid,
+		transaction_uid: r.uid,
+		recurrence_uid: null,
+		installment_no: r.installment_no,
+		installment_total: r.installment_total,
+	}));
+
+	for (const rule of (await repo.list("recurrence")).filter((r) => r.active)) {
+		const next = rule.generated_through === null ? null : addDays(rule.generated_through, 1);
+		const from = next !== null && next > today ? next : today;
+		const dates = occurrences(ruleOf(rule), from, end, UPCOMING_CAP);
+		if (dates.length === 0) {
+			continue;
+		}
+		const held = new Set(
+			(
+				await db.all<{ occurrence_on: string }>("SELECT occurrence_on FROM transactions WHERE recurrence_uid = ?", [rule.uid])
+			).map((h) => h.occurrence_on),
+		);
+		for (const d of dates.filter((x) => !held.has(x))) {
+			out.push({
+				date: d,
+				kind: rule.kind,
+				amount_cents: rule.amount_cents,
+				description: rule.description,
+				source: "recurrence",
+				account_uid: rule.account_uid,
+				transaction_uid: null,
+				recurrence_uid: rule.uid,
+				installment_no: null,
+				installment_total: null,
+			});
+		}
+	}
+
+	return out.sort((a, b) => (a.date < b.date ? -1 : a.date > b.date ? 1 : 0)).slice(0, UPCOMING_CAP);
+}

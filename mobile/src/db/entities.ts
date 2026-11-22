@@ -101,22 +101,27 @@ interface EntityMeta {
 	fields: Record<string, FieldKind>;
 	/** Fields that hold the uid of another entity: [field, parent entity]. */
 	refs: readonly (readonly [string, EntityName])[];
+	/** ORDER BY of a list: what a person expects to see first. */
+	order: string;
 }
 
 export const ENTITIES: Record<EntityName, EntityMeta> = {
 	account: {
 		table: "accounts",
+		order: "position, name, uid",
 		fields: { name: "text", kind: "text", opening_cents: "int", archived_at: "text", position: "int" },
 		refs: [],
 	},
 	category: {
 		table: "categories",
+		order: "kind, name, uid",
 		fields: { name: "text", kind: "text", parent_uid: "text", color: "text", icon: "text", archived_at: "text" },
 		refs: [["parent_uid", "category"]],
 	},
-	tag: { table: "tags", fields: { name: "text", color: "text" }, refs: [] },
+	tag: { table: "tags", order: "name, uid", fields: { name: "text", color: "text" }, refs: [] },
 	transaction: {
 		table: "transactions",
+		order: "occurred_on DESC, uid DESC",
 		fields: {
 			account_uid: "text",
 			category_uid: "text",
@@ -140,11 +145,13 @@ export const ENTITIES: Record<EntityName, EntityMeta> = {
 	},
 	budget: {
 		table: "budgets",
+		order: "uid",
 		fields: { category_uid: "text", limit_cents: "int", rollover: "bool" },
 		refs: [["category_uid", "category"]],
 	},
 	credit_card: {
 		table: "credit_cards",
+		order: "uid",
 		fields: {
 			account_uid: "text",
 			limit_cents: "int",
@@ -161,6 +168,7 @@ export const ENTITIES: Record<EntityName, EntityMeta> = {
 	},
 	recurrence: {
 		table: "recurrences",
+		order: "start_date, uid",
 		fields: {
 			account_uid: "text",
 			category_uid: "text",

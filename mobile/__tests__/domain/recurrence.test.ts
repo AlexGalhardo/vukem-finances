@@ -8,6 +8,7 @@ import {
 	occurrences,
 	type Frequency,
 	splitInstallments,
+	upcoming,
 	validateRule,
 } from "../../src/domain/recurrence";
 import { ACCOUNT, type Env, openEnv } from "../helpers/fixtures";
@@ -218,5 +219,41 @@ describe("installments", () => {
 			await expect(createInstallments(env.db, env.repo, { ...base, ...bad })).rejects.toThrow();
 		}
 		expect(await env.repo.list("transaction")).toHaveLength(0);
+	});
+});
+
+describe("upcoming", () => {
+	it("merges future rows with virtual occurrences and hides what a row already holds", async () => {
+		const uid = await rule({ start_date: "2027-03-10", frequency: "weekly" });
+		await createInstallments(env.db, env.repo, {
+			account_uid: acc,
+			category_uid: null,
+			total_cents: 3000,
+			parts: 3,
+			first_date: "2027-03-12",
+			description: "TV",
+		});
+
+		const items = await upcoming(env.db, env.repo, "2027-03-10", 7);
+		expect(items.map((i) => [i.date, i.source])).toEqual([
+			["2027-03-10", "recurrence"],
+			["2027-03-12", "installment"],
+			["2027-03-17", "recurrence"],
+		]);
+		expect(items[0]).toMatchObject({ recurrence_uid: uid, transaction_uid: null, amount_cents: 1500 });
+		expect(items[1]).toMatchObject({ installment_no: 1, installment_total: 3, amount_cents: 1000 });
+
+		await generateDue(env.db, env.repo, "2027-03-10");
+		const after = await upcoming(env.db, env.repo, "2027-03-10", 7);
+		expect(after.map((i) => i.date)).toEqual(["2027-03-12", "2027-03-17"]);
+	});
+
+	it("never shows a deleted occurrence again", async () => {
+		await rule({ start_date: "2027-03-10", frequency: "weekly" });
+		await generateDue(env.db, env.repo, "2027-03-10");
+		const made = (await env.repo.list("transaction"))[0];
+		await env.ledger.deleteTransaction(made?.uid ?? "");
+		const items = await upcoming(env.db, env.repo, "2027-03-10", 1);
+		expect(items).toEqual([]);
 	});
 });
