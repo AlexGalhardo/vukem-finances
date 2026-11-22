@@ -1,0 +1,39 @@
+---
+import fs from "node:fs";
+import path from "node:path";
+import SiteFooter from "../../components/SiteFooter.astro";
+import SiteHeader from "../../components/SiteHeader.astro";
+import { catalogs } from "../../lib/copy.ts";
+import { renderMarkdown } from "../../lib/markdown.ts";
+import { basePath, termsApproved } from "../../lib/site.ts";
+import Base from "../layouts/Base.astro";
+
+// The legal pages come from docs/legal. The terms are only built once the author approves them.
+export function getStaticPaths() {
+	const pages = [{ params: { legal: "privacy" } }];
+	if (process.env.LANDING_TERMS_APPROVED === "true") pages.push({ params: { legal: "terms" } });
+	return pages;
+}
+
+const { legal } = Astro.params;
+const copy = catalogs.en;
+const source = fs.readFileSync(path.resolve(process.cwd(), "..", "docs", "legal", `${legal}.md`), "utf8");
+const { html, title } = renderMarkdown(source);
+---
+<Base
+	locale="en"
+	title={`${title} | vukem-finances`}
+	description={copy.meta.description}
+	path={`${basePath}/${legal}/`}
+	ogAlt={copy.meta.ogAlt}
+>
+	<a class="skip" href="#content">{copy.a11y.skip}</a>
+	<SiteHeader locale="en" copy={copy} />
+	<main id="content">
+		<div class="wrap prose">
+			<Fragment set:html={html} />
+			<p><a href={`${basePath}/`}>{copy.legal.back}</a></p>
+		</div>
+	</main>
+	<SiteFooter copy={copy} />
+</Base>
