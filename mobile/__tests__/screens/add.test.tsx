@@ -122,4 +122,17 @@ describe("Add", () => {
 		expect(last).toMatchObject({ op: "upsert", fields: { amount_cents: 1300 } });
 		expect(Object.keys(last?.fields ?? {})).toEqual(["amount_cents"]);
 	});
+
+	it("tags a transaction and keeps the join rows", async () => {
+		const tag = await env.repo.create("tag", { name: "work", color: "" });
+		await renderApp(<AddScreen />, { env });
+		await fireEvent.press(await screen.findByRole("checkbox", { name: "work" }));
+		await fireEvent.changeText(screen.getByLabelText("Amount"), "9");
+		await fireEvent.press(screen.getByRole("button", { name: "Save" }));
+		await waitFor(async () => expect(await rows()).toHaveLength(1));
+		const [saved] = await env.repo.list("transaction");
+		expect(saved?.tag_uids).toEqual([tag.uid]);
+		const joins = await env.db.all<{ tag_uid: string }>("SELECT tag_uid FROM transaction_tags");
+		expect(joins.map((j) => j.tag_uid)).toEqual([tag.uid]);
+	});
 });
