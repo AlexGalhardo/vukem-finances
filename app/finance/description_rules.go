@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"strings"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/AlexGalhardo/vukem/database"
 	"github.com/AlexGalhardo/vukem/errs"
@@ -124,7 +125,13 @@ func NormalizeDescription(description string) string {
 
 	key := strings.Join(tokens, " ")
 	if len(key) > ruleKeyMax {
-		key = key[:ruleKeyMax]
+		cut := ruleKeyMax
+		for cut > 0 && !utf8.RuneStart(key[cut]) {
+			cut--
+		}
+
+		// The limit can fall right after a space, or inside a letter of two bytes.
+		key = strings.TrimRight(key[:cut], " ")
 	}
 
 	return key
