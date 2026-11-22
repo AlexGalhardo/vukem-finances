@@ -32,6 +32,9 @@ func Schedule(s *schedule.Schedule, _ *vukem.App) {
 	// Purge old tombstones and compact the change log, once a day at night.
 	s.Job(jobs.ChangesCompact{}).DailyAt("03:30").WithoutOverlapping()
 
+	// Forget the stored results of pushed operations after 30 days.
+	s.Job(jobs.SyncOpsPrune{}).DailyAt("03:45").WithoutOverlapping()
+
 	// Keys sealed with a former APP_KEY are re-sealed with the current one.
 	s.Job(jobs.AIReseal{}).Daily().WithoutOverlapping()
 
