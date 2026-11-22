@@ -203,8 +203,14 @@ func (s *Service) Pair(ctx context.Context, rawCode, deviceName, platform string
 			return err
 		}
 
-		if n, err := res.RowsAffected(); err != nil || n != 1 {
-			return errors.Join(err, errInvalidPairing)
+		n, err := res.RowsAffected()
+		if err != nil {
+			// A failing database is not a bad code: it must not count against the failure limit.
+			return err
+		}
+
+		if n != 1 {
+			return errInvalidPairing
 		}
 
 		var userID int64
