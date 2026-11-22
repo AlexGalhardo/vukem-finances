@@ -1,5 +1,4 @@
 import type { ReactElement, ReactNode } from "react";
-import { useId } from "react";
 import { cn } from "../../lib/utils";
 
 export interface SettingsSectionProps {
@@ -17,7 +16,8 @@ export interface SettingsSectionProps {
 
 /**
  * One row of a settings page (section 7.7): the title and the reason on the left, the controls on the right, and a
- * hairline below. On a narrow screen the two stack. Each section saves on its own.
+ * hairline below. On a narrow screen the two stack. Each section saves on its own. It is deliberately not a named
+ * region: a landmark labelled by its heading would also answer `getByLabel` for words the heading shares with a field.
  */
 export default function SettingsSection({
   title,
@@ -27,10 +27,8 @@ export default function SettingsSection({
   tour,
   children,
 }: SettingsSectionProps): ReactElement {
-  const headingId = useId();
   return (
     <section
-      aria-labelledby={headingId}
       data-tour={tour}
       className={cn(
         "grid gap-4 py-8 lg:grid-cols-[280px_minmax(0,1fr)] lg:gap-8",
@@ -39,9 +37,7 @@ export default function SettingsSection({
     >
       <div className="flex min-w-0 flex-col gap-1">
         <div className="flex items-center gap-1">
-          <h2 id={headingId} className="text-h3">
-            {title}
-          </h2>
+          <h2 className="text-h3">{title}</h2>
           {help}
         </div>
         {description && <p className="text-body text-pretty text-muted-foreground">{description}</p>}

@@ -24,5 +24,9 @@ const dict = {
   devicesPairExpires: "Expires at",
   devicesPairCopy: "Copy code",
   devicesPairDismiss: "Done",
+  devicesHelpLastPull: "About the last pull",
+  devicesCopied: "Copied",
+  devicesListDescription: "The phones that sync this workspace and when each one last did.",
+  devicesPairDescription: "A code that links a new phone. It works once and expires in minutes.",
 } as const;
 export default dict;

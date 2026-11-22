@@ -21,6 +21,7 @@ import type syncPage from "./en/sync";
 import type telegram from "./en/telegram";
 import type tokens from "./en/tokens";
 import type tutorial from "./en/tutorial";
+import type twofactor from "./en/twofactor";
 import type transactions from "./en/transactions";
 import type workspace from "./en/workspace";
 
@@ -49,5 +50,6 @@ export type Key =
   | keyof typeof telegram
   | keyof typeof tokens
   | keyof typeof tutorial
+  | keyof typeof twofactor
   | keyof typeof transactions
   | keyof typeof workspace;

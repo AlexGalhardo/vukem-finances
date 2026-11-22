@@ -177,34 +177,34 @@ export default function AssistantHost() {
           <DialogDescription>{t("assistantDisclosure")}</DialogDescription>
         </DialogHeader>
         {status !== null && !status.enabled ? (
-          <p role="alert" className="text-sm">
+          <p role="alert" className="text-body">
             {t("assistantOff")}
           </p>
         ) : (
           <div className="flex flex-col gap-4">
             <div role="log" aria-live="polite" aria-label={t("assistantLog")} className="flex flex-col gap-4">
-              {turns.length === 0 && <p className="text-sm text-muted-foreground">{t("assistantEmpty")}</p>}
+              {turns.length === 0 && <p className="text-body text-muted-foreground">{t("assistantEmpty")}</p>}
               {turns.map((turn, index) => (
                 // The turns only ever grow, so the position is a stable key.
                 // biome-ignore lint/suspicious/noArrayIndexKey: append-only list
                 <div key={index} className="flex flex-col gap-2">
-                  <p className="text-xs font-medium text-muted-foreground">
+                  <p className="text-caption font-medium text-muted-foreground">
                     {turn.role === "user" ? t("assistantYou") : t("assistantName")}
                   </p>
-                  <p className="whitespace-pre-wrap text-sm">{turn.text}</p>
+                  <p className="whitespace-pre-wrap text-body">{turn.text}</p>
                   {turn.reply?.figuresDiffer && (
-                    <p role="note" className="text-xs text-destructive">
+                    <p role="note" className="text-caption text-expense">
                       {t("assistantDiffers")}
                     </p>
                   )}
                   {turn.reply?.tables.map((table) => (
-                    <div key={table.title} className="overflow-x-auto rounded-lg border">
-                      <table className="w-full text-sm">
-                        <caption className="p-2 text-left text-xs text-muted-foreground">{table.title}</caption>
+                    <div key={table.title} className="overflow-x-auto rounded-lg border border-border">
+                      <table className="w-full text-body">
+                        <caption className="p-2 text-left text-caption text-muted-foreground">{table.title}</caption>
                         <tbody>
                           {table.rows.map((row, i) => (
                             // biome-ignore lint/suspicious/noArrayIndexKey: labels can repeat
-                            <tr key={i} className="border-t">
+                            <tr key={i} className="border-t border-border">
                               <th scope="row" className="p-2 text-left font-normal">
                                 {row.label}
                               </th>
@@ -214,12 +214,12 @@ export default function AssistantHost() {
                         </tbody>
                       </table>
                       {table.truncated && (
-                        <p className="p-2 text-xs text-muted-foreground">{t("assistantTruncated")}</p>
+                        <p className="p-2 text-caption text-muted-foreground">{t("assistantTruncated")}</p>
                       )}
                     </div>
                   ))}
                   {turn.reply && turn.reply.queries.length > 0 && (
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-caption text-muted-foreground">
                       {t("assistantBasedOn")}: {turn.reply.queries.join("; ")}. {t("assistantTablesNote")}
                     </p>
                   )}
@@ -227,16 +227,16 @@ export default function AssistantHost() {
               ))}
             </div>
             {error !== "" && (
-              <p role="alert" className="text-sm text-destructive">
+              <p role="alert" className="text-body text-expense">
                 {error}
               </p>
             )}
-            {!canAsk && <p className="text-sm text-muted-foreground">{t("assistantViewer")}</p>}
+            {!canAsk && <p className="text-body text-muted-foreground">{t("assistantViewer")}</p>}
             {canAsk && (
               <>
                 <form onSubmit={ask} className="flex items-end gap-2">
                   <div className="flex flex-1 flex-col gap-1">
-                    <label htmlFor={inputId} className="text-xs text-muted-foreground">
+                    <label htmlFor={inputId} className="text-caption text-muted-foreground">
                       {t("assistantQuestion")}
                     </label>
                     <Input
@@ -254,7 +254,7 @@ export default function AssistantHost() {
                   </Button>
                 </form>
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-xs text-muted-foreground">{t("assistantExamples")}:</span>
+                  <span className="text-caption text-muted-foreground">{t("assistantExamples")}:</span>
                   {examples.map((example) => (
                     <Button
                       key={example}

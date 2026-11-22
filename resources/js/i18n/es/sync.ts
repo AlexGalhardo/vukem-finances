@@ -26,5 +26,9 @@ const dict = {
   devicesPairExpires: "Caduca a las",
   devicesPairCopy: "Copiar código",
   devicesPairDismiss: "Listo",
+  devicesHelpLastPull: "Acerca de la última lectura",
+  devicesCopied: "Copiado",
+  devicesListDescription: "Los teléfonos que sincronizan este espacio y cuándo lo hizo cada uno por última vez.",
+  devicesPairDescription: "Un código que vincula un teléfono nuevo. Sirve una vez y caduca en minutos.",
 } satisfies Record<keyof typeof en, string>;
 export default dict;

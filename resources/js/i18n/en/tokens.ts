@@ -23,5 +23,10 @@ const dict = {
   tokensStatusRevoked: "Revoked",
   tokensRevoke: "Revoke",
   tokensLimit: "You can hold at most {max} live tokens per workspace.",
+  tokensHelpScopes: "About scopes",
+  tokensHelpExpiry: "About expiry",
+  tokensCopied: "Copied",
+  tokensCreateDescription: "Pick a name, what the token may do and when it stops working.",
+  tokensListDescription: "The tokens you made here. Revoking one stops it at once.",
 } as const;
 export default dict;

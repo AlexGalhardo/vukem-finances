@@ -109,5 +109,12 @@ const dict = {
     "Sin conexión con el proveedor de IA. Esta función necesita internet; el resto de la app sigue funcionando.",
   aiNeedsInternet:
     "Esta instalación funciona sin conexión. La IA es la excepción: envía tu petición al proveedor que elegiste, así que necesita internet (un servidor de modelos en este equipo o en tu red no lo necesita).",
+  aiHelpKey: "Acerca de guardar la clave",
+  aiHelpBaseUrl: "Acerca de la dirección del endpoint",
+  aiHelpLimit: "Acerca del límite mensual de llamadas",
+  aiStatusDescription: "Si la IA está activada en este espacio y qué necesita para funcionar.",
+  aiKeyDescription: "Tu propia clave del proveedor. Se guarda cifrada y no se vuelve a mostrar.",
+  aiSettingsDescription: "Qué puede hacer la IA en este espacio y cuánto se puede usar.",
+  aiUsageDescription: "Cuánta IA se usó este mes.",
 } satisfies Record<keyof typeof en, string>;
 export default dict;
