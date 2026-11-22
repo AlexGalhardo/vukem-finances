@@ -1,91 +1,98 @@
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
-import type { FormEvent } from "react";
 import { ArrowUpRight } from "lucide-react";
+import type { FormEvent } from "react";
+import {
+  AuthErrorSummary,
+  AuthHeading,
+  AuthSection,
+  authLinkClass,
+  GoogleButton,
+} from "../../components/auth/AuthParts";
+import Field from "../../components/Field";
 import PasswordField from "../../components/PasswordField";
 import { Button } from "../../components/ui/button";
-import { Field, FieldGroup, FieldLabel, FieldError, FieldSeparator } from "../../components/ui/field";
-import { Input } from "../../components/ui/input";
+import { Checkbox } from "../../components/ui/checkbox";
+import { FieldSeparator } from "../../components/ui/field";
+import { Label } from "../../components/ui/label";
+import { useFocusFirstError } from "../../hooks/useFocusFirstError";
 import { useFinanceI18n } from "../../lib/i18n";
+import GuideSummary from "../../tutorial/GuideSummary";
+
 export default function Login() {
   const { t } = useFinanceI18n();
   const { googleEnabled: google, edition } = usePage().props as { googleEnabled?: boolean; edition?: string };
   const googleEnabled = Boolean(google);
   const form = useForm({ email: "", password: "", remember: false });
+  const formRef = useFocusFirstError(form.errors);
+
   function submit(e: FormEvent) {
     e.preventDefault();
     form.post("/login", { onFinish: () => form.reset("password") });
   }
+
   return (
     <>
       <Head title={t("login")} />
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{t("welcome")}</h1>
-        <p className="text-muted-foreground">{t("authDescription")}</p>
-      </div>
+      <AuthHeading title={t("welcome")} description={t("authDescription")} />
       {googleEnabled && (
         <>
-          <Button variant="outline" size="lg" asChild>
-            <a href="/auth/google/redirect">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path
-                  fill="currentColor"
-                  d="M21.6 12.2c0-.7-.1-1.4-.2-2.1H12v4h5.4a4.6 4.6 0 0 1-2 3v2.5h3.3c1.9-1.7 2.9-4.2 2.9-7.4ZM12 22c2.7 0 5-.9 6.7-2.4l-3.3-2.5c-.9.6-2 1-3.4 1-2.6 0-4.8-1.8-5.6-4.2H3v2.6A10 10 0 0 0 12 22ZM6.4 13.9a6 6 0 0 1 0-3.8V7.5H3a10 10 0 0 0 0 9l3.4-2.6ZM12 5.9c1.5 0 2.8.5 3.9 1.5l2.9-2.9A9.6 9.6 0 0 0 12 2a10 10 0 0 0-9 5.5l3.4 2.6A6 6 0 0 1 12 5.9Z"
-                />
-              </svg>
-              {t("google")}
-            </a>
-          </Button>
-          {edition === "personal" && <p className="text-sm text-muted-foreground">{t("googleNeedsInternet")}</p>}
+          <GoogleButton label={t("google")} />
+          {edition === "personal" && <p className="text-caption text-muted-foreground">{t("googleNeedsInternet")}</p>}
           <FieldSeparator>{t("orEmail")}</FieldSeparator>
         </>
       )}
-      <form onSubmit={submit} className="flex flex-col gap-6">
-        <FieldGroup>
-          <Field data-invalid={!!form.errors.email}>
-            <FieldLabel htmlFor="auth-email">{t("email")}</FieldLabel>
-            <Input
-              id="auth-email"
+      <AuthSection>
+        <AuthErrorSummary errors={form.errors} />
+        <form ref={formRef} onSubmit={submit} data-tour="login-form" className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
+            <Field
+              label={t("email")}
               type="email"
+              name="email"
               autoComplete="email"
+              inputSize="lg"
               required
               value={form.data.email}
-              aria-invalid={!!form.errors.email}
               onChange={(e) => form.setData("email", e.target.value)}
+              error={form.errors.email}
             />
-            <FieldError>{form.errors.email}</FieldError>
-          </Field>
-          <PasswordField
-            label={t("password")}
-            name="password"
-            autoComplete="current-password"
-            value={form.data.password}
-            onChange={(value) => form.setData("password", value)}
-            error={form.errors.password}
-          />
-          <label className="flex items-center gap-2 text-sm">
-            <input
-              type="checkbox"
-              checked={form.data.remember}
-              onChange={(e) => form.setData("remember", e.target.checked)}
+            <PasswordField
+              label={t("password")}
+              name="password"
+              autoComplete="current-password"
+              inputSize="lg"
+              value={form.data.password}
+              onChange={(value) => form.setData("password", value)}
+              error={form.errors.password}
             />
-            {t("remember")}
-          </label>
-        </FieldGroup>
-        <Button type="submit" disabled={form.processing}>
-          {t("login")}
-          <ArrowUpRight data-icon="inline-end" />
-        </Button>
-      </form>
-      <div className="flex flex-wrap justify-between gap-4 text-sm">
+            <div className="flex items-center gap-2">
+              <Checkbox
+                id="auth-remember"
+                checked={form.data.remember}
+                onCheckedChange={(checked) => form.setData("remember", checked === true)}
+              />
+              <Label htmlFor="auth-remember" className="font-normal">
+                {t("remember")}
+              </Label>
+            </div>
+          </div>
+          <Button type="submit" variant="brand" size="lg" loading={form.processing}>
+            {t("login")}
+            <ArrowUpRight data-icon="inline-end" />
+          </Button>
+        </form>
+      </AuthSection>
+      <div className="flex flex-wrap justify-between gap-x-4 gap-y-2 text-body">
         {edition !== "personal" && (
-          <Link href="/register" className="text-primary underline underline-offset-4">
+          <Link href="/register" className={authLinkClass}>
             {t("register")}
           </Link>
         )}
-        <Link href="/forgot-password" className="text-primary underline underline-offset-4">
+        <Link href="/forgot-password" data-tour="login-forgot" className={authLinkClass}>
           {t("forgot")}
         </Link>
       </div>
+      <GuideSummary screenId="Login" />
     </>
   );
 }

@@ -1,10 +1,13 @@
 import { Head, useForm } from "@inertiajs/react";
 import type { FormEvent } from "react";
-
-import { primary } from "../components/ui";
+import { AuthHeading } from "../components/auth/AuthParts";
+import { Button } from "../components/ui/button";
+import { useFinanceI18n } from "../lib/i18n";
 import type { Page } from "../page-props";
+import GuideSummary from "../tutorial/GuideSummary";
 
 export default function InviteAccept({ token }: Page<"InviteAccept">) {
+  const { t } = useFinanceI18n();
   const form = useForm({});
 
   const submit = (e: FormEvent) => {
@@ -14,16 +17,21 @@ export default function InviteAccept({ token }: Page<"InviteAccept">) {
 
   return (
     <>
-      <Head title="Join a workspace" />
-      <h1 className="text-2xl font-semibold">Join a workspace</h1>
-      <p className="mt-2">
-        Accept the invitation to start working in the shared workspace. It only works for the address it was sent to.
-      </p>
-      <form onSubmit={submit} className="mt-4">
-        <button type="submit" disabled={form.processing} className={primary}>
-          Accept the invitation
-        </button>
+      <Head title={t("authInviteTitle")} />
+      <AuthHeading title={t("authInviteTitle")} description={t("authInviteBody")} />
+      <form onSubmit={submit}>
+        <Button
+          type="submit"
+          variant="brand"
+          size="lg"
+          loading={form.processing}
+          data-tour="invite-accept"
+          className="w-full"
+        >
+          {t("authInviteAccept")}
+        </Button>
       </form>
+      <GuideSummary screenId="InviteAccept" />
     </>
   );
 }

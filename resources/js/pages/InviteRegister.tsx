@@ -1,17 +1,20 @@
 import { Head, useForm } from "@inertiajs/react";
 import { ArrowUpRight } from "lucide-react";
 import type { FormEvent } from "react";
+import { AuthErrorSummary, AuthHeading, AuthSection } from "../components/auth/AuthParts";
+import Field from "../components/Field";
 import PasswordField from "../components/PasswordField";
 import { Button } from "../components/ui/button";
-import { Field, FieldError, FieldGroup, FieldLabel } from "../components/ui/field";
-import { Input } from "../components/ui/input";
+import { useFocusFirstError } from "../hooks/useFocusFirstError";
 import { useFinanceI18n } from "../lib/i18n";
 import { checkConfirmation, checkPassword, passwordAdvice } from "../lib/password-policy";
 import type { InviteRegisterProps } from "../page-props";
+import GuideSummary from "../tutorial/GuideSummary";
 
 export default function InviteRegister({ token, email }: InviteRegisterProps) {
   const { t } = useFinanceI18n();
   const form = useForm({ name: "", password: "", password_confirmation: "" });
+  const formRef = useFocusFirstError(form.errors);
 
   function submit(e: FormEvent) {
     e.preventDefault();
@@ -21,54 +24,52 @@ export default function InviteRegister({ token, email }: InviteRegisterProps) {
   return (
     <>
       <Head title={t("inviteRegisterTitle")} />
-      <div className="flex flex-col gap-2">
-        <h1 className="text-3xl font-semibold tracking-tight">{t("inviteRegisterTitle")}</h1>
-        <p className="text-muted-foreground">{t("inviteRegisterDescription")}</p>
-      </div>
-      <form onSubmit={submit} className="flex flex-col gap-6">
-        <FieldGroup>
-          <Field>
-            <FieldLabel htmlFor="invite-email">{t("email")}</FieldLabel>
-            <Input id="invite-email" type="email" readOnly value={email} />
-          </Field>
-          <Field data-invalid={!!form.errors.name}>
-            <FieldLabel htmlFor="invite-name">{t("name")}</FieldLabel>
-            <Input
-              id="invite-name"
+      <AuthHeading title={t("inviteRegisterTitle")} description={t("inviteRegisterDescription")} />
+      <AuthSection>
+        <AuthErrorSummary errors={form.errors} />
+        <form ref={formRef} onSubmit={submit} data-tour="invite-register-form" className="flex flex-col gap-6">
+          <div className="flex flex-col gap-4">
+            <Field label={t("email")} type="email" name="email" inputSize="lg" readOnly value={email} />
+            <Field
+              label={t("name")}
               type="text"
+              name="name"
               autoComplete="name"
+              inputSize="lg"
               required
               value={form.data.name}
-              aria-invalid={!!form.errors.name}
               onChange={(e) => form.setData("name", e.target.value)}
+              error={form.errors.name}
             />
-            <FieldError>{form.errors.name}</FieldError>
-          </Field>
-          <PasswordField
-            label={t("password")}
-            name="password"
-            autoComplete="new-password"
-            value={form.data.password}
-            onChange={(value) => form.setData("password", value)}
-            error={form.errors.password}
-            checks={checkPassword(form.data.password)}
-            advice={passwordAdvice(form.data.password)}
-          />
-          <PasswordField
-            label={t("confirmPassword")}
-            name="password_confirmation"
-            autoComplete="new-password"
-            value={form.data.password_confirmation}
-            onChange={(value) => form.setData("password_confirmation", value)}
-            error={form.errors.password_confirmation}
-            checks={checkConfirmation(form.data.password, form.data.password_confirmation)}
-          />
-        </FieldGroup>
-        <Button type="submit" disabled={form.processing}>
-          {t("createAccount")}
-          <ArrowUpRight data-icon="inline-end" />
-        </Button>
-      </form>
+            <PasswordField
+              label={t("password")}
+              name="password"
+              autoComplete="new-password"
+              inputSize="lg"
+              value={form.data.password}
+              onChange={(value) => form.setData("password", value)}
+              error={form.errors.password}
+              checks={checkPassword(form.data.password)}
+              advice={passwordAdvice(form.data.password)}
+            />
+            <PasswordField
+              label={t("confirmPassword")}
+              name="password_confirmation"
+              autoComplete="new-password"
+              inputSize="lg"
+              value={form.data.password_confirmation}
+              onChange={(value) => form.setData("password_confirmation", value)}
+              error={form.errors.password_confirmation}
+              checks={checkConfirmation(form.data.password, form.data.password_confirmation)}
+            />
+          </div>
+          <Button type="submit" variant="brand" size="lg" loading={form.processing}>
+            {t("createAccount")}
+            <ArrowUpRight data-icon="inline-end" />
+          </Button>
+        </form>
+      </AuthSection>
+      <GuideSummary screenId="InviteRegister" />
     </>
   );
 }

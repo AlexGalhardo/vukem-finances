@@ -22,6 +22,8 @@ interface Props {
   // Optional strength rating. Kept visually apart from `checks` because it is
   // advice: the server accepts anything `checks` accepts, whatever this says.
   advice?: PasswordAdvice;
+  /** `lg` is the 44 px field of the auth screens. */
+  inputSize?: "default" | "lg";
 }
 
 // Every step also has its text, so the meter is never the only signal.
@@ -40,7 +42,17 @@ const meter = ["bg-muted", "bg-expense", "bg-warning", "bg-info", "bg-brand"];
 // The checklist carries role="list" explicitly: Tailwind's reset sets
 // list-style: none, which drops the list role in some screen readers. Each
 // rule's state is in its text too, never in its colour alone.
-export default function PasswordField({ label, name, value, onChange, autoComplete, error, checks, advice }: Props) {
+export default function PasswordField({
+  label,
+  name,
+  value,
+  onChange,
+  autoComplete,
+  error,
+  checks,
+  advice,
+  inputSize,
+}: Props) {
   const { t } = useFinanceI18n();
   const [visible, setVisible] = useState(false);
   const id = useId();
@@ -66,6 +78,7 @@ export default function PasswordField({ label, name, value, onChange, autoComple
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
+          inputSize={inputSize}
           className="pe-11"
         />
         <button

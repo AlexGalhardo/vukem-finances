@@ -15,11 +15,11 @@ export default function AuthLayout({ children, notices }: { children: ReactNode;
   return (
     <div className="flex min-h-svh flex-col bg-background">
       <header className="flex h-16 items-center justify-between gap-3 px-4 md:px-8">
-        <Link href="/" className="flex items-center gap-2 text-h2">
+        <Link href="/" className="flex min-w-0 items-center gap-2 text-h2">
           <Mark />
-          {appName}
+          <span className="truncate max-[359px]:sr-only">{appName}</span>
         </Link>
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <Preferences />
           <ThemeToggle />
         </div>

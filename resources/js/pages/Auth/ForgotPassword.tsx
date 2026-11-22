@@ -1,10 +1,16 @@
-import { Head, useForm } from "@inertiajs/react";
+import { Head, Link, useForm } from "@inertiajs/react";
 import type { FormEvent } from "react";
-
+import { AuthErrorSummary, AuthHeading, AuthSection, authLinkClass } from "../../components/auth/AuthParts";
 import Field from "../../components/Field";
+import { Button } from "../../components/ui/button";
+import { useFocusFirstError } from "../../hooks/useFocusFirstError";
+import { useFinanceI18n } from "../../lib/i18n";
+import GuideSummary from "../../tutorial/GuideSummary";
 
 export default function ForgotPassword() {
+  const { t } = useFinanceI18n();
   const form = useForm({ email: "" });
+  const formRef = useFocusFirstError(form.errors);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -13,27 +19,31 @@ export default function ForgotPassword() {
 
   return (
     <>
-      <Head title="Forgot your password?" />
-      <h1 className="mb-2 text-2xl font-semibold">Forgot your password?</h1>
-      <p className="mb-4 text-zinc-600 dark:text-zinc-400">We will email you a link to choose a new one.</p>
-      <form onSubmit={submit} className="space-y-4">
-        <Field
-          label="Email"
-          type="email"
-          autoComplete="email"
-          required
-          value={form.data.email}
-          onChange={(e) => form.setData("email", e.target.value)}
-          error={form.errors.email}
-        />
-        <button
-          type="submit"
-          disabled={form.processing}
-          className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-        >
-          Email me a reset link
-        </button>
-      </form>
+      <Head title={t("authForgotTitle")} />
+      <AuthHeading title={t("authForgotTitle")} description={t("authForgotDescription")} />
+      <AuthSection>
+        <AuthErrorSummary errors={form.errors} />
+        <form ref={formRef} onSubmit={submit} data-tour="forgot-form" className="flex flex-col gap-6">
+          <Field
+            label={t("email")}
+            type="email"
+            name="email"
+            autoComplete="email"
+            inputSize="lg"
+            required
+            value={form.data.email}
+            onChange={(e) => form.setData("email", e.target.value)}
+            error={form.errors.email}
+          />
+          <Button type="submit" variant="brand" size="lg" loading={form.processing}>
+            {t("authForgotSubmit")}
+          </Button>
+        </form>
+      </AuthSection>
+      <Link href="/login" className={authLinkClass}>
+        {t("authBackToLogin")}
+      </Link>
+      <GuideSummary screenId="ForgotPassword" />
     </>
   );
 }
