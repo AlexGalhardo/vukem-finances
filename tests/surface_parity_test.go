@@ -3,6 +3,7 @@ package tests
 import (
 	"os"
 	"path/filepath"
+	"reflect"
 	"slices"
 	"strings"
 	"testing"
@@ -10,7 +11,9 @@ import (
 	"github.com/AlexGalhardo/vukem/router"
 
 	"github.com/AlexGalhardo/vukem-finances/app/api"
+	"github.com/AlexGalhardo/vukem-finances/app/cli"
 	"github.com/AlexGalhardo/vukem-finances/app/operations"
+	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 )
 
 // restOnly are the operations of /api/v1 that are not in the registry, each
@@ -76,9 +79,72 @@ func surfaceGaps(reg *operations.Registry, routes []router.RouteInfo) []string {
 	return gaps
 }
 
+// cliGaps lists what is wrong between the registry and the CLI: an operation
+// offered on the CLI with no command, with a command that is not its name, a
+// resource no registered Vukem command serves, or an input field with no flag;
+// and a command with no operation.
+func cliGaps(reg *operations.Registry, cmds []cli.Command, registered []string) []string {
+	var gaps []string
+
+	byOp := map[string]cli.Command{}
+
+	for _, c := range cmds {
+		byOp[c.Op.Name] = c
+
+		if m, ok := reg.Named(c.Op.Name); !ok || !m.Offered(operations.SurfaceCLI) {
+			gaps = append(gaps, "the command "+c.Name()+" is not an operation the CLI offers")
+		}
+	}
+
+	for _, m := range reg.Operations() {
+		if !m.Offered(operations.SurfaceCLI) {
+			continue
+		}
+
+		c, ok := byOp[m.Name]
+		if !ok {
+			gaps = append(gaps, m.Name+" has no CLI command")
+			continue
+		}
+
+		resource, rest, _ := strings.Cut(m.Name, ".")
+		if c.Resource != resource || c.Verb != strings.ReplaceAll(rest, ".", "-") {
+			gaps = append(gaps, m.Name+" is the command "+c.Name()+", not `"+resource+" "+strings.ReplaceAll(rest, ".", "-")+"`")
+		}
+
+		if !slices.Contains(registered, c.Resource) {
+			gaps = append(gaps, m.Name+": no registered command serves the resource "+c.Resource)
+		}
+
+		if m.Input.Kind() == reflect.Struct {
+			for f := range m.Input.Fields() {
+				name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
+				if name == "-" || !f.IsExported() {
+					continue
+				}
+
+				if !slices.ContainsFunc(c.Fields, func(cf cli.Field) bool { return cf.Name == name }) {
+					gaps = append(gaps, m.Name+": the input field "+name+" has no flag")
+				}
+			}
+		}
+	}
+
+	return gaps
+}
+
+func registeredCLICommands() []string {
+	var names []string
+	for _, c := range bootstrap.EarlyCommands() {
+		names = append(names, c.Name())
+	}
+
+	return names
+}
+
 // TestSurfaceParity: every operation the registry offers on REST has its route,
-// and every route is an operation. Epics 31 and 32 add the CLI and MCP surfaces
-// to this test; an operation leaves a surface only through OptOut, with a reason.
+// and every route is an operation; every operation it offers on the CLI has its
+// command. Epic 32 adds the MCP surface to this test; an operation leaves a surface only through OptOut, with a reason.
 func TestSurfaceParity(t *testing.T) {
 	t.Parallel()
 
@@ -93,11 +159,56 @@ func TestSurfaceParity(t *testing.T) {
 		t.Error(gap)
 	}
 
+	tree, err := cli.DefaultTree()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, gap := range cliGaps(reg, tree.Commands, registeredCLICommands()) {
+		t.Error(gap)
+	}
+
 	for _, m := range reg.Operations() {
 		for s, why := range m.OptOut {
 			if strings.TrimSpace(why) == "" {
 				t.Errorf("%s leaves %s with no reason", m.Name, s)
 			}
+		}
+	}
+}
+
+// Removing the command of any operation, or the Vukem command of a resource,
+// must fail the parity check.
+func TestSurfaceParityFailsWithoutACLICommand(t *testing.T) {
+	t.Parallel()
+
+	reg := api.Describe().Registry
+
+	tree, err := cli.DefaultTree()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if len(tree.Commands) == 0 {
+		t.Fatal("the CLI has no command")
+	}
+
+	registered := registeredCLICommands()
+
+	for i, c := range tree.Commands {
+		without := slices.Delete(slices.Clone(tree.Commands), i, i+1)
+
+		gaps := cliGaps(reg, without, registered)
+		if len(gaps) != 1 || !strings.Contains(gaps[0], c.Op.Name+" has no CLI command") {
+			t.Errorf("without the command of %s the gaps are %v, want exactly that one", c.Op.Name, gaps)
+		}
+	}
+
+	for _, resource := range tree.Resources() {
+		without := slices.DeleteFunc(slices.Clone(registered), func(n string) bool { return n == resource })
+
+		if gaps := cliGaps(reg, tree.Commands, without); len(gaps) != len(tree.Of(resource)) {
+			t.Errorf("without the resource command %s the gaps are %v, want one per verb", resource, gaps)
 		}
 	}
 }
