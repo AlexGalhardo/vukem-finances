@@ -36,7 +36,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `database/migrations/` | Go migrations, registered in `registry.go` |
 | `resources/js/` | React pages, components, layouts and React Email templates |
 | `resources/js/shortcuts/`, `resources/js/nav.ts`, `resources/js/i18n/` | the shortcut registry, the sidebar items, the translation files (see "The application shell") |
-| `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API), `export-format.md` and `export-format.schema.json` (the exports), `telegram.md` (the Telegram bot) |
+| `docs/` | `design.md` (brief and tokens), `design-system.md` (the full UI specification), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API), `export-format.md` and `export-format.schema.json` (the exports), `telegram.md` (the Telegram bot) |
 | `clients/typescript/` | the generated TypeScript client of the API (`api.ts`) |
 | `mobile/` | the React Native app (Expo, local SQLite, offline): its own `package.json` and `bun.lock`, not a workspace of the root; see `docs/mobile.md` |
 | `cmd/app/` | the binary entry point |
@@ -89,7 +89,7 @@ Read `docs/desktop.md`. `desktop/` is a separate Go module (the root `go build .
 
 ## The application shell
 
-Read `docs/design.md` and `docs/shortcuts.md` before touching the UI. The design is original (D-011, D-012): never copy code, assets or layout from another product.
+Read `docs/design.md`, `docs/design-system.md` (the full specification and the migration plan) and `docs/shortcuts.md` before touching the UI. The design is original (D-011, D-012): another product may inspire a quality, never code, assets, copy or identity. The palette is white, black and the brand green `rgb(0, 158, 0)`; use `--vf-brand-text` for green text, never white or small text on the green fill. UI uses shadcn/ui (pinned `bunx shadcn@4.23.0`), Geist fonts and `lucide-react` only.
 
 - **Add a sidebar item.** Append an entry to `resources/js/nav.ts` (`id`, `labelKey`, `href`, `icon`, optional `keys`, optional `edition: "saas" | "personal"`). The sidebar, the palette and a `go-<id>` action come from it. Billing is `edition: "saas"`: the personal edition must never show billing, workspace creation or workspace switching.
 - **Register an action.** Call `useAction({ id, labelKey, group, keys, run, enabled })` from `resources/js/shortcuts/useAction.ts` in the component that owns the behavior. Never add a `keydown` listener. The action appears in the command palette and in the shortcut help by itself. Pick `keys` from the free ones in `docs/shortcuts.md` and add the row there; `registerAction` throws on a duplicate id or key, on a key a longer sequence starts with, and on a browser-reserved combination (`shortcuts/reserved.ts`).

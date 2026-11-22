@@ -1,17 +1,15 @@
+import "@fontsource-variable/geist/wght.css";
+import "@fontsource-variable/geist-mono/wght.css";
+
 import { createInertiaApp } from "@inertiajs/react";
 
 import AppLayout from "./layouts/AppLayout";
+import { watchTheme } from "./lib/theme";
 
-// Dark mode follows the "dark" class on <html>: the saved choice
-// (localStorage.theme = "dark" | "light") or the system preference. A theme
-// toggle flips the class and saves it.
-try {
-  const theme = localStorage.getItem("theme");
-  const dark = theme ? theme === "dark" : matchMedia("(prefers-color-scheme: dark)").matches;
-  document.documentElement.classList.toggle("dark", dark);
-} catch {
-  // Storage can be blocked (private mode): keep the default theme.
-}
+// Dark mode follows the "dark" class on <html>. app.html sets it before paint
+// from localStorage.theme ("dark" | "light") or the system preference; this
+// keeps it live while no choice is stored.
+watchTheme();
 
 // The @inertiajs/vite plugin resolves pages from ./pages and mounts the app.
 // The nonce lets the progress bar styles through the CSP.

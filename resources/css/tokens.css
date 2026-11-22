@@ -1,21 +1,48 @@
-/* Design tokens of vukem-finances (docs/design.md). Colors are hex so that
-   resources/js/design/contrast.test.ts can read and measure them. */
+/* Design tokens of vukem-finances (docs/design-system.md). Colors are hex so that
+   resources/js/design/contrast.test.ts can read and measure them. The brand is
+   exactly rgb(0, 158, 0): never put white text or normal-size text on it in the
+   light theme, use --vf-on-brand and --vf-brand-text. */
 
 :root {
 	color-scheme: light;
 
-	--vf-bg: #fbfcfb;
+	--vf-bg: #ffffff;
 	--vf-surface: #ffffff;
-	--vf-surface-muted: #eff3f0;
-	--vf-border: #d5ddd8;
-	--vf-control-border: #6f8176;
-	--vf-text: #13201a;
-	--vf-text-muted: #475a50;
-	--vf-brand: #1c7448;
-	--vf-on-brand: #ffffff;
-	--vf-income: #17663c;
-	--vf-expense: #b3261e;
-	--vf-focus: #1c7448;
+	--vf-surface-muted: #f5f5f5;
+	--vf-border: #e5e5e5;
+	--vf-control-border: #858585;
+
+	--vf-text: #0a0a0a;
+	--vf-text-muted: #525252;
+	--vf-text-subtle: #6b6b6b;
+	--vf-text-disabled: #a3a3a3;
+
+	--vf-ink: #0a0a0a;
+	--vf-on-ink: #ffffff;
+
+	--vf-brand: #009e00;
+	--vf-brand-hover: #00b300;
+	--vf-brand-active: #008f00;
+	--vf-on-brand: #000000;
+	--vf-brand-text: #007a00;
+	--vf-brand-subtle: #e8f5e8;
+
+	--vf-income: #007a00;
+	--vf-expense: #b42318;
+	--vf-on-expense: #ffffff;
+	--vf-expense-subtle: #fdecea;
+
+	--vf-warning: #8f5600;
+	--vf-warning-subtle: #fff4e0;
+	--vf-info: #1d5fc4;
+	--vf-info-subtle: #e8f0fc;
+	--vf-focus: #007a00;
+
+	--vf-chart-green: #009e00;
+	--vf-chart-blue: #2f6fde;
+	--vf-chart-amber: #c77700;
+	--vf-chart-violet: #8a4fd1;
+	--vf-chart-pink: #c23b7a;
 
 	/* Category and tag colors: 3:1 against every surface, for the swatch (never the only signal). */
 	--vf-cat-slate: #566574;
@@ -28,40 +55,48 @@
 	--vf-cat-red: #c03030;
 	--vf-cat-pink: #b83280;
 	--vf-cat-violet: #7a4fc4;
-
-	--vf-radius: 0.625rem;
-	--vf-space-1: 0.25rem;
-	--vf-space-2: 0.5rem;
-	--vf-space-3: 0.75rem;
-	--vf-space-4: 1rem;
-	--vf-space-6: 1.5rem;
-	--vf-space-8: 2rem;
-	--vf-text-xs: 0.75rem;
-	--vf-text-sm: 0.875rem;
-	--vf-text-base: 1rem;
-	--vf-text-lg: 1.125rem;
-	--vf-text-xl: 1.5rem;
-	--vf-duration-fast: 100ms;
-	--vf-duration-base: 200ms;
-	--vf-duration-slow: 320ms;
-	--vf-target-min: 2.75rem;
 }
 
 .dark {
 	color-scheme: dark;
 
-	--vf-bg: #0e1310;
-	--vf-surface: #151b17;
-	--vf-surface-muted: #1d2520;
-	--vf-border: #28332c;
-	--vf-control-border: #6f8176;
-	--vf-text: #edf3ef;
-	--vf-text-muted: #a6b6ac;
-	--vf-brand: #62d596;
-	--vf-on-brand: #08150d;
-	--vf-income: #6fdc9f;
+	--vf-bg: #000000;
+	--vf-surface: #0a0a0a;
+	--vf-surface-muted: #171717;
+	--vf-border: #262626;
+	--vf-control-border: #767676;
+
+	--vf-text: #f5f5f5;
+	--vf-text-muted: #a3a3a3;
+	--vf-text-subtle: #8f8f8f;
+	--vf-text-disabled: #525252;
+
+	--vf-ink: #f5f5f5;
+	--vf-on-ink: #0a0a0a;
+
+	--vf-brand: #009e00;
+	--vf-brand-hover: #00b300;
+	--vf-brand-active: #008f00;
+	--vf-on-brand: #000000;
+	--vf-brand-text: #2fc42f;
+	--vf-brand-subtle: #0b2a0b;
+
+	--vf-income: #2fc42f;
 	--vf-expense: #ff8f86;
-	--vf-focus: #7fe3ae;
+	--vf-on-expense: #000000;
+	--vf-expense-subtle: #2a0f0d;
+
+	--vf-warning: #f0b94a;
+	--vf-warning-subtle: #2a1e05;
+	--vf-info: #7ab0ff;
+	--vf-info-subtle: #0c1d36;
+	--vf-focus: #2fc42f;
+
+	--vf-chart-green: #009e00;
+	--vf-chart-blue: #4f8df0;
+	--vf-chart-amber: #b87a1e;
+	--vf-chart-violet: #a078e8;
+	--vf-chart-pink: #e0609c;
 
 	--vf-cat-slate: #9aabb8;
 	--vf-cat-blue: #7ab0ff;
@@ -75,6 +110,75 @@
 	--vf-cat-violet: #b79cff;
 }
 
+/* Structure tokens: spacing, radius, type scale, elevation, motion, layers. */
+:root {
+	--vf-radius: 0.5rem;
+
+	--vf-space-1: 0.25rem;
+	--vf-space-2: 0.5rem;
+	--vf-space-3: 0.75rem;
+	--vf-space-4: 1rem;
+	--vf-space-5: 1.25rem;
+	--vf-space-6: 1.5rem;
+	--vf-space-8: 2rem;
+	--vf-space-10: 2.5rem;
+	--vf-space-12: 3rem;
+	--vf-space-16: 4rem;
+	--vf-space-24: 6rem;
+
+	/* The type scale (section 5.2); the Tailwind names live in finance.css. */
+	--vf-text-xs: 0.75rem;
+	--vf-text-sm: 0.875rem;
+	--vf-text-base: 1rem;
+	--vf-text-lg: 1.125rem;
+	--vf-text-xl: 1.5rem;
+	--vf-text-display: 2.5rem;
+	--vf-text-hero-number: 2.25rem;
+	--vf-text-h1-auth: 1.75rem;
+	--vf-text-h1: 1.5rem;
+	--vf-text-h2: 1.125rem;
+	--vf-text-h3: 0.9375rem;
+	--vf-text-body: 0.875rem;
+	--vf-text-body-lg: 1rem;
+	--vf-text-label: 0.875rem;
+	--vf-text-caption: 0.8125rem;
+	--vf-text-overline: 0.75rem;
+	--vf-text-kbd: 0.6875rem;
+	--vf-text-mono: 0.8125rem;
+
+	--vf-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.06);
+	--vf-shadow-md: 0 4px 12px rgb(0 0 0 / 0.08);
+	--vf-shadow-lg: 0 16px 48px rgb(0 0 0 / 0.14);
+	--vf-backdrop: rgb(0 0 0 / 0.5);
+
+	--vf-duration-fast: 100ms; /* hover, color */
+	--vf-duration-base: 150ms; /* popover, tooltip, menu */
+	--vf-duration-slow: 200ms; /* dialog, sheet, tutorial step */
+	--vf-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+	--vf-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+	--vf-shift: 4px; /* entry offset of floating layers */
+	--vf-shift-sheet: 16px;
+
+	--vf-target-min: 2.75rem;
+
+	--vf-z-header: 10;
+	--vf-z-sidebar: 20;
+	--vf-z-overlay: 40;
+	--vf-z-dialog: 50;
+	--vf-z-popover: 55;
+	--vf-z-tooltip: 60;
+	--vf-z-tutorial: 65;
+	--vf-z-toast: 70;
+	--vf-z-skip: 80;
+}
+
+.dark {
+	--vf-shadow-sm: none;
+	--vf-shadow-md: 0 4px 12px rgb(0 0 0 / 0.6);
+	--vf-shadow-lg: 0 16px 48px rgb(0 0 0 / 0.7);
+	--vf-backdrop: rgb(0 0 0 / 0.7);
+}
+
 /* The shadcn-style primitives read these names; they now come from the tokens. */
 :root,
 .dark {
@@ -84,8 +188,8 @@
 	--card-foreground: var(--vf-text);
 	--popover: var(--vf-surface);
 	--popover-foreground: var(--vf-text);
-	--primary: var(--vf-brand);
-	--primary-foreground: var(--vf-on-brand);
+	--primary: var(--vf-ink);
+	--primary-foreground: var(--vf-on-ink);
 	--secondary: var(--vf-surface-muted);
 	--secondary-foreground: var(--vf-text);
 	--muted: var(--vf-surface-muted);
@@ -93,15 +197,30 @@
 	--accent: var(--vf-surface-muted);
 	--accent-foreground: var(--vf-text);
 	--destructive: var(--vf-expense);
+	--destructive-foreground: var(--vf-on-expense);
 	--border: var(--vf-border);
 	--input: var(--vf-control-border);
 	--ring: var(--vf-focus);
 	--radius: var(--vf-radius);
-	--sidebar: var(--vf-surface-muted);
-	--sidebar-foreground: var(--vf-text);
+
+	--brand: var(--vf-brand);
+	--brand-hover: var(--vf-brand-hover);
+	--brand-active: var(--vf-brand-active);
+	--brand-foreground: var(--vf-on-brand);
+	--brand-text: var(--vf-brand-text);
+	--brand-subtle: var(--vf-brand-subtle);
+
+	--chart-1: var(--vf-chart-green);
+	--chart-2: var(--vf-chart-blue);
+	--chart-3: var(--vf-chart-amber);
+	--chart-4: var(--vf-chart-violet);
+	--chart-5: var(--vf-chart-pink);
+
+	--sidebar: var(--vf-bg);
+	--sidebar-foreground: var(--vf-text-muted);
 	--sidebar-primary: var(--vf-brand);
 	--sidebar-primary-foreground: var(--vf-on-brand);
-	--sidebar-accent: var(--vf-surface);
+	--sidebar-accent: var(--vf-surface-muted);
 	--sidebar-accent-foreground: var(--vf-text);
 	--sidebar-border: var(--vf-border);
 	--sidebar-ring: var(--vf-focus);
@@ -123,10 +242,10 @@ dialog:modal,
 	}
 }
 
+/* Reduced motion keeps opacity and color transitions: only the spatial shift goes. */
 @media (prefers-reduced-motion: reduce) {
 	:root {
-		--vf-duration-fast: 0ms;
-		--vf-duration-base: 0ms;
-		--vf-duration-slow: 0ms;
+		--vf-shift: 0px;
+		--vf-shift-sheet: 0px;
 	}
 }

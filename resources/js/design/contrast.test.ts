@@ -33,11 +33,33 @@ export function contrast(a: string, b: string): number {
 }
 
 const surfaces = ["vf-bg", "vf-surface", "vf-surface-muted"] as const;
-const textOnSurface = ["vf-text", "vf-text-muted", "vf-brand", "vf-income", "vf-expense"] as const;
+const textOnSurface = [
+  "vf-text",
+  "vf-text-muted",
+  "vf-text-subtle",
+  "vf-brand-text",
+  "vf-income",
+  "vf-expense",
+  "vf-warning",
+  "vf-info",
+] as const;
 const categoryColors = ["slate", "blue", "teal", "green", "olive", "amber", "orange", "red", "pink", "violet"].map(
   (name) => `vf-cat-${name}`,
 );
-const nonText = ["vf-control-border", "vf-focus", ...categoryColors] as const;
+const nonText = ["vf-control-border", "vf-focus", "vf-brand", ...categoryColors] as const;
+
+// A label token on the fill it sits on: buttons and badges need 4.5:1.
+const onColor: ReadonlyArray<readonly [string, string]> = [
+  ["vf-on-brand", "vf-brand"],
+  ["vf-on-brand", "vf-brand-hover"],
+  ["vf-on-brand", "vf-brand-active"],
+  ["vf-on-ink", "vf-ink"],
+  ["vf-on-expense", "vf-expense"],
+  ["vf-brand-text", "vf-brand-subtle"],
+  ["vf-expense", "vf-expense-subtle"],
+  ["vf-warning", "vf-warning-subtle"],
+  ["vf-info", "vf-info-subtle"],
+];
 
 describe("contrast", () => {
   test("the helper matches known values", () => {
@@ -49,7 +71,8 @@ describe("contrast", () => {
     const tokens = readTokens(theme);
 
     test(`${theme}: every token is present`, () => {
-      for (const name of [...surfaces, ...textOnSurface, ...nonText, "vf-on-brand", "vf-border"]) {
+      const pairs = onColor.flat();
+      for (const name of [...surfaces, ...textOnSurface, ...nonText, ...pairs, "vf-border"]) {
         expect(tokens[name], name).toBeDefined();
       }
     });
@@ -67,8 +90,14 @@ describe("contrast", () => {
       }
     }
 
-    test(`${theme}: text on the brand color is at least 4.5:1`, () => {
-      expect(contrast(tokens["vf-on-brand"], tokens["vf-brand"])).toBeGreaterThanOrEqual(4.5);
+    for (const [label, fill] of onColor) {
+      test(`${theme}: ${label} on ${fill} is at least 4.5:1`, () => {
+        expect(contrast(tokens[label], tokens[fill])).toBeGreaterThanOrEqual(4.5);
+      });
+    }
+
+    test(`${theme}: the brand is exactly rgb(0, 158, 0)`, () => {
+      expect(tokens["vf-brand"]).toBe("#009e00");
     });
   }
 });
