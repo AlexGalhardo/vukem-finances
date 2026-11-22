@@ -2,7 +2,9 @@ package alerts
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
+	"time"
 
 	"github.com/AlexGalhardo/vukem/errs"
 	"github.com/AlexGalhardo/vukem/orm"
@@ -147,4 +149,39 @@ func (s *Service) SetPreferences(ctx context.Context, userID int64, role string,
 	}
 
 	return nil
+}
+
+// View is a notification as the client reads it: the key and the params are
+// rendered there, in the language of the person.
+type View struct {
+	ID        int64           `json:"id"`
+	Kind      string          `json:"kind"`
+	TitleKey  string          `json:"titleKey"`
+	Params    json.RawMessage `json:"params"`
+	CreatedAt string          `json:"createdAt"`
+	Read      bool            `json:"read"`
+}
+
+// Views lists the newest notifications of the person for the client.
+func (s *Service) Views(ctx context.Context, userID int64, limit int) ([]View, error) {
+	rows, err := s.List(ctx, userID, limit)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]View, 0, len(rows))
+
+	for _, n := range rows {
+		params := json.RawMessage(n.Params)
+		if !json.Valid(params) {
+			params = json.RawMessage("{}")
+		}
+
+		out = append(out, View{
+			ID: n.ID, Kind: n.Kind, TitleKey: n.TitleKey, Params: params,
+			CreatedAt: n.CreatedAt.UTC().Format(time.RFC3339), Read: n.ReadAt.Valid,
+		})
+	}
+
+	return out, nil
 }

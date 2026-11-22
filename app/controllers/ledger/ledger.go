@@ -14,18 +14,22 @@ import (
 	"github.com/AlexGalhardo/vukem/inertia"
 	"github.com/AlexGalhardo/vukem/web"
 
+	"github.com/AlexGalhardo/vukem-finances/app/alerts"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
 // Handlers serves the finance pages.
 type Handlers struct {
-	WS  *workspaces.Service
-	Fin *finance.Service
+	WS     *workspaces.Service
+	Fin    *finance.Service
+	Alerts *alerts.Service
 }
 
 // New returns the handlers.
-func New(ws *workspaces.Service, fin *finance.Service) *Handlers { return &Handlers{WS: ws, Fin: fin} }
+func New(ws *workspaces.Service, fin *finance.Service, al *alerts.Service) *Handlers {
+	return &Handlers{WS: ws, Fin: fin, Alerts: al}
+}
 
 // first returns the first of values that is not empty.
 func first(values ...string) string {

@@ -87,14 +87,58 @@ var TagSchema = z.Struct[Tag](z.Shape{
 
 // Budget is the input of the budget form.
 type Budget struct {
+	// CategoryID is empty for the overall budget of the workspace.
 	CategoryID string `json:"categoryId" form:"categoryId"`
 	Limit      string `json:"limit"      form:"limit"`
+	Rollover   bool   `json:"rollover"   form:"rollover"`
 }
 
 // BudgetSchema validates Budget.
 var BudgetSchema = z.Struct[Budget](z.Shape{
-	"categoryId": z.String().Trim().Min(1).Max(20),
+	"categoryId": z.String().Trim().Max(20).Optional(),
 	"limit":      z.String().Trim().Min(1).Max(30),
+	"rollover":   z.Bool().Optional(),
+})
+
+// Goal is the input of the goal form.
+type Goal struct {
+	Name       string `json:"name"       form:"name"`
+	Target     string `json:"target"     form:"target"`
+	TargetDate string `json:"targetDate" form:"targetDate"`
+}
+
+// GoalSchema validates Goal.
+var GoalSchema = z.Struct[Goal](z.Shape{
+	"name":       z.String().Trim().Min(1).Max(120),
+	"target":     z.String().Trim().Min(1).Max(30),
+	"targetDate": z.String().Trim().Max(10).Optional(),
+})
+
+// Contribution is the input of the goal contribution form.
+type Contribution struct {
+	Amount string `json:"amount" form:"amount"`
+	Date   string `json:"date"   form:"date"`
+	Note   string `json:"note"   form:"note"`
+}
+
+// ContributionSchema validates Contribution.
+var ContributionSchema = z.Struct[Contribution](z.Shape{
+	"amount": z.String().Trim().Min(1).Max(30),
+	"date":   z.String().Trim().Max(10).Optional(),
+	"note":   z.String().Trim().Max(200).Optional(),
+})
+
+// NotificationPreferences is the input of the preferences form: the kinds the
+// person wants in the app and by mail. A kind in neither list is off.
+type NotificationPreferences struct {
+	InApp []string `json:"inApp" form:"inApp"`
+	Email []string `json:"email" form:"email"`
+}
+
+// NotificationPreferencesSchema validates NotificationPreferences.
+var NotificationPreferencesSchema = z.Struct[NotificationPreferences](z.Shape{
+	"inApp": z.Slice(z.String().Trim().Max(40)).Max(20).Optional(),
+	"email": z.Slice(z.String().Trim().Max(40)).Max(20).Optional(),
 })
 
 // Invite is the input of the invite form.

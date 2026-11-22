@@ -4,6 +4,7 @@ import (
 	"github.com/AlexGalhardo/vukem/inertia"
 
 	"github.com/AlexGalhardo/vukem-finances/app/ai"
+	"github.com/AlexGalhardo/vukem-finances/app/alerts"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
@@ -17,6 +18,8 @@ var (
 	CardStatement  = inertia.Define[CardStatementProps]("CardStatement")
 	Categories     = inertia.Define[CategoriesProps]("Categories")
 	Budgets        = inertia.Define[BudgetsProps]("Budgets")
+	Goals          = inertia.Define[GoalsProps]("Goals")
+	Notifications  = inertia.Define[NotificationsProps]("Notifications")
 	Recurrences    = inertia.Define[RecurrencesProps]("Recurrences")
 	Import         = inertia.Define[ImportProps]("Import")
 	Workspace      = inertia.Define[WorkspaceProps]("Workspace")
@@ -137,6 +140,21 @@ type BudgetsProps struct {
 	Categories []models.Category      `json:"categories"`
 	Month      string                 `json:"month"`
 	Enabled    bool                   `json:"enabled"`
+}
+
+// GoalsProps are the props of Goals: the goals with their progress and the
+// newest contributions of each (the client groups them by goal_id).
+type GoalsProps struct {
+	Goals         []finance.GoalStatus      `json:"goals"`
+	Contributions []models.GoalContribution `json:"contributions"`
+	Today         string                    `json:"today"`
+}
+
+// NotificationsProps are the props of Notifications: the full list of the
+// signed-in person and their channel choices.
+type NotificationsProps struct {
+	Notifications []alerts.View          `json:"notifications"`
+	Preferences   []alerts.PreferenceRow `json:"preferences"`
 }
 
 // ImportProps are the props of Import.

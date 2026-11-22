@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/vukemtest"
 
 	"github.com/AlexGalhardo/vukem-finances/app/api"
@@ -97,6 +98,19 @@ var crossTenantCases = map[string]crossTenantCase{
 		},
 	},
 	"budgets.destroy": {method: http.MethodDelete, table: "budgets", param: "budget"},
+	"goals.update": {
+		method: http.MethodPatch, table: "goals", param: "goal",
+		body: func(map[string]int64) map[string]any { return map[string]any{"name": "Renamed", "target": "10.00"} },
+	},
+	"goals.destroy":   {method: http.MethodDelete, table: "goals", param: "goal"},
+	"goals.archive":   {method: http.MethodPost, table: "goals", param: "goal"},
+	"goals.unarchive": {method: http.MethodPost, table: "goals", param: "goal"},
+	"goals.contributions.store": {
+		method: http.MethodPost, table: "goal_contributions", param: "goal",
+		body: func(map[string]int64) map[string]any { return map[string]any{"amount": "1.00"} },
+	},
+	"goals.contributions.destroy": {method: http.MethodDelete, table: "goal_contributions", param: "contribution"},
+	"notifications.read":          {method: http.MethodPost, table: "notifications", param: "notification"},
 	"recurrences.update": {
 		method: http.MethodPatch, table: "recurrences", param: "recurrence",
 		body: func(ids map[string]int64) map[string]any {
@@ -154,6 +168,16 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PostForm("/budgets", map[string][]string{
 		"categoryId": {strconv.FormatInt(categoryID(t, app, ana, "Groceries"), 10)}, "limit": {"100.00"},
 	}).AssertRedirect("/budgets")
+	ana.Client.PostForm("/goals", map[string][]string{"name": {"Trip"}, "target": {"100.00"}}).AssertRedirect("/goals")
+	ana.Client.PostForm("/goals/"+idString(firstOf[models.Goal](t, app, ana, "").ID)+"/contributions",
+		map[string][]string{"amount": {"5.00"}}).AssertRedirect("/goals")
+
+	if err := orm.Create(wsCtx(t, ana), mustDB(t, app), &models.Notification{
+		UserID: ana.User.ID, Kind: "goal_reached", SubjectKey: "goal:x", TitleKey: "alerts.goal_reached", Params: "{}", InApp: true,
+	}); err != nil {
+		t.Fatal(err)
+	}
+
 	upload(t, ana, accAna, statement).AssertOK()
 	ana.Client.PostJSON("/tags", map[string]any{"name": "Trip"}).AssertStatus(http.StatusCreated)
 	ana.Client.PostForm("/cards", map[string][]string{
@@ -164,18 +188,21 @@ func TestCrossTenantMatrix(t *testing.T) {
 		AssertRedirect("/ai")
 
 	ids := map[string]int64{
-		"transaction": firstOf[models.Transaction](t, app, ana, "").ID,
-		"account":     accAna,
-		"budget":      firstOf[models.Budget](t, app, ana, "").ID,
-		"import":      firstOf[models.Import](t, app, ana, "").ID,
-		"credential":  firstOf[models.AICredential](t, app, ana, "").ID,
-		"user":        cara.ID,
-		"card":        firstOf[models.CreditCard](t, app, ana, "").ID,
-		"recurrence":  firstOf[models.Recurrence](t, app, ana, "").ID,
-		"bobAccount":  firstAccount(t, app, bob),
-		"category":    categoryID(t, app, ana, "Groceries"),
-		"bobCategory": categoryID(t, app, bob, "Groceries"),
-		"tag":         firstOf[models.Tag](t, app, ana, "Trip").ID,
+		"transaction":  firstOf[models.Transaction](t, app, ana, "").ID,
+		"account":      accAna,
+		"budget":       firstOf[models.Budget](t, app, ana, "").ID,
+		"import":       firstOf[models.Import](t, app, ana, "").ID,
+		"credential":   firstOf[models.AICredential](t, app, ana, "").ID,
+		"user":         cara.ID,
+		"card":         firstOf[models.CreditCard](t, app, ana, "").ID,
+		"recurrence":   firstOf[models.Recurrence](t, app, ana, "").ID,
+		"bobAccount":   firstAccount(t, app, bob),
+		"category":     categoryID(t, app, ana, "Groceries"),
+		"bobCategory":  categoryID(t, app, bob, "Groceries"),
+		"tag":          firstOf[models.Tag](t, app, ana, "Trip").ID,
+		"goal":         firstOf[models.Goal](t, app, ana, "").ID,
+		"contribution": firstOf[models.GoalContribution](t, app, ana, "").ID,
+		"notification": firstOf[models.Notification](t, app, ana, "").ID,
 	}
 
 	// Token ids are strings; the row that must survive is checked after the loop (revoking keeps the row).
@@ -188,7 +215,7 @@ func TestCrossTenantMatrix(t *testing.T) {
 	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
 
 	tables := map[string]int64{}
-	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "recurrences": true, "access_tokens": true} {
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "recurrences": true, "access_tokens": true, "goals": true, "goal_contributions": true, "notifications": true} {
 		tables[table] = rowCount(t, app, table)
 	}
 

@@ -8,6 +8,8 @@ import (
 	"time"
 
 	"github.com/AlexGalhardo/vukem/inertia"
+
+	"github.com/AlexGalhardo/vukem-finances/app/alerts"
 )
 
 // Shared is the props every page receives (inertia.Config.SharedType).
@@ -18,6 +20,15 @@ type Shared struct {
 	Workspace     *SharedWorkspace `json:"workspace"` // set on the pages inside a workspace
 	Locale        string           `json:"locale"`
 	GoogleEnabled bool             `json:"googleEnabled"`
+	// Notifications is the unread count and the latest few notifications of
+	// the signed-in person, for the bell of the header.
+	Notifications *SharedNotifications `json:"notifications"`
+}
+
+// SharedNotifications feeds the notification bell.
+type SharedNotifications struct {
+	Unread int64         `json:"unread"`
+	Recent []alerts.View `json:"recent"`
 }
 
 // SharedAuth is the signed-in user, or null.
@@ -46,6 +57,8 @@ func All() []inertia.PageInfo {
 		CardStatement.Info(),
 		Categories.Info(),
 		Budgets.Info(),
+		Goals.Info(),
+		Notifications.Info(),
 		Recurrences.Info(),
 		Import.Info(),
 		Workspace.Info(),
