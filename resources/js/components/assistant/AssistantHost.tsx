@@ -94,7 +94,6 @@ export default function AssistantHost() {
     labelKey: "askAssistant",
     group: "actions",
     keys: "a s",
-    enabled: () => canAsk,
     run: show,
   });
   useAction({
@@ -232,42 +231,47 @@ export default function AssistantHost() {
                 {error}
               </p>
             )}
-            <form onSubmit={ask} className="flex items-end gap-2">
-              <div className="flex flex-1 flex-col gap-1">
-                <label htmlFor={inputId} className="text-xs text-muted-foreground">
-                  {t("assistantQuestion")}
-                </label>
-                <Input
-                  id={inputId}
-                  ref={inputRef}
-                  autoComplete="off"
-                  maxLength={status?.questionMax ?? 500}
-                  placeholder={t("assistantPlaceholder")}
-                  value={question}
-                  onChange={(e) => setQuestion(e.target.value)}
-                />
-              </div>
-              <Button type="submit" disabled={busy || question.trim() === ""}>
-                {busy ? t("assistantThinking") : t("assistantAsk")}
-              </Button>
-            </form>
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs text-muted-foreground">{t("assistantExamples")}:</span>
-              {examples.map((example) => (
-                <Button
-                  key={example}
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => {
-                    setQuestion(example);
-                    inputRef.current?.focus();
-                  }}
-                >
-                  {example}
-                </Button>
-              ))}
-            </div>
+            {!canAsk && <p className="text-sm text-muted-foreground">{t("assistantViewer")}</p>}
+            {canAsk && (
+              <>
+                <form onSubmit={ask} className="flex items-end gap-2">
+                  <div className="flex flex-1 flex-col gap-1">
+                    <label htmlFor={inputId} className="text-xs text-muted-foreground">
+                      {t("assistantQuestion")}
+                    </label>
+                    <Input
+                      id={inputId}
+                      ref={inputRef}
+                      autoComplete="off"
+                      maxLength={status?.questionMax ?? 500}
+                      placeholder={t("assistantPlaceholder")}
+                      value={question}
+                      onChange={(e) => setQuestion(e.target.value)}
+                    />
+                  </div>
+                  <Button type="submit" disabled={busy || question.trim() === ""}>
+                    {busy ? t("assistantThinking") : t("assistantAsk")}
+                  </Button>
+                </form>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground">{t("assistantExamples")}:</span>
+                  {examples.map((example) => (
+                    <Button
+                      key={example}
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setQuestion(example);
+                        inputRef.current?.focus();
+                      }}
+                    >
+                      {example}
+                    </Button>
+                  ))}
+                </div>
+              </>
+            )}
             {status !== null && status.conversations.length > 0 && (
               <div className="flex flex-wrap items-center gap-2">
                 {status.conversations.slice(0, 5).map((c) => (

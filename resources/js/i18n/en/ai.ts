@@ -79,6 +79,7 @@ const dict = {
   assistantExample2: "Compare this month with the previous one",
   assistantExample3: "What is my net worth trend this year?",
   assistantEmpty: "No questions yet.",
+  assistantViewer: "Viewers cannot ask the assistant. You can still read or delete your past conversations.",
   assistantThinking: "Thinking...",
   assistantBasedOn: "Based on",
   assistantTablesNote:

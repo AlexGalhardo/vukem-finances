@@ -82,6 +82,8 @@ const dict = {
   assistantExample2: "Compara este mes con el anterior",
   assistantExample3: "¿Cómo va la tendencia de mi patrimonio este año?",
   assistantEmpty: "Aún no hay preguntas.",
+  assistantViewer:
+    "Quien tiene el rol de lector no puede preguntar al asistente. Aún puedes leer o borrar tus conversaciones anteriores.",
   assistantThinking: "Pensando...",
   assistantBasedOn: "Basado en",
   assistantTablesNote:

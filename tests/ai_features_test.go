@@ -224,6 +224,33 @@ func TestSecurity_DescriptionInjection(t *testing.T) {
 	}
 }
 
+// Losing the right to ask does not take away the right to erase what you asked.
+func TestDemotedViewerKeepsTheirConversations(t *testing.T) {
+	t.Parallel()
+
+	tm, provider := aiTeam(t, false)
+	planThenAnswer(provider, cashFlowPlan)
+
+	first := jsonOf(t, tm.member.Client.PostJSON("/assistant/ask", map[string]any{"question": "first"}).AssertOK())
+	cid := idStr(int64(first["conversationId"].(float64)))
+
+	if _, err := mustDB(t, tm.app).SQL().ExecContext(t.Context(),
+		"UPDATE memberships SET role = ? WHERE user_id = ?", models.RoleViewer, tm.member.User.ID); err != nil {
+		t.Fatal(err)
+	}
+
+	if m := jsonOf(t, tm.member.Client.Get("/assistant/conversations/"+cid).AssertOK()); len(m["messages"].([]any)) != 2 {
+		t.Errorf("a demoted person's messages = %v", m)
+	}
+
+	tm.member.Client.PostJSON("/assistant/ask", map[string]any{"question": "more"}).AssertForbidden()
+	tm.member.Client.Delete("/assistant/conversations/" + cid).AssertOK()
+	tm.member.Client.Delete("/assistant/conversations/" + cid).AssertForbidden()
+	tm.member.Client.Delete("/assistant/conversations").AssertForbidden()
+
+	vukemtest.AssertDatabaseCount(t, tm.app, "assistant_conversations", 0)
+}
+
 func TestConversationsArePrivate(t *testing.T) {
 	t.Parallel()
 
