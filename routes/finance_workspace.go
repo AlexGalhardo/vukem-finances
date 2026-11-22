@@ -9,4 +9,5 @@ import (
 func financeWorkspace(g *router.Group, h *ledger.Handlers) {
 	g.Get("/workspace", h.Workspace).Name("workspace.show")
 	g.Put("/workspace", h.UpdateWorkspace).Name("workspace.update")
+	g.Get("/workspace/export.json", h.ExportWorkspaceJSON).Name("workspace.export")
 }

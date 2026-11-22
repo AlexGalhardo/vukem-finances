@@ -1,0 +1,557 @@
+{
+  "type": "object",
+  "properties": {
+    "format": {
+      "const": "vukem-finances-export"
+    },
+    "version": {
+      "const": 1
+    },
+    "exported_at": {
+      "type": "string",
+      "minLength": 20
+    },
+    "workspace": {
+      "$ref": "#/$defs/workspace"
+    },
+    "accounts": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/account"
+      }
+    },
+    "categories": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/category"
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/tag"
+      }
+    },
+    "transactions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/transaction"
+      }
+    },
+    "budgets": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/budget"
+      }
+    },
+    "goals": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/goal"
+      }
+    },
+    "recurrences": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/recurrence"
+      }
+    },
+    "cards": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/card"
+      }
+    }
+  },
+  "required": [
+    "format",
+    "version",
+    "exported_at",
+    "workspace",
+    "accounts",
+    "categories",
+    "tags",
+    "transactions",
+    "budgets",
+    "goals",
+    "recurrences",
+    "cards"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://vukem.dev/vukem-finances/export-format.schema.json",
+  "title": "vukem-finances workspace export, version 1",
+  "$defs": {
+    "member": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "owner",
+            "admin",
+            "member",
+            "viewer"
+          ]
+        }
+      },
+      "required": [
+        "name",
+        "role"
+      ],
+      "additionalProperties": false
+    },
+    "workspace": {
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "currency": {
+          "type": "string",
+          "minLength": 3
+        },
+        "timezone": {
+          "type": "string"
+        },
+        "members": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/member"
+          }
+        }
+      },
+      "required": [
+        "name",
+        "currency",
+        "timezone",
+        "members"
+      ],
+      "additionalProperties": false
+    },
+    "account": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "type": "string"
+        },
+        "opening_cents": {
+          "type": "integer"
+        },
+        "archived_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "position": {
+          "type": "integer"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "kind",
+        "opening_cents",
+        "archived_at",
+        "position"
+      ],
+      "additionalProperties": false
+    },
+    "category": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "income",
+            "expense"
+          ]
+        },
+        "parent_uid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "color": {
+          "type": "string"
+        },
+        "icon": {
+          "type": "string"
+        },
+        "archived_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "kind",
+        "parent_uid",
+        "color",
+        "icon",
+        "archived_at"
+      ],
+      "additionalProperties": false
+    },
+    "tag": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "color": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "color"
+      ],
+      "additionalProperties": false
+    },
+    "transaction": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "account_uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category_uid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "income",
+            "expense"
+          ]
+        },
+        "amount_cents": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "description": {
+          "type": "string"
+        },
+        "occurred_on": {
+          "type": "string",
+          "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+        },
+        "transfer_uid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "tag_uids": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "statement_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "recurrence_uid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "occurrence_on": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "installment_group_uid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "installment_no": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "installment_total": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "uid",
+        "account_uid",
+        "category_uid",
+        "kind",
+        "amount_cents",
+        "description",
+        "occurred_on",
+        "transfer_uid",
+        "tag_uids",
+        "statement_ref",
+        "recurrence_uid",
+        "occurrence_on",
+        "installment_group_uid",
+        "installment_no",
+        "installment_total"
+      ],
+      "additionalProperties": false
+    },
+    "budget": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category_uid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "limit_cents": {
+          "type": "integer"
+        },
+        "rollover": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "uid",
+        "category_uid",
+        "limit_cents",
+        "rollover"
+      ],
+      "additionalProperties": false
+    },
+    "contribution": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "amount_cents": {
+          "type": "integer"
+        },
+        "on_date": {
+          "type": "string"
+        },
+        "note": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "uid",
+        "amount_cents",
+        "on_date",
+        "note"
+      ],
+      "additionalProperties": false
+    },
+    "goal": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "name": {
+          "type": "string"
+        },
+        "target_cents": {
+          "type": "integer"
+        },
+        "target_date": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "archived_at": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "contributions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/contribution"
+          }
+        }
+      },
+      "required": [
+        "uid",
+        "name",
+        "target_cents",
+        "target_date",
+        "archived_at",
+        "contributions"
+      ],
+      "additionalProperties": false
+    },
+    "recurrence": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "account_uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "category_uid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "kind": {
+          "enum": [
+            "income",
+            "expense"
+          ]
+        },
+        "amount_cents": {
+          "type": "integer"
+        },
+        "description": {
+          "type": "string"
+        },
+        "frequency": {
+          "type": "string"
+        },
+        "interval": {
+          "type": "integer"
+        },
+        "start_date": {
+          "type": "string"
+        },
+        "end_date": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "max_count": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "generated_through": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "active": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "uid",
+        "account_uid",
+        "category_uid",
+        "kind",
+        "amount_cents",
+        "description",
+        "frequency",
+        "interval",
+        "start_date",
+        "end_date",
+        "max_count",
+        "generated_through",
+        "active"
+      ],
+      "additionalProperties": false
+    },
+    "card": {
+      "type": "object",
+      "properties": {
+        "uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "account_uid": {
+          "type": "string",
+          "minLength": 1
+        },
+        "limit_cents": {
+          "type": "integer"
+        },
+        "closing_day": {
+          "type": "integer"
+        },
+        "due_day": {
+          "type": "integer"
+        },
+        "payment_account_uid": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "brand": {
+          "type": "string"
+        },
+        "last4": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "uid",
+        "account_uid",
+        "limit_cents",
+        "closing_day",
+        "due_day",
+        "payment_account_uid",
+        "brand",
+        "last4"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
