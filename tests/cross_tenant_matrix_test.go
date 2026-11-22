@@ -140,6 +140,7 @@ var crossTenantCases = map[string]crossTenantCase{
 	},
 	"ai.key.destroy":            {method: http.MethodDelete, table: "ai_credentials", param: "credential"},
 	"tokens.destroy":            {method: http.MethodDelete, table: "access_tokens", param: "token"},
+	"devices.destroy":           {method: http.MethodDelete, table: "sync_devices", param: "device"},
 	"workspace.members.destroy": {method: http.MethodDelete, table: "memberships", param: "user"},
 	"workspace.members.role": {
 		method: http.MethodPatch, table: "memberships", param: "user",
@@ -209,13 +210,16 @@ func TestCrossTenantMatrix(t *testing.T) {
 	anaToken := makeToken(t, app, ana, 30, "accounts:read")
 	strIDs := map[string]string{"token": tokenID(anaToken)}
 
+	// Ana's device: the uid of a sync device is a ULID, like a token id a string.
+	strIDs["device"] = newSyncDevice(t, app, rawToken(t, app, ana.User, ana.Workspace.ID, "sync"), "Ana phone").Device
+
 	// Control: the same edit is fine for the owner, so only the id is wrong for Bob.
 	own := crossTenantCases["transactions.update"].body(ids)
 	own["accountId"] = strconv.FormatInt(accAna, 10)
 	ana.Client.PatchJSON("/transactions/"+strconv.FormatInt(ids["transaction"], 10), own).AssertOK()
 
 	tables := map[string]int64{}
-	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "recurrences": true, "access_tokens": true, "goals": true, "goal_contributions": true, "notifications": true} {
+	for table := range map[string]bool{"transactions": true, "accounts": true, "budgets": true, "imports": true, "memberships": true, "ai_credentials": true, "categories": true, "tags": true, "transaction_tags": true, "credit_cards": true, "recurrences": true, "access_tokens": true, "goals": true, "goal_contributions": true, "notifications": true, "sync_devices": true} {
 		tables[table] = rowCount(t, app, table)
 	}
 
