@@ -313,6 +313,9 @@ func send(c *vukemtest.Client, call matrixCall) *vukemtest.Response {
 	}
 }
 
+// publicOperations are the operations that take no token.
+var publicOperations = map[string]bool{"sync.pair": true} //nolint:gochecknoglobals // a constant table
+
 func TestAPIScopeMatrix(t *testing.T) {
 	t.Parallel()
 
@@ -341,6 +344,14 @@ func TestAPIScopeMatrix(t *testing.T) {
 	for _, methods := range doc.Paths {
 		for _, op := range methods {
 			inDoc++
+
+			// A public operation has no token to scope: sync_pairing_test.go holds it to its code,
+			// its rate limit and its absence from the security schemes.
+			if op.Scope == "" && publicOperations[op.ID] {
+				tested++
+
+				continue
+			}
 
 			if _, isSync := syncMatrixCalls[op.ID]; isSync {
 				if op.Scope != "sync" {
@@ -411,7 +422,7 @@ func TestAPIScopeMatrix(t *testing.T) {
 		}
 	}
 
-	if cases := len(matrixCalls) + len(syncMatrixCalls); tested != inDoc || tested != len(api.Operations()) || tested != cases {
+	if cases := len(matrixCalls) + len(syncMatrixCalls) + len(publicOperations); tested != inDoc || tested != len(api.Operations()) || tested != cases {
 		t.Errorf("tested %d operations, the document has %d, the table %d, the cases %d",
 			tested, inDoc, len(api.Operations()), cases)
 	}

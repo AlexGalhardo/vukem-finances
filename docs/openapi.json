@@ -1703,6 +1703,53 @@
         ],
         "type": "object"
       },
+      "PairResult": {
+        "properties": {
+          "device_id": {
+            "type": "string"
+          },
+          "server_time": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "token": {
+            "type": "string"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/PairWorkspace"
+          }
+        },
+        "required": [
+          "token",
+          "device_id",
+          "workspace",
+          "server_time"
+        ],
+        "type": "object"
+      },
+      "PairWorkspace": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "name",
+          "currency",
+          "timezone"
+        ],
+        "type": "object"
+      },
       "PeriodOut": {
         "properties": {
           "from": {
@@ -5758,6 +5805,75 @@
           "Sync"
         ],
         "x-required-scope": "sync"
+      }
+    },
+    "/sync/pair": {
+      "post": {
+        "operationId": "sync.pair",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "code": {
+                    "description": "The pairing code the Devices page shows",
+                    "examples": [
+                      "7K2M-9QXA"
+                    ],
+                    "maxLength": 40,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "device_name": {
+                    "description": "What the person calls the device",
+                    "examples": [
+                      "Ana's phone"
+                    ],
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "platform": {
+                    "description": "ios, android, web or other",
+                    "examples": [
+                      "android"
+                    ],
+                    "maxLength": 20,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "code",
+                  "device_name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PairResult"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "summary": "Trade a pairing code for a sync token and a registered device",
+        "tags": [
+          "Sync"
+        ]
       }
     },
     "/sync/pull": {

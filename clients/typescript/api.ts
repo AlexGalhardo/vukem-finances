@@ -335,6 +335,20 @@ export type NetWorthReportOut = {
   points: NetWorthPointOut[];
 };
 
+export type PairResult = {
+  device_id: string;
+  server_time: string;
+  token: string;
+  workspace: PairWorkspace;
+};
+
+export type PairWorkspace = {
+  currency: string;
+  name: string;
+  timezone: string;
+  uid: string;
+};
+
 export type PeriodOut = {
   from: string;
   preset: string;
@@ -818,6 +832,14 @@ export type SyncDevicesCreateResponse = SyncDeviceOut;
 export type SyncDevicesListResponse = EnvelopeGithubComAlexGalhardoVukemFinancesAppApiSyncDeviceOut;
 
 export type SyncInfoResponse = Info;
+
+export type SyncPairBody = {
+  code: string;
+  device_name: string;
+  platform?: string;
+};
+
+export type SyncPairResponse = PairResult;
 
 export type SyncPullQuery = {
   cursor?: number;
@@ -1419,6 +1441,10 @@ export type SyncInfoError =
   | { status: 401; value: Problem }
   | { status: Exclude<HttpErrorStatus, 401>; value: ApiProblem | undefined };
 
+export type SyncPairError =
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 422>; value: ApiProblem | undefined };
+
 export type SyncPullError =
   | { status: 401; value: Problem }
   | { status: 422; value: Problem }
@@ -1859,6 +1885,14 @@ export interface Client {
   ): Promise<ApiResult<SyncInfoResponse, SyncInfoError>>;
 
   /**
+   * POST /sync/pair: Trade a pairing code for a sync token and a registered device
+   */
+  syncPair(
+    args: { body: SyncPairBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<SyncPairResponse, SyncPairError>>;
+
+  /**
    * GET /sync/pull: Read the changes after a cursor, parents first
    */
   syncPull(
@@ -2069,6 +2103,8 @@ export function createClient(options: ClientOptions = {}): Client {
       request<SyncDevicesListResponse, SyncDevicesListError>("GET", "/sync/devices", undefined, options),
     syncInfo: (options) =>
       request<SyncInfoResponse, SyncInfoError>("GET", "/sync/info", undefined, options),
+    syncPair: (args, options) =>
+      request<SyncPairResponse, SyncPairError>("POST", "/sync/pair", args, options),
     syncPull: (args, options) =>
       request<SyncPullResponse, SyncPullError>("GET", "/sync/pull", args, options),
     syncPush: (args, options) =>
