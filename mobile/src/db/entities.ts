@@ -40,7 +40,8 @@ export interface TransactionFields {
 }
 
 export interface BudgetFields {
-	category_uid: string;
+	/** null is the overall budget of the workspace. */
+	category_uid: string | null;
 	limit_cents: number;
 	rollover: boolean;
 }

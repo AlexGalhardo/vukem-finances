@@ -1,6 +1,6 @@
 /** Calendar dates are ISO "YYYY-MM-DD" strings, never instants (docs/specs/recurrence.md). */
 
-function daysInMonth(year: number, month: number): number {
+export function daysInMonth(year: number, month: number): number {
 	if (month === 2) {
 		const leap = (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
 		return leap ? 29 : 28;
@@ -31,4 +31,40 @@ export function addMonths(date: string, n: number): string {
 	const nm = (((index % 12) + 12) % 12) + 1;
 
 	return `${pad(ny, 4)}-${pad(nm, 2)}-${pad(Math.min(day, daysInMonth(ny, nm)), 2)}`;
+}
+
+const MS_PER_DAY = 86_400_000;
+
+function utcDay(date: string): number {
+	const m = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(date);
+	if (m === null) {
+		throw new RangeError(`not an ISO date: ${date}`);
+	}
+	return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / MS_PER_DAY;
+}
+
+/** Moves an ISO date by n days. */
+export function addDays(date: string, n: number): string {
+	return new Date((utcDay(date) + n) * MS_PER_DAY).toISOString().slice(0, 10);
+}
+
+/** The dates from a to b, both included. */
+export function daysBetween(a: string, b: string): number {
+	return utcDay(b) - utcDay(a) + 1;
+}
+
+/** True for a real calendar date written as YYYY-MM-DD. */
+export function isIsoDate(date: string): boolean {
+	const m = /^(\d{4})-(\d{2})-(\d{2})$/u.exec(date);
+	if (m === null) {
+		return false;
+	}
+	const month = Number(m[2]);
+	return month >= 1 && month <= 12 && Number(m[3]) >= 1 && Number(m[3]) <= daysInMonth(Number(m[1]), month);
+}
+
+export function monthEnd(date: string): string {
+	const y = Number(date.slice(0, 4));
+	const mo = Number(date.slice(5, 7));
+	return `${date.slice(0, 7)}-${pad(daysInMonth(y, mo), 2)}`;
 }
