@@ -6,6 +6,9 @@ import (
 	vukem "github.com/AlexGalhardo/vukem"
 
 	"github.com/AlexGalhardo/vukem-finances/app/ai"
+	"github.com/AlexGalhardo/vukem-finances/app/ai/categorize"
+	"github.com/AlexGalhardo/vukem-finances/app/finance"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
@@ -36,4 +39,42 @@ func HandleAIReseal(app *vukem.App) func(ctx context.Context, j AIReseal) error 
 
 		return err
 	}
+}
+
+// AICategorize is the payload of the categorization job; it is defined with
+// the finance service, which enqueues it after a write.
+type AICategorize = finance.AICategorize
+
+// HandleAICategorize proposes categories for the uncategorized transactions of
+// the workspace of the job: rules first, then the model in batches of 30, at
+// most categorize.RunCap transactions. An error makes the queue retry, and a
+// retry proposes nothing twice (one suggestion per transaction).
+func HandleAICategorize(app *vukem.App) func(ctx context.Context, j AICategorize) error {
+	return func(ctx context.Context, j AICategorize) error {
+		svc, err := Categorizer(app)
+		if err != nil {
+			return err
+		}
+
+		_, err = svc.Run(workspaces.WithTenant(ctx, j.WorkspaceID), categorize.Options{
+			ImportID: j.ImportID, TransactionUID: j.TransactionUID,
+		})
+
+		return err
+	}
+}
+
+// Categorizer builds the suggestions service on the shared AI client.
+func Categorizer(app *vukem.App) (*categorize.Service, error) {
+	shared, err := ai.Shared(app)
+	if err != nil {
+		return nil, err
+	}
+
+	fin, err := service(app)
+	if err != nil {
+		return nil, err
+	}
+
+	return categorize.New(fin.DB, shared.Client, fin, app.Log, app.Now), nil
 }

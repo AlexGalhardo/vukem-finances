@@ -12,7 +12,7 @@ import (
 // page is readable by every member; each write checks ai.manage (owner only)
 // in its handler.
 func financeAI(g *router.Group, app *vukem.App, h *ledger.Handlers) error {
-	svc, err := ai.New(app)
+	svc, err := ai.Shared(app)
 	if err != nil {
 		return err
 	}

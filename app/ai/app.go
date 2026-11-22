@@ -1,6 +1,8 @@
 package ai
 
 import (
+	"sync"
+
 	"github.com/AlexGalhardo/vukem"
 
 	"github.com/AlexGalhardo/vukem-finances/config"
@@ -38,4 +40,25 @@ func New(app *vukem.App) (*Service, error) {
 		Vault:    vault,
 		Settings: settings, PrivateHosts: private,
 	}, nil
+}
+
+// shared holds one Service per app: the per-minute rate limit lives in the
+// Client, so the routes and the jobs must use the same one.
+var shared sync.Map //nolint:gochecknoglobals // one entry per app, guarded by the map
+
+// Shared returns the Service of app, built on first use. Tests may replace
+// Client.Factory on it to use a fake provider.
+func Shared(app *vukem.App) (*Service, error) {
+	if svc, ok := shared.Load(app); ok {
+		return svc.(*Service), nil //nolint:forcetypeassert // only Shared stores here
+	}
+
+	svc, err := New(app)
+	if err != nil {
+		return nil, err
+	}
+
+	actual, _ := shared.LoadOrStore(app, svc)
+
+	return actual.(*Service), nil //nolint:forcetypeassert // only Shared stores here
 }

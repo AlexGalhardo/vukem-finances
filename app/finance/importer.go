@@ -550,6 +550,14 @@ func (s *Service) RunImport(ctx context.Context, id int64) error {
 
 	s.requestAlerts(ctx, made...)
 
+	for i := range made {
+		if !made[i].CategoryID.Valid {
+			s.RequestCategorize(ctx, id, "")
+
+			break
+		}
+	}
+
 	return nil
 }
 

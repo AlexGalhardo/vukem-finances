@@ -97,6 +97,10 @@ func (s *Service) saveTransaction(ctx context.Context, id int64, in TxInput) (mo
 
 	s.requestAlerts(ctx, out)
 
+	if id == 0 && !out.CategoryID.Valid && !out.TransferUID.Valid {
+		s.RequestCategorize(ctx, 0, out.UID)
+	}
+
 	return out, nil
 }
 
