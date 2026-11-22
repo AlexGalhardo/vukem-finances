@@ -102,7 +102,7 @@ The entries of task 10 (load, budgets and drills) are numbered from QA-500.
 - **Fix applied:** migration `20261126120000_add_transaction_cover_indexes` adds two covering indexes. The same profile then shows the dashboard at 221 ms, a list page at 18 ms, the default report at 315 ms and the 12 month report at 868 ms. `TestTransactionCoverIndexesAnswerTheHotQueries` checks the plans and the rollback.
 - **Evidence:** the table in `perf-budgets.md`. After the fix, with one client: dashboard 448 ms p95 (budget 300), reports 359 ms, export 1478 ms (budget 1000); with 20 clients all of those and the filtered list and the push (p95 3869 ms, CPU queueing on a shared machine) are still over.
 - **Severity:** Medium.
-- **Status:** open, with the evidence that an index cannot reach the budget: what is left is the cost of aggregating 100000 rows per request. Options for the orchestrator, each a change of design:
+- **Status:** accepted for v0.6.0 by the author on 2026-11-22 (`accepted.md`), to be solved in v0.7.0 with the summary table. An index cannot reach the budget: what is left is the cost of aggregating 100000 rows per request. The options, each a change of design:
   - a per-workspace monthly summary table kept by the change-log triggers (balances, month points, category totals), read by the dashboard and the reports;
   - SQL `SUM` per group with an overflow guard instead of grouping by amount (smaller result, still a scan);
   - a cached dashboard and total with invalidation on the change log;
