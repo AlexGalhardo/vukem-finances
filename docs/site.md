@@ -12,6 +12,7 @@ Run them in `site/` after `bun install --frozen-lockfile`.
 | --- | --- |
 | `bun run dev` | Astro dev server |
 | `bun run build` | Builds `site/out` and writes `sitemap.xml`, `robots.txt`, the Markdown twin of every docs page (`/docs/<page>.md`), `llms.txt` and the search index (`/pagefind/`) |
+| `go run ./scripts/qa/sitecheck site/out` (repo root) | Audits the built output as an artifact: no form, no resource from another origin, no network call in built JavaScript outside `pagefind/`, no server or worker file, the `CNAME`, no link to an app path (`/login`, `/api`, ...) and no hosted-service phrase on the landing pages; `e2e/site-network.spec.ts` opens every page and records every request |
 | `bun run build:search` | Indexes the built docs with Pagefind into `site/out/pagefind/` (part of `build`) |
 | `bun run check:built` | Scans `site/out`: no form, other origin, network API, server or worker file; one `h1`, no skipped heading level, landmarks, skip link, alt text, title and description lengths, JSON-LD without a price, hreflang, no hosted-service phrase on the landing page, weight budgets, and a Markdown twin and an `llms.txt` line for every docs page |
 | `bun run check:claims` | Checks the claims register of `docs/landing-brief.md` (every evidence path exists), the forbidden phrases of the three catalogs, and the documentation claims: every `app <resource> <verb>` command is in the CLI reference, every setting, repository path, REST route and MCP tool exists, every link and anchor resolves, no bare URL; a failure names the page and line |

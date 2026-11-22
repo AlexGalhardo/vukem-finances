@@ -6,9 +6,9 @@ import {
   E2E_PORT,
   E2E_SAAS_PORT,
   E2E_TELEGRAM_PORT,
+  env,
   SAAS_STORAGE_STATE,
   STORAGE_STATE,
-  env,
 } from "./e2e/env";
 
 // The bundled Chromium is the default (CI). Set E2E_CHANNEL=chrome to use the Chrome installed on the machine.
@@ -31,9 +31,15 @@ export default defineConfig({
     {
       name: "chromium",
       testMatch: /.*.spec.ts/,
-      testIgnore: /(billing|privacy).spec.ts/,
+      testIgnore: /(billing|privacy|site-network).spec.ts/,
       dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"], ...(channel ? { channel } : {}), storageState: STORAGE_STATE },
+    },
+    // The built static site (site/out) is served by the spec itself on a free port: no app server, no sign-in.
+    {
+      name: "site",
+      testMatch: /site-network.spec.ts/,
+      use: { ...devices["Desktop Chrome"], ...(channel ? { channel } : {}) },
     },
     // Billing needs the saas edition: its own server, database and sign-in.
     {

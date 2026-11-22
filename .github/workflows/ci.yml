@@ -85,6 +85,10 @@ jobs:
           bun-version: 1.4.4
       - run: bun install --frozen-lockfile
       - run: bunx playwright install --with-deps chromium
+      # e2e/site-network.spec.ts serves site/out and builds it when it is missing.
+      - name: Install the site dependencies
+        run: bun install --frozen-lockfile
+        working-directory: site
       - name: End-to-end suite, then the log scanner over everything it printed
         run: bash scripts/qa/run-e2e-with-logscan.sh
 

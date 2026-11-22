@@ -11,6 +11,7 @@ on:
       - "docs/legal/**"
       - "docs/landing-brief.md"
       - "app/workspaces/limits.go"
+      - "scripts/qa/sitecheck/**"
       # Sources of the generated documentation pages and of the claims check.
       - "docs/openapi.json"
       - "docs/reference/**"
@@ -27,6 +28,7 @@ on:
       - "docs/legal/**"
       - "docs/landing-brief.md"
       - "app/workspaces/limits.go"
+      - "scripts/qa/sitecheck/**"
       # Sources of the generated documentation pages and of the claims check.
       - "docs/openapi.json"
       - "docs/reference/**"
@@ -77,6 +79,13 @@ jobs:
       - run: bun run test:site
       - run: bun run build
       - run: bun run check:built
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: go.mod
+          cache: false
+      - name: Static site audit
+        run: go run ./scripts/qa/sitecheck site/out
+        working-directory: .
       - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         with:
