@@ -239,7 +239,7 @@ Authorization cases: 640
 | `PATCH /transfers/{transaction}` | transfers.update (personal, saas) | `TestTransferHTTP` |
 | `GET /two-factor-challenge` | two-factor.login (personal, saas) | `TestSecurity_TwoFactorPerAccountLimit`, `TestTwoFactorChallengeNeedsPasswordStep`, `TestTwoFactorLogin` |
 | `POST /two-factor-challenge` | middleware.BodyLimit, (personal, saas) | `TestSecurity_TwoFactorLimitNeedsPassword`, `TestSecurity_TwoFactorPerAccountLimit`, `TestTwoFactorChallengeNeedsPasswordStep` and 3 more |
-| `GET /up` | vukem.health (personal, saas) | `TestAboutReportsVersionAndEdition`, `TestHome`, `TestSecurity_GateNoCookie` and 2 more |
+| `GET /up` | vukem.health (personal, saas) | `TestAboutReportsVersionAndEdition`, `TestRootRedirects`, `TestSecurity_GateNoCookie` and 2 more |
 | `GET /user/two-factor` | two-factor.show (personal, saas) | `TestTwoFactorDisableNeedsPassword`, `TestTwoFactorRecoveryCodes`, `tests/two_factor_test.go` |
 | `POST /user/two-factor` | two-factor.enable (personal, saas) | `TestTwoFactorLogin`, `TestTwoFactorThrottle`, `tests/two_factor_test.go` |
 | `POST /user/two-factor/confirm` | two-factor.confirm (personal, saas) | `TestTwoFactorThrottle`, `tests/two_factor_test.go` |
@@ -257,7 +257,7 @@ Authorization cases: 640
 | `POST /workspace/owner` | workspace.transfer (personal, saas) | `tests/roles_test.go` |
 | `POST /workspaces` | workspaces.store (saas) | `TestPersonalSingleWorkspace` |
 | `POST /workspaces/{workspace}/switch` | workspaces.switch (saas) | `TestPersonalSingleWorkspace`, `TestTenancyIsolatesWorkspaces` |
-| `GET /{$}` | home (personal, saas) | `TestGateWrongCookieAndWrongToken`, `TestHome`, `TestLoginLogoutAndThrottle` and 1 more |
+| `GET /{$}` | home (personal, saas) | `TestGateWrongCookieAndWrongToken`, `TestLoginLogoutAndThrottle`, `TestPersonalRootRedirects` and 3 more |
 
 ## API routes outside the registry
 
@@ -318,7 +318,6 @@ Authorization cases: 640
 | `Devices` | resources/js/pages/Devices.tsx | `TestPagesOfTheShell` |
 | `Error` | resources/js/pages/Error.tsx | `TestEntryFlow`, `TestErrorPage`, `TestEveryPageIsTyped` |
 | `Goals` | resources/js/pages/Goals.tsx | `TestGoalsHTTP`, `TestNotificationsHTTP` |
-| `Home` | resources/js/pages/Home.tsx | `TestHome`, `TestLoginLogoutAndThrottle`, `TestPersonalHomeHasNoLanding` and 4 more |
 | `Import` | resources/js/pages/Import.tsx | `TestCSVImportDelimiterAndSigns`, `TestCSVImportMapsColumnsAndRunsAsAJob`, `TestFreePlanLimits` and 2 more |
 | `InviteAccept` | resources/js/pages/InviteAccept.tsx | `TestInviteAcceptFlow` |
 | `InviteRegister` | resources/js/pages/InviteRegister.tsx | `TestPersonalInviteRegister` |
