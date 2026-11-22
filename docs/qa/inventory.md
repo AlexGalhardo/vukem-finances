@@ -252,7 +252,7 @@ Authorization cases: 640
 | `GET /workspace/export.json` | workspace.export (personal, saas) | `TestCrossTenantMatrixExports`, `TestExportPermissions`, `TestExportRateLimited` and 5 more |
 | `POST /workspace/invites` | workspace.invite (personal, saas) | `TestAuditEvents`, `TestExpiredInviteIsRefused`, `TestFreePlanLimits` and 10 more |
 | `POST /workspace/leave` | workspace.leave (personal, saas) | `TestAuditEvents`, `TestLastOwner` |
-| `DELETE /workspace/members/{user}` | workspace.members.destroy (personal, saas) | `TestAuditEvents`, `TestLastOwner`, `TestRolesDecideWhoMayDoWhat` and 2 more |
+| `DELETE /workspace/members/{user}` | workspace.members.destroy (personal, saas) | `TestAuditEvents`, `TestLastOwner`, `TestRolesDecideWhoMayDoWhat` and 3 more |
 | `PATCH /workspace/members/{user}` | workspace.members.role (personal, saas) | `tests/roles_test.go` |
 | `POST /workspace/owner` | workspace.transfer (personal, saas) | `tests/roles_test.go` |
 | `POST /workspaces` | workspaces.store (saas) | `TestPersonalSingleWorkspace` |
@@ -265,7 +265,7 @@ Authorization cases: 640
 | --- | --- | --- |
 | `GET /api/v1/me` | api.me.show (personal, saas) | `TestAPIAuthMatrix`, `TestAPIFailedTokenLimit`, `TestAPIRateLimit` and 3 more |
 | `GET /api/v1/openapi.json` | api.openapi (personal, saas) | `TestOpenAPIRoute`, `TestPairing_RouteIsPublicInTheDocument`, `TestSecurity_Web_Headers` |
-| `ANY /api/v1/{rest...}` | middleware.BodyLimit, (personal, saas) | `TestAPIAccounts`, `TestAPIAuthMatrix`, `TestAPIBudgets` and 61 more |
+| `ANY /api/v1/{rest...}` | middleware.BodyLimit, (personal, saas) | `TestAPIAccounts`, `TestAPIAuthMatrix`, `TestAPIBudgets` and 62 more |
 
 ## Sync routes
 
@@ -273,7 +273,7 @@ Authorization cases: 640
 | --- | --- | --- |
 | `GET /api/v1/sync/devices` | api.sync.devices.list (personal, saas) | `TestSyncDevices` |
 | `POST /api/v1/sync/devices` | api.sync.devices.create (personal, saas) | `TestSyncDevices`, `e2e/devices.spec.ts`, `tests/sync_helpers_test.go` |
-| `GET /api/v1/sync/info` | api.sync.info (personal, saas) | `TestSyncDeletedWorkspace`, `TestSyncInfo`, `TestSyncProtocolVersion` and 2 more |
+| `GET /api/v1/sync/info` | api.sync.info (personal, saas) | `TestSecurity_Authz_RemovedMemberLosesEveryCredential`, `TestSyncDeletedWorkspace`, `TestSyncInfo` and 3 more |
 | `POST /api/v1/sync/pair` | api.sync.pair (personal, saas) | `TestPairing`, `TestPairing_ExpiredCodeFails`, `TestPairing_TokenHasTheRoleCeiling` and 4 more |
 | `GET /api/v1/sync/pull` | api.sync.pull (personal, saas) | `TestPairing`, `TestSecurity_PushOtherWorkspaceUID`, `TestSyncDeletedWorkspace` and 9 more |
 | `POST /api/v1/sync/push` | api.sync.push (personal, saas) | `TestSyncLimits`, `TestSyncPushSizeLimits`, `tests/sync_helpers_test.go` and 1 more |
@@ -347,7 +347,7 @@ Authorization cases: 640
 | `/month` | bot command | `TestBotCommands`, `TestSecurity_RemovedMemberLosesBot`, `TestViewerCannotRecord` |
 | `/start` | bot command | `TestBotCommands`, `TestLinkFlow`, `TestSecurity_GroupChatIgnored` and 10 more |
 | `/unlink` | bot command | `TestUnlink` |
-| `/workspace` | bot command | `TestAuditEvents`, `TestAuditLogIsHiddenFromMembersAndViewers`, `TestExpiredInviteIsRefused` and 21 more |
+| `/workspace` | bot command | `TestAuditEvents`, `TestAuditLogIsHiddenFromMembersAndViewers`, `TestExpiredInviteIsRefused` and 22 more |
 
 ## Queue jobs
 
