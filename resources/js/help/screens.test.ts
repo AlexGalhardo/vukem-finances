@@ -22,6 +22,6 @@ describe("screenIdForPath", () => {
   test("an unknown path has no screen, and every screen id is unique", () => {
     expect(screenIdForPath("/nope/at/all")).toBeUndefined();
     expect(new Set(screenRoutes.map((screen) => screen.id)).size).toBe(screenRoutes.length);
-    expect(screenRoutes).toHaveLength(36);
+    expect(screenRoutes).toHaveLength(35);
   });
 });

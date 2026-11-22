@@ -14,7 +14,7 @@ The app ships in two editions of one binary (decision D-003), chosen by `APP_EDI
 | Sign-up | closed: `/register` is 404; the first owner uses `/setup` with `SETUP_TOKEN` or the code in the boot log, the others use `/invites/{token}/register` | public `/register`, email verification always on |
 | Billing, `/stripe/webhook`, `/abacatepay/webhook`, `/admin/revenue` | not registered (404), no Stripe or AbacatePay settings read | registered |
 | Plan limits | none (`workspaces.Personal`) | Free and Pro |
-| `GET /` | redirects to `/dashboard`, `/login` or `/setup` | landing page |
+| `GET /` | redirects to `/dashboard`, `/login` or `/setup` (never to another site: it works offline) | redirects to `/dashboard` or `/login`; the app has no landing page, `site/` is the landing |
 | Social login | find-only, never creates a user | creates users |
 
 Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEdition(app.Source)` where there is no service. Never read `APP_EDITION` in a handler. The finance test suite builds the app as `saas` (`newSaaSApp`); use `newPersonalApp` for the other edition. A sign-up address is never marked verified in `saas` (`AUTH_REQUIRE_EMAIL_VERIFICATION` is forced on, and a production boot refuses `false`).

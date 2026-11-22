@@ -12,7 +12,6 @@ import type components from "./en/components";
 import type goals from "./en/goals";
 import type help from "./en/help";
 import type importPage from "./en/import";
-import type landing from "./en/landing";
 import type mcp from "./en/mcp";
 import type privacy from "./en/privacy";
 import type recurrences from "./en/recurrences";
@@ -43,7 +42,6 @@ export type Key =
   | keyof typeof goals
   | keyof typeof help
   | keyof typeof importPage
-  | keyof typeof landing
   | keyof typeof mcp
   | keyof typeof privacy
   | keyof typeof recurrences

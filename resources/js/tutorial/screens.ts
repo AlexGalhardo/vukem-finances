@@ -12,16 +12,8 @@ const isAdminSaas = (props: SharedProps): boolean => isAdmin(props) && isSaas(pr
 // screen itself (the route exists only when the bot is configured).
 const never = (): boolean => false;
 
-/** The 36 screens and 81 steps of section 15.8 of docs/design-system.md. Text lives in i18n/<locale>/tutorial.ts. */
+/** The 35 screens and 80 steps of section 15.8 of docs/design-system.md. Text lives in i18n/<locale>/tutorial.ts. */
 export const tutorialScreens: readonly TutorialScreen[] = [
-  {
-    id: "Home",
-    route: "/",
-    whyKey: "tutHomeWhy",
-    mode: "guide",
-    edition: "saas",
-    steps: [{ target: "home-cta", titleKey: "tutHome1Title", bodyKey: "tutHome1Body" }],
-  },
   {
     id: "Login",
     route: "/login",

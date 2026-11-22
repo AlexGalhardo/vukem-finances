@@ -37,9 +37,9 @@ function props(overrides: { edition?: string; role?: string; admin?: boolean } =
 }
 
 describe("the screen data", () => {
-  test("has 36 screens and 81 steps, each target unique within its screen", () => {
-    expect(tutorialScreens).toHaveLength(36);
-    expect(tutorialScreens.reduce((sum, screen) => sum + screen.steps.length, 0)).toBe(81);
+  test("has 35 screens and 80 steps, each target unique within its screen", () => {
+    expect(tutorialScreens).toHaveLength(35);
+    expect(tutorialScreens.reduce((sum, screen) => sum + screen.steps.length, 0)).toBe(80);
     for (const screen of tutorialScreens) {
       const targets = screen.steps.map((step) => step.target);
       expect(new Set(targets).size, screen.id).toBe(targets.length);

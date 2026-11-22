@@ -47,13 +47,9 @@ type SharedUser struct {
 	EmailVerifiedAt *time.Time `json:"email_verified_at"`
 }
 
-// Home is the landing page.
-var Home = inertia.Define[struct{}]("Home")
-
 // All lists the typed pages for inertia.Config.Pages.
 func All() []inertia.PageInfo {
 	return []inertia.PageInfo{
-		Home.Info(),
 		Transactions.Info(),
 		Accounts.Info(),
 		Cards.Info(),
