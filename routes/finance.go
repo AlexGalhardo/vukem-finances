@@ -23,6 +23,7 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/controllers"
 	"github.com/AlexGalhardo/vukem-finances/app/controllers/ledger"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
+	"github.com/AlexGalhardo/vukem-finances/app/jobs"
 	appmail "github.com/AlexGalhardo/vukem-finances/app/mail"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
@@ -49,6 +50,25 @@ func Finance(r *router.Router, app *vukem.App) error {
 	fin, err := finance.New(app, ws)
 	if err != nil {
 		return err
+	}
+
+	// The queue keeps its jobs in memory: an import queued when the process
+	// died is run again on the next start (QA-501).
+	if app.Kind == vukem.KindWeb {
+		app.AddRunner("import-recovery", vukem.RunnerFunc(func(ctx context.Context) error {
+			n, err := fin.RecoverQueuedImports(ctx, func(ctx context.Context, workspaceID, importID int64) error {
+				return fin.Queue.Dispatch(ctx, jobs.ImportCSV{WorkspaceID: workspaceID, ImportID: importID})
+			})
+			if err != nil {
+				app.Log.ErrorContext(ctx, "import recovery failed", "err", err.Error())
+			} else if n > 0 {
+				app.Log.InfoContext(ctx, "queued imports run again", "count", n)
+			}
+
+			<-ctx.Done()
+
+			return nil
+		}))
 	}
 
 	// The personal edition has no billing: no Stripe settings are read, and

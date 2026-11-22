@@ -78,7 +78,7 @@ The entries of task 10 (load, budgets and drills) are numbered from QA-500.
 - **Actual:** the rows are never half written (the import is one transaction), but the import stays `queued` forever: the queue is in process memory (there is no `queue_jobs` table), nothing re-dispatches a `queued` import at boot, and `ConfirmImport` only accepts an `uploaded` one, so it cannot be confirmed again either.
 - **Evidence:** the drill fails with `the import is still "queued" 45 s after the restart with 0 rows`.
 - **Severity:** Medium.
-- **Status:** open. The fix is a choice: re-dispatch the imports still `queued` at boot (a start-up hook), accept a second confirmation for a `queued` import older than a few minutes, or move the queue to the database queue the framework offers (`QUEUE_CONNECTION=database`). It touches how background work is made durable, so it goes to the orchestrator.
+- **Status:** fixed (`fix(finance): run queued imports again at boot`). The imports still `queued` are re-dispatched when the web server starts. The import already writes its rows, counts and status in one transaction under the workspace lock and re-reads the status inside it, so a repeat or a concurrent run writes nothing twice (`TestImportJobRunConcurrentlyWritesRowsOnce`, `TestImportRecoveryRunsAQueuedImportOnce`). The sync queue default is kept.
 
 ## QA-502: the full migration rollback failed
 
