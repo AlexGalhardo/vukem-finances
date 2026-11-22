@@ -7,6 +7,7 @@ import (
 	"path"
 	"slices"
 	"strings"
+	"unicode"
 
 	"github.com/AlexGalhardo/vukem/errs"
 )
@@ -130,13 +131,23 @@ func DetectFormat(filename string, content []byte) (string, error) {
 }
 
 // SpreadsheetSafe makes a text safe to put in a cell of an exported
-// spreadsheet. A cell that starts with =, +, - or @ (or a tab or carriage
-// return, which some programs skip) is read as a formula, so one that came
-// from a statement ("=HYPERLINK(...)") could run when the export is opened.
-// A leading apostrophe makes it plain text. The importer stores text as typed,
-// so every exporter must call this on each text cell it writes.
+// spreadsheet. A cell whose first visible character is =, +, - or @ (or its
+// full-width form, which some locales convert), or that starts with a tab or
+// carriage return, can be read as a formula, so one that came from a statement
+// ("=HYPERLINK(...)") could run when the export is opened. Leading white space
+// and invisible characters do not hide it. A leading apostrophe makes it plain
+// text. The importer stores text as typed, so every exporter must call this on
+// each text cell it writes.
 func SpreadsheetSafe(s string) string {
-	if s != "" && strings.ContainsRune("=+-@\t\r", rune(s[0])) {
+	if s == "" {
+		return s
+	}
+
+	visible := strings.TrimLeftFunc(s, func(r rune) bool {
+		return unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r)
+	})
+
+	if s[0] == '\t' || s[0] == '\r' || strings.IndexAny(visible, "=+-@＝＋－＠") == 0 {
 		return "'" + s
 	}
 
