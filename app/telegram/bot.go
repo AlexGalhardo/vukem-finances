@@ -51,6 +51,11 @@ type Bot struct {
 	// afterUpdate runs after each update of a poll batch (tests stop a poll
 	// mid-batch with it).
 	afterUpdate func(updateID int64)
+
+	// failedUpdate and failures count the retries of the update the poller is
+	// stuck on. Only the one polling goroutine touches them.
+	failedUpdate int64
+	failures     int
 }
 
 // New builds the bot from the app. It returns nil, nil while TELEGRAM_BOT_TOKEN
