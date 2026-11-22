@@ -2,8 +2,6 @@
 # (Let's Encrypt for a public name, Caddy's internal CA for localhost),
 # compression and the security headers the app does not send itself.
 {$APP_DOMAIN} {
-	encode zstd gzip
-
 	header {
 		# The app already sends CSP, X-Frame-Options, X-Content-Type-Options,
 		# Referrer-Policy and Permissions-Policy.
@@ -14,5 +12,18 @@
 	# Caddy replaces X-Forwarded-For with the real peer address and sets
 	# X-Forwarded-Proto; the app trusts both only from this network
 	# (TRUSTED_PROXIES in compose.prod.yaml).
-	reverse_proxy app:3000
+	#
+	# /mcp (the remote MCP endpoint, docs/mcp.md) streams progress as it happens:
+	# no compression and no buffering, so a client sees each message when the
+	# app sends it. Everything else is compressed as before.
+	handle /mcp {
+		reverse_proxy app:3000 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		encode zstd gzip
+		reverse_proxy app:3000
+	}
 }
