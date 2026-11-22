@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	_ "embed"
 	"encoding/json"
 	"errors"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strconv"
 	"strings"
 )
 
@@ -23,7 +25,9 @@ const maxSaveBytes = 512 << 20
 
 // shell answers the /desktop/ paths: the native actions the web page cannot do
 // itself. It is mounted behind the gate, so only the app window reaches it
-// (cookie, loopback Host, same-origin fetch).
+// (cookie, loopback Host, same-origin fetch). The Wails runtime cannot do this
+// job: it ignores messages from a page that is not served by Wails, and the
+// window loads the app from the loopback server.
 type shell struct {
 	tmpDir string
 	// openURL opens an address in the system browser.
@@ -33,15 +37,103 @@ type shell struct {
 	chooseSavePath func(name string) (string, error)
 }
 
-func (s *shell) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	switch {
-	case r.Method == http.MethodPost && r.URL.Path == "/desktop/save":
-		s.save(w, r)
-	case r.Method == http.MethodPost && r.URL.Path == "/desktop/open-external":
-		s.openExternal(w, r)
-	default:
-		http.NotFound(w, r)
+// Wrap serves the /desktop/ paths itself and passes everything else to app,
+// adding the shell script to its HTML pages.
+func (s *shell) Wrap(app http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		switch {
+		case r.Method == http.MethodGet && r.URL.Path == "/desktop/shell.js":
+			w.Header().Set("Content-Type", "text/javascript; charset=utf-8")
+			w.Header().Set("Cache-Control", "no-store")
+			_, _ = io.WriteString(w, shellJS)
+		case r.Method == http.MethodPost && r.URL.Path == "/desktop/save":
+			s.save(w, r)
+		case r.Method == http.MethodPost && r.URL.Path == "/desktop/open-external":
+			s.openExternal(w, r)
+		case strings.HasPrefix(r.URL.Path, "/desktop/"):
+			http.NotFound(w, r)
+		case r.Method == http.MethodGet && r.Header.Get("X-Inertia") == "" && strings.Contains(r.Header.Get("Accept"), "text/html"):
+			// The page is rewritten, so it must arrive uncompressed.
+			r = r.Clone(r.Context())
+			r.Header.Del("Accept-Encoding")
+
+			iw := &injectWriter{ResponseWriter: w}
+			app.ServeHTTP(iw, r)
+			iw.finish()
+		default:
+			app.ServeHTTP(w, r)
+		}
+	})
+}
+
+// scriptTag loads the shell script; the CSP of the app allows 'self' scripts.
+const scriptTag = `<script src="/desktop/shell.js" defer></script>`
+
+// injectWriter buffers an HTML page to add the script tag before </head>; any
+// other response streams through untouched.
+type injectWriter struct {
+	http.ResponseWriter
+	buf    bytes.Buffer
+	status int
+	html   bool
+	wrote  bool
+}
+
+func (w *injectWriter) WriteHeader(status int) {
+	if w.wrote {
+		return
 	}
+
+	w.wrote = true
+	w.status = status
+	w.html = strings.HasPrefix(w.Header().Get("Content-Type"), "text/html") && w.Header().Get("Content-Encoding") == ""
+
+	if !w.html {
+		w.ResponseWriter.WriteHeader(status)
+	}
+}
+
+func (w *injectWriter) Write(p []byte) (int, error) {
+	if !w.wrote {
+		if w.Header().Get("Content-Type") == "" {
+			w.Header().Set("Content-Type", http.DetectContentType(p))
+		}
+
+		w.WriteHeader(http.StatusOK)
+	}
+
+	if !w.html {
+		return w.ResponseWriter.Write(p)
+	}
+
+	return w.buf.Write(p)
+}
+
+func (w *injectWriter) Flush() {
+	if !w.html {
+		if f, ok := w.ResponseWriter.(http.Flusher); ok {
+			f.Flush()
+		}
+	}
+}
+
+// Unwrap lets http.ResponseController reach the real writer.
+func (w *injectWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
+
+// finish sends the buffered page with the tag inserted.
+func (w *injectWriter) finish() {
+	if !w.html {
+		return
+	}
+
+	page := w.buf.Bytes()
+	if i := bytes.Index(page, []byte("</head>")); i >= 0 {
+		page = append(page[:i:i], append([]byte(scriptTag), page[i:]...)...)
+	}
+
+	w.Header().Set("Content-Length", strconv.Itoa(len(page)))
+	w.ResponseWriter.WriteHeader(w.status)
+	_, _ = w.ResponseWriter.Write(page)
 }
 
 // openExternal opens a web or mail address in the system browser. Any other

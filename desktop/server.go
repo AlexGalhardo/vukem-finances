@@ -50,9 +50,9 @@ type Server struct {
 type startOptions struct {
 	appOptions []vukem.Option
 	version    string
-	// shell answers /desktop/ (native actions of the window); nil in tests
-	// that only need the app.
-	shell http.Handler
+	// shell answers /desktop/ (native actions of the window) and adds its script
+	// to the pages; nil in tests that only need the app.
+	shell *shell
 }
 
 // StartServer prepares the data directory, migrates the database and starts
@@ -142,6 +142,15 @@ func desktopEnv(p Paths, key string, port int) map[string]string {
 	}
 }
 
+// wrap is the handler wrapper of the shell, or nil without one.
+func (o startOptions) wrap() func(http.Handler) http.Handler {
+	if o.shell == nil {
+		return nil
+	}
+
+	return o.shell.Wrap
+}
+
 func (s *Server) build(_ Paths, env map[string]string, gate *desktopgate.Gate, opts startOptions) error {
 	getenv := func(k string) (string, bool) { v, ok := env[k]; return v, ok }
 
@@ -151,7 +160,7 @@ func (s *Server) build(_ Paths, env map[string]string, gate *desktopgate.Gate, o
 		return err
 	}
 
-	all := append(bootstrap.DesktopOptions(gate, s.ln, opts.shell), vukem.WithSource(src), vukem.WithLogOutput(s.logs))
+	all := append(bootstrap.DesktopOptions(gate, s.ln, opts.wrap()), vukem.WithSource(src), vukem.WithLogOutput(s.logs))
 	all = append(all, opts.appOptions...)
 
 	s.app, err = bootstrap.New(all...)

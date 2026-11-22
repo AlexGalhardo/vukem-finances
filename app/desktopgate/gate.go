@@ -88,9 +88,7 @@ func EntryPath(token string) string { return EnterPrefix + token }
 // of the app (health checks, static files, webhooks) answers without it.
 func (g *Gate) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		h := w.Header()
-		h.Set("Content-Security-Policy", "frame-ancestors 'none'")
-		h.Set("Referrer-Policy", "no-referrer")
+		w = &headerWriter{ResponseWriter: w}
 
 		if !localRequest(r) {
 			http.Error(w, "Forbidden", http.StatusForbidden)
@@ -110,6 +108,48 @@ func (g *Gate) Wrap(next http.Handler) http.Handler {
 		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), verifiedKey{}, true)))
 	})
 }
+
+// headerWriter adds the gate's response headers at the moment the header is
+// sent, so a handler that sets its own Referrer-Policy cannot weaken it.
+type headerWriter struct {
+	http.ResponseWriter
+	done bool
+}
+
+func (w *headerWriter) seal() {
+	if w.done {
+		return
+	}
+
+	w.done = true
+
+	h := w.Header()
+	h.Set("Referrer-Policy", "no-referrer")
+	// A second policy narrows the first: both must allow what a page does.
+	h.Add("Content-Security-Policy", "frame-ancestors 'none'")
+}
+
+func (w *headerWriter) WriteHeader(status int) {
+	w.seal()
+	w.ResponseWriter.WriteHeader(status)
+}
+
+func (w *headerWriter) Write(p []byte) (int, error) {
+	w.seal()
+	return w.ResponseWriter.Write(p)
+}
+
+// Flush keeps streaming responses (server-sent events) working.
+func (w *headerWriter) Flush() {
+	w.seal()
+
+	if f, ok := w.ResponseWriter.(http.Flusher); ok {
+		f.Flush()
+	}
+}
+
+// Unwrap lets http.ResponseController reach the real writer.
+func (w *headerWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
 
 // exchange spends the launch token and mints the cookie. A wrong or spent token
 // answers 401 and never spends the real one.
