@@ -34,3 +34,7 @@ One registry (`resources/js/shortcuts/registry.ts`) owns every shortcut. A featu
 | `g k` | `go-cards` | shell |
 | `g u` | `go-recurrences` | shell |
 | `g g` | `go-goals` | shell |
+| `a s` | `ask-assistant` | epic 16 |
+| `g s` | `review-suggestions` | epic 16 |
+
+On the suggestions page the list is keyboard driven (local keys, not registry actions): the arrow keys move, `Enter` accepts, `Backspace` rejects and `Shift+A` accepts every suggestion at or above the chosen confidence. A plain `a` is not used there because it starts the `a s` sequence.

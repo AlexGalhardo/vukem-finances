@@ -211,6 +211,19 @@ func (a *AIFeatureHandlers) DraftEntry(c *web.Ctx) error {
 	return c.JSON(http.StatusOK, draft)
 }
 
+// DraftStatus tells the transaction dialog whether to offer the sentence field.
+func (a *AIFeatureHandlers) DraftStatus(c *web.Ctx) error {
+	settings, err := a.ai.Settings.Get(c.Context())
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, map[string]any{
+		"enabled":   settings.FeatureOn(ai.FeatureCategorize) && a.h.can(c, workspaces.AbilityRecord) == nil,
+		"textLimit": entry.TextMax,
+	})
+}
+
 // AssistantStatus tells the dialog whether the assistant is on and lists the
 // conversations of the person asking.
 func (a *AIFeatureHandlers) AssistantStatus(c *web.Ctx) error {

@@ -15,6 +15,7 @@ import {
   type TransactionDraft,
 } from "./entryForm";
 import PickerField from "./PickerField";
+import SentenceField from "./SentenceField";
 import TagsField from "./TagsField";
 
 export interface TransactionDialogProps {
@@ -143,6 +144,19 @@ function TransactionForm({
         </p>
       )}
       <FieldGroup>
+        <SentenceField
+          onDraft={(d) =>
+            setDraft((current) => ({
+              ...current,
+              kind: d.kind,
+              amount: d.amount,
+              date: d.date,
+              description: d.description,
+              categoryId: d.categoryId > 0 ? String(d.categoryId) : "",
+              accountId: d.accountId > 0 ? String(d.accountId) : current.accountId,
+            }))
+          }
+        />
         <Field data-invalid={!!fields.amount}>
           <FieldLabel htmlFor="quick-amount">{t("amount")}</FieldLabel>
           <AmountInput
