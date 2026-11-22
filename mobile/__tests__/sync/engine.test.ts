@@ -1,6 +1,6 @@
 import { BACKOFF_SCHEDULE_MS, backoffDelay } from "../../src/sync/backoff";
 import { DEBOUNCE_MS, FOREGROUND_INTERVAL_MS, SyncEngine } from "../../src/sync/engine";
-import { saveConnection } from "../../src/sync/state";
+import { loadConnection, saveConnection } from "../../src/sync/state";
 import type { TokenStore } from "../../src/sync/transport";
 import { type Clock, type PushResult, TransportError } from "../../src/sync/types";
 import { ACCOUNT, type Env, openEnv } from "../helpers/fixtures";
@@ -347,6 +347,38 @@ describe("the sync engine", () => {
       engine.onLocalWrite();
       await flush();
       expect(transport.calls).toHaveLength(calls);
+    });
+
+    it("stops at workspace_deleted on a 410, keeps the data until the person confirms, then erases it", async () => {
+      const transport = okTransport({
+        push: accept,
+        pull: () => {
+          throw new TransportError("http", "gone", 410, "workspace_deleted");
+        },
+      });
+      const { env, engine, clock, store } = await setup(transport);
+      await env.repo.create("account", ACCOUNT);
+      await engine.start();
+      await engine.trigger("manual");
+
+      expect(engine.getStatus()).toBe("workspace_deleted");
+      expect(engine.view().failure).toBe("workspace_deleted");
+      // Told first, erased later: nothing is deleted by the failure itself.
+      expect(await env.repo.list("account")).toHaveLength(1);
+
+      const calls = transport.calls.length;
+      clock.advance(FOREGROUND_INTERVAL_MS * 3);
+      await engine.trigger("manual");
+      engine.onLocalWrite();
+      await flush();
+      expect(transport.calls).toHaveLength(calls);
+
+      await engine.eraseDeletedWorkspace();
+      expect(await env.repo.list("account")).toHaveLength(0);
+      expect(await env.repo.outboxCount()).toBe(0);
+      expect(store.value).toBeNull();
+      expect(engine.getStatus()).toBe("disconnected");
+      expect(await loadConnection(env.db)).toBeNull();
     });
 
     it("treats a 401 as auth_failed too", async () => {

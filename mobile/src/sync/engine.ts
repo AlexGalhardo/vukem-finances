@@ -3,6 +3,7 @@ import { ENTITIES } from "../db/entities";
 import type { Repository } from "../db/repository";
 import { PULL_LIMIT, pullUntilDone } from "./apply";
 import { backoffDelay } from "./backoff";
+import { wipeLocalData } from "./erase";
 import { integrityPass } from "./integrity";
 import { BATCH_SIZE, markAttempt, nextBatch } from "./outbox";
 import { handleResults, type ResultSummary } from "./results";
@@ -29,6 +30,7 @@ export type SyncStatus =
   | "offline"
   | "error"
   | "auth_failed"
+  | "workspace_deleted"
   | "needs_merge_choice";
 
 export type Trigger = "manual" | "foreground" | "write" | "timer" | "backoff";
@@ -158,6 +160,16 @@ export class SyncEngine {
     this.debounce = this.retryTimer = this.interval = null;
   }
 
+  /** Statuses where the engine waits for the person and never touches the network. */
+  private stopped(): boolean {
+    return (
+      this.status === "disconnected" ||
+      this.status === "auth_failed" ||
+      this.status === "workspace_deleted" ||
+      this.status === "needs_merge_choice"
+    );
+  }
+
   private tick(): void {
     this.interval = this.o.clock.setTimeout(() => this.tick(), FOREGROUND_INTERVAL_MS);
     void this.trigger("timer");
@@ -165,7 +177,7 @@ export class SyncEngine {
 
   /** The app calls this after every local write: the sync starts 3 seconds after the last one. */
   onLocalWrite(): void {
-    if (this.status === "disconnected" || this.status === "auth_failed" || this.status === "needs_merge_choice") {
+    if (this.stopped()) {
       void this.refresh();
       return;
     }
@@ -182,7 +194,7 @@ export class SyncEngine {
 
   /** Asks for a sync. Triggers that arrive while one runs share that run. */
   trigger(reason: Trigger): Promise<void> {
-    if (this.status === "disconnected" || this.status === "auth_failed" || this.status === "needs_merge_choice") {
+    if (this.stopped()) {
       return this.refresh().then(() => undefined);
     }
     if (reason === "manual") {
@@ -321,6 +333,13 @@ export class SyncEngine {
 
   private async fail(error: unknown): Promise<void> {
     if (error instanceof TransportError) {
+      if (error.status === 410 && error.code === "workspace_deleted") {
+        // The workspace is gone on the server (it waits to be purged, or was purged). Sync stops for good, the data
+        // stays until the person confirms the erase on the status screen.
+        this.failure = "workspace_deleted";
+        await this.setStatus("workspace_deleted");
+        return;
+      }
       if (error.status === 401 || error.code === "device_revoked") {
         // Sync stops, the data stays; the person pairs again or disconnects.
         this.failure = "auth";
@@ -366,6 +385,13 @@ export class SyncEngine {
     this.failures = 0;
     this.failure = null;
     await this.setStatus("disconnected");
+  }
+
+  /** The person was told the workspace was deleted and confirmed: erase it from this phone, then disconnect. */
+  async eraseDeletedWorkspace(): Promise<void> {
+    this.stop();
+    await wipeLocalData(this.o.db);
+    await this.disconnect(true);
   }
 
   /** The person chose Merge or Replace and it finished: sync as usual from here. */

@@ -4,6 +4,7 @@ import type { Repository } from "../db/repository";
 import { newUid } from "../domain/ids";
 import { type ConnectInput, type ConnectResult, connectToServer } from "./connect";
 import { SyncEngine } from "./engine";
+import { wipeLocalData } from "./erase";
 import { describeReplace, type MergeResult, mergeWithServer, replaceWithServer } from "./merge";
 import { type Connection, loadConnection, requestResync } from "./state";
 import type { TokenStore } from "./transport";
@@ -164,24 +165,16 @@ export class SyncController {
 
   /** The separate, confirmed action that deletes the data on this phone. */
   async resetLocalData(): Promise<void> {
-    const { db } = this.s;
-    await db.transaction(async (db) => {
-      for (const meta of Object.values(ENTITIES)) {
-        await db.run(`DELETE FROM ${meta.table}`);
-      }
-      for (const table of [
-        "transaction_tags",
-        "outbox",
-        "sync_problems",
-        "sync_conflicts",
-        "sync_ref_missing",
-        "sync_staging",
-      ]) {
-        await db.run(`DELETE FROM ${table}`);
-      }
-      await db.run("DELETE FROM meta WHERE key = 'sync.cursor'");
-    });
+    await wipeLocalData(this.s.db);
     await this.engine.refresh();
+  }
+
+  /**
+   * The server said this workspace was deleted (410 workspace_deleted) and the person was told on the status
+   * screen: erase it from this phone and forget the server.
+   */
+  async eraseDeletedWorkspace(): Promise<void> {
+    await this.engine.eraseDeletedWorkspace();
   }
 
   async dismissConflict(id: number): Promise<void> {

@@ -77,7 +77,7 @@ The client of `docs/specs/sync-protocol.md`. It is in `mobile/src/sync/` and dep
 
 ### Pairing
 
-On the web, open Devices and press Add device: the page shows an 8 character code (valid once, for 10 minutes) and the server address. On the phone open More, Sync, Connect, type the address, the code and a name for the phone. The server answers with a token for that workspace (only the `sync` scope, 365 days, listed on the Tokens page as "Phone" and the device name) and registers the device. The token is kept only in the secure store of the phone (`expo-secure-store`); it is never in SQLite, never in a backup and never in a log or an error message. The code is cleared from the screen after use. Revoking the device or the token on the web stops the phone at once; it keeps its data and offers Pair again or Disconnect.
+On the web, open Devices and press Add device: the page shows an 8 character code (valid once, for 10 minutes) and the server address. On the phone open More, Sync, Connect, type the address, the code and a name for the phone. The server answers with a token for that workspace (only the `sync` scope, 365 days, listed on the Tokens page as "Phone" and the device name) and registers the device. The token is kept only in the secure store of the phone (`expo-secure-store`); it is never in SQLite, never in a backup and never in a log or an error message. The code is cleared from the screen after use. Revoking the device or the token on the web stops the phone at once; it keeps its data and offers Pair again or Disconnect. When the owner deletes the workspace, sync answers `410 workspace_deleted` (during the 30 day grace period and after the purge): the phone stops for good, says so on the Sync screen and keeps its data until the person presses "Erase this workspace from the phone", which erases the local rows and the queue and disconnects. A phone that was offline for the whole grace period gets the same answer at its next sync.
 
 ### Server address rules
 
@@ -139,6 +139,7 @@ Run on a device or emulator before a release. None of this is covered by the uni
 - [ ] Kill the app in the middle of a sync (push, then pull): reopen it and sync again, with no duplicate and no loss.
 - [ ] Two phones on one workspace: edit the same transaction on both while offline and sync both; the conflict list shows the lost value and Apply the replaced value again works.
 - [ ] Revoke the device on the web: the phone shows Sign-in needed, keeps its data and offers Pair again and Disconnect.
+- [ ] Delete the workspace on the web: the phone shows Workspace deleted, keeps its data until Erase this workspace from the phone is pressed, then is disconnected and empty.
 - [ ] First connection of a phone that has data: Merge reports the merged count; Replace shows the warning and offers the export first.
 - [ ] The status line is read by TalkBack and VoiceOver when it changes ("Synced", "Offline, 3 changes waiting", "Sign-in needed").
 - [ ] A device where Hermes lacks `Intl` data for the chosen time zone or currency still shows dates and amounts.
