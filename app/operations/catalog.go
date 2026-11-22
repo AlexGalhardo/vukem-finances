@@ -27,6 +27,12 @@ type Catalog struct {
 
 	Transactions transactionOps
 	Budgets      budgetOps
+
+	Cards       cardOps
+	Recurrences recurrenceOps
+	Goals       goalOps
+	Reports     reportOps
+	Exports     exportOps
 }
 
 // NewCatalog declares every operation of the application.
@@ -38,6 +44,11 @@ func NewCatalog(cfg Config, svc Services) *Catalog {
 	c.defineTags()
 	c.defineTransactions()
 	c.defineBudgets()
+	c.defineCards()
+	c.defineRecurrences()
+	c.defineGoals()
+	c.defineReports()
+	c.defineExports()
 
 	return c
 }

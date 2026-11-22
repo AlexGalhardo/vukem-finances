@@ -34,7 +34,47 @@ func BuildDocument(routes []router.RouteInfo) (*openapi.Document, error) {
 		return nil, err
 	}
 
-	return keepSchemaNames(doc)
+	doc, err = keepSchemaNames(doc)
+	if err != nil {
+		return nil, err
+	}
+
+	describeDownloads(doc)
+
+	return doc, nil
+}
+
+// downloads are the operations that answer a file, not JSON: the media type and
+// the schema of what they send.
+var downloads = map[string]struct { //nolint:gochecknoglobals // a constant table
+	mediaType string
+	schema    openapi.Schema
+}{
+	"export.transactions": {"text/csv", openapi.Schema{
+		"type": "string", "description": "A CSV file: uid, date, account, category, tags, kind, amount, description, transfer_uid.",
+	}},
+	"export.workspace": {"application/json", openapi.Schema{
+		"type": "object", "description": "The whole workspace as one document, see docs/export-format.md.",
+	}},
+}
+
+// describeDownloads documents the file an export sends in place of the JSON
+// object its Go output type would give.
+func describeDownloads(doc *openapi.Document) {
+	for _, methods := range doc.Paths {
+		for _, op := range methods {
+			d, ok := downloads[op.OperationID]
+			if !ok {
+				continue
+			}
+
+			ok200 := op.Responses["200"]
+			ok200.Content = map[string]openapi.MediaType{d.mediaType: {Schema: d.schema}}
+			op.Responses["200"] = ok200
+		}
+	}
+
+	delete(doc.Components.Schemas, "Download")
 }
 
 // keepSchemaNames gives the list envelopes the component names they had when

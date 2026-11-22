@@ -45,6 +45,7 @@ type matrixCall struct {
 // seeded are the rows a call may point at, made fresh for every operation.
 type seeded struct {
 	account, account2, category, expenseCategory, tag, transaction, transfer, budget string
+	card, statement, recurrence, goal, contribution                                  string
 }
 
 func seed(t *testing.T, f apiFixture, name string) seeded {
@@ -67,6 +68,16 @@ func seed(t *testing.T, f apiFixture, name string) seeded {
 	}).AssertCreated()
 	s.transfer = uidOf(t, tr, "uid")
 	s.budget = uidOf(t, c.PostJSON("/api/v1/budgets", map[string]any{"category_uid": s.expenseCategory, "limit_cents": 100}).AssertOK(), "uid")
+
+	s.card = uidOf(t, c.PostJSON("/api/v1/cards", map[string]any{
+		"name": "Card " + name, "limit_cents": 100000, "closing_day": 10, "due_day": 20,
+	}).AssertCreated(), "uid")
+	s.statement = uidOf(t, c.Get("/api/v1/cards/"+s.card+"/statements").AssertOK(), "data.0.ref")
+	s.recurrence = uidOf(t, c.PostJSON("/api/v1/recurrences", map[string]any{
+		"account_uid": s.account, "kind": "expense", "amount_cents": 100, "frequency": "monthly", "interval": 1, "start_date": "2099-01-01",
+	}).AssertCreated(), "uid")
+	s.goal = uidOf(t, c.PostJSON("/api/v1/goals", map[string]any{"name": "Goal " + name, "target_cents": 100000}).AssertCreated(), "uid")
+	s.contribution = uidOf(t, c.PostJSON("/api/v1/goals/"+s.goal+"/contributions", map[string]any{"amount_cents": 100}).AssertCreated(), "uid")
 
 	return s
 }
@@ -138,7 +149,82 @@ var matrixCalls = map[string]func(s seeded, name string) matrixCall{ //nolint:go
 	"budgets.delete": func(s seeded, _ string) matrixCall { return matrixCall{method: "DELETE", path: "/budgets/" + s.budget} },
 
 	"summary.show": func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/summary"} },
+
+	"cards.list": func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/cards"} },
+	"cards.show": func(s seeded, _ string) matrixCall { return matrixCall{method: "GET", path: "/cards/" + s.card} },
+	"cards.create": func(_ seeded, n string) matrixCall {
+		return matrixCall{"POST", "/cards", map[string]any{"name": "N " + n, "limit_cents": 100000, "closing_day": 10, "due_day": 20}}
+	},
+	"cards.update": func(s seeded, _ string) matrixCall {
+		return matrixCall{"PATCH", "/cards/" + s.card, map[string]any{"limit_cents": 200000}}
+	},
+	"cards.archive": func(s seeded, _ string) matrixCall {
+		return matrixCall{method: "POST", path: "/cards/" + s.card + "/archive"}
+	},
+	"cards.unarchive": func(s seeded, _ string) matrixCall {
+		return matrixCall{method: "POST", path: "/cards/" + s.card + "/unarchive"}
+	},
+
+	"statements.list": func(s seeded, _ string) matrixCall {
+		return matrixCall{method: "GET", path: "/cards/" + s.card + "/statements"}
+	},
+	"statements.show": func(s seeded, _ string) matrixCall {
+		return matrixCall{method: "GET", path: "/cards/" + s.card + "/statements/" + s.statement}
+	},
+	"statements.pay": func(s seeded, _ string) matrixCall {
+		return matrixCall{"POST", "/cards/" + s.card + "/statements/" + s.statement + "/pay",
+			map[string]any{"from_account_uid": s.account, "amount_cents": 100, "date": "2026-11-20"}}
+	},
+
+	"recurrences.list": func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/recurrences"} },
+	"recurrences.create": func(s seeded, _ string) matrixCall {
+		return matrixCall{"POST", "/recurrences", map[string]any{
+			"account_uid": s.account, "kind": "expense", "amount_cents": 100, "frequency": "monthly", "interval": 1, "start_date": "2099-01-01",
+		}}
+	},
+	"recurrences.update": func(s seeded, _ string) matrixCall {
+		return matrixCall{"PATCH", "/recurrences/" + s.recurrence, map[string]any{"description": "Renamed"}}
+	},
+	"recurrences.delete": func(s seeded, _ string) matrixCall {
+		return matrixCall{method: "DELETE", path: "/recurrences/" + s.recurrence}
+	},
+
+	"goals.list": func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/goals"} },
+	"goals.create": func(_ seeded, n string) matrixCall {
+		return matrixCall{"POST", "/goals", map[string]any{"name": "N " + n, "target_cents": 100000}}
+	},
+	"goals.update": func(s seeded, _ string) matrixCall {
+		return matrixCall{"PATCH", "/goals/" + s.goal, map[string]any{"name": "Renamed"}}
+	},
+	"goals.archive": func(s seeded, _ string) matrixCall {
+		return matrixCall{method: "POST", path: "/goals/" + s.goal + "/archive"}
+	},
+	"goals.unarchive": func(s seeded, _ string) matrixCall {
+		return matrixCall{method: "POST", path: "/goals/" + s.goal + "/unarchive"}
+	},
+	"goals.delete": func(s seeded, _ string) matrixCall { return matrixCall{method: "DELETE", path: "/goals/" + s.goal} },
+	"goals.contributions.add": func(s seeded, _ string) matrixCall {
+		return matrixCall{"POST", "/goals/" + s.goal + "/contributions", map[string]any{"amount_cents": 5}}
+	},
+	"goals.contributions.delete": func(s seeded, _ string) matrixCall {
+		return matrixCall{method: "DELETE", path: "/goals/" + s.goal + "/contributions/" + s.contribution}
+	},
+
+	"reports.cashflow":   func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/reports/cash-flow"} },
+	"reports.categories": func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/reports/categories"} },
+	"reports.accounts":   func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/reports/accounts"} },
+	"reports.tags":       func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/reports/tags"} },
+	"reports.networth":   func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/reports/net-worth"} },
+	"reports.compare":    func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/reports/compare"} },
+
+	"export.transactions": func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/export/transactions"} },
+	"export.workspace":    func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/export/workspace"} },
 }
+
+// ceilingReads are the reads whose role ceiling is above the read ability: the
+// whole-workspace export keeps the owner and admin rule of the web app, so a
+// viewer's token that holds the scope is refused (and so is a member's).
+var ceilingReads = map[string]bool{"export.workspace": true} //nolint:gochecknoglobals // a table
 
 // syncMatrixCalls has one entry per operation of the sync protocol. They need
 // the protocol headers and a registered device, and a viewer's push is refused
@@ -304,7 +390,9 @@ func TestAPIScopeMatrix(t *testing.T) {
 
 				viewerClient := apiClient(t, f.app, rawToken(t, f.app, vera.User, vera.Workspace.ID, scopes...))
 
-				if read {
+				if read && ceilingReads[op.ID] {
+					assertProblem(t, send(viewerClient, call), http.StatusForbidden, "forbidden")
+				} else if read {
 					if s := send(viewerClient, call).Status(); s != http.StatusOK {
 						t.Errorf("a viewer's read got %d, want 200", s)
 					}

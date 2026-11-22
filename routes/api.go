@@ -2,6 +2,7 @@ package routes
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"sync"
 
@@ -61,6 +62,15 @@ func API(r *router.Router, app *vukem.App) error {
 	a.Sync = &syncproto.Service{DB: ws.DB, WS: ws, Fin: fin, Log: app.Log, Now: app.Now}
 	a.PullLimiter = limiters("sync.pull", syncproto.PullsPerMinute, config.APIWindow)
 	a.PushLimiter = limiters("sync.push", syncproto.PushesPerMinute, config.APIWindow)
+
+	// The downloads share one limit per workspace with the exports of the web app.
+	a.Exports = ratelimit.Middleware(limiters("workspace.export", config.ExportLimit, config.ExportWindow), func(r *http.Request) string {
+		if id, ok := workspaces.TenantID(r.Context()); ok {
+			return "workspace:" + strconv.FormatInt(id, 10)
+		}
+
+		return ratelimit.ByIP(r)
+	})
 
 	// Every error of the API carries a stable "code" next to the problem+json members.
 	r.Services().ProblemDecorator = func(c *web.Ctx, p *web.Problem) {

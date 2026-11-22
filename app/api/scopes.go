@@ -22,6 +22,16 @@ const (
 	ScopeBudgetsRead       = operations.ScopeBudgetsRead
 	ScopeBudgetsWrite      = operations.ScopeBudgetsWrite
 	ScopeSummaryRead       = operations.ScopeSummaryRead
+	ScopeCardsRead         = operations.ScopeCardsRead
+	ScopeCardsWrite        = operations.ScopeCardsWrite
+	ScopeStatementsRead    = operations.ScopeStatementsRead
+	ScopeStatementsWrite   = operations.ScopeStatementsWrite
+	ScopeRecurrencesRead   = operations.ScopeRecurrencesRead
+	ScopeRecurrencesWrite  = operations.ScopeRecurrencesWrite
+	ScopeGoalsRead         = operations.ScopeGoalsRead
+	ScopeGoalsWrite        = operations.ScopeGoalsWrite
+	ScopeReportsRead       = operations.ScopeReportsRead
+	ScopeExportRead        = operations.ScopeExportRead
 	ScopeSync              = operations.ScopeSync
 )
 

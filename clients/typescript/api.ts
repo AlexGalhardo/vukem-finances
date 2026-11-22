@@ -15,6 +15,21 @@ export type AccountOut = {
   version: number;
 };
 
+export type AccountReportOut = {
+  currency: string;
+  period: PeriodOut;
+  rows: AccountRowOut[];
+};
+
+export type AccountRowOut = {
+  expense_cents: number;
+  income_cents: number;
+  kind: string;
+  name: string;
+  net_cents: number;
+  uid: string;
+};
+
 export type BudgetOut = {
   category_name: string;
   category_uid: string;
@@ -25,6 +40,45 @@ export type BudgetOut = {
   spent_cents: number;
   uid: string;
   version: number;
+};
+
+export type CardOut = {
+  account_uid: string;
+  archived: boolean;
+  available_cents: number;
+  balance_cents: number;
+  brand: string;
+  closing_day: number;
+  created_at: string;
+  currency: string;
+  current: StatementOut;
+  due?: StatementOut | null;
+  due_day: number;
+  last4: string;
+  limit_cents: number;
+  name: string;
+  over_limit: boolean;
+  payment_account_uid?: string | null;
+  uid: string;
+  updated_at: string;
+  used_cents: number;
+  version: number;
+};
+
+export type CashFlowOut = {
+  currency: string;
+  months: MonthFlowOut[];
+  period: PeriodOut;
+  totals: SumOut;
+};
+
+export type CategoryChildOut = {
+  cents: number;
+  name: string;
+  own_cents: number;
+  share_bps: number;
+  uid: string;
+  uncategorized: boolean;
 };
 
 export type CategoryOut = {
@@ -40,12 +94,56 @@ export type CategoryOut = {
   version: number;
 };
 
+export type CategoryReportOut = {
+  currency: string;
+  kind: string;
+  period: PeriodOut;
+  rows: CategoryRowOut[];
+  total_cents: number;
+};
+
+export type CategoryRowOut = {
+  cents: number;
+  children: CategoryChildOut[];
+  name: string;
+  own_cents: number;
+  share_bps: number;
+  uid: string;
+  uncategorized: boolean;
+};
+
+export type CompareReportOut = {
+  currency: string;
+  period: PeriodOut;
+  previous: PeriodOut;
+  rows: CompareRowOut[];
+};
+
+export type CompareRowOut = {
+  change_bps: number;
+  current_cents: number;
+  diff_cents: number;
+  key: string;
+  not_applicable: boolean;
+  previous_cents: number;
+};
+
 export type ConflictOut = {
   applied_value: unknown;
   field: string;
   kind: string;
   lost_by_device?: string;
   lost_value: unknown;
+};
+
+export type ContributionOut = {
+  amount_cents: number;
+  created_at: string;
+  date: string;
+  goal_uid: string;
+  note: string;
+  uid: string;
+  version: number;
 };
 
 export type EffectOut = {
@@ -73,8 +171,32 @@ export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiBudgetOut = {
   meta?: Meta | null;
 };
 
+export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiCardOut = {
+  data: CardOut[];
+  links?: Links | null;
+  meta?: Meta | null;
+};
+
 export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiCategoryOut = {
   data: CategoryOut[];
+  links?: Links | null;
+  meta?: Meta | null;
+};
+
+export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiGoalOut = {
+  data: GoalOut[];
+  links?: Links | null;
+  meta?: Meta | null;
+};
+
+export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiRecurrenceOut = {
+  data: RecurrenceOut[];
+  links?: Links | null;
+  meta?: Meta | null;
+};
+
+export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiStatementOut = {
+  data: StatementOut[];
   links?: Links | null;
   meta?: Meta | null;
 };
@@ -114,6 +236,25 @@ export type FieldSpec = {
   required: boolean;
   type: string;
   writable: boolean;
+};
+
+export type GoalOut = {
+  archived: boolean;
+  contributions: number;
+  currency: string;
+  months_left: number;
+  name: string;
+  overdue: boolean;
+  percent: number;
+  projected_date?: string | null;
+  reached: boolean;
+  remaining_cents: number;
+  required_monthly_cents: number;
+  saved_cents: number;
+  target_cents: number;
+  target_date?: string | null;
+  uid: string;
+  version: number;
 };
 
 export type Info = {
@@ -167,6 +308,13 @@ export type Meta = {
   total?: number | null;
 };
 
+export type MonthFlowOut = {
+  expense_cents: number;
+  income_cents: number;
+  month: string;
+  net_cents: number;
+};
+
 export type MutationIn = {
   base_seq?: number;
   entity?: string;
@@ -174,6 +322,23 @@ export type MutationIn = {
   op?: string;
   op_id?: string;
   uid?: string;
+};
+
+export type NetWorthPointOut = {
+  balance_cents: number;
+  month: string;
+};
+
+export type NetWorthReportOut = {
+  currency: string;
+  period: PeriodOut;
+  points: NetWorthPointOut[];
+};
+
+export type PeriodOut = {
+  from: string;
+  preset: string;
+  to: string;
 };
 
 export type Problem = {
@@ -208,6 +373,26 @@ export type Range = {
   min: number;
 };
 
+export type RecurrenceOut = {
+  account_uid: string;
+  active: boolean;
+  amount_cents: number;
+  category_uid?: string | null;
+  created_at: string;
+  currency: string;
+  description: string;
+  end_date?: string | null;
+  frequency: string;
+  generated_through?: string | null;
+  interval: number;
+  kind: string;
+  max_count?: number | null;
+  start_date: string;
+  uid: string;
+  updated_at: string;
+  version: number;
+};
+
 export type RefInfo = {
   entity: string;
   field: string;
@@ -234,6 +419,29 @@ export type SnapshotPage = {
   rows: Record<string, unknown>[];
   snapshot_cursor: number;
   snapshot_id: string;
+};
+
+export type StatementDetailOut = {
+  rows: TransactionOut[];
+  statement: StatementOut;
+};
+
+export type StatementOut = {
+  closing_on: string;
+  credits_cents: number;
+  due_on: string;
+  paid_cents: number;
+  purchases_cents: number;
+  ref: string;
+  remaining_cents: number;
+  status: string;
+  total_cents: number;
+};
+
+export type SumOut = {
+  expense_cents: number;
+  income_cents: number;
+  net_cents: number;
 };
 
 export type SummaryAccountOut = {
@@ -279,6 +487,20 @@ export type TagOut = {
 export type TagRefOut = {
   color: string;
   name: string;
+  uid: string;
+};
+
+export type TagReportOut = {
+  currency: string;
+  period: PeriodOut;
+  rows: TagRowOut[];
+};
+
+export type TagRowOut = {
+  expense_cents: number;
+  income_cents: number;
+  name: string;
+  net_cents: number;
   uid: string;
 };
 
@@ -357,6 +579,42 @@ export type BudgetsSetBody = {
 
 export type BudgetsSetResponse = BudgetOut;
 
+export type CardsArchiveBody = Record<string, unknown>;
+
+export type CardsArchiveResponse = CardOut;
+
+export type CardsCreateBody = {
+  brand?: string;
+  closing_day?: number;
+  due_day?: number;
+  last4?: string;
+  limit_cents?: number;
+  name: string;
+  payment_account_uid?: string;
+};
+
+export type CardsCreateResponse = CardOut;
+
+export type CardsListResponse = EnvelopeGithubComAlexGalhardoVukemFinancesAppApiCardOut;
+
+export type CardsShowResponse = CardOut;
+
+export type CardsUnarchiveBody = Record<string, unknown>;
+
+export type CardsUnarchiveResponse = CardOut;
+
+export type CardsUpdateBody = {
+  brand?: string | null;
+  closing_day?: number | null;
+  due_day?: number | null;
+  last4?: string | null;
+  limit_cents?: number | null;
+  name?: string | null;
+  payment_account_uid?: string | null;
+};
+
+export type CardsUpdateResponse = CardOut;
+
 export type CategoriesArchiveBody = Record<string, unknown>;
 
 export type CategoriesArchiveResponse = CategoryOut;
@@ -385,7 +643,164 @@ export type CategoriesUpdateBody = {
 
 export type CategoriesUpdateResponse = CategoryOut;
 
+export type ExportTransactionsQuery = {
+  account?: string;
+  bom?: boolean;
+  category?: string;
+  delimiter?: string;
+  from?: string;
+  kind?: string;
+  max_cents?: number | null;
+  min_cents?: number | null;
+  q?: string;
+  tag?: string;
+  to?: string;
+};
+
+export type ExportTransactionsResponse = void;
+
+export type ExportWorkspaceResponse = Record<string, unknown>;
+
+export type GoalsArchiveBody = Record<string, unknown>;
+
+export type GoalsArchiveResponse = GoalOut;
+
+export type GoalsContributionsAddBody = {
+  amount_cents?: number;
+  date?: string;
+  note?: string;
+};
+
+export type GoalsContributionsAddResponse = ContributionOut;
+
+export type GoalsContributionsDeleteResponse = void;
+
+export type GoalsCreateBody = {
+  name: string;
+  target_cents?: number;
+  target_date?: string;
+};
+
+export type GoalsCreateResponse = GoalOut;
+
+export type GoalsDeleteResponse = void;
+
+export type GoalsListResponse = EnvelopeGithubComAlexGalhardoVukemFinancesAppApiGoalOut;
+
+export type GoalsUnarchiveBody = Record<string, unknown>;
+
+export type GoalsUnarchiveResponse = GoalOut;
+
+export type GoalsUpdateBody = {
+  name?: string | null;
+  target_cents?: number | null;
+  target_date?: string | null;
+};
+
+export type GoalsUpdateResponse = GoalOut;
+
 export type MeShowResponse = MeOut;
+
+export type RecurrencesCreateBody = {
+  account_uid: string;
+  amount_cents?: number;
+  backfill?: boolean;
+  category_uid?: string;
+  description?: string;
+  end_date?: string;
+  frequency: string;
+  interval?: number;
+  kind: string;
+  max_count?: number;
+  start_date: string;
+};
+
+export type RecurrencesCreateResponse = RecurrenceOut;
+
+export type RecurrencesDeleteQuery = {
+  future?: boolean;
+};
+
+export type RecurrencesDeleteResponse = void;
+
+export type RecurrencesListResponse = EnvelopeGithubComAlexGalhardoVukemFinancesAppApiRecurrenceOut;
+
+export type RecurrencesUpdateBody = {
+  account_uid?: string | null;
+  active?: boolean | null;
+  amount_cents?: number | null;
+  category_uid?: string | null;
+  description?: string | null;
+  end_date?: string | null;
+  frequency?: string | null;
+  interval?: number | null;
+  kind?: string | null;
+  max_count?: number | null;
+  start_date?: string | null;
+};
+
+export type RecurrencesUpdateResponse = RecurrenceOut;
+
+export type ReportsAccountsQuery = {
+  from?: string;
+  period?: string;
+  to?: string;
+};
+
+export type ReportsAccountsResponse = AccountReportOut;
+
+export type ReportsCashflowQuery = {
+  from?: string;
+  period?: string;
+  to?: string;
+};
+
+export type ReportsCashflowResponse = CashFlowOut;
+
+export type ReportsCategoriesQuery = {
+  from?: string;
+  kind?: string;
+  period?: string;
+  to?: string;
+};
+
+export type ReportsCategoriesResponse = CategoryReportOut;
+
+export type ReportsCompareQuery = {
+  from?: string;
+  period?: string;
+  to?: string;
+};
+
+export type ReportsCompareResponse = CompareReportOut;
+
+export type ReportsNetworthQuery = {
+  from?: string;
+  period?: string;
+  to?: string;
+};
+
+export type ReportsNetworthResponse = NetWorthReportOut;
+
+export type ReportsTagsQuery = {
+  from?: string;
+  period?: string;
+  to?: string;
+};
+
+export type ReportsTagsResponse = TagReportOut;
+
+export type StatementsListResponse = EnvelopeGithubComAlexGalhardoVukemFinancesAppApiStatementOut;
+
+export type StatementsPayBody = {
+  amount_cents?: number;
+  date?: string;
+  from_account_uid: string;
+};
+
+export type StatementsPayResponse = TransferOut;
+
+export type StatementsShowResponse = StatementDetailOut;
 
 export type SummaryShowQuery = {
   month?: string;
@@ -518,6 +933,22 @@ export type BudgetsDeleteParams = {
   uid: string;
 };
 
+export type CardsArchiveParams = {
+  uid: string;
+};
+
+export type CardsShowParams = {
+  uid: string;
+};
+
+export type CardsUnarchiveParams = {
+  uid: string;
+};
+
+export type CardsUpdateParams = {
+  uid: string;
+};
+
 export type CategoriesArchiveParams = {
   uid: string;
 };
@@ -528,6 +959,53 @@ export type CategoriesShowParams = {
 
 export type CategoriesUpdateParams = {
   uid: string;
+};
+
+export type GoalsArchiveParams = {
+  uid: string;
+};
+
+export type GoalsContributionsAddParams = {
+  uid: string;
+};
+
+export type GoalsContributionsDeleteParams = {
+  uid: string;
+  contribution_uid: string;
+};
+
+export type GoalsDeleteParams = {
+  uid: string;
+};
+
+export type GoalsUnarchiveParams = {
+  uid: string;
+};
+
+export type GoalsUpdateParams = {
+  uid: string;
+};
+
+export type RecurrencesDeleteParams = {
+  uid: string;
+};
+
+export type RecurrencesUpdateParams = {
+  uid: string;
+};
+
+export type StatementsListParams = {
+  uid: string;
+};
+
+export type StatementsPayParams = {
+  uid: string;
+  ref: string;
+};
+
+export type StatementsShowParams = {
+  uid: string;
+  ref: string;
 };
 
 export type TagsDeleteParams = {
@@ -754,6 +1232,35 @@ export type BudgetsSetError =
   | { status: 422; value: Problem }
   | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
 
+export type CardsArchiveError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type CardsCreateError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type CardsListError =
+  | { status: 401; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401>; value: ApiProblem | undefined };
+
+export type CardsShowError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type CardsUnarchiveError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type CardsUpdateError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
 export type CategoriesArchiveError =
   | { status: 401; value: Problem }
   | { status: 422; value: Problem }
@@ -778,9 +1285,121 @@ export type CategoriesUpdateError =
   | { status: 422; value: Problem }
   | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
 
+export type ExportTransactionsError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type ExportWorkspaceError =
+  | { status: 401; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401>; value: ApiProblem | undefined };
+
+export type GoalsArchiveError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type GoalsContributionsAddError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type GoalsContributionsDeleteError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type GoalsCreateError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type GoalsDeleteError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type GoalsListError =
+  | { status: 401; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401>; value: ApiProblem | undefined };
+
+export type GoalsUnarchiveError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type GoalsUpdateError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
 export type MeShowError =
   | { status: 401; value: Problem }
   | { status: Exclude<HttpErrorStatus, 401>; value: ApiProblem | undefined };
+
+export type RecurrencesCreateError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type RecurrencesDeleteError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type RecurrencesListError =
+  | { status: 401; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401>; value: ApiProblem | undefined };
+
+export type RecurrencesUpdateError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type ReportsAccountsError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type ReportsCashflowError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type ReportsCategoriesError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type ReportsCompareError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type ReportsNetworthError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type ReportsTagsError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type StatementsListError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type StatementsPayError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type StatementsShowError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
 
 export type SummaryShowError =
   | { status: 401; value: Problem }
@@ -936,6 +1555,53 @@ export interface Client {
   ): Promise<ApiResult<BudgetsSetResponse, BudgetsSetError>>;
 
   /**
+   * POST /cards/{uid}/archive: Archive a credit card
+   */
+  cardsArchive(
+    args: { params: CardsArchiveParams; body: CardsArchiveBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<CardsArchiveResponse, CardsArchiveError>>;
+
+  /**
+   * POST /cards: Create a credit card with its account
+   */
+  cardsCreate(
+    args: { body: CardsCreateBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<CardsCreateResponse, CardsCreateError>>;
+
+  /**
+   * GET /cards: List the credit cards with their limits and statements
+   */
+  cardsList(
+    options?: CallOptions,
+  ): Promise<ApiResult<CardsListResponse, CardsListError>>;
+
+  /**
+   * GET /cards/{uid}: Read a credit card
+   */
+  cardsShow(
+    args: { params: CardsShowParams },
+    options?: CallOptions,
+  ): Promise<ApiResult<CardsShowResponse, CardsShowError>>;
+
+  /**
+   * POST /cards/{uid}/unarchive: Bring an archived credit card back
+   */
+  cardsUnarchive(
+    args: { params: CardsUnarchiveParams; body: CardsUnarchiveBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<CardsUnarchiveResponse, CardsUnarchiveError>>;
+
+  /**
+   * PATCH /cards/{uid}: Change a credit card
+   */
+  cardsUpdate(
+    args: { params: CardsUpdateParams; body: CardsUpdateBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<CardsUpdateResponse, CardsUpdateError>>;
+
+  /**
    * POST /categories/{uid}/archive: Archive a category
    */
   categoriesArchive(
@@ -975,11 +1641,192 @@ export interface Client {
   ): Promise<ApiResult<CategoriesUpdateResponse, CategoriesUpdateError>>;
 
   /**
+   * GET /export/transactions: Download the transactions that match the filters as a CSV file
+   */
+  exportTransactions(
+    args?: { query?: ExportTransactionsQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<ExportTransactionsResponse, ExportTransactionsError>>;
+
+  /**
+   * GET /export/workspace: Download the whole workspace as one JSON document (owner and admins)
+   */
+  exportWorkspace(
+    options?: CallOptions,
+  ): Promise<ApiResult<ExportWorkspaceResponse, ExportWorkspaceError>>;
+
+  /**
+   * POST /goals/{uid}/archive: Archive a goal; its contributions stay
+   */
+  goalsArchive(
+    args: { params: GoalsArchiveParams; body: GoalsArchiveBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<GoalsArchiveResponse, GoalsArchiveError>>;
+
+  /**
+   * POST /goals/{uid}/contributions: Put an amount towards a goal
+   */
+  goalsContributionsAdd(
+    args: { params: GoalsContributionsAddParams; body: GoalsContributionsAddBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<GoalsContributionsAddResponse, GoalsContributionsAddError>>;
+
+  /**
+   * DELETE /goals/{uid}/contributions/{contribution_uid}: Delete a contribution of a goal
+   */
+  goalsContributionsDelete(
+    args: { params: GoalsContributionsDeleteParams },
+    options?: CallOptions,
+  ): Promise<ApiResult<GoalsContributionsDeleteResponse, GoalsContributionsDeleteError>>;
+
+  /**
+   * POST /goals: Create a savings goal
+   */
+  goalsCreate(
+    args: { body: GoalsCreateBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<GoalsCreateResponse, GoalsCreateError>>;
+
+  /**
+   * DELETE /goals/{uid}: Delete a goal and its contributions
+   */
+  goalsDelete(
+    args: { params: GoalsDeleteParams },
+    options?: CallOptions,
+  ): Promise<ApiResult<GoalsDeleteResponse, GoalsDeleteError>>;
+
+  /**
+   * GET /goals: List the savings goals with their progress
+   */
+  goalsList(
+    options?: CallOptions,
+  ): Promise<ApiResult<GoalsListResponse, GoalsListError>>;
+
+  /**
+   * POST /goals/{uid}/unarchive: Bring an archived goal back
+   */
+  goalsUnarchive(
+    args: { params: GoalsUnarchiveParams; body: GoalsUnarchiveBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<GoalsUnarchiveResponse, GoalsUnarchiveError>>;
+
+  /**
+   * PATCH /goals/{uid}: Change the name, target and date of a goal
+   */
+  goalsUpdate(
+    args: { params: GoalsUpdateParams; body: GoalsUpdateBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<GoalsUpdateResponse, GoalsUpdateError>>;
+
+  /**
    * GET /me: The token, its scopes and the workspace it works in
    */
   meShow(
     options?: CallOptions,
   ): Promise<ApiResult<MeShowResponse, MeShowError>>;
+
+  /**
+   * POST /recurrences: Create a recurring rule and post what is already due
+   */
+  recurrencesCreate(
+    args: { body: RecurrencesCreateBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<RecurrencesCreateResponse, RecurrencesCreateError>>;
+
+  /**
+   * DELETE /recurrences/{uid}: Delete a recurring rule and keep what it generated
+   */
+  recurrencesDelete(
+    args: { params: RecurrencesDeleteParams; query?: RecurrencesDeleteQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<RecurrencesDeleteResponse, RecurrencesDeleteError>>;
+
+  /**
+   * GET /recurrences: List the recurring rules
+   */
+  recurrencesList(
+    options?: CallOptions,
+  ): Promise<ApiResult<RecurrencesListResponse, RecurrencesListError>>;
+
+  /**
+   * PATCH /recurrences/{uid}: Change a recurring rule
+   */
+  recurrencesUpdate(
+    args: { params: RecurrencesUpdateParams; body: RecurrencesUpdateBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<RecurrencesUpdateResponse, RecurrencesUpdateError>>;
+
+  /**
+   * GET /reports/accounts: Income and expense of a period by account
+   */
+  reportsAccounts(
+    args?: { query?: ReportsAccountsQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<ReportsAccountsResponse, ReportsAccountsError>>;
+
+  /**
+   * GET /reports/cash-flow: Income against expense per month of a period
+   */
+  reportsCashflow(
+    args?: { query?: ReportsCashflowQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<ReportsCashflowResponse, ReportsCashflowError>>;
+
+  /**
+   * GET /reports/categories: Spending or income of a period by category
+   */
+  reportsCategories(
+    args?: { query?: ReportsCategoriesQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<ReportsCategoriesResponse, ReportsCategoriesError>>;
+
+  /**
+   * GET /reports/compare: A period against the one right before it
+   */
+  reportsCompare(
+    args?: { query?: ReportsCompareQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<ReportsCompareResponse, ReportsCompareError>>;
+
+  /**
+   * GET /reports/net-worth: The net worth at the end of each month of a period
+   */
+  reportsNetworth(
+    args?: { query?: ReportsNetworthQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<ReportsNetworthResponse, ReportsNetworthError>>;
+
+  /**
+   * GET /reports/tags: Income and expense of a period by tag
+   */
+  reportsTags(
+    args?: { query?: ReportsTagsQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<ReportsTagsResponse, ReportsTagsError>>;
+
+  /**
+   * GET /cards/{uid}/statements: List the statements of a credit card, newest first
+   */
+  statementsList(
+    args: { params: StatementsListParams },
+    options?: CallOptions,
+  ): Promise<ApiResult<StatementsListResponse, StatementsListError>>;
+
+  /**
+   * POST /cards/{uid}/statements/{ref}/pay: Pay a statement from a bank account
+   */
+  statementsPay(
+    args: { params: StatementsPayParams; body: StatementsPayBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<StatementsPayResponse, StatementsPayError>>;
+
+  /**
+   * GET /cards/{uid}/statements/{ref}: Read a statement of a credit card with its rows
+   */
+  statementsShow(
+    args: { params: StatementsShowParams },
+    options?: CallOptions,
+  ): Promise<ApiResult<StatementsShowResponse, StatementsShowError>>;
 
   /**
    * GET /summary: Income, expense, net, account balances and net worth of a month
@@ -1144,6 +1991,18 @@ export function createClient(options: ClientOptions = {}): Client {
       request<BudgetsListResponse, BudgetsListError>("GET", "/budgets", args, options),
     budgetsSet: (args, options) =>
       request<BudgetsSetResponse, BudgetsSetError>("POST", "/budgets", args, options),
+    cardsArchive: (args, options) =>
+      request<CardsArchiveResponse, CardsArchiveError>("POST", "/cards/{uid}/archive", args, options),
+    cardsCreate: (args, options) =>
+      request<CardsCreateResponse, CardsCreateError>("POST", "/cards", args, options),
+    cardsList: (options) =>
+      request<CardsListResponse, CardsListError>("GET", "/cards", undefined, options),
+    cardsShow: (args, options) =>
+      request<CardsShowResponse, CardsShowError>("GET", "/cards/{uid}", args, options),
+    cardsUnarchive: (args, options) =>
+      request<CardsUnarchiveResponse, CardsUnarchiveError>("POST", "/cards/{uid}/unarchive", args, options),
+    cardsUpdate: (args, options) =>
+      request<CardsUpdateResponse, CardsUpdateError>("PATCH", "/cards/{uid}", args, options),
     categoriesArchive: (args, options) =>
       request<CategoriesArchiveResponse, CategoriesArchiveError>("POST", "/categories/{uid}/archive", args, options),
     categoriesCreate: (args, options) =>
@@ -1154,8 +2013,54 @@ export function createClient(options: ClientOptions = {}): Client {
       request<CategoriesShowResponse, CategoriesShowError>("GET", "/categories/{uid}", args, options),
     categoriesUpdate: (args, options) =>
       request<CategoriesUpdateResponse, CategoriesUpdateError>("PATCH", "/categories/{uid}", args, options),
+    exportTransactions: (args, options) =>
+      request<ExportTransactionsResponse, ExportTransactionsError>("GET", "/export/transactions", args, options),
+    exportWorkspace: (options) =>
+      request<ExportWorkspaceResponse, ExportWorkspaceError>("GET", "/export/workspace", undefined, options),
+    goalsArchive: (args, options) =>
+      request<GoalsArchiveResponse, GoalsArchiveError>("POST", "/goals/{uid}/archive", args, options),
+    goalsContributionsAdd: (args, options) =>
+      request<GoalsContributionsAddResponse, GoalsContributionsAddError>("POST", "/goals/{uid}/contributions", args, options),
+    goalsContributionsDelete: (args, options) =>
+      request<GoalsContributionsDeleteResponse, GoalsContributionsDeleteError>("DELETE", "/goals/{uid}/contributions/{contribution_uid}", args, options),
+    goalsCreate: (args, options) =>
+      request<GoalsCreateResponse, GoalsCreateError>("POST", "/goals", args, options),
+    goalsDelete: (args, options) =>
+      request<GoalsDeleteResponse, GoalsDeleteError>("DELETE", "/goals/{uid}", args, options),
+    goalsList: (options) =>
+      request<GoalsListResponse, GoalsListError>("GET", "/goals", undefined, options),
+    goalsUnarchive: (args, options) =>
+      request<GoalsUnarchiveResponse, GoalsUnarchiveError>("POST", "/goals/{uid}/unarchive", args, options),
+    goalsUpdate: (args, options) =>
+      request<GoalsUpdateResponse, GoalsUpdateError>("PATCH", "/goals/{uid}", args, options),
     meShow: (options) =>
       request<MeShowResponse, MeShowError>("GET", "/me", undefined, options),
+    recurrencesCreate: (args, options) =>
+      request<RecurrencesCreateResponse, RecurrencesCreateError>("POST", "/recurrences", args, options),
+    recurrencesDelete: (args, options) =>
+      request<RecurrencesDeleteResponse, RecurrencesDeleteError>("DELETE", "/recurrences/{uid}", args, options),
+    recurrencesList: (options) =>
+      request<RecurrencesListResponse, RecurrencesListError>("GET", "/recurrences", undefined, options),
+    recurrencesUpdate: (args, options) =>
+      request<RecurrencesUpdateResponse, RecurrencesUpdateError>("PATCH", "/recurrences/{uid}", args, options),
+    reportsAccounts: (args, options) =>
+      request<ReportsAccountsResponse, ReportsAccountsError>("GET", "/reports/accounts", args, options),
+    reportsCashflow: (args, options) =>
+      request<ReportsCashflowResponse, ReportsCashflowError>("GET", "/reports/cash-flow", args, options),
+    reportsCategories: (args, options) =>
+      request<ReportsCategoriesResponse, ReportsCategoriesError>("GET", "/reports/categories", args, options),
+    reportsCompare: (args, options) =>
+      request<ReportsCompareResponse, ReportsCompareError>("GET", "/reports/compare", args, options),
+    reportsNetworth: (args, options) =>
+      request<ReportsNetworthResponse, ReportsNetworthError>("GET", "/reports/net-worth", args, options),
+    reportsTags: (args, options) =>
+      request<ReportsTagsResponse, ReportsTagsError>("GET", "/reports/tags", args, options),
+    statementsList: (args, options) =>
+      request<StatementsListResponse, StatementsListError>("GET", "/cards/{uid}/statements", args, options),
+    statementsPay: (args, options) =>
+      request<StatementsPayResponse, StatementsPayError>("POST", "/cards/{uid}/statements/{ref}/pay", args, options),
+    statementsShow: (args, options) =>
+      request<StatementsShowResponse, StatementsShowError>("GET", "/cards/{uid}/statements/{ref}", args, options),
     summaryShow: (args, options) =>
       request<SummaryShowResponse, SummaryShowError>("GET", "/summary", args, options),
     syncDevicesCreate: (args, options) =>

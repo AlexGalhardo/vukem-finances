@@ -386,6 +386,30 @@ var apiCrossTenantCases = map[string]apiCrossTenantCase{
 	"api.transactions.delete": {method: http.MethodDelete, uid: "transaction", table: "transactions"},
 	"api.transfers.delete":    {method: http.MethodDelete, uid: "transfer", table: "transactions"},
 	"api.budgets.delete":      {method: http.MethodDelete, uid: "budget", table: "budgets"},
+
+	"api.cards.show":      {method: http.MethodGet, uid: "card", table: "credit_cards"},
+	"api.cards.update":    {method: http.MethodPatch, uid: "card", table: "credit_cards", body: map[string]any{"name": "Renamed"}},
+	"api.cards.archive":   {method: http.MethodPost, uid: "card", table: "credit_cards"},
+	"api.cards.unarchive": {method: http.MethodPost, uid: "card", table: "credit_cards"},
+	"api.statements.list": {method: http.MethodGet, uid: "card", table: "credit_cards"},
+	"api.statements.show": {method: http.MethodGet, uid: "card", table: "credit_cards"},
+	"api.statements.pay": {
+		method: http.MethodPost, uid: "card", table: "transactions",
+		body: map[string]any{"from_account_uid": "01JD5Z8K3M4N5P6Q7R8S9T0V1W", "amount_cents": 100},
+	},
+
+	"api.recurrences.update": {method: http.MethodPatch, uid: "recurrence", table: "recurrences", body: map[string]any{"description": "Renamed"}},
+	"api.recurrences.delete": {method: http.MethodDelete, uid: "recurrence", table: "recurrences"},
+
+	"api.goals.update":    {method: http.MethodPatch, uid: "goal", table: "goals", body: map[string]any{"name": "Renamed"}},
+	"api.goals.archive":   {method: http.MethodPost, uid: "goal", table: "goals"},
+	"api.goals.unarchive": {method: http.MethodPost, uid: "goal", table: "goals"},
+	"api.goals.delete":    {method: http.MethodDelete, uid: "goal", table: "goals"},
+	"api.goals.contributions.add": {
+		method: http.MethodPost, uid: "goal", table: "goal_contributions", body: map[string]any{"amount_cents": 100},
+	},
+	// The goal is Ana's too, so the contribution of her goal is the only row at risk.
+	"api.goals.contributions.delete": {method: http.MethodDelete, uid: "goal", table: "goal_contributions"},
 }
 
 // crossTenantAPI runs every uid route of the API with Bob's token on Ana's rows:
@@ -405,12 +429,16 @@ func crossTenantAPI(t *testing.T, app *vukemtest.App, ana, bob who) {
 	}).AssertCreated(), "uid")
 
 	uids := map[string]string{
-		"account":     first,
-		"category":    firstOf[models.Category](t, app, ana, "Groceries").UID,
-		"tag":         firstOf[models.Tag](t, app, ana, "Trip").UID,
-		"transaction": firstOf[models.Transaction](t, app, ana, "").UID,
-		"budget":      firstOf[models.Budget](t, app, ana, "").UID,
-		"transfer":    transfer,
+		"account":      first,
+		"category":     firstOf[models.Category](t, app, ana, "Groceries").UID,
+		"tag":          firstOf[models.Tag](t, app, ana, "Trip").UID,
+		"transaction":  firstOf[models.Transaction](t, app, ana, "").UID,
+		"budget":       firstOf[models.Budget](t, app, ana, "").UID,
+		"transfer":     transfer,
+		"card":         firstOf[models.CreditCard](t, app, ana, "").UID,
+		"recurrence":   firstOf[models.Recurrence](t, app, ana, "").UID,
+		"goal":         firstOf[models.Goal](t, app, ana, "").UID,
+		"contribution": firstOf[models.GoalContribution](t, app, ana, "").UID,
 	}
 
 	// Control: the owner's token reads the same rows, so only the workspace is wrong for Bob.
@@ -442,7 +470,18 @@ func crossTenantAPI(t *testing.T, app *vukemtest.App, ana, bob who) {
 				t.Fatalf("the route is %s, the case calls %s", route.Method, tc.method)
 			}
 
-			target := pathParam.ReplaceAllString(route.Path, uids[tc.uid])
+			// The path names the row of Ana's the case targets; a statement is a date, and
+			// the contribution of a goal is the contribution of Ana's goal.
+			target := pathParam.ReplaceAllStringFunc(route.Path, func(p string) string {
+				switch p {
+				case "{ref}":
+					return "2026-11-10"
+				case "{contribution_uid}":
+					return uids["contribution"]
+				}
+
+				return uids[tc.uid]
+			})
 			before := versions(tc.table)
 			c := apiClient(t, app, bobToken)
 

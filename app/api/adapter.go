@@ -125,3 +125,61 @@ func pageLink(c *web.Ctx, n int) string {
 
 	return (&url.URL{Path: u.Path, RawQuery: q.Encode()}).RequestURI()
 }
+
+// download registers the route of an operation that produces a file. The
+// operation refuses first (a result that is too large is a 413 before the first
+// byte); the route then sets the headers of the file and streams it. A failure
+// after the first byte aborts the connection, so a cut file never looks whole.
+func download[In any](a *API, g *router.Group, o *operations.Op[In, operations.Download]) {
+	meta := o.Meta()
+
+	row, ok := OperationNamed(meta.Name)
+	if !ok {
+		panic("api: operation " + meta.Name + " is not in the operations table")
+	}
+
+	handler := func(c *web.Ctx, in In) (operations.Download, error) {
+		var zero operations.Download
+
+		p, ok := PrincipalFrom(c.Context())
+		if !ok {
+			return zero, errs.New(http.StatusUnauthorized, "A valid token is required.").WithExtension("code", CodeUnauthorized)
+		}
+
+		res, err := operations.Invoke(c.Context(), o, actorOf(p), in)
+		if err != nil {
+			return zero, restError(err)
+		}
+
+		file := res.Value
+
+		c.SetHeader("Content-Type", file.ContentType)
+		c.SetHeader("Content-Disposition", `attachment; filename="`+file.Filename+`"`)
+		c.SetHeader("X-Content-Type-Options", "nosniff")
+		c.SetHeader("Cache-Control", "no-store")
+
+		if err := file.Write(c.Writer()); err != nil {
+			if c.Writer().Written() {
+				panic(http.ErrAbortHandler)
+			}
+
+			c.Writer().Header().Del("Content-Disposition")
+
+			return zero, err
+		}
+
+		return zero, nil
+	}
+
+	rt := vukemapi.Register(g, row.Method+" "+row.Path, vukemapi.Op{
+		Name: row.Name, Summary: row.Summary, Tags: []string{row.Tag}, Security: []string{"bearer"}, Status: http.StatusOK,
+	}, handler)
+
+	// The role is checked before the limit, so a viewer cannot spend the downloads of the workspace.
+	mws := []router.Middleware{a.Require(row)}
+	if a.Exports != nil {
+		mws = append(mws, a.Exports)
+	}
+
+	rt.Use(mws...)
+}
