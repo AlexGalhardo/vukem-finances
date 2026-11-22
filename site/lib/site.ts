@@ -22,9 +22,9 @@ export const termsApproved = process.env.LANDING_TERMS_APPROVED === "true";
 
 /** Path of the landing page of a locale, with the base path and a trailing slash. */
 export function localePath(locale: Locale): string {
-	return `${basePath}${locale === "en" ? "/" : `/${locale}/`}`;
+  return `${basePath}${locale === "en" ? "/" : `/${locale}/`}`;
 }
 
 export function absolute(path: string): string {
-	return new URL(path, siteOrigin.origin).href;
+  return new URL(path, siteOrigin.origin).href;
 }

@@ -11,17 +11,17 @@ const root = path.dirname(fileURLToPath(import.meta.url));
 const siteUrl = new URL(process.env.SITE_URL || "https://finances.vukem.dev");
 const prefix = siteUrl.pathname.replace(/\/$/, "");
 
-// Fully static HTML: no adapter, no server entry. The documentation (epic 23) lives at /docs.
+// Fully static HTML: no server entry of any kind. The documentation (epic 23) lives at /docs.
 export default defineConfig({
-	site: siteUrl.origin,
-	base: prefix || "/",
-	output: "static",
-	outDir: "out",
-	trailingSlash: "always",
-	build: { format: "directory" },
-	integrations: [react()],
-	vite: {
-		plugins: [tailwindcss()],
-		resolve: { alias: { "@": root } },
-	},
+  site: siteUrl.origin,
+  base: prefix || "/",
+  output: "static",
+  outDir: process.env.SITE_OUT || "out",
+  trailingSlash: "always",
+  build: { format: "directory" },
+  integrations: [react()],
+  vite: {
+    plugins: [tailwindcss()],
+    resolve: { alias: { "@": root } },
+  },
 });

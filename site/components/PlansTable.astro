@@ -1,0 +1,38 @@
+---
+import type { Copy } from "../lib/copy.ts";
+import { plans, UNLIMITED, type PlanLimits } from "../lib/plans.ts";
+
+interface Props {
+	copy: Copy;
+}
+const { copy } = Astro.props;
+const rows = copy.editions.rows;
+const keys = ["accounts", "transactionsPerMonth", "members", "csvImport", "budgets"] as const;
+
+function cell(plan: PlanLimits, key: (typeof keys)[number]): string {
+	const value = plan[key];
+	if (typeof value === "boolean") return value ? copy.editions.yes : copy.editions.no;
+	return value === UNLIMITED ? copy.editions.unlimited : String(value);
+}
+---
+<div class="table-scroll">
+	<table>
+		<caption class="sr-only">{copy.editions.plansTitle}</caption>
+		<thead>
+			<tr>
+				<td></td>
+				<th scope="col">{copy.editions.free}</th>
+				<th scope="col">{copy.editions.pro}</th>
+			</tr>
+		</thead>
+		<tbody>
+			{keys.map((key) => (
+				<tr>
+					<th scope="row">{rows[key]}</th>
+					<td>{cell(plans.free, key)}</td>
+					<td>{cell(plans.pro, key)}</td>
+				</tr>
+			))}
+		</tbody>
+	</table>
+</div>
