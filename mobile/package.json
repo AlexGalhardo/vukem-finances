@@ -42,6 +42,9 @@
 		],
 		"testMatch": [
 			"<rootDir>/__tests__/**/*.test.[jt]s?(x)"
+		],
+		"modulePaths": [
+			"<rootDir>/node_modules"
 		]
 	}
 }
