@@ -7,30 +7,14 @@ export interface NavSection {
 }
 
 export const navigation: NavSection[] = [
+  { title: "Start", items: ["index", "start/what-is-it", "start/editions", "start/quick-start"] },
   {
-    "title": "Start",
-    "items": [
-      "index",
-      "start/what-is-it",
-      "start/editions",
-      "start/quick-start"
-    ]
+    title: "Run it",
+    items: ["run/docker", "run/vps", "run/desktop", "run/mobile", "run/offline", "run/upgrading", "run/backup-restore"],
   },
   {
-    "title": "Run it",
-    "items": [
-      "run/docker",
-      "run/vps",
-      "run/desktop",
-      "run/mobile",
-      "run/offline",
-      "run/upgrading",
-      "run/backup-restore"
-    ]
-  },
-  {
-    "title": "Use it",
-    "items": [
+    title: "Use it",
+    items: [
       "use/accounts-transfers",
       "use/transactions-import",
       "use/cards",
@@ -41,53 +25,27 @@ export const navigation: NavSection[] = [
       "use/ai",
       "use/telegram",
       "use/mobile-sync",
-      "use/billing"
-    ]
+      "use/billing",
+    ],
   },
   {
-    "title": "Integrate",
-    "items": [
+    title: "Integrate",
+    items: [
       "integrate/rest-api",
-      {
-        "dir": "integrate/rest"
-      },
+      { dir: "integrate/rest" },
       "integrate/cli",
-      {
-        "dir": "integrate/cli"
-      },
+      { dir: "integrate/cli" },
       "integrate/mcp-stdio",
       "integrate/mcp-remote",
-      {
-        "dir": "integrate/mcp"
-      },
+      { dir: "integrate/mcp" },
       "integrate/sync-protocol",
-      "integrate/export-format"
-    ]
+      "integrate/export-format",
+    ],
   },
+  { title: "Operate", items: ["operate/environment", "operate/security", "operate/roles-workspaces"] },
   {
-    "title": "Operate",
-    "items": [
-      "operate/environment",
-      "operate/security",
-      "operate/roles-workspaces"
-    ]
+    title: "Contribute",
+    items: ["contribute/architecture", "contribute/release-train", "contribute/how-epics-work", "contribute/tests"],
   },
-  {
-    "title": "Contribute",
-    "items": [
-      "contribute/architecture",
-      "contribute/release-train",
-      "contribute/how-epics-work",
-      "contribute/tests"
-    ]
-  },
-  {
-    "title": "Changelog",
-    "items": [
-      "changelog",
-      {
-        "dir": "changelog"
-      }
-    ]
-  }
+  { title: "Changelog", items: ["changelog", { dir: "changelog" }] },
 ];

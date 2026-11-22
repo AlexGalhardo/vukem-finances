@@ -14,7 +14,7 @@
       "site/scripts/**",
       "site/*.mjs",
       "site/*.json",
-      "site/content/**",
+      "site/content/*.ts",
       "site/generated/*.json",
       "site/src/landing/copy/*.json",
       "!node_modules",
