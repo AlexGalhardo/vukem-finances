@@ -16,7 +16,9 @@
     "test:site": "bun test scripts",
     "reference": "bun scripts/generate-reference.ts",
     "reference:check": "bun scripts/reference-check.ts",
-    "test:reference": "bun test scripts/reference.test.ts"
+    "test:reference": "bun test scripts/reference.test.ts",
+    "last-updated": "bun scripts/last-updated.ts",
+    "check:last-updated": "bun scripts/last-updated.ts --check"
   },
   "dependencies": {
     "@astrojs/react": "7.1.9",
