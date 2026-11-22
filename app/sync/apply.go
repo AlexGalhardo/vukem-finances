@@ -164,7 +164,7 @@ func (s *Service) apply(ctx context.Context, tx *database.Tx, env pushEnv, m Mut
 			return rejected(res, merr), nil
 		}
 
-		if err := s.settleStatement(ctx, tx, ws, ent, cur, exists, m.Op, fields, refs); err != nil {
+		if err := s.settleStatement(ctx, tx, ws, ent, cur, exists, m.Op, env.today, fields, refs); err != nil {
 			return Result{}, err
 		}
 	}
@@ -202,21 +202,25 @@ func (s *Service) apply(ctx context.Context, tx *database.Tx, env pushEnv, m Mut
 
 // settleStatement makes the statement of an entry the one its card and date
 // give, as every other write path does: what a device sends is not trusted, or
-// a purchase could land on a statement already paid. A transfer leg keeps its
-// value, because a card payment names the statement it pays.
+// a purchase could land on a statement already paid. Only the income leg of a
+// transfer into a card may name a statement, the one it pays, and it must be a
+// statement of that card. A bad value is cleared rather than refused, because
+// the two legs of a transfer are applied together.
 func (s *Service) settleStatement(
-	ctx context.Context, tx *database.Tx, ws int64, ent changes.Entity, cur StoredRow, exists bool, op string,
+	ctx context.Context, tx *database.Tx, ws int64, ent changes.Entity, cur StoredRow, exists bool, op, today string,
 	fields map[string]any, refs refSet,
 ) error {
-	if ent.Name != "transaction" || op != "upsert" {
+	if ent.Name != "transaction" || op == "delete" {
 		return nil
 	}
 
 	_, account := fields["account_uid"]
 	_, date := fields["occurred_on"]
 	_, sent := fields["statement_ref"]
+	_, transfer := fields["transfer_uid"]
+	_, kind := fields["kind"]
 
-	if !account && !date && !sent {
+	if !account && !date && !sent && !transfer && !kind {
 		return nil
 	}
 
@@ -226,10 +230,6 @@ func (s *Service) settleStatement(
 	}
 
 	maps.Copy(eff, fields)
-
-	if t, _ := eff["transfer_uid"].(string); t != "" {
-		return nil
-	}
 
 	accountID, ok := refs.ids["account_uid"]
 	if !ok {
@@ -253,6 +253,24 @@ func (s *Service) settleStatement(
 	var want any
 	if ref.Valid {
 		want = ref.V
+	}
+
+	if t, _ := eff["transfer_uid"].(string); t != "" {
+		want = nil
+
+		named, _ := eff["statement_ref"].(string)
+		moved := !sent && exists && eff["account_uid"] != cur.Fields["account_uid"]
+
+		if ref.Valid && eff["kind"] == models.KindIncome && named != "" && !moved {
+			valid, err := s.Fin.IsStatementIn(ctx, tx, accountID, named, today)
+			if err != nil {
+				return err
+			}
+
+			if valid {
+				want = named
+			}
+		}
 	}
 
 	if (exists && cur.Fields["statement_ref"] == want) || (!exists && want == nil) {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"slices"
 
 	"github.com/AlexGalhardo/vukem/database"
 	"github.com/AlexGalhardo/vukem/orm"
@@ -16,6 +17,21 @@ import (
 // not valid when the account is not a card.
 func (s *Service) StatementRefIn(ctx context.Context, tx *database.Tx, accountID int64, date string) (sql.Null[string], error) {
 	return refForRow(ctx, tx, accountID, date)
+}
+
+// IsStatementIn reports whether ref is a statement of the card on accountID.
+func (s *Service) IsStatementIn(ctx context.Context, tx *database.Tx, accountID int64, ref, today string) (bool, error) {
+	c, ok, err := cardOfAccount(ctx, tx, accountID)
+	if err != nil || !ok {
+		return false, err
+	}
+
+	list, err := cardStatements(ctx, tx, c, today)
+	if err != nil {
+		return false, err
+	}
+
+	return slices.ContainsFunc(list, func(st StatementSummary) bool { return st.Ref == ref }), nil
 }
 
 // DeleteIn soft-deletes row id of a synced entity inside tx, with the same
