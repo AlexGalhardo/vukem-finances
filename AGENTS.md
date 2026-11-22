@@ -26,12 +26,13 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `app/` | Go application code: `accounts/`, `admin/`, `alerts/` (notifications: evaluation, channels, preferences), `billing/`, `changes/` (sync: entity registry, change-log triggers and reader, compaction, merge), `controllers/`, `finance/` (money, transactions, dashboard, import), `jobs/`, `listeners/`, `mail/`, `models/`, `pages/`, `requests/`, `workspaces/` |
 | `app/reports/`, `app/export/` | the reports (period, cash flow, breakdowns, net worth series, comparison) and the CSV and JSON exporters (see "Reports and exports") |
 | `app/ai/` | the AI layer (bring your own key): providers, the encrypted key vault, `Redact`, the call pipeline with limits (see "The AI layer") |
+| `app/telegram/` | the Telegram bot: Bot API client, updates, polling and webhook, linking, commands, rate limits, alert channel, texts in `lang/` (see "The Telegram bot") |
 | `app/api/` | the public JSON API: scoped tokens, the middleware chain, the operations table and the handlers (see "The public API") |
 | `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `api.go`, `admin.go`, ...) registered by `registry.go` |
 | `database/migrations/` | Go migrations, registered in `registry.go` |
 | `resources/js/` | React pages, components, layouts and React Email templates |
 | `resources/js/shortcuts/`, `resources/js/nav.ts`, `resources/js/i18n/` | the shortcut registry, the sidebar items, the translation files (see "The application shell") |
-| `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API), `export-format.md` and `export-format.schema.json` (the exports) |
+| `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API), `export-format.md` and `export-format.schema.json` (the exports), `telegram.md` (the Telegram bot) |
 | `clients/typescript/` | the generated TypeScript client of the API (`api.ts`) |
 | `cmd/app/` | the binary entry point |
 | `config/`, `bootstrap/` | configuration and application start-up |
@@ -89,6 +90,20 @@ Read `docs/ai.md` first. AI is bring your own key (D-007): off by default, enabl
 - A custom base URL (`openai_compatible`) goes through `ai.CheckBaseURL` and the safe client. `AI_ALLOW_PRIVATE_HOSTS` works in the personal edition only.
 - Tests use `app/ai/fake` or an `httptest` server; no test calls a real provider or needs a real key. The tables `ai_credentials`, `workspace_ai_settings` and `ai_usage` stay out of sync, export and API scopes (`TestAIExcludedFromExportAndAPI`); extend that test when those routes exist.
 - To add a provider, see "Add a provider" in `docs/ai.md`.
+
+## The Telegram bot
+
+Read `docs/telegram.md` first. The bot lives in `app/telegram/` and talks to the Bot API with `net/http` only (no library, D-010). It is off until `TELEGRAM_BOT_TOKEN` is set: then every bot route (the webhook and `/settings/telegram`) is 404 and no worker starts.
+
+- A chat links only through a single-use code made for the signed-in person (`Store.NewCode`, hashed, 10 minutes) and spent by one conditional `UPDATE` inside the transaction that writes the link (`Store.Redeem`). Never link by account id, email or password, and never add a route or a field that takes a chat id.
+- Authorization is read at every message and every tap: `Bot.accessTo` takes the role from the membership now, and `access.can` intersects the bot's fixed scopes (`telegram.Scopes`) with the role ceiling of epic 14. A new command names its scope there. The only delete the bot has is the 60 second undo of the entry it just saved.
+- Every update begins with `Store.ClaimUpdate` (unique `update_id`). A command or tap is idempotent by construction: drafts are consumed with a conditional update and the draft reference is the transaction uid.
+- Only private chats are served. Anything sent to the chat goes through `EscapeHTML` (the builders of `format.go` do it themselves); money is `finance.ParseAmount` in and `finance.FormatAmount` out.
+- The token is a `config.Secret`; the client scrubs it from every error and prints `[redacted]`. Never log a token, a secret, a link code or the text of a message: log update ids and error kinds only (`TestSecurity_TokenNeverInLogsOrResponses`).
+- The Telegram tables have no `workspace_id` (they are on the allow-list of the isolation guard): a link belongs to a person and the workspace comes from the live membership. Rate limits are counted in `telegram_counters`, not in `RATE_LIMIT_STORE`.
+- Alerts: `telegram.Channel` is an `alerts.Channel`, attached with `telegram.Attach`; a person opts in with `alerts.Service.SetTelegram`. A failure is logged and never fails the alert job.
+- Tests use `tests/fakes/telegram.go` (a fake Bot API) and `TELEGRAM_API_BASE`; the browser spec uses `e2e/fake-telegram.mjs`. No test calls the real API or needs a real token. Add a user-facing text in all three languages of `app/telegram/lang/` (a test keeps them equal) and the page strings in `resources/js/i18n/*/telegram.ts`.
+- Settings: `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_MODE`, `TELEGRAM_WEBHOOK_SECRET`, `TELEGRAM_WEBHOOK_URL` (`.env.example`); commands `telegram:set-webhook` and `telegram:info`.
 
 ## Billing
 
