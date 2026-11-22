@@ -300,3 +300,33 @@ func (b *Billing) notifyRevoked(ctx context.Context, workspaceID int64, reason s
 		}
 	}
 }
+
+// CancelWorkspaceSubscriptions cancels, at Stripe and at once, every
+// subscription of the workspace that is not already canceled (no proration, no
+// final invoice, no automatic refund). It is what a deletion calls, and it is
+// idempotent: a subscription the local row calls canceled, or one Stripe no
+// longer knows, is skipped, so a retry after a failure only does what is left.
+// PIX has no recurrence to cancel. Without a Stripe client the subscriptions
+// cannot be cancelled and the call fails, which keeps the purge waiting.
+func (b *Billing) CancelWorkspaceSubscriptions(ctx context.Context, workspaceID int64) error {
+	subs, err := orm.QueryOf[models.WorkspaceSubscription](b.DB).Where("workspace_id", workspaceID).Get(ctx)
+	if err != nil {
+		return err
+	}
+
+	for _, sub := range subs {
+		if sub.Status == "canceled" || sub.StripeSubscriptionID == "" {
+			continue
+		}
+
+		if b.Stripe == nil {
+			return ErrNotConfigured
+		}
+
+		if err := b.cancelSubscription(ctx, sub.StripeSubscriptionID); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
