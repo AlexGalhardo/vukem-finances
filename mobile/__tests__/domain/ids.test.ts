@@ -1,10 +1,5 @@
 import { isValidUid, MAX_FUTURE_MS, newUid, uidTime } from "../../src/domain/ids";
 
-// jest-expo stubs expo-crypto with fixed bytes; use the platform CSPRNG so the default path is exercised.
-jest.mock("expo-crypto", () => ({
-	getRandomValues: (a: Uint8Array<ArrayBuffer>): Uint8Array<ArrayBuffer> => crypto.getRandomValues(a),
-}));
-
 const NOW = Date.UTC(2026, 10, 21, 12, 0, 0);
 
 describe("newUid", () => {
