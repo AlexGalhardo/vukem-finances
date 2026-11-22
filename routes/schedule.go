@@ -38,4 +38,8 @@ func Schedule(s *schedule.Schedule, _ *vukem.App) {
 	// Re-read the PIX charges that can still change (refunds, disputes, timers)
 	// every 6 hours; a no-op in the personal edition and while PIX is off.
 	s.Job(jobs.BillingReconcile{}).Cron("15 */6 * * *").WithoutOverlapping()
+
+	// Drop old Telegram update ids (7 days), expired link codes and drafts and
+	// finished rate windows; harmless while the bot is off.
+	s.Job(jobs.TelegramPrune{}).DailyAt("04:10").WithoutOverlapping()
 }
