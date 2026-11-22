@@ -30,24 +30,24 @@ The first targets come from the plan of epic 24: p95 under 300 ms for lists and 
 
 ## Measurements
 
-Last run after the covering indexes of QA-503 (migration `20261126120000`), on a developer machine shared with other work, so absolute numbers move by tens of percent between runs. The web rate limit counts per user: the big workspace has one member per client and each client signs in as its own member, so no 429 counts as a failure on `dashboard` (no product limit is changed). `database is locked`: none, in any client response or the server log.
+Last run after the monthly summary of QA-503 (migration `20261127100000`, the dashboard, the budgets and the reports read `transaction_month_totals`) and the plain-column CSV export, on a developer machine shared with other work, so absolute numbers move by tens of percent between runs. The web rate limit counts per user: the big workspace has one member per client and each client signs in as its own member, so no 429 counts as a failure on `dashboard` (no product limit is changed). `database is locked`: none, in any client response or the server log.
+
+The 1 client column is `go run ./scripts/qa/loadtest -check -clients 1 -requests 15`: with one user the read limit (120 a minute, `config.ReadLimit`) answers 429 to a longer run now that the requests are fast, so it holds 15 samples per scenario (the export is always 8 downloads at once, 10 an hour is its limit).
 
 | Scenario | 20 clients p50 (ms) | 20 clients p95 (ms) | 1 client p50 (ms) | 1 client p95 (ms) | Budget (ms) | 20 clients |
 | --- | --- | --- | --- | --- | --- | --- |
-| `dashboard` | 1271 | 1626 | 376 | 448 | 300 | over |
-| `transactions_list` | 299 | 679 | 23 | 39 | 300 | over |
-| `transactions_filtered` | 1664 | 2954 | 60 | 108 | 300 | over |
-| `reports` | 1080 | 2437 | 213 | 359 | 300 | over |
-| `export_csv_50k` | 1727 | 1749 | 1453 | 1478 | 1000 | over |
-| `api_list_small` | 13 | 28 | 5 | 7 | 300 | ok |
-| `sync_pull` | 64 | 89 | 23 | 28 | 300 | ok |
-| `sync_push` | 1025 | 3869 | 52 | 145 | 300 | over |
-| `mcp_tools_list` | 3 | 9 | 1 | 1 | 300 | ok |
-| `mcp_transactions_list` | 147 | 225 | 23 | 30 | 300 | ok |
-| `mixed_load` | 182 | 1264 | 20 | 292 | 300 | over |
+| `dashboard` | 55 | 77 | 10 | 13 | 300 | ok |
+| `transactions_list` | 159 | 230 | 21 | 24 | 300 | ok |
+| `transactions_filtered` | 1057 | 1541 | 30 | 68 | 300 | over |
+| `reports` | 8 | 13 | 2 | 4 | 300 | ok |
+| `export_csv_50k` | 732 | 751 | 728 | 754 | 1000 | ok |
+| `api_list_small` | 10 | 233 | 3 | 3 | 300 | ok |
+| `sync_pull` | 49 | 64 | 11 | 14 | 300 | ok |
+| `sync_push` | 624 | 1576 | 30 | 45 | 300 | over |
+| `mcp_tools_list` | 2 | 2 | 1 | 2 | 300 | ok |
+| `mcp_transactions_list` | 134 | 156 | 21 | 26 | 300 | ok |
+| `mixed_load` | 42 | 243 | 9 | 23 | 300 | ok |
 
-With one client the single-device limit (30 pushes a minute per device) makes `mixed_load` answer a few 429s after `sync_push` used the same device; with 20 clients each device stays under it.
+Before QA-500 and QA-503 (one machine, same load): dashboard 739 ms p50 for one client, list page 296 ms, push 866 ms. The first 20-client run missed every budget by 5 to 25 times. After the covering indexes of `20261126120000` the dashboard was 448 ms, the reports 359 ms and the export 1478 ms p95 with one client.
 
-Before QA-500 and QA-503 (one machine, same load): dashboard 739 ms p50 for one client, list page 296 ms, push 866 ms. The first 20-client run missed every budget by 5 to 25 times.
-
-What is left, by the profile: with one client the dashboard (448 ms p95), the reports (359 ms) and the export (1478 ms) still miss; with 20 clients every request that scans the workspace queues on the CPU of the machine. Each of those reads aggregates all rows of a period at request time (a covering index scan of 100000 entries costs about 100 ms by itself), and the reports group by amount to keep exact sums without `SUM` overflow, so a group per row. See QA-503.
+What is left, by the profile, with 20 clients: `transactions_filtered` (1541 ms p95, 5.1 times the budget) scans the date range of the workspace for its `LIKE '%text%'` filter (68 ms alone, queueing on the CPU of the machine under 20 clients) and `sync_push` (1576 ms p95, 5.3 times the budget) is 20 mutations a push written one after the other by the single SQLite writer (45 ms alone, so 20 clients wait their turn). Neither is an aggregate the summary can answer. See QA-503.
