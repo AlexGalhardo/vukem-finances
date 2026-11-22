@@ -1,6 +1,7 @@
 import { MoneyText } from "../MoneyText";
 import { useFinanceI18n } from "../../lib/i18n";
 import { cn } from "../../lib/utils";
+import { Progress } from "../ui/progress";
 import type { CardOverview } from "../../page-props";
 
 export interface LimitBarProps {
@@ -17,21 +18,13 @@ export default function LimitBar({ card, currency }: LimitBarProps) {
     new Intl.NumberFormat(locale, { style: "currency", currency }).format(cents / 100);
   return (
     <div className="flex flex-col gap-1">
-      <div
-        role="progressbar"
+      <Progress
+        value={card.usedCents}
+        max={Math.max(card.limit_cents, 1)}
         aria-label={`${t("cardLimitBar")}: ${card.name}`}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={percent}
-        aria-valuetext={`${money(card.usedCents)} / ${money(card.limit_cents)}`}
-        className="h-2 w-full overflow-hidden rounded-full bg-muted"
-      >
-        <div
-          className={cn("h-full rounded-full", card.overLimit ? "bg-(--vf-expense)" : "bg-primary")}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
-      <p className="flex flex-wrap justify-between gap-x-3 text-xs text-muted-foreground">
+        aria-valuetext={`${money(card.usedCents)} / ${money(card.limit_cents)} (${percent}%)`}
+      />
+      <p className="flex flex-wrap justify-between gap-x-3 text-caption text-muted-foreground">
         <span>
           {t("cardUsed")}{" "}
           <MoneyText

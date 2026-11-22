@@ -1,4 +1,5 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
+import { HelpHint } from "../help/HelpHint";
 import { Archive, ArchiveRestore, CreditCard, Pencil, Plus, Trash2, Wallet } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import AmountInput from "../components/AmountInput";
@@ -124,7 +125,6 @@ export default function Accounts({ accounts, limits, balances, netWorthCents, ki
                 variant="ghost"
                 size="icon"
                 aria-label={`${t(account.archived_at ? "unarchive" : "archive")} ${account.name}`}
-                title={t(account.archived_at ? "unarchive" : "archive")}
                 onClick={() =>
                   router.post(`/accounts/${account.id}/${account.archived_at ? "unarchive" : "archive"}`, undefined, {
                     preserveScroll: true,
@@ -156,8 +156,11 @@ export default function Accounts({ accounts, limits, balances, netWorthCents, ki
         title={t("accounts")}
         description={t("accountsDescription")}
         actions={
-          <div className="flex flex-col items-end text-right">
-            <span className="text-xs text-muted-foreground">{t("netWorth")}</span>
+          <div className="flex flex-col items-end text-right" data-tour="accounts-networth">
+            <span className="flex items-center gap-1 text-caption text-muted-foreground">
+              {t("netWorth")}
+              <HelpHint id="hintAcctNetWorth" />
+            </span>
             <MoneyText
               cents={netWorthCents}
               currency={currency}
@@ -165,23 +168,22 @@ export default function Accounts({ accounts, limits, balances, netWorthCents, ki
               labels={labels}
               className="text-2xl font-semibold"
             />
-            <span className="text-xs text-muted-foreground">{t("netWorthNote")}</span>
+            <span className="text-caption text-muted-foreground">{t("netWorthNote")}</span>
           </div>
         }
       />
       {limits.accounts >= 0 && (
-        <p className="text-sm text-muted-foreground">
-          The {limits.plan} plan allows {limits.accounts} account.{" "}
-          <Link href="/billing" className="text-primary hover:underline">
-            Upgrade
-          </Link>{" "}
-          for more.
+        <p className="text-body text-muted-foreground">
+          {t("accountsPlanLimit").replace("{plan}", limits.plan).replace("{count}", String(limits.accounts))}{" "}
+          <Link href="/billing" className="text-brand-text underline underline-offset-4">
+            {t("accountsUpgrade")}
+          </Link>
         </p>
       )}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>{t("accounts")}</CardTitle>
-          <label className="flex items-center gap-2 text-sm pointer-coarse:min-h-11">
+          <label className="flex items-center gap-2 text-body pointer-coarse:min-h-11" data-tour="accounts-archived">
             <input
               type="checkbox"
               checked={showArchived}
@@ -191,7 +193,7 @@ export default function Accounts({ accounts, limits, balances, netWorthCents, ki
             {t("showArchived")}
           </label>
         </CardHeader>
-        <CardContent>
+        <CardContent data-tour="accounts-table">
           <DataTable
             columns={columns}
             rows={rows}
@@ -218,7 +220,7 @@ export default function Accounts({ accounts, limits, balances, netWorthCents, ki
             <CardTitle>{t("newAccount")}</CardTitle>
           </CardHeader>
           <CardContent>
-            <form onSubmit={submitAdd} className="grid gap-3 sm:grid-cols-3" noValidate>
+            <form onSubmit={submitAdd} className="grid gap-3 sm:grid-cols-3" noValidate data-tour="accounts-new">
               <Field data-invalid={!!add.errors.name}>
                 <FieldLabel htmlFor="account-name">{t("name")}</FieldLabel>
                 <Input
@@ -246,7 +248,10 @@ export default function Accounts({ accounts, limits, balances, netWorthCents, ki
                 <FieldError>{add.errors.kind}</FieldError>
               </Field>
               <Field data-invalid={!!add.errors.opening}>
-                <FieldLabel htmlFor="account-opening">{t("opening")}</FieldLabel>
+                <span className="flex items-center gap-1">
+                  <FieldLabel htmlFor="account-opening">{t("opening")}</FieldLabel>
+                  <HelpHint id="hintAcctOpening" />
+                </span>
                 <AmountInput
                   id="account-opening"
                   placeholder="0.00"

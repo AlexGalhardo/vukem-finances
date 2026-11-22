@@ -44,7 +44,7 @@ export default function Cards({ cards, accounts, brands }: Page<"Cards">) {
           </EmptyHeader>
         </Empty>
       ) : (
-        <ul aria-label={t("cardsTable")} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+        <ul aria-label={t("cardsTable")} className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" data-tour="cards-list">
           {cards.map((card) => (
             <li key={card.id}>
               <Card>
@@ -53,13 +53,17 @@ export default function Cards({ cards, accounts, brands }: Page<"Cards">) {
                     <Link href={`/cards/${card.id}`} className="hover:underline">
                       {card.name}
                     </Link>
-                    {card.last4 && <span className="text-xs font-normal text-muted-foreground">•••• {card.last4}</span>}
+                    {card.last4 && (
+                      <span className="text-caption font-normal text-muted-foreground">•••• {card.last4}</span>
+                    )}
                     {card.archived && <Badge variant="secondary">{t("archived")}</Badge>}
                   </CardTitle>
                   <StatusBadge status={card.current.status} />
                 </CardHeader>
                 <CardContent className="flex flex-col gap-3">
-                  <LimitBar card={card} currency={currency} />
+                  <div data-tour={card.id === cards[0]?.id ? "cards-limit" : undefined}>
+                    <LimitBar card={card} currency={currency} />
+                  </div>
                   <dl className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <dt className="text-xs text-muted-foreground">{t("cardCurrentStatement")}</dt>
@@ -108,7 +112,7 @@ export default function Cards({ cards, accounts, brands }: Page<"Cards">) {
         </ul>
       )}
       {canManage && (
-        <Card>
+        <Card data-tour="cards-new">
           <CardHeader>
             <CardTitle>{t("cardNew")}</CardTitle>
           </CardHeader>

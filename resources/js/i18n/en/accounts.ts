@@ -1,4 +1,6 @@
 const dict = {
+  accountsPlanLimit: "The {plan} plan allows {count} accounts.",
+  accountsUpgrade: "Upgrade for more",
   accountsDescription: "Every place your money sits, with its real balance.",
   accountsTable: "Accounts and their balances",
   netWorth: "Net worth",

@@ -1,4 +1,5 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
+import { HelpHint } from "../help/HelpHint";
 import { Archive, ArchiveRestore, ArrowLeft, HandCoins, Pencil, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import AmountInput from "../components/AmountInput";
@@ -103,7 +104,10 @@ export default function CardStatement({ card, statements, statement, accounts, b
   return (
     <>
       <Head title={card.name} />
-      <Link href="/cards" className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
+      <Link
+        href="/cards"
+        className="inline-flex items-center gap-1 text-body text-brand-text underline underline-offset-4"
+      >
         <ArrowLeft aria-hidden="true" className="size-4" />
         {t("cardAllCards")}
       </Link>
@@ -148,7 +152,7 @@ export default function CardStatement({ card, statements, statement, accounts, b
         </CardContent>
       </Card>
       <div className="grid gap-4 lg:grid-cols-[16rem_1fr]">
-        <Card>
+        <Card data-tour="statement-picker">
           <CardHeader>
             <CardTitle>{t("cardStatements")}</CardTitle>
           </CardHeader>
@@ -188,16 +192,19 @@ export default function CardStatement({ card, statements, statement, accounts, b
               {t("cardClosesOn")} {date(statement.closingOn)} <StatusBadge status={statement.status} />
             </CardTitle>
             {canManage && accounts.length > 0 && (
-              <Button type="button" onClick={() => setPaying(true)}>
+              <Button type="button" variant="brand" data-tour="statement-pay" onClick={() => setPaying(true)}>
                 <HandCoins data-icon="inline-start" />
                 {t("cardPay")}
               </Button>
             )}
           </CardHeader>
           <CardContent className="flex flex-col gap-4">
-            <dl className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
+            <dl className="grid grid-cols-2 gap-3 text-body sm:grid-cols-4" data-tour="statement-totals">
               <div>
-                <dt className="text-xs text-muted-foreground">{t("cardStatementTotal")}</dt>
+                <dt className="flex items-center gap-1 text-caption text-muted-foreground">
+                  {t("cardStatementTotal")}
+                  <HelpHint id="hintStmtTotal" />
+                </dt>
                 <dd>{money(statement.totalCents)}</dd>
               </div>
               <div>
@@ -263,7 +270,10 @@ export default function CardStatement({ card, statements, statement, accounts, b
           <form onSubmit={submitPay} className="flex flex-col gap-6" noValidate>
             <FieldGroup>
               <Field data-invalid={!!pay.errors.fromAccountId}>
-                <FieldLabel htmlFor="pay-from">{t("cardPayFrom")}</FieldLabel>
+                <span className="flex items-center gap-1">
+                  <FieldLabel htmlFor="pay-from">{t("cardPayFrom")}</FieldLabel>
+                  <HelpHint id="hintStmtPayFrom" />
+                </span>
                 <NativeSelect
                   id="pay-from"
                   value={pay.data.fromAccountId}
