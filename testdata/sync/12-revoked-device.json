@@ -1,0 +1,103 @@
+{
+	"name": "revoked-device",
+	"description": "A revoked device is refused everywhere with 403 device_revoked while the other devices of the workspace keep syncing.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P44",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Wallet",
+							"kind": "cash"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"status": 200
+			}
+		},
+		{
+			"device": "b",
+			"action": "admin",
+			"input": {
+				"do": "revoke_device",
+				"target": "b"
+			},
+			"expect": {}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"status": 403,
+				"code": "device_revoked"
+			}
+		},
+		{
+			"device": "b",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P45",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A03",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Nope",
+							"kind": "cash"
+						}
+					}
+				]
+			},
+			"expect": {
+				"status": 403,
+				"code": "device_revoked"
+			}
+		},
+		{
+			"device": "a",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"status": 200
+			}
+		}
+	],
+	"final": {
+		"absent": [
+			"01JD5Z8K3M0000000000000A03"
+		]
+	}
+}

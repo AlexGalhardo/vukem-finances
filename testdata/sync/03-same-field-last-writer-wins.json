@@ -1,0 +1,142 @@
+{
+	"name": "same-field-last-writer-wins",
+	"description": "The same field edited on two devices goes to the later arrival and the loser gets a conflict with the lost value.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P08",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Wallet",
+							"kind": "cash"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P09",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"kind": "expense",
+							"amount_cents": 100,
+							"occurred_on": "2026-11-20"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					},
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000T01"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P10",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": "$seen",
+						"fields": {
+							"amount_cents": 700
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P11",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": "$seen",
+						"fields": {
+							"amount_cents": 800
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "merged",
+						"conflicts": [
+							{
+								"field": "amount_cents",
+								"kind": "field",
+								"lost_value": 700,
+								"applied_value": 800
+							}
+						],
+						"row": {
+							"amount_cents": 800
+						}
+					}
+				]
+			}
+		}
+	],
+	"final": {
+		"devices_equal": [
+			"a"
+		],
+		"server": {
+			"transaction": {
+				"01JD5Z8K3M0000000000000T01": {
+					"amount_cents": 800
+				}
+			}
+		}
+	}
+}

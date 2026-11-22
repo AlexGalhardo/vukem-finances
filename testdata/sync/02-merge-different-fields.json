@@ -1,0 +1,159 @@
+{
+	"name": "merge-different-fields",
+	"description": "Two devices edit different fields of one transaction from the same base; both edits survive and no conflict is reported.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P04",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Wallet",
+							"kind": "cash"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P05",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"kind": "expense",
+							"amount_cents": 100,
+							"description": "Lunch",
+							"occurred_on": "2026-11-20"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					},
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"note": "a had not seen b; b edits from its older base",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P06",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": "$seen",
+						"fields": {
+							"description": "Dinner"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied",
+						"conflicts": []
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P07",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": "$seen",
+						"fields": {
+							"amount_cents": 900
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "merged",
+						"conflicts": [],
+						"row": {
+							"description": "Dinner",
+							"amount_cents": 900
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"row": {
+							"description": "Dinner",
+							"amount_cents": 900
+						}
+					}
+				]
+			}
+		}
+	],
+	"final": {
+		"devices_equal": [
+			"a",
+			"b"
+		],
+		"server": {
+			"transaction": {
+				"01JD5Z8K3M0000000000000T01": {
+					"description": "Dinner",
+					"amount_cents": 900
+				}
+			}
+		}
+	}
+}

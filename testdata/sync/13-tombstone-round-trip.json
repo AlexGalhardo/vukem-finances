@@ -1,0 +1,194 @@
+{
+	"name": "tombstone-round-trip",
+	"description": "A deleted row travels as a tombstone and a restore within the window brings it back with its data; after the window the restore is refused.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P46",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Wallet",
+							"kind": "cash"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P47",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Old",
+							"kind": "expense"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					},
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "upsert"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P48",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "delete",
+						"base_seq": "$seen",
+						"fields": {}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "delete",
+						"row": null
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P49",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "restore",
+						"base_seq": "$seen",
+						"fields": {}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"row": {
+							"name": "Old"
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P50",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "delete",
+						"base_seq": "$seen",
+						"fields": {}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "admin",
+			"note": "the delete is now 31 days old",
+			"input": {
+				"do": "age_tombstones",
+				"target": "a"
+			},
+			"expect": {}
+		},
+		{
+			"device": "b",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P51",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "restore",
+						"base_seq": "$seen",
+						"fields": {}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "rejected",
+						"error": {
+							"code": "restore_window_expired"
+						}
+					}
+				]
+			}
+		}
+	],
+	"final": {
+		"absent": [
+			"01JD5Z8K3M0000000000000C01"
+		]
+	}
+}

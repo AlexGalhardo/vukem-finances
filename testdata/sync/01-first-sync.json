@@ -1,0 +1,137 @@
+{
+	"name": "first-sync",
+	"description": "Device a creates rows offline and pushes them; a fresh device b pulls everything, parents before children, and both end equal.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P01",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Wallet",
+							"kind": "cash",
+							"opening_cents": 1000
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P02",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Food",
+							"kind": "expense",
+							"color": "green"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P03",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"category_uid": "01JD5Z8K3M0000000000000C01",
+							"kind": "expense",
+							"amount_cents": 250,
+							"description": "Lunch",
+							"occurred_on": "2026-11-20"
+						}
+					}
+				]
+			},
+			"expect": {
+				"status": 200,
+				"results": [
+					{
+						"status": "applied",
+						"version": 1
+					},
+					{
+						"status": "applied",
+						"version": 1
+					},
+					{
+						"status": "applied",
+						"version": 1,
+						"row": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"category_uid": "01JD5Z8K3M0000000000000C01",
+							"amount_cents": 250
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"status": 200,
+				"has_more": false,
+				"contains": [
+					{
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"row": {
+							"name": "Wallet",
+							"opening_cents": 1000
+						}
+					},
+					{
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "upsert",
+						"row": {
+							"name": "Food",
+							"color": "green"
+						}
+					},
+					{
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"row": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"category_uid": "01JD5Z8K3M0000000000000C01",
+							"description": "Lunch"
+						}
+					}
+				],
+				"parents_first": true
+			}
+		}
+	],
+	"final": {
+		"devices_equal": [
+			"a",
+			"b"
+		],
+		"server": {
+			"transaction": {
+				"01JD5Z8K3M0000000000000T01": {
+					"amount_cents": 250
+				}
+			}
+		}
+	}
+}
