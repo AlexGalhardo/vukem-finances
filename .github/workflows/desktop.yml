@@ -37,7 +37,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        # Linux stays on 24.04: GTK 4.22 of 26.04 has no gtk-4.0 module folder, which
+        # the AppImage GTK plugin requires, and an older glibc runs on more systems.
+        os: [windows-latest, macos-latest, ubuntu-24.04]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
