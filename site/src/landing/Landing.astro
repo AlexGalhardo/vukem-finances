@@ -1,0 +1,152 @@
+---
+import PlansTable from "../../components/PlansTable.astro";
+import SiteFooter from "../../components/SiteFooter.astro";
+import SiteHeader from "../../components/SiteHeader.astro";
+import { catalogs } from "../../lib/copy.ts";
+import {
+	basePath,
+	dockerDocsPath,
+	dockerHubImage,
+	docsPath,
+	ghcrImage,
+	localePath,
+	releasesUrl,
+	repoUrl,
+	type Locale,
+} from "../../lib/site.ts";
+import Base from "../layouts/Base.astro";
+
+interface Props {
+	locale: Locale;
+}
+const { locale } = Astro.props;
+const copy = catalogs[locale];
+---
+<Base
+	locale={locale}
+	title={copy.meta.title}
+	description={copy.meta.description}
+	path={localePath(locale)}
+	alternates
+	ogAlt={copy.meta.ogAlt}
+	jsonLd
+>
+	<a class="skip" href="#content">{copy.a11y.skip}</a>
+	<SiteHeader locale={locale} copy={copy} />
+	<main id="content">
+		<section class="hero" aria-labelledby="hero-title">
+			<div class="wrap">
+				<p class="eyebrow">{copy.hero.eyebrow}</p>
+				<h1 id="hero-title">{copy.hero.title}</h1>
+				<p class="lead">{copy.hero.lead}</p>
+				<div class="actions">
+					<a class="btn btn-primary" href={`${basePath}${docsPath}`}>{copy.hero.ctaDocs}</a>
+					<a class="btn" href={repoUrl}>{copy.hero.ctaGithub}</a>
+					<a class="btn" href={`${basePath}${dockerDocsPath}`}>{copy.hero.ctaDocker}</a>
+					<a class="btn" href={releasesUrl}>{copy.hero.ctaDownload}</a>
+				</div>
+				<p class="note">{copy.hero.note}</p>
+			</div>
+		</section>
+
+		<section aria-labelledby="how-title">
+			<div class="wrap">
+				<h2 id="how-title">{copy.how.title}</h2>
+				<ol class="steps">
+					{copy.how.steps.map((step) => (
+						<li>
+							<h3>{step.title}</h3>
+							<p>{step.text}</p>
+						</li>
+					))}
+				</ol>
+			</div>
+		</section>
+
+		<section id="features" aria-labelledby="features-title">
+			<div class="wrap">
+				<h2 id="features-title">{copy.features.title}</h2>
+				{copy.features.groups.map((group, index) => (
+					<div class="group">
+						<h3 id={`group-${index}`}>{group.title}</h3>
+						<ul class="cards" aria-labelledby={`group-${index}`}>
+							{group.items.map((item) => (
+								<li>
+									<strong>{item.title}</strong>
+									<p>{item.text}</p>
+								</li>
+							))}
+						</ul>
+					</div>
+				))}
+			</div>
+		</section>
+
+		<section id="privacy" aria-labelledby="privacy-title">
+			<div class="wrap">
+				<h2 id="privacy-title">{copy.privacy.title}</h2>
+				<p class="lead">{copy.privacy.lead}</p>
+				<ul class="points">
+					{copy.privacy.points.map((point) => <li>{point}</li>)}
+				</ul>
+				<p><a href={`${basePath}/privacy/`}>{copy.privacy.link}</a></p>
+			</div>
+		</section>
+
+		<section id="editions" aria-labelledby="editions-title">
+			<div class="wrap">
+				<h2 id="editions-title">{copy.editions.title}</h2>
+				<p class="lead">{copy.editions.lead}</p>
+				<div class="two">
+					<div class="panel">
+						<h3>{copy.editions.personal.title}</h3>
+						<p>{copy.editions.personal.text}</p>
+					</div>
+					<div class="panel">
+						<h3>{copy.editions.saas.title}</h3>
+						<p>{copy.editions.saas.text}</p>
+					</div>
+				</div>
+				<p class="callout">{copy.editions.notice}</p>
+				<h3 class="group">{copy.editions.plansTitle}</h3>
+				<PlansTable copy={copy} />
+			</div>
+		</section>
+
+		<section id="install" aria-labelledby="install-title">
+			<div class="wrap">
+				<h2 id="install-title">{copy.install.title}</h2>
+				<p class="lead">{copy.install.lead}</p>
+				<div class="two">
+					<div class="panel">
+						<h3>{copy.install.docker}</h3>
+						<p>{copy.install.dockerText}</p>
+						<code class="image-name" tabindex="0" aria-label={`${copy.install.copy}: ${ghcrImage}`}>{ghcrImage}</code>
+						<code class="image-name" tabindex="0" aria-label={`${copy.install.copy}: ${dockerHubImage}`}>{dockerHubImage}</code>
+					</div>
+					<div class="panel">
+						<h3>{copy.install.desktop}</h3>
+						<p>{copy.install.desktopText}</p>
+					</div>
+				</div>
+				<div class="actions">
+					<a class="btn btn-primary" href={`${basePath}${dockerDocsPath}`}>{copy.hero.ctaDocker}</a>
+					<a class="btn" href={releasesUrl}>{copy.hero.ctaDownload}</a>
+				</div>
+			</div>
+		</section>
+
+		<section id="faq" aria-labelledby="faq-title">
+			<div class="wrap">
+				<h2 id="faq-title">{copy.faq.title}</h2>
+				{copy.faq.items.map((item) => (
+					<details>
+						<summary>{item.q}</summary>
+						<p>{item.a}</p>
+					</details>
+				))}
+			</div>
+		</section>
+	</main>
+	<SiteFooter copy={copy} />
+</Base>

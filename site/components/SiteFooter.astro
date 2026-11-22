@@ -1,0 +1,23 @@
+---
+import type { Copy } from "../lib/copy.ts";
+import { basePath, docsPath, releasesUrl, repoUrl, termsApproved } from "../lib/site.ts";
+
+interface Props {
+	copy: Copy;
+}
+const { copy } = Astro.props;
+---
+<footer class="site-footer">
+	<div class="wrap">
+		<p>vukem-finances. {copy.footer.tagline} {copy.footer.license}.</p>
+		<nav aria-label={copy.a11y.footerNav}>
+			<ul>
+				<li><a href={`${basePath}${docsPath}`}>{copy.footer.docs}</a></li>
+				<li><a href={repoUrl}>{copy.footer.github}</a></li>
+				<li><a href={releasesUrl}>{copy.footer.releases}</a></li>
+				<li><a href={`${basePath}/privacy/`}>{copy.footer.privacy}</a></li>
+				{termsApproved && <li><a href={`${basePath}/terms/`}>{copy.footer.terms}</a></li>}
+			</ul>
+		</nav>
+	</div>
+</footer>
