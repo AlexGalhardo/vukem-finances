@@ -1,5 +1,5 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
-import { ArrowLeftRight, Pencil, Search, Trash2, Upload } from "lucide-react";
+import { ArrowLeftRight, Pencil, Search, SlidersHorizontal, Trash2, Upload } from "lucide-react";
 import ExportMenu from "../components/ExportMenu";
 import { MoneyText } from "../components/MoneyText";
 import { HelpHint } from "../help/HelpHint";
@@ -27,7 +27,8 @@ import { Empty, EmptyContent, EmptyDescription, EmptyHeader, EmptyMedia, EmptyTi
 import { Field, FieldError, FieldGroup, FieldLabel } from "../components/ui/field";
 import { Input } from "../components/ui/input";
 import { NativeSelect, NativeSelectOption } from "../components/ui/native-select";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import DataTable, { type DataTableColumn } from "../components/DataTable";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet";
 import { transactionsCsvUrl } from "../lib/exports";
 import { useFinanceI18n } from "../lib/i18n";
 import type { Page, SharedProps } from "../page-props";
@@ -38,6 +39,19 @@ function queryOf(filters: Record<string, string>, page = 1): Record<string, stri
   for (const [key, value] of Object.entries(filters)) if (value !== "") query[key] = value;
   if (page > 1) query.page = String(page);
   return query;
+}
+
+/** True from md up; below it the filters are a sheet. Starts true so the server and first client render match. */
+function useWide(): boolean {
+  const [wide, setWide] = useState(true);
+  useEffect(() => {
+    const query = matchMedia("(min-width: 48rem)");
+    const update = (): void => setWide(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return wide;
 }
 
 export default function Transactions({
@@ -159,6 +173,193 @@ export default function Transactions({
     const query = new URLSearchParams(queryOf(draft, target)).toString();
     return query === "" ? "/transactions" : `/transactions?${query}`;
   };
+  const wide = useWide();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const activeFilters = (["category", "tag", "account", "kind", "from", "to", "min", "max"] as const).filter(
+    (key) => draft[key] !== "",
+  ).length;
+  const columns: DataTableColumn<(typeof transactions)[number]>[] = [
+    {
+      id: "description",
+      header: t("description"),
+      cell: (item) =>
+        item.transferId !== null ? (
+          <span className="flex flex-wrap items-center gap-2 font-medium">
+            <Badge variant="neutral">{t("transfer")}</Badge>
+            <span>
+              {t(item.kind === "expense" ? "transferTo" : "transferFrom")} {item.transferAccountName}
+            </span>
+            {item.description && <span className="font-normal text-muted-foreground">{item.description}</span>}
+          </span>
+        ) : (
+          <span className="flex flex-wrap items-center gap-2 font-medium">
+            <span>{item.description || t(item.kind === "income" ? "income" : "expense")}</span>
+            {item.tags.map((tag) => (
+              <Badge key={tag.id} variant="outline" className="gap-1 font-normal">
+                <Mark color={tag.color} icon="tag" />
+                {tag.name}
+              </Badge>
+            ))}
+          </span>
+        ),
+    },
+    {
+      id: "date",
+      header: t("date"),
+      cell: (item) => <span className="text-muted-foreground">{date(item.occurred_on)}</span>,
+    },
+    { id: "category", header: t("category"), cell: (item) => item.categoryName || "—" },
+    { id: "account", header: t("account"), cell: (item) => item.accountName },
+    {
+      id: "amount",
+      header: t("amount"),
+      align: "end",
+      cell: (item) => (
+        <MoneyText
+          cents={item.kind === "income" ? item.amount_cents : -item.amount_cents}
+          currency={currency}
+          locale={locale}
+          kind={item.transferId !== null ? "transfer" : item.kind === "income" ? "income" : "expense"}
+          sign={item.transferId !== null ? "never" : "always"}
+          labels={{ minus: t("moneyMinus"), plus: t("moneyPlus") }}
+          colored
+          showIcon
+        />
+      ),
+    },
+    {
+      id: "actions",
+      header: t("actions"),
+      cell: (item) => (
+        <div className="flex gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            disabled={!canRecord}
+            onClick={() => edit(item)}
+            aria-label={`${t("edit")} ${item.description}`}
+          >
+            <Pencil />
+          </Button>
+          <ConfirmDelete
+            href={item.transferId !== null ? `/transfers/${item.id}` : `/transactions/${item.id}`}
+            name={item.description || t(item.kind === "income" ? "income" : "expense")}
+            trigger={
+              <Button type="button" variant="ghost" size="icon" aria-label={`${t("delete")} ${item.description}`}>
+                <Trash2 />
+              </Button>
+            }
+          />
+        </div>
+      ),
+    },
+  ];
+  const fieldsBlock = (
+    <FieldGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <Field>
+        <FieldLabel htmlFor="filter-category">{t("category")}</FieldLabel>
+        <NativeSelect
+          id="filter-category"
+          name="category"
+          value={draft.category}
+          onChange={(e) => setFilter("category", e.target.value)}
+        >
+          <NativeSelectOption value="">{t("any")}</NativeSelectOption>
+          {categories.map((c) => (
+            <NativeSelectOption key={c.id} value={c.id}>
+              {c.parent_id.Valid ? "– " : ""}
+              {c.name}
+              {c.archived_at ? ` (${t("archived")})` : ""}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      </Field>
+      <Field>
+        <span className="flex items-center gap-1">
+          <FieldLabel htmlFor="filter-tag">{t("tag")}</FieldLabel>
+          <HelpHint id="hintTxTags" />
+        </span>
+        <NativeSelect id="filter-tag" name="tag" value={draft.tag} onChange={(e) => setFilter("tag", e.target.value)}>
+          <NativeSelectOption value="">{t("any")}</NativeSelectOption>
+          {tags.map((tag) => (
+            <NativeSelectOption key={tag.id} value={tag.id}>
+              {tag.name}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      </Field>
+      <Field>
+        <FieldLabel htmlFor="filter-account">{t("account")}</FieldLabel>
+        <NativeSelect
+          id="filter-account"
+          name="account"
+          value={draft.account}
+          onChange={(e) => setFilter("account", e.target.value)}
+        >
+          <NativeSelectOption value="">{t("any")}</NativeSelectOption>
+          {accounts.map((a) => (
+            <NativeSelectOption key={a.id} value={a.id}>
+              {a.name}
+            </NativeSelectOption>
+          ))}
+        </NativeSelect>
+      </Field>
+      <Field>
+        <span className="flex items-center gap-1">
+          <FieldLabel htmlFor="filter-kind">{t("kind")}</FieldLabel>
+          <HelpHint id="hintTxType" />
+        </span>
+        <NativeSelect
+          id="filter-kind"
+          name="kind"
+          value={draft.kind}
+          onChange={(e) => setFilter("kind", e.target.value)}
+        >
+          <NativeSelectOption value="">{t("any")}</NativeSelectOption>
+          <NativeSelectOption value="expense">{t("expense")}</NativeSelectOption>
+          <NativeSelectOption value="income">{t("income")}</NativeSelectOption>
+        </NativeSelect>
+      </Field>
+      {(["from", "to"] as const).map((key) => (
+        <Field key={key}>
+          <FieldLabel htmlFor={`filter-${key}`}>{t(key)}</FieldLabel>
+          <Input
+            id={`filter-${key}`}
+            name={key}
+            type="date"
+            value={draft[key]}
+            onChange={(e) => setFilter(key, e.target.value)}
+          />
+        </Field>
+      ))}
+      {(["min", "max"] as const).map((key) => (
+        <Field key={key}>
+          <FieldLabel htmlFor={`filter-${key}`}>{t(key === "min" ? "minAmount" : "maxAmount")}</FieldLabel>
+          <Input
+            id={`filter-${key}`}
+            name={key}
+            type="text"
+            inputMode="decimal"
+            autoComplete="off"
+            placeholder="0.00"
+            value={draft[key]}
+            onChange={(e) => setFilter(key, e.target.value)}
+          />
+        </Field>
+      ))}
+    </FieldGroup>
+  );
+  const actionsBlock = (
+    <div className="flex flex-wrap items-center gap-2">
+      <Button type="submit">{t("applyFilters")}</Button>
+      <Button type="button" variant="outline" onClick={() => router.get("/transactions")}>
+        {t("clearFilters")}
+      </Button>
+      <p role="status" className="ms-auto text-sm text-muted-foreground tabular-nums">
+        {total} {t("transactionsWord")}
+      </p>
+    </div>
+  );
   const kindCategories = categories.filter((c) => c.kind === form.data.kind);
   return (
     <>
@@ -185,6 +386,7 @@ export default function Transactions({
                 {t("newTransfer")}
               </Button>
             )}
+            {canRecord && <HelpHint id="hintTxTransfer" />}
           </>
         }
       />
@@ -316,115 +518,50 @@ export default function Transactions({
                   />
                 </div>
               </Field>
-              <FieldGroup className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                <Field>
-                  <FieldLabel htmlFor="filter-category">{t("category")}</FieldLabel>
-                  <NativeSelect
-                    id="filter-category"
-                    name="category"
-                    value={draft.category}
-                    onChange={(e) => setFilter("category", e.target.value)}
-                  >
-                    <NativeSelectOption value="">{t("any")}</NativeSelectOption>
-                    {categories.map((c) => (
-                      <NativeSelectOption key={c.id} value={c.id}>
-                        {c.parent_id.Valid ? "– " : ""}
-                        {c.name}
-                        {c.archived_at ? ` (${t("archived")})` : ""}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </Field>
-                <Field>
-                  <span className="flex items-center gap-1">
-                    <FieldLabel htmlFor="filter-tag">{t("tag")}</FieldLabel>
-                    <HelpHint id="hintTxTags" />
-                  </span>
-                  <NativeSelect
-                    id="filter-tag"
-                    name="tag"
-                    value={draft.tag}
-                    onChange={(e) => setFilter("tag", e.target.value)}
-                  >
-                    <NativeSelectOption value="">{t("any")}</NativeSelectOption>
-                    {tags.map((tag) => (
-                      <NativeSelectOption key={tag.id} value={tag.id}>
-                        {tag.name}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </Field>
-                <Field>
-                  <FieldLabel htmlFor="filter-account">{t("account")}</FieldLabel>
-                  <NativeSelect
-                    id="filter-account"
-                    name="account"
-                    value={draft.account}
-                    onChange={(e) => setFilter("account", e.target.value)}
-                  >
-                    <NativeSelectOption value="">{t("any")}</NativeSelectOption>
-                    {accounts.map((a) => (
-                      <NativeSelectOption key={a.id} value={a.id}>
-                        {a.name}
-                      </NativeSelectOption>
-                    ))}
-                  </NativeSelect>
-                </Field>
-                <Field>
-                  <span className="flex items-center gap-1">
-                    <FieldLabel htmlFor="filter-kind">{t("kind")}</FieldLabel>
-                    <HelpHint id="hintTxType" />
-                  </span>
-                  <NativeSelect
-                    id="filter-kind"
-                    name="kind"
-                    value={draft.kind}
-                    onChange={(e) => setFilter("kind", e.target.value)}
-                  >
-                    <NativeSelectOption value="">{t("any")}</NativeSelectOption>
-                    <NativeSelectOption value="expense">{t("expense")}</NativeSelectOption>
-                    <NativeSelectOption value="income">{t("income")}</NativeSelectOption>
-                  </NativeSelect>
-                </Field>
-                {(["from", "to"] as const).map((key) => (
-                  <Field key={key}>
-                    <FieldLabel htmlFor={`filter-${key}`}>{t(key)}</FieldLabel>
-                    <Input
-                      id={`filter-${key}`}
-                      name={key}
-                      type="date"
-                      value={draft[key]}
-                      onChange={(e) => setFilter(key, e.target.value)}
-                    />
-                  </Field>
-                ))}
-                {(["min", "max"] as const).map((key) => (
-                  <Field key={key}>
-                    <FieldLabel htmlFor={`filter-${key}`}>{t(key === "min" ? "minAmount" : "maxAmount")}</FieldLabel>
-                    <Input
-                      id={`filter-${key}`}
-                      name={key}
-                      type="text"
-                      inputMode="decimal"
-                      autoComplete="off"
-                      placeholder="0.00"
-                      value={draft[key]}
-                      onChange={(e) => setFilter(key, e.target.value)}
-                    />
-                  </Field>
-                ))}
-              </FieldGroup>
-              <div className="flex flex-wrap items-center gap-2">
-                <Button type="submit">{t("applyFilters")}</Button>
-                <Button type="button" variant="outline" onClick={() => router.get("/transactions")}>
-                  {t("clearFilters")}
-                </Button>
-                <p role="status" className="ms-auto text-sm text-muted-foreground tabular-nums">
-                  {total} {t("transactionsWord")}
-                </p>
-              </div>
+              {wide ? (
+                <>
+                  {fieldsBlock}
+                  {actionsBlock}
+                </>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <Button type="button" variant="outline" aria-haspopup="dialog" onClick={() => setFiltersOpen(true)}>
+                    <SlidersHorizontal aria-hidden="true" />
+                    {t("filters")}
+                    {activeFilters > 0 && <Badge variant="neutral">{activeFilters}</Badge>}
+                  </Button>
+                  <Button type="submit">{t("applyFilters")}</Button>
+                  <p role="status" className="ms-auto text-body text-muted-foreground tabular-nums">
+                    {total} {t("transactionsWord")}
+                  </p>
+                </div>
+              )}
             </form>
           </search>
+          <Sheet open={!wide && filtersOpen} onOpenChange={setFiltersOpen}>
+            <SheetContent side="bottom" data-vf-overlay aria-describedby={undefined} className="overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle>{t("filters")}</SheetTitle>
+              </SheetHeader>
+              <div className="flex flex-col gap-4 px-4 pb-4">
+                {fieldsBlock}
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      setFiltersOpen(false);
+                      router.get("/transactions", queryOf(draft), { preserveState: true, replace: true });
+                    }}
+                  >
+                    {t("applyFilters")}
+                  </Button>
+                  <Button type="button" variant="outline" onClick={() => router.get("/transactions")}>
+                    {t("clearFilters")}
+                  </Button>
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
           {transactions.length === 0 ? (
             <Empty>
               <EmptyHeader>
@@ -445,90 +582,7 @@ export default function Transactions({
             </Empty>
           ) : (
             <div data-tour="transactions-table">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    {(["date", "description", "category", "account", "amount", "actions"] as const).map((key) => (
-                      <TableHead key={key} className={key === "amount" ? "text-right" : undefined}>
-                        {t(key)}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {transactions.map((item) => (
-                    <TableRow key={item.id}>
-                      <TableCell className="whitespace-nowrap text-muted-foreground">
-                        {date(item.occurred_on)}
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        {item.transferId !== null ? (
-                          <span className="flex flex-wrap items-center gap-2">
-                            <Badge variant="secondary">{t("transfer")}</Badge>
-                            <span>
-                              {t(item.kind === "expense" ? "transferTo" : "transferFrom")} {item.transferAccountName}
-                            </span>
-                            {item.description && (
-                              <span className="font-normal text-muted-foreground">{item.description}</span>
-                            )}
-                          </span>
-                        ) : (
-                          <span className="flex flex-wrap items-center gap-2">
-                            <span>{item.description || t(item.kind === "income" ? "income" : "expense")}</span>
-                            {item.tags.map((tag) => (
-                              <Badge key={tag.id} variant="outline" className="gap-1 font-normal">
-                                <Mark color={tag.color} icon="tag" />
-                                {tag.name}
-                              </Badge>
-                            ))}
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell>{item.categoryName || "—"}</TableCell>
-                      <TableCell>{item.accountName}</TableCell>
-                      <TableCell className="whitespace-nowrap text-right">
-                        <MoneyText
-                          cents={item.kind === "income" ? item.amount_cents : -item.amount_cents}
-                          currency={currency}
-                          locale={locale}
-                          kind={item.transferId !== null ? "transfer" : item.kind === "income" ? "income" : "expense"}
-                          sign={item.transferId !== null ? "never" : "always"}
-                          labels={{ minus: t("moneyMinus"), plus: t("moneyPlus") }}
-                          colored
-                          showIcon
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <div className="flex justify-end gap-1">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            disabled={!canRecord}
-                            onClick={() => edit(item)}
-                            aria-label={`${t("edit")} ${item.description}`}
-                          >
-                            <Pencil />
-                          </Button>
-                          <ConfirmDelete
-                            href={item.transferId !== null ? `/transfers/${item.id}` : `/transactions/${item.id}`}
-                            name={item.description || t(item.kind === "income" ? "income" : "expense")}
-                            trigger={
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                aria-label={`${t("delete")} ${item.description}`}
-                              >
-                                <Trash2 />
-                              </Button>
-                            }
-                          />
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+              <DataTable columns={columns} rows={transactions} rowKey={(item) => item.id} caption={t("activity")} />
             </div>
           )}
           <Pagination page={pageNumber} pageCount={pageCount} hrefFor={pageHref} />

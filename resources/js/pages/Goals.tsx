@@ -146,6 +146,7 @@ export default function Goals({ goals, contributions, today }: Page<"Goals">) {
                         {fill(t("goalRequired"), { amount: money(g.requiredMonthlyCents, currency), n: g.monthsLeft })}
                         {" · "}
                         {date(g.targetDate)}
+                        <HelpHint id="hintGoalMonthly" />
                       </p>
                     )}
                     {g.overdue && <p className="text-sm font-medium text-expense">{t("goalOverdue")}</p>}

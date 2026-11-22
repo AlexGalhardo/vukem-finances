@@ -191,6 +191,7 @@ export default function Accounts({ accounts, limits, balances, netWorthCents, ki
               className="size-4"
             />
             {t("showArchived")}
+            <HelpHint id="hintAcctArchive" />
           </label>
         </CardHeader>
         <CardContent data-tour="accounts-table">
