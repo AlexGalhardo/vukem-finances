@@ -74,6 +74,14 @@ func (s *Service) PurgeAccount(ctx context.Context, id int64) error {
 		return errPurgeBlocked
 	}
 
+	// A person who signed in during the grace period holds a session (the sign-in leads to the offer to cancel): end
+	// them all again before the rows go, outside the transaction because the session store may share SQLite's one writer.
+	if s.Access != nil {
+		if err := s.Access.RevokeAllAccess(ctx, id); err != nil {
+			return fmt.Errorf("privacy: ending the sessions of the account: %w", err)
+		}
+	}
+
 	ref := s.Ref("user", id)
 
 	err = s.DB.Tx(ctx, func(tx *database.Tx) error {
