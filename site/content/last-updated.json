@@ -1,0 +1,290 @@
+{
+	"changelog": {
+		"date": "2026-11-22",
+		"hash": "0ec04827d320145a"
+	},
+	"changelog/v0.1.0": {
+		"date": "2026-11-22",
+		"hash": "3c1fff27f0c053ed"
+	},
+	"changelog/v0.2.0": {
+		"date": "2026-11-22",
+		"hash": "721c528f921be9ab"
+	},
+	"changelog/v0.3.0": {
+		"date": "2026-11-22",
+		"hash": "bffbc6b2f1540bdd"
+	},
+	"changelog/v0.4.0": {
+		"date": "2026-11-22",
+		"hash": "44d301a05ef08bec"
+	},
+	"changelog/v0.5.0": {
+		"date": "2026-11-22",
+		"hash": "ac2c9dad0863e50e"
+	},
+	"contribute/architecture": {
+		"date": "2026-11-22",
+		"hash": "be41f4b897e0dcf7"
+	},
+	"contribute/how-epics-work": {
+		"date": "2026-11-22",
+		"hash": "b8b0f076d1036298"
+	},
+	"contribute/release-train": {
+		"date": "2026-11-22",
+		"hash": "b951398cb65af1ec"
+	},
+	"contribute/tests": {
+		"date": "2026-11-22",
+		"hash": "e98d1618f9e434bd"
+	},
+	"index": {
+		"date": "2026-11-22",
+		"hash": "227906c47617a8ad"
+	},
+	"integrate/cli": {
+		"date": "2026-11-22",
+		"hash": "f714083c59685344"
+	},
+	"integrate/cli/accounts": {
+		"date": "2026-11-22",
+		"hash": "664126f978487886"
+	},
+	"integrate/cli/budgets": {
+		"date": "2026-11-22",
+		"hash": "94f2e3f03ee6c01a"
+	},
+	"integrate/cli/cards": {
+		"date": "2026-11-22",
+		"hash": "6e7a06926b16f173"
+	},
+	"integrate/cli/categories": {
+		"date": "2026-11-22",
+		"hash": "f05c14d6f3b524bf"
+	},
+	"integrate/cli/export": {
+		"date": "2026-11-22",
+		"hash": "9e17bb3f0ddbd59f"
+	},
+	"integrate/cli/goals": {
+		"date": "2026-11-22",
+		"hash": "422a0512ce7570b2"
+	},
+	"integrate/cli/overview": {
+		"date": "2026-11-22",
+		"hash": "1e4a3429bd8e35d5"
+	},
+	"integrate/cli/recurrences": {
+		"date": "2026-11-22",
+		"hash": "bfe1db615ffde204"
+	},
+	"integrate/cli/reports": {
+		"date": "2026-11-22",
+		"hash": "b9955e631bbd7b81"
+	},
+	"integrate/cli/statements": {
+		"date": "2026-11-22",
+		"hash": "c0aad6b3b2cd31ce"
+	},
+	"integrate/cli/summary": {
+		"date": "2026-11-22",
+		"hash": "ac3ec39dc2e10b37"
+	},
+	"integrate/cli/tags": {
+		"date": "2026-11-22",
+		"hash": "7adda20d0191a106"
+	},
+	"integrate/cli/transactions": {
+		"date": "2026-11-22",
+		"hash": "5a78670eda31c981"
+	},
+	"integrate/cli/transfers": {
+		"date": "2026-11-22",
+		"hash": "d4d59a94b22f313c"
+	},
+	"integrate/export-format": {
+		"date": "2026-11-22",
+		"hash": "b5225a011b03d4f4"
+	},
+	"integrate/mcp-remote": {
+		"date": "2026-11-22",
+		"hash": "9509ce750d5e8f06"
+	},
+	"integrate/mcp-stdio": {
+		"date": "2026-11-22",
+		"hash": "da9e0c7ff7455613"
+	},
+	"integrate/mcp/resources-prompts": {
+		"date": "2026-11-22",
+		"hash": "24a00bec861a8618"
+	},
+	"integrate/mcp/tools": {
+		"date": "2026-11-22",
+		"hash": "e85c3d60ead67023"
+	},
+	"integrate/rest-api": {
+		"date": "2026-11-22",
+		"hash": "41c2e2f7ea97cc83"
+	},
+	"integrate/rest/accounts": {
+		"date": "2026-11-22",
+		"hash": "e2004c050e46ed39"
+	},
+	"integrate/rest/budgets": {
+		"date": "2026-11-22",
+		"hash": "13d96f9a06063ca3"
+	},
+	"integrate/rest/cards": {
+		"date": "2026-11-22",
+		"hash": "9e44d3c1c74db7ea"
+	},
+	"integrate/rest/categories": {
+		"date": "2026-11-22",
+		"hash": "791450ad45b3059f"
+	},
+	"integrate/rest/export": {
+		"date": "2026-11-22",
+		"hash": "e2602a19afd6760a"
+	},
+	"integrate/rest/goals": {
+		"date": "2026-11-22",
+		"hash": "a07e27ddd5e6e332"
+	},
+	"integrate/rest/recurrences": {
+		"date": "2026-11-22",
+		"hash": "1522eb9271fce47a"
+	},
+	"integrate/rest/reports": {
+		"date": "2026-11-22",
+		"hash": "8c2d762aa10adde0"
+	},
+	"integrate/rest/statements": {
+		"date": "2026-11-22",
+		"hash": "63943da87401dece"
+	},
+	"integrate/rest/summary": {
+		"date": "2026-11-22",
+		"hash": "42e90796de91c233"
+	},
+	"integrate/rest/sync": {
+		"date": "2026-11-22",
+		"hash": "7ff20be61a761865"
+	},
+	"integrate/rest/tags": {
+		"date": "2026-11-22",
+		"hash": "660401062d1a19b9"
+	},
+	"integrate/rest/token": {
+		"date": "2026-11-22",
+		"hash": "b53f140adcdde4b7"
+	},
+	"integrate/rest/transactions": {
+		"date": "2026-11-22",
+		"hash": "9c67794a8bd3b2aa"
+	},
+	"integrate/rest/transfers": {
+		"date": "2026-11-22",
+		"hash": "e48ee4538563f2fc"
+	},
+	"integrate/sync-protocol": {
+		"date": "2026-11-22",
+		"hash": "0bb2bb3dcc9ec756"
+	},
+	"operate/environment": {
+		"date": "2026-11-22",
+		"hash": "9c08215d664f19cb"
+	},
+	"operate/roles-workspaces": {
+		"date": "2026-11-22",
+		"hash": "42d50cb634a942d7"
+	},
+	"operate/security": {
+		"date": "2026-11-22",
+		"hash": "53396b959f68ccea"
+	},
+	"run/backup-restore": {
+		"date": "2026-11-22",
+		"hash": "9fb81216d42ecfbc"
+	},
+	"run/desktop": {
+		"date": "2026-11-22",
+		"hash": "79c8e1419da02643"
+	},
+	"run/docker": {
+		"date": "2026-11-22",
+		"hash": "1f315cf245e9be8c"
+	},
+	"run/mobile": {
+		"date": "2026-11-22",
+		"hash": "89b6d0134aa78c79"
+	},
+	"run/offline": {
+		"date": "2026-11-22",
+		"hash": "75d12e3f4b2e8958"
+	},
+	"run/upgrading": {
+		"date": "2026-11-22",
+		"hash": "e7b84c971a6d4ba0"
+	},
+	"run/vps": {
+		"date": "2026-11-22",
+		"hash": "c362dc55e91e8d8d"
+	},
+	"start/editions": {
+		"date": "2026-11-22",
+		"hash": "795c44d84d4ae6f3"
+	},
+	"start/quick-start": {
+		"date": "2026-11-22",
+		"hash": "15d740a16ede6829"
+	},
+	"start/what-is-it": {
+		"date": "2026-11-22",
+		"hash": "e172ada8fdb08984"
+	},
+	"use/accounts-transfers": {
+		"date": "2026-11-22",
+		"hash": "59ff5a44088cca46"
+	},
+	"use/ai": {
+		"date": "2026-11-22",
+		"hash": "5cf03b9a4e206d24"
+	},
+	"use/billing": {
+		"date": "2026-11-22",
+		"hash": "3ad5f05f06b15ba7"
+	},
+	"use/budgets-goals": {
+		"date": "2026-11-22",
+		"hash": "96faced3c1722c76"
+	},
+	"use/cards": {
+		"date": "2026-11-22",
+		"hash": "eb2f4f14c7602493"
+	},
+	"use/insights-exports": {
+		"date": "2026-11-22",
+		"hash": "743ab279602fbeab"
+	},
+	"use/mobile-sync": {
+		"date": "2026-11-22",
+		"hash": "ca76d892f979a83f"
+	},
+	"use/recurrences-installments": {
+		"date": "2026-11-22",
+		"hash": "733fee8254bb64c7"
+	},
+	"use/shortcuts": {
+		"date": "2026-11-22",
+		"hash": "7b1389ef6f5a49a5"
+	},
+	"use/telegram": {
+		"date": "2026-11-22",
+		"hash": "34f73bb5ff8cf8ab"
+	},
+	"use/transactions-import": {
+		"date": "2026-11-22",
+		"hash": "9002b2fc3ec78139"
+	}
+}
