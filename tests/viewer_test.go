@@ -15,8 +15,10 @@ import (
 // on the workspace they are looking at: any role may call them (a viewer reads and
 // settles their own notifications). A viewer may make
 // an API token: the role limits what it can do at every request (TestAPIScopeMatrix).
+// A viewer syncs read-only, so they also revoke their own devices (devices.destroy);
+// the pushed rows are checked against the role one by one (TestSyncPushPermissions).
 var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leave", "tokens.store", "tokens.destroy",
-	"notifications.read", "notifications.read_all", "notifications.preferences"}
+	"notifications.read", "notifications.read_all", "notifications.preferences", "devices.destroy"}
 
 // ownerOnlyReads are GET routes that are not open to a viewer: polling a PIX
 // payment re-reads it at the provider and can activate it, so it is billing

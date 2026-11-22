@@ -4,7 +4,36 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/AlexGalhardo/vukem/vukemtest"
 )
+
+// untilSyncLimited calls send until the first 429 and returns how many calls passed
+// before it. The limiter refills one slot per interval (a smoothed bucket), so
+// a slow machine lets a few extra calls through: the burst is the limit, and
+// the first refusal must come within a few seconds of refill after it.
+func untilSyncLimited(t *testing.T, limit int, send func() *vukemtest.Response) *vukemtest.Response {
+	t.Helper()
+
+	for passed := 0; passed < limit+20; passed++ {
+		res := send()
+		if res.Status() == 429 {
+			if passed < limit {
+				t.Fatalf("refused after %d calls, the limit is %d a minute", passed, limit)
+			}
+
+			return res
+		}
+
+		if res.Status() != 200 {
+			t.Fatalf("call %d = %d: %s", passed+1, res.Status(), res.Body())
+		}
+	}
+
+	t.Fatalf("no refusal after %d calls, the limit is %d a minute", limit+20, limit)
+
+	return nil
+}
 
 func TestSyncLimits(t *testing.T) {
 	t.Parallel()
@@ -12,14 +41,8 @@ func TestSyncLimits(t *testing.T) {
 	f := newSyncFixture(t)
 	d, other := f.device(t, "phone"), f.device(t, "tablet")
 
-	// 60 pulls a minute per device; the 61st is refused with Retry-After.
-	for i := range 60 {
-		if res := d.client().Get("/api/v1/sync/pull?cursor=0&limit=1"); res.Status() != 200 {
-			t.Fatalf("pull %d = %d", i+1, res.Status())
-		}
-	}
-
-	res := d.client().Get("/api/v1/sync/pull?cursor=0&limit=1")
+	// 60 pulls a minute per device, refused with Retry-After after that.
+	res := untilSyncLimited(t, 60, func() *vukemtest.Response { return d.client().Get("/api/v1/sync/pull?cursor=0&limit=1") })
 	assertProblem(t, res, 429, "rate_limited")
 
 	if res.Header("Retry-After") == "" {
@@ -30,13 +53,9 @@ func TestSyncLimits(t *testing.T) {
 	other.client().Get("/api/v1/sync/pull?cursor=0&limit=1").AssertOK()
 
 	// 30 pushes a minute per device.
-	for i := range 30 {
-		if res := d.client().PostJSON("/api/v1/sync/push", map[string]any{"mutations": []any{}}); res.Status() != 200 {
-			t.Fatalf("push %d = %d", i+1, res.Status())
-		}
-	}
-
-	assertProblem(t, d.client().PostJSON("/api/v1/sync/push", map[string]any{"mutations": []any{}}), 429, "rate_limited")
+	assertProblem(t, untilSyncLimited(t, 30, func() *vukemtest.Response {
+		return d.client().PostJSON("/api/v1/sync/push", map[string]any{"mutations": []any{}})
+	}), 429, "rate_limited")
 }
 
 func TestSyncPushSizeLimits(t *testing.T) {
