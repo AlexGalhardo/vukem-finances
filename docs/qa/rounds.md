@@ -58,6 +58,43 @@ carries a test written first, in its own commit, with `Refs: epic 24 task N` and
 - **Severity:** Low (a date no person enters; the TypeScript engine in `resources/js/lib/recurrence.ts` was not checked).
 - **Status:** fixed with an explicit `hasEnd` flag.
 
+### QA-010: the address a workspace invited stays in its audit log after that person deletes their account
+
+- **Surface:** account deletion, `privacy.PurgeAccount`, the `audit_events` of another person's workspace.
+- **Steps:** a member invites `ana@example.com` to the workspace (the audit row `invite.created` has the subject
+  `ana@example.com as viewer`); Ana has an account, asks to delete it and the grace period ends; the purge runs.
+- **Expected:** the address of the deleted person is in no table. The purge already deletes the `invites` rows, the password
+  reset rows and the mail suppression of that address.
+- **Actual:** `audit_events.subject` still holds the address in the inviting workspace, for as long as that workspace lives.
+- **Evidence:** `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson` (it scans every column of every table for the address).
+- **Severity:** Medium (personal data kept after a deletion; the row is visible to the owner and admins of the other workspace only).
+- **Status:** open.
+
+### QA-011: a session opened while the account waited for deletion outlives the purge
+
+- **Surface:** account deletion, `privacy.PurgeAccount`, the `sessions` table (`SESSION_DRIVER=database`, the default).
+- **Steps:** request the deletion of the account; sign in again during the grace period (it leads to the offer to cancel, so it
+  opens a session); let the grace period end and run the purge.
+- **Expected:** no row names the person any more.
+- **Actual:** the `sessions` row of that sign-in stays, with `user_id = web:<id>` and the session data, until it expires (2 hours
+  idle, 24 hours absolute) and the hourly `session:prune` removes it. The deletion revoked the sessions that existed at the time
+  of the request, and the purge does not revoke again.
+- **Evidence:** `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson`.
+- **Severity:** Low (the row holds an id that no user has any more, and it dies within a day).
+- **Status:** open.
+
+### QA-012: the operator guide does not say that a backup keeps what was deleted
+
+- **Surface:** `deploy/README.md`, "Backup".
+- **Steps:** read how to take and keep snapshots; delete an account or a workspace and look for what happens to old snapshots.
+- **Expected:** the guide says that a snapshot keeps the data as it was, deletion never reaches it, and the operator decides when
+  to rotate it (`docs/security.md` already lists "backups are retained until rotated", epic 34 leaves existing backups to the
+  retention policy of epic 03).
+- **Actual:** the guide only says "Old snapshots are not removed for you".
+- **Evidence:** `TestDataLifecycle_BackupsAreDocumentedAsRetainedUntilRotated`.
+- **Severity:** Low (documentation).
+- **Status:** open.
+
 The entries of task 10 (load, budgets and drills) are numbered from QA-500.
 
 ## QA-500: a sync push scans every row of the workspace once per transaction
