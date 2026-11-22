@@ -62,7 +62,7 @@ jobs:
         if: runner.os == 'Windows'
         shell: bash
         run: |
-          choco install nsis --version=3.11 --yes --no-progress
+          choco install nsis --version=3.13.0 --yes --no-progress
           echo "C:/Program Files (x86)/NSIS" >> "$GITHUB_PATH"
 
       - name: Install wails3
