@@ -14,6 +14,9 @@ const (
 	retryAfterError = 3 * time.Second
 	// retryAfterHeld waits while another instance polls.
 	retryAfterHeld = 10 * time.Second
+	// maxUpdateAttempts is how many times one update is tried before the
+	// poller moves past it.
+	maxUpdateAttempts = 3
 )
 
 // NewOwner makes the name a polling worker takes the lease with.
@@ -40,7 +43,11 @@ func (b *Bot) PollOnce(ctx context.Context) (handled int, leased bool, err error
 		}
 
 		if err := b.HandleUpdate(ctx, u); err != nil {
-			return handled, true, err
+			if ctx.Err() != nil || !b.giveUp(u.UpdateID) {
+				return handled, true, err
+			}
+
+			b.Log.Error("telegram: update skipped after repeated failures", "update_id", u.UpdateID, "err", err.Error())
 		}
 
 		handled++
@@ -56,6 +63,20 @@ func (b *Bot) PollOnce(ctx context.Context) (handled int, leased bool, err error
 	}
 
 	return handled, true, nil
+}
+
+// giveUp counts a failure of update id and reports when it is time to move
+// past it: updates are read in order, so one that always fails would stop the
+// bot for every chat. During a database outage the offset cannot be saved
+// either, so nothing is skipped until the database is back.
+func (b *Bot) giveUp(id int64) bool {
+	if b.failedUpdate != id {
+		b.failedUpdate, b.failures = id, 0
+	}
+
+	b.failures++
+
+	return b.failures >= maxUpdateAttempts
 }
 
 // Run is the polling worker, a vukem Runner: it loops until ctx is done and
