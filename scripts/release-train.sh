@@ -198,6 +198,8 @@ cut_release() {
 	if [ "$released" = 0 ]; then
 		stamp_version "$v"
 		write_changelog "$v"
+		# The site publishes the changelog: stale pages would fail its build on main.
+		refresh_site || die "could not regenerate the site pages of the changelog"
 		git add package.json CHANGELOG.md
 		git commit -q -m "chore(release): v$v"
 	fi
@@ -273,19 +275,23 @@ relink_changelog() {
 	return "$bad"
 }
 
+# Regenerates and stages the site pages built from CHANGELOG.md, when the site is installed here.
+refresh_site() {
+	[ -f site/package.json ] && command -v bun >/dev/null || return 0
+	(cd site && bun run reference >/dev/null && bun run last-updated >/dev/null) || return 1
+	git add site/content
+}
+
 # Relinks the versions given (those with a section in CHANGELOG.md when none) and commits the
 # change on the current release branch, then pushes. Prints nothing when nothing changed.
 relink_commit() {
 	local v bad=0 vs=("$@") msg
-	[ ${#vs[@]} -gt 0 ] || while read -r v; do vs+=("$v"); done < <(sed -n 's/^## \[\([0-9][0-9.]*\)\].*//p' CHANGELOG.md)
+	[ ${#vs[@]} -gt 0 ] || while read -r v; do vs+=("$v"); done < <(sed -n 's/^## \[\([0-9][0-9.]*\)\].*/\1/p' CHANGELOG.md)
 	for v in "${vs[@]}"; do
 		relink_changelog "${v#v}" || bad=1
 	done
 	git diff --quiet CHANGELOG.md && return "$bad"
-	if [ -f site/package.json ] && command -v bun >/dev/null; then
-		(cd site && bun run reference >/dev/null && bun run last-updated >/dev/null) || return 1
-		git add site/content
-	fi
+	refresh_site || return 1
 	msg="link the ${vs[*]/#/v} changelog entries to the commits on main"
 	git add CHANGELOG.md
 	git commit -q -m "docs(release): ${msg//vv/v}"
