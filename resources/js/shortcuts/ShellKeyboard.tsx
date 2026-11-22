@@ -55,18 +55,24 @@ export default function ShellKeyboard({
   items,
   onOpenPalette,
   onOpenHelp,
+  onOpenPageHelp,
 }: {
   items: readonly NavItem[];
   onOpenPalette: () => void;
   onOpenHelp: () => void;
+  onOpenPageHelp: () => void;
 }) {
   const { toggleSidebar } = useSidebar();
   useKeyboardDispatcher();
-  const [palette, help, sidebar] = shellActionSpecs;
-  if (!palette || !help || !sidebar) throw new Error("shell action specs are incomplete");
-  useAction({ ...palette, run: onOpenPalette });
-  useAction({ ...help, run: onOpenHelp });
-  useAction({ ...sidebar, run: toggleSidebar });
+  const spec = (id: string) => {
+    const found = shellActionSpecs.find((candidate) => candidate.id === id);
+    if (!found) throw new Error(`shell action spec ${id} is missing`);
+    return found;
+  };
+  useAction({ ...spec("open-palette"), run: onOpenPalette });
+  useAction({ ...spec("open-shortcut-help"), run: onOpenHelp });
+  useAction({ ...spec("toggle-sidebar"), run: toggleSidebar });
+  useAction({ ...spec("open-page-help"), run: onOpenPageHelp });
   return (
     <>
       {items.map((item) => (
