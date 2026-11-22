@@ -2,6 +2,7 @@ package finance
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 
 	"github.com/AlexGalhardo/vukem/database"
@@ -10,6 +11,12 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
+
+// StatementRefIn is the statement an entry on accountID dated date belongs to;
+// not valid when the account is not a card.
+func (s *Service) StatementRefIn(ctx context.Context, tx *database.Tx, accountID int64, date string) (sql.Null[string], error) {
+	return refForRow(ctx, tx, accountID, date)
+}
 
 // DeleteIn soft-deletes row id of a synced entity inside tx, with the same
 // cascades as the Delete services (an account takes its transactions, a

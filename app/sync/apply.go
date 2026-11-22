@@ -163,6 +163,10 @@ func (s *Service) apply(ctx context.Context, tx *database.Tx, env pushEnv, m Mut
 		if merr := s.relations(ctx, tx, ws, ent, cur, exists, m.UID, fields, refs, m.Op); merr != nil {
 			return rejected(res, merr), nil
 		}
+
+		if err := s.settleStatement(ctx, tx, ws, ent, cur, exists, m.Op, fields, refs); err != nil {
+			return Result{}, err
+		}
 	}
 
 	var since []changes.Change
@@ -194,6 +198,72 @@ func (s *Service) apply(ctx context.Context, tx *database.Tx, env pushEnv, m Mut
 	}
 
 	return s.write(ctx, tx, env, ent, m, cur, exists, verdict, refs, len(since) > 0, res)
+}
+
+// settleStatement makes the statement of an entry the one its card and date
+// give, as every other write path does: what a device sends is not trusted, or
+// a purchase could land on a statement already paid. A transfer leg keeps its
+// value, because a card payment names the statement it pays.
+func (s *Service) settleStatement(
+	ctx context.Context, tx *database.Tx, ws int64, ent changes.Entity, cur StoredRow, exists bool, op string,
+	fields map[string]any, refs refSet,
+) error {
+	if ent.Name != "transaction" || op != "upsert" {
+		return nil
+	}
+
+	_, account := fields["account_uid"]
+	_, date := fields["occurred_on"]
+	_, sent := fields["statement_ref"]
+
+	if !account && !date && !sent {
+		return nil
+	}
+
+	eff := map[string]any{}
+	if exists {
+		maps.Copy(eff, cur.Fields)
+	}
+
+	maps.Copy(eff, fields)
+
+	if t, _ := eff["transfer_uid"].(string); t != "" {
+		return nil
+	}
+
+	accountID, ok := refs.ids["account_uid"]
+	if !ok {
+		uid, _ := eff["account_uid"].(string)
+
+		row, found, err := findRow(ctx, tx, ws, "account", uid)
+		if err != nil || !found {
+			return err
+		}
+
+		accountID = row.ID
+	}
+
+	on, _ := eff["occurred_on"].(string)
+
+	ref, err := s.Fin.StatementRefIn(ctx, tx, accountID, on)
+	if err != nil {
+		return err
+	}
+
+	var want any
+	if ref.Valid {
+		want = ref.V
+	}
+
+	if (exists && cur.Fields["statement_ref"] == want) || (!exists && want == nil) {
+		delete(fields, "statement_ref")
+
+		return nil
+	}
+
+	fields["statement_ref"] = want
+
+	return nil
 }
 
 func conflictsOf(v changes.Result) []ConflictOut {
