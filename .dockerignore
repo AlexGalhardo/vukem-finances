@@ -9,6 +9,9 @@
 node_modules/
 /development/
 
+# The desktop app is its own Go module and never part of the image
+/desktop/
+
 # Local data (SQLite files, uploads)
 storage/
 

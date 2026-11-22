@@ -35,6 +35,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API), `export-format.md` and `export-format.schema.json` (the exports), `telegram.md` (the Telegram bot) |
 | `clients/typescript/` | the generated TypeScript client of the API (`api.ts`) |
 | `cmd/app/` | the binary entry point |
+| `desktop/`, `app/desktopgate/`, `bootstrap/desktop.go` | the desktop app: its own Go module (Wails v3.1.0, `replace` to the parent), the loopback gate, and the option that serves the handler behind it (see "The desktop app") |
 | `config/`, `bootstrap/` | configuration and application start-up |
 | `.agents/rules/` | the rules of the team: read them before editing |
 | `.github/` | CI workflows and `scopes.txt`, the list of commit scopes |
@@ -57,6 +58,16 @@ bun run build
 ```
 
 Install the JavaScript dependencies with `bun install --frozen-lockfile`. Run every command above before a hand-off.
+
+## The desktop app
+
+Read `docs/desktop.md`. `desktop/` is a separate Go module (the root `go build ./...`, `go test ./...` and the Docker image do not see it); run `cd desktop && go vet ./... && go test ./...` for it, and `bash desktop/scripts/smoke.sh` for the headless smoke test.
+
+- The desktop runs the personal edition on `127.0.0.1` behind `app/desktopgate`, which wraps the whole handler: loopback peer and Host, no proxy headers, same-origin fetches, and the `vf_desktop` cookie from the one-time launch token. Never mount a route or a static file outside the gate, and never serve the app on another address.
+- `desktopgate.Verified(ctx)` is the only way a request skips the setup code; it is false when no gate wraps the handler. Do not read the cookie anywhere else.
+- The desktop reads no `.env` and no process variable (`desktop/server.go` `desktopEnv`); add a setting there, not in the user's shell.
+- The Wails runtime ignores a page it does not serve, so native actions go through `/desktop/*` routes of `desktop/gate.go` (save, open-external) and `desktop/shell.js`, not Wails bindings.
+- Wails is pinned to an exact stable version in `desktop/go.mod` (no nightly, beta or alpha); the `wails3` tool is installed at the same version. Builds are unsigned.
 
 ## The application shell
 
