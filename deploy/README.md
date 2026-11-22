@@ -95,6 +95,10 @@ docker compose -f compose.prod.yaml cp app:/app/storage/backups/2026-11-21.sqlit
 A daily cron entry on the host does both; run it from the project directory and keep the copies
 somewhere that is not this server. Old snapshots are not removed for you.
 
+A snapshot keeps the data as it was when it was taken. Deleting a workspace or an account in the app never reaches a
+snapshot: what was deleted is retained until you rotate (delete) the snapshot that holds it. Decide how long you keep them,
+and tell the people whose data you host.
+
 On Windows with Git Bash, put `MSYS_NO_PATHCONV=1` before the command: Git Bash otherwise turns
 `/app/...` into a Windows path.
 
