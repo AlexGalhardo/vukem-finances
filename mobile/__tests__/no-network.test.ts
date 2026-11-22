@@ -1,5 +1,5 @@
-import { fireEvent, screen, waitFor } from "@testing-library/react-native";
 import { readdirSync, readFileSync, statSync } from "node:fs";
+import { fireEvent, screen, waitFor } from "@testing-library/react-native";
 import { createElement } from "react";
 import type { Sharer } from "../src/backup/share";
 import { generateDue } from "../src/domain/recurrence";
@@ -84,11 +84,22 @@ describe("no network", () => {
 
   it("has no network API or web address in the app sources", () => {
     const root = `${__dirname}/..`;
-    const sources = [...files(`${root}/src`), ...files(`${root}/app`)].filter((p) => /\.(ts|tsx)$/u.test(p));
+    const sources = [...files(`${root}/src`), ...files(`${root}/app`)]
+      .filter((p) => /\.(ts|tsx)$/u.test(p))
+      // The sync transport is the one place that may touch the network, and it is used only after the person connects.
+      .filter((p) => !p.replaceAll("\\", "/").endsWith("/src/sync/transport.ts"));
     expect(sources.length).toBeGreaterThan(40);
     const forbidden = /\bfetch\s*\(|XMLHttpRequest|\bWebSocket\b|\baxios\b|https?:\/\//u;
     const offenders = sources.filter((p) => forbidden.test(readFileSync(p, "utf8")));
     expect(offenders).toEqual([]);
+  });
+
+  it("keeps fetch inside the sync transport", () => {
+    const root = `${__dirname}/..`;
+    const users = files(`${root}/src`)
+      .filter((p) => /\.(ts|tsx)$/u.test(p) && /\bfetch\b/u.test(readFileSync(p, "utf8")))
+      .map((p) => p.replaceAll("\\", "/").split("/src/")[1]);
+    expect(users).toEqual(["sync/transport.ts"]);
   });
 
   it("declares no networking, analytics or crash-reporting dependency", () => {
