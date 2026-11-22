@@ -16,6 +16,13 @@ Each row needs the author's approval before the campaign relies on it.
 
 `go tool govulncheck ./...` reports no vulnerability on the day of writing.
 
+## Framework
+
+| Finding | Accepted for | Why | Plan |
+| --- | --- | --- | --- |
+| CodeQL 33, `oauth/client.go:188`: fetching a Client ID Metadata Document | Until a framework change, under the decisions delegated by the author on 2026-11-22 | The safe client blocks private addresses at connect time, follows no redirect and never returns the body. What remains is a blind GET to a public https host | Keep |
+| CodeQL 34, `oauth/authorize.go:265`: an error on `/authorize` redirects to a URI from an attacker's metadata document (SaaS only) | Until the fix ships in Vukem | Low: a phishing bounce carrying only `error`, `state` and `iss`, with no code or token | VF-119 in the framework |
+
 ## Performance
 
 | Finding | Accepted for | Why | Plan |
