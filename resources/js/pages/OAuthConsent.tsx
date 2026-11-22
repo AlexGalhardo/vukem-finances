@@ -7,7 +7,19 @@ import type { Page } from "../page-props";
 /** The consent screen of the remote MCP authorization server. The form is a plain POST to the authorization endpoint: the answer is a redirect to the client. */
 export default function OAuthConsent(props: Page<"OAuthConsent">) {
   const { t } = useFinanceI18n();
-  const { clientName, clientId, redirectHost, workspace, role, workspaces, scopes, action, fields, returnTo } = props;
+  const {
+    clientName,
+    claimedName,
+    clientId,
+    redirectHost,
+    workspace,
+    role,
+    workspaces,
+    scopes,
+    action,
+    fields,
+    returnTo,
+  } = props;
 
   return (
     <>
@@ -18,6 +30,12 @@ export default function OAuthConsent(props: Page<"OAuthConsent">) {
         <dl className="grid gap-2 text-sm sm:grid-cols-[12rem_1fr]">
           <dt className="text-muted-foreground">{t("consentClient")}</dt>
           <dd>{clientName}</dd>
+          {claimedName && (
+            <>
+              <dt className="text-muted-foreground">{t("consentClaimedName")}</dt>
+              <dd>{claimedName}</dd>
+            </>
+          )}
           <dt className="text-muted-foreground">{t("consentClientId")}</dt>
           <dd className="break-all">{clientId}</dd>
           <dt className="text-muted-foreground">{t("consentRedirect")}</dt>

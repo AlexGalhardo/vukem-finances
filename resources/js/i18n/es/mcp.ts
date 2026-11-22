@@ -19,6 +19,7 @@ const dict = {
   consentTitle: "Conectar un cliente de IA",
   consentIntro: "{client} pide trabajar con tus finanzas.",
   consentClient: "Cliente",
+  consentClaimedName: "Nombre que dice tener (no verificado)",
   consentClientId: "Identidad verificada",
   consentRedirect: "Vuelve a",
   consentWorkspace: "Espacio de trabajo",

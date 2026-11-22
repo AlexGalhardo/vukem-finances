@@ -14,12 +14,15 @@ import (
 type MCPGrant struct {
 	orm.Model
 
-	WorkspaceID int64        `json:"workspace_id"`
-	UserID      int64        `json:"user_id"`
-	GrantID     string       `json:"-"`
-	ClientID    string       `json:"client_id"`
-	ClientName  string       `json:"client_name"`
-	LastUsedAt  orm.NullTime `json:"last_used_at"`
+	WorkspaceID int64  `json:"workspace_id"`
+	UserID      int64  `json:"user_id"`
+	GrantID     string `json:"-"`
+	ClientID    string `json:"client_id"`
+	ClientName  string `json:"client_name"`
+	// Scopes are the scopes approved at consent: the requested ones the role of
+	// the person could grant then.
+	Scopes     string       `json:"scopes"`
+	LastUsedAt orm.NullTime `json:"last_used_at"`
 }
 
 // Table maps MCPGrant to mcp_grants.

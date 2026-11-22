@@ -226,8 +226,10 @@ func (s *Stack) Call(t *testing.T, access, method string, params map[string]any)
 		c = c.WithToken(access)
 	}
 
-	if name, _ := params["name"].(string); name != "" {
-		c = c.WithHeader("Mcp-Name", name)
+	for _, key := range []string{"name", "uri"} {
+		if name, _ := params[key].(string); name != "" {
+			c = c.WithHeader("Mcp-Name", name)
+		}
 	}
 
 	p := map[string]any{"_meta": map[string]any{

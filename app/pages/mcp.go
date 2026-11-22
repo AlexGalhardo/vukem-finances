@@ -39,7 +39,10 @@ type OAuthConsentProps struct {
 	// ClientName is what the client calls itself; ClientID is its identifier,
 	// the verified identity: the address of its metadata document or the id it
 	// was registered with. RedirectHost is where the browser returns to.
-	ClientName   string             `json:"clientName"`
+	ClientName string `json:"clientName"`
+	// ClaimedName is the name a client identified by a metadata document gives
+	// itself. Nothing verified it: the screen shows it labeled as unverified.
+	ClaimedName  string             `json:"claimedName"`
 	ClientID     string             `json:"clientId"`
 	RedirectHost string             `json:"redirectHost"`
 	Workspace    string             `json:"workspace"`

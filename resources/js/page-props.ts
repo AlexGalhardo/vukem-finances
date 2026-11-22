@@ -814,6 +814,7 @@ export type NotificationsProps = {
 
 export type OAuthConsentProps = {
   action: string;
+  claimedName: string;
   clientId: string;
   clientName: string;
   fields: ConsentField[];
