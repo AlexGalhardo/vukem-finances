@@ -16,6 +16,68 @@ git cliff --config .config/cliff.toml --offline --unreleased --tag vX.Y.Z --stri
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-22
+
+### Added
+
+- **cards:** Add closing, statement and due date arithmetic ([`c28cdc4`](https://github.com/AlexGalhardo/vukem-finances/commit/c28cdc4b61b9576646f019760a4e1a693247a289))
+- **cards:** Add credit_cards table and transaction statement_ref ([`5351780`](https://github.com/AlexGalhardo/vukem-finances/commit/5351780899f36a6499983697e40937b2f2f7a711))
+- **cards:** Add card create, update, archive and delete ([`f0a2581`](https://github.com/AlexGalhardo/vukem-finances/commit/f0a258108bff2219b441da4caf6c1e77963228b2))
+- **cards:** Tag card purchases with a statement and pay statements ([`61b3280`](https://github.com/AlexGalhardo/vukem-finances/commit/61b32809edf5248eff1023dc62c36381382c7bde))
+- **cards:** Add card and statement routes, handlers and pages props ([`3f186b1`](https://github.com/AlexGalhardo/vukem-finances/commit/3f186b1b44f43fda08fa8218a769dcf867dbfc6e))
+- **cards:** Add the cards and card statement pages with the g k action ([`7ea31b8`](https://github.com/AlexGalhardo/vukem-finances/commit/7ea31b808538bc3098a839684b6c0a8eb7bd359d))
+- **i18n:** Add card translations in three locales and the g k shortcut row ([`f2c3d54`](https://github.com/AlexGalhardo/vukem-finances/commit/f2c3d54693cc4e9fc5d0ea6b218c1748aedfbcc1))
+- **cards:** Seed a demo card with two statements ([`79bcc7f`](https://github.com/AlexGalhardo/vukem-finances/commit/79bcc7fb8791f54d7ab31ec6eeb0aafabaa7bdec))
+- **api:** Add the token resource column and the vf_ prefix ([`391a3f8`](https://github.com/AlexGalhardo/vukem-finances/commit/391a3f86327fe6b01b0fa94162818b3330498f31))
+- **api:** Add scoped token creation, listing and revocation with the Tokens page ([`bd5fdf3`](https://github.com/AlexGalhardo/vukem-finances/commit/bd5fdf3881175fcb1514b277994b10020213320a))
+- **api:** Add the bearer middleware chain, me and account endpoints ([`964618f`](https://github.com/AlexGalhardo/vukem-finances/commit/964618f0cb857da9fcc1c9b69f200d3fca24c387))
+- **api:** Add category and tag endpoints with client uids and version checks ([`3b40a64`](https://github.com/AlexGalhardo/vukem-finances/commit/3b40a64a28913876ce5d3d3628994dc19a160713))
+- **api:** Add transaction and transfer endpoints with filters, pages, client uids and If-Match ([`7ac69d3`](https://github.com/AlexGalhardo/vukem-finances/commit/7ac69d3765cecc3efef211d1b7b233d81d0bdcaf))
+- **api:** Add budget and summary endpoints ([`dadb2e0`](https://github.com/AlexGalhardo/vukem-finances/commit/dadb2e09cbe5682f5e6575a7fd73457b85fd56d7))
+- **api:** Generate the OpenAPI document and the TypeScript client with freshness tests ([`703253a`](https://github.com/AlexGalhardo/vukem-finances/commit/703253a1fa2427360e45d4bb48ff04f6d262415b))
+- **recurrence:** Add the pure recurrence engine ([`1604c1f`](https://github.com/AlexGalhardo/vukem-finances/commit/1604c1fce33291beebfd2b11e29f1005aae641c0))
+- **recurrence:** Add the recurrences table and the transaction natural key ([`4060dfa`](https://github.com/AlexGalhardo/vukem-finances/commit/4060dfa463c6fee761172a8c1f2bf69e57858a33))
+- **recurrence:** Create, split and delete installment purchases ([`8462732`](https://github.com/AlexGalhardo/vukem-finances/commit/8462732de039bc83df964aae3dee794699c16b34))
+- **recurrence:** Generate due occurrences idempotently under the quota lock ([`ec72c6a`](https://github.com/AlexGalhardo/vukem-finances/commit/ec72c6a70a8da8a190a1eddd83e1c60d1f6987a5))
+- **recurrence:** Run the generation job hourly ([`60c5060`](https://github.com/AlexGalhardo/vukem-finances/commit/60c50600b10e961800c7227ccdbcd3ed75ed57d1))
+- **recurrence:** List what is due in the next days with virtual occurrences ([`e31524b`](https://github.com/AlexGalhardo/vukem-finances/commit/e31524bf8b37dd9ec4337ff52c290716dd1ece2d))
+- **recurrence:** Add the recurrence and installment routes and handlers ([`3d2d491`](https://github.com/AlexGalhardo/vukem-finances/commit/3d2d4918a02a35f1bdcc75b5bc1892a0a07a1911))
+- **recurrence:** Add the recurrences page, the upcoming list and the installment form ([`e48bd4d`](https://github.com/AlexGalhardo/vukem-finances/commit/e48bd4d04640fab5f570726215d6eb5bf03cbd1d))
+- **sync:** Merge a recurrence watermark by the later date ([`218b1ba`](https://github.com/AlexGalhardo/vukem-finances/commit/218b1bad574e5f13903b257c583807bfa87a2dcb))
+- **db:** Add budget rollover, goals and notifications tables ([`268874c`](https://github.com/AlexGalhardo/vukem-finances/commit/268874c15e9b4517129bf976ad0ca85e083878ac))
+- **budgets:** Sum spending in one grouped query with rollover, parents and an overall budget ([`5550f56`](https://github.com/AlexGalhardo/vukem-finances/commit/5550f564511d0e1129047047320f9cfc525ad00c))
+- **goals:** Add goals and contributions with required monthly and projected date ([`cf58a2a`](https://github.com/AlexGalhardo/vukem-finances/commit/cf58a2a75d4c5c601231bb2d21dee566d5405dbf))
+- **alerts:** Evaluate alerts from current data in an idempotent job ([`a628f26`](https://github.com/AlexGalhardo/vukem-finances/commit/a628f2605efd8bdc4c997bcb5dd1704a291c4286))
+- **alerts:** Add preferences, the mail channel templates and the notification reads ([`e3e4d7c`](https://github.com/AlexGalhardo/vukem-finances/commit/e3e4d7c42544d7b3351f22b9de32c8d2026e234b))
+- **budgets:** Add goal, notification and overall budget routes with page props ([`e328735`](https://github.com/AlexGalhardo/vukem-finances/commit/e32873535d01ddfaa8cad642d97d4b5a3fbe9510))
+- **i18n:** Add budgets, goals and alerts translations and the goals shortcut ([`7b54651`](https://github.com/AlexGalhardo/vukem-finances/commit/7b546512bbd698f3b8b7d5d60e5262c2b6d88415))
+- **ui:** Add the notification bell, goals page and budgets with rollover and overall ([`197a302`](https://github.com/AlexGalhardo/vukem-finances/commit/197a3026d1a2a28504aea3e2f80c08226494fb13))
+- **export:** Format cents as a machine decimal ([`c08b855`](https://github.com/AlexGalhardo/vukem-finances/commit/c08b855aff650cfa1c04a4f602d6da501fb0e2ba))
+- **reports:** Add the report period and the category index ([`84d4561`](https://github.com/AlexGalhardo/vukem-finances/commit/84d4561c54d448aad815c7e9575af44b7de40f91))
+- **reports:** Add cash flow and breakdown by category, account and tag ([`269d58d`](https://github.com/AlexGalhardo/vukem-finances/commit/269d58db8a3cf5da9f0859114c08eeb291cfba44))
+- **reports:** Add the net worth series and the period comparison ([`8743f73`](https://github.com/AlexGalhardo/vukem-finances/commit/8743f736630932a86e6886fb2cba08ccdae34dab))
+- **export:** Stream the transactions CSV with a formula guard ([`9e686b4`](https://github.com/AlexGalhardo/vukem-finances/commit/9e686b412df143a698dc3ff6e8ee0b54b8d0dc2f))
+- **export:** Add the JSON export of the workspace and its schema ([`b6cad12`](https://github.com/AlexGalhardo/vukem-finances/commit/b6cad12526d5c83ced5db1d3f09884eeca0c25c7))
+- **export:** Rate limit the downloads and check who may take them ([`634c016`](https://github.com/AlexGalhardo/vukem-finances/commit/634c016159ce4692da1ff9e3869ea6b536690fa8))
+- **reports:** Add the reports page, the export menu and the x and g r actions ([`d7f004f`](https://github.com/AlexGalhardo/vukem-finances/commit/d7f004f21af1c1f52c098a31ccf5930c9f09c612))
+
+### Fixed
+
+- **cards:** Move trashed purchases of an emptied statement with the closing day ([`5c5ad5d`](https://github.com/AlexGalhardo/vukem-finances/commit/5c5ad5daea9a8b743f9e4a5cb9a43c4d586c5bf4))
+- **api:** Answer unknown paths and methods under /api/v1 with problem+json ([`eca8afb`](https://github.com/AlexGalhardo/vukem-finances/commit/eca8afb9c902d30161929a25b6bd206237b72233))
+- **api:** Require tags:write to create a tag through a transaction ([`0b119fd`](https://github.com/AlexGalhardo/vukem-finances/commit/0b119fd385185395f3cdc1d2d8bf992a2e68cb90))
+- **billing:** Keep access on a refund of an ended period and after a won dispute ([`936ca87`](https://github.com/AlexGalhardo/vukem-finances/commit/936ca871315a5f09b4f0a06a0ed51c23b08dd777))
+- **sync:** Read a recurrence watermark strictly and never past today ([`d38bd5a`](https://github.com/AlexGalhardo/vukem-finances/commit/d38bd5a15e078eedfac115768a761b09355b7535))
+- **recurrence:** Bound the engine years and the walk, refuse insane dates ([`af7ad12`](https://github.com/AlexGalhardo/vukem-finances/commit/af7ad128385d3ba0cc9a8934e8dcd985dfae7afa))
+- **recurrence:** Post nothing when a future rule moves into the past ([`b3cc416`](https://github.com/AlexGalhardo/vukem-finances/commit/b3cc4169662668d6969b43cd7e293bf0f72ea936))
+- **billing:** Decide a refund by the event time and always finish its cancel ([`d1ca96c`](https://github.com/AlexGalhardo/vukem-finances/commit/d1ca96cd364e7469ca2fefc8e93ee8185cbdf058))
+- **ui:** Name the notifications page list items so the shared bell prop is not hidden ([`f794244`](https://github.com/AlexGalhardo/vukem-finances/commit/f79424428b2894a7faefda2856555fcc9cf525d8))
+- **alerts:** Honor the current mail preference for pending notifications ([`a85ed38`](https://github.com/AlexGalhardo/vukem-finances/commit/a85ed380a4d58d74dbf1a01ad0ca33b63aaab8c9))
+- **finance:** Detect formulas behind invisible leading characters ([`b590df7`](https://github.com/AlexGalhardo/vukem-finances/commit/b590df7ddc2faa9dcec88f9c11da98293c82a134))
+- **export:** Guard formulas after list separators in CSV cells ([`52bc928`](https://github.com/AlexGalhardo/vukem-finances/commit/52bc928fc3aa4fa1060a937a641568037a4f8a6f))
+- **export:** Abort a download that fails after its first byte ([`2853c7f`](https://github.com/AlexGalhardo/vukem-finances/commit/2853c7fed2ae1010d7a2fc644492358e73508513))
+- **export:** Guard formulas after line breaks in CSV cells ([`3ffe100`](https://github.com/AlexGalhardo/vukem-finances/commit/3ffe100193b11df474d71320e70312da3f449949))
+
 ## [0.2.0] - 2026-11-21
 
 ### Added
