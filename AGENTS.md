@@ -24,13 +24,14 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | Path | What lives there |
 | --- | --- |
 | `app/` | Go application code: `accounts/`, `admin/`, `alerts/` (notifications: evaluation, channels, preferences), `billing/`, `changes/` (sync: entity registry, change-log triggers and reader, compaction, merge), `controllers/`, `finance/` (money, transactions, dashboard, import), `jobs/`, `listeners/`, `mail/`, `models/`, `pages/`, `requests/`, `workspaces/` |
+| `app/reports/`, `app/export/` | the reports (period, cash flow, breakdowns, net worth series, comparison) and the CSV and JSON exporters (see "Reports and exports") |
 | `app/ai/` | the AI layer (bring your own key): providers, the encrypted key vault, `Redact`, the call pipeline with limits (see "The AI layer") |
 | `app/api/` | the public JSON API: scoped tokens, the middleware chain, the operations table and the handlers (see "The public API") |
 | `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `api.go`, `admin.go`, ...) registered by `registry.go` |
 | `database/migrations/` | Go migrations, registered in `registry.go` |
 | `resources/js/` | React pages, components, layouts and React Email templates |
 | `resources/js/shortcuts/`, `resources/js/nav.ts`, `resources/js/i18n/` | the shortcut registry, the sidebar items, the translation files (see "The application shell") |
-| `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API) |
+| `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API), `export-format.md` and `export-format.schema.json` (the exports) |
 | `clients/typescript/` | the generated TypeScript client of the API (`api.ts`) |
 | `cmd/app/` | the binary entry point |
 | `config/`, `bootstrap/` | configuration and application start-up |
@@ -102,6 +103,14 @@ Read `docs/billing.md` first. Billing is saas only (D-003): the personal edition
 - Provider error text and secrets never reach a log, response or audit entry: wrap errors with `sanitizeStripe` or `providerError`, log references and kinds only. Payment records follow D-022: after a deletion only the amount, date, provider reference and a non-reversible subject reference are kept for 5 years (no legal review of that default).
 - Settings: `STRIPE_*`, `ABACATEPAY_API_KEY`, `ABACATEPAY_WEBHOOK_SECRET`, `PIX_PRICE_PRO_MONTHLY_CENTS`, `PIX_MONTHS_OPTIONS` (`.env.example`). PIX is on when the API key is set; a production saas boot then requires the other three.
 - The job `billing_reconcile` (every 6 hours) re-reads PIX charges that can still change. `ABACATEPAY_API_BASE` and `STRIPE_API_BASE` point at fakes: the tests (`fakeStripe`, `fakeAbacatePay` in `tests/`) and `bunx playwright test e2e/billing.spec.ts` (a saas server on port 3918 and `e2e/fake-abacatepay.mjs`); production ignores the AbacatePay one.
+
+## Reports and exports
+
+Read `docs/export-format.md` first.
+
+- Reports are functions of `reports.Service` that return plain structs (`CashFlow`, `ByCategory`, `ByAccount`, `ByTag`, `NetWorthSeries`, `Compare`); the page (`GET /reports`) and the future public API share them. A period is `reports.Period` (`NewPeriod`: presets or custom dates, workspace-local, never floats); its `Previous` has the same length (whole months go back the same number of months). All of them go through `workspaces.Scoped`, leave out transfer legs and deleted rows, and sum in Go from grouped queries with clamping at `capCents` (never a SQL `SUM`). Percentages are basis points from integers (`ratio`, `changeBps`), `n/a` when the previous value is zero.
+- The CSV (`GET /transactions/export.csv`, any role that can read) takes the filters of the transaction list, streams through `finance.EachTransaction` (keyset chunks, so no cursor holds the one SQLite connection), refuses more than `export.MaxCSVRows` with a 413 before the first byte, and writes every text cell through `finance.SpreadsheetSafe`. The amount is `finance.FormatDecimalCents`. The JSON (`GET /workspace/export.json`, `data.manage`: owner and admin) is built from the explicit types of `app/export/json.go`: a new column reaches it only when added there and to `docs/export-format.schema.json` (`additionalProperties: false`), and `TestSecurity_JSONExportHasNoSecrets` lists the names that may never appear. Both share the limit `config.ExportLimit` per workspace and hour.
+- On the page, every chart sits in `ChartWithTable` (the chart is `aria-hidden`, the table is read by screen readers and swaps in with "Show as table"); `resources/css/print.css` shows the tables and hides the shell. The `x` action (`export-transactions`) is registered by `useExportAction` on the transactions and reports pages; `g r` is the `reports` nav item.
 
 ## Rules that never bend
 
