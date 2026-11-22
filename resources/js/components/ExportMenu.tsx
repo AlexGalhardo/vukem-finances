@@ -17,7 +17,7 @@ export default function ExportMenu({ csvUrl, csvExcelUrl, jsonUrl, onPrint }: Ex
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button type="button" variant="outline" data-print="hide">
+        <Button type="button" variant="outline" data-print="hide" shortcutAction="export-transactions">
           <Download aria-hidden="true" data-icon="inline-start" />
           {t("rptExport")}
         </Button>
