@@ -9,11 +9,17 @@
 #                                           cuts on its own when the branch reaches MAX commits
 #   release-train.sh cut [--force]          cut, merge and start the next release (needs MIN
 #                                           commits unless --force)
+#   release-train.sh relink [vX.Y.Z]...     rewrite the commit links of those releases (all by
+#                                           default) in CHANGELOG.md to the ids on main, and
+#                                           commit it on the open release branch
 #
 # Run it in the main checkout, on the open release branch. It never force-pushes and never
 # pushes main: the rebase-merge of the pull request moves main. The GitHub release of each cut
 # is created after the merge, with notes regenerated from main (the rebase gives the commits new
-# ids), and every commit id linked in CHANGELOG.md is checked against GitHub.
+# ids). The changelog is written before the merge, so it links the pre-rebase ids; the first
+# commit of the next release branch rewrites them to the ids on main (matched by subject), and
+# every id linked there is checked to be on main and on GitHub. Main itself carries the
+# pre-rebase links of a release until the next release is merged.
 set -euo pipefail
 
 MIN=${RELEASE_TRAIN_MIN:-90}
@@ -95,15 +101,22 @@ integrate() {
 # Prints the notes of version $1 for the commits of $2 (a git range), without the header.
 render_section() {
 	local v=$1 range=$2
-	"${CLIFF[@]}" "$range" --tag "v$v" --strip header
+	# --tag-pattern matches nothing: a tag inside the range (one that sits after its release
+	# commit) must not print its own section here.
+	"${CLIFF[@]}" "$range" --tag "v$v" --tag-pattern '^$.' --strip header
 }
+
+RELEASE_RE='^chore\(release\): v[0-9]+\.[0-9]+\.[0-9]+$'
+
+# The release commits on main, newest first (not "chore(release): vX.Y.Z changelog" and the like).
+release_commits() { git log origin/main -E --grep="$RELEASE_RE" --format=%H; }
 
 # The commit range of the release being cut: everything since the last release commit on main.
 # $1 is the tip (HEAD while cutting, origin/main after the merge) and $2 how many release
 # commits at the tip of main to skip (0 before the merge, 1 after it).
 range_since_last_release() {
 	local tip=$1 skip=$2 last
-	last=$(git log origin/main --format=%H --grep='^chore(release): v' | sed -n "$((skip + 1))p" || true)
+	last=$(release_commits | sed -n "$((skip + 1))p" || true)
 	# git-cliff takes only "a..b" ranges. Before the first release the start is the root commit
 	# (the initial import, which the changelog skips anyway).
 	[ -n "$last" ] || last=$(git rev-list --max-parents=0 "$tip" | tail -n 1)
@@ -174,7 +187,7 @@ open_or_update_pr() { # $1 branch, $2 version, $3 body file; prints the number
 }
 
 cut_release() {
-	local b v pr n next body released=0
+	local b v pr n next body relinked released=0
 	b=$(branch)
 	v=$(version_of "$b")
 	n=$(count)
@@ -210,9 +223,10 @@ cut_release() {
 	next="0.$(($(cut -d. -f2 <<<"$v") + 1)).0"
 	git switch -q -c "release/v$next" origin/main
 	git push -q -u origin "release/v$next"
+	relinked=$(relink_commit "$v") || die "the changelog links of v$v could not be rewritten: $relinked"
 	echo "next release: release/v$next (its pull request opens with the first integrated commit)"
 	rm -f "$body"
-	check_links "$v"
+	check_links "$v" HEAD:CHANGELOG.md
 }
 
 # Creates the GitHub release vX.Y.Z on the release commit of main. The notes are rendered again
@@ -221,18 +235,73 @@ publish_release() {
 	local v=$1 notes
 	notes=$(mktemp)
 	render_section "$v" "$(range_since_last_release origin/main 1)" | sed '1,/^$/d' >"$notes"
-	gh release create "v$v" --target "$(git rev-parse origin/main)" --title "v$v" --notes-file "$notes" >/dev/null ||
+	gh release create "v$v" --target "$(release_commits | sed -n 1p)" --title "v$v" --notes-file "$notes" >/dev/null ||
 		echo "release-train: the GitHub release v$v was not created" >&2
 	rm -f "$notes"
 	echo "published the GitHub release v$v"
 }
 
-# Every commit id linked in the section of CHANGELOG.md must exist on GitHub. A failure is a
-# stop: the changelog is not edited by hand.
+# Rewrites, in CHANGELOG.md, the links of the section of version $1 that point to pre-rebase ids
+# to the ids on main. An id is matched by the subject of its commit (the rebase keeps it) among
+# the commits of the release on main; an id with no commit, or a subject that is not unique in
+# the release, is reported and left alone. Returns 1 when something stayed unlinked.
+relink_changelog() {
+	local v=$1 rel prev map bad=0 id subject new o n url=$URL/commit
+	rel=$(git log origin/main -1 -E --grep="^chore\(release\): v${v//./\.}\$" --format=%H)
+	[ -n "$rel" ] || {
+		echo "no release commit for v$v on main" >&2
+		return 1
+	}
+	prev=$(release_commits | awk -v r="$rel" 'f { print; exit } $0 == r { f = 1 }')
+	[ -n "$prev" ] || prev=$(git rev-list --max-parents=0 "$rel" | tail -n 1)
+	map=$(mktemp)
+	git log --no-merges --format='%H %s' "$prev..$rel^" >"$map"
+	for id in $(section_of "$v" HEAD:CHANGELOG.md | grep -o "$REPO/commit/[0-9a-f]\{40\}" | sed 's#.*/##' | sort -u); do
+		git merge-base --is-ancestor "$id" origin/main 2>/dev/null && continue
+		subject=$(git log -1 --format=%s "$id" 2>/dev/null) || subject=
+		new=$(awk -v s="$subject" 'substr($0, 42) == s { print substr($0, 1, 40) }' "$map")
+		if [ -z "$subject" ] || [ "$(wc -w <<<"$new")" != 1 ]; then
+			echo "v$v: $id has no unique commit on main (subject: ${subject:-unknown})" >&2
+			bad=1
+			continue
+		fi
+		o=${id:0:7}
+		n=${new:0:7}
+		sed -i.bak "s#\`$o\`\]($url/$id)#\`$n\`]($url/$new)#" CHANGELOG.md
+	done
+	rm -f "$map" CHANGELOG.md.bak
+	return "$bad"
+}
+
+# Relinks the versions given (those with a section in CHANGELOG.md when none) and commits the
+# change on the current release branch, then pushes. Prints nothing when nothing changed.
+relink_commit() {
+	local v bad=0 vs=("$@") msg
+	[ ${#vs[@]} -gt 0 ] || while read -r v; do vs+=("$v"); done < <(sed -n 's/^## \[\([0-9][0-9.]*\)\].*//p' CHANGELOG.md)
+	for v in "${vs[@]}"; do
+		relink_changelog "${v#v}" || bad=1
+	done
+	git diff --quiet CHANGELOG.md && return "$bad"
+	if [ -f site/package.json ] && command -v bun >/dev/null; then
+		(cd site && bun run reference >/dev/null && bun run last-updated >/dev/null) || return 1
+		git add site/content
+	fi
+	msg="link the ${vs[*]/#/v} changelog entries to the commits on main"
+	git add CHANGELOG.md
+	git commit -q -m "docs(release): ${msg//vv/v}"
+	git push -q origin "$(branch)"
+	return "$bad"
+}
+
+# Every commit id linked in the section of version $1 of $2 (a git rev:path) must be on main and
+# exist on GitHub. A failure is a stop: the changelog is not edited by hand.
 check_links() {
 	local v=$1 id bad=0
-	for id in $(section_of "$v" origin/main:CHANGELOG.md | grep -o "$REPO/commit/[0-9a-f]\{40\}" | sed 's#.*/##' | sort -u); do
-		if ! gh api "repos/$REPO/commits/$id" --jq .sha >/dev/null 2>&1; then
+	for id in $(section_of "$v" "$2" | grep -o "$REPO/commit/[0-9a-f]\{40\}" | sed 's#.*/##' | sort -u); do
+		if ! git merge-base --is-ancestor "$id" origin/main 2>/dev/null; then
+			echo "release-train: the changelog links $id, which is not on main" >&2
+			bad=1
+		elif ! gh api "repos/$REPO/commits/$id" --jq .sha >/dev/null 2>&1; then
 			echo "release-train: the changelog links $id, which GitHub does not answer" >&2
 			bad=1
 		fi
@@ -264,5 +333,10 @@ cut)
 	[ "${2:-}" = "--force" ] || [ "$(count)" -ge "$MIN" ] || die "$(count) commits: cut at $MIN or more, or pass --force"
 	cut_release
 	;;
-*) die "usage: release-train.sh status | integrate <ref>... | cut [--force]" ;;
+relink)
+	shift
+	require_release_branch
+	relink_commit "$@"
+	;;
+*) die "usage: release-train.sh status | integrate <ref>... | cut [--force] | relink [vX.Y.Z]..." ;;
 esac
