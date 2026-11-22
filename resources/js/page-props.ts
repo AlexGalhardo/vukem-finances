@@ -35,6 +35,21 @@ export type AccountBalance = {
   transactions: number;
 };
 
+export type AccountReport = {
+  currency: string;
+  period: Period;
+  rows: AccountRow[];
+};
+
+export type AccountRow = {
+  expenseCents: number;
+  incomeCents: number;
+  kind: string;
+  name: string;
+  netCents: number;
+  uid: string;
+};
+
 export type AdminPixPayment = {
   amountCents: number;
   canRefund: boolean;
@@ -99,6 +114,13 @@ export type CardOverview = {
   workspace_id: number;
 };
 
+export type CashFlowReport = {
+  currency: string;
+  months: MonthFlow[];
+  period: Period;
+  totals: Sum;
+};
+
 export type Category = {
   archived_at: string | null;
   color: string;
@@ -115,9 +137,43 @@ export type Category = {
   workspace_id: number;
 };
 
+export type CategoryReport = {
+  currency: string;
+  kind: string;
+  period: Period;
+  rows: CategoryRow[];
+  totalCents: number;
+};
+
+export type CategoryRow = {
+  cents: number;
+  children: CategoryRow[];
+  name: string;
+  ownCents: number;
+  shareBps: number;
+  uid: string;
+  uncategorized: boolean;
+};
+
 export type CategorySpend = {
   category: string;
   cents: number;
+};
+
+export type CompareReport = {
+  currency: string;
+  period: Period;
+  previous: Period;
+  rows: CompareRow[];
+};
+
+export type CompareRow = {
+  changeBps: number;
+  currentCents: number;
+  diffCents: number;
+  key: string;
+  notApplicable: boolean;
+  previousCents: number;
 };
 
 export type CreatedToken = {
@@ -234,6 +290,13 @@ export type Member = {
   userId: number;
 };
 
+export type MonthFlow = {
+  expenseCents: number;
+  incomeCents: number;
+  month: string;
+  netCents: number;
+};
+
 export type MonthPoint = {
   expenseCents: number;
   incomeCents: number;
@@ -248,6 +311,17 @@ export type MonthUsage = {
   outputTokens: number;
 };
 
+export type NetWorthPoint = {
+  balanceCents: number;
+  month: string;
+};
+
+export type NetWorthReport = {
+  currency: string;
+  period: Period;
+  points: NetWorthPoint[];
+};
+
 export type NullInt64 = {
   V: number;
   Valid: boolean;
@@ -256,6 +330,12 @@ export type NullInt64 = {
 export type NullString = {
   V: string;
   Valid: boolean;
+};
+
+export type Period = {
+  from: string;
+  preset: string;
+  to: string;
 };
 
 export type PixAccess = {
@@ -380,6 +460,12 @@ export type StatementSummary = {
   totalCents: number;
 };
 
+export type Sum = {
+  expenseCents: number;
+  incomeCents: number;
+  netCents: number;
+};
+
 export type Tag = {
   color: string;
   created_at: string;
@@ -396,6 +482,20 @@ export type TagRef = {
   color: string;
   id: number;
   name: string;
+  uid: string;
+};
+
+export type TagReport = {
+  currency: string;
+  period: Period;
+  rows: TagRow[];
+};
+
+export type TagRow = {
+  expenseCents: number;
+  incomeCents: number;
+  name: string;
+  netCents: number;
   uid: string;
 };
 
@@ -653,6 +753,18 @@ export type RecurrencesProps = {
   upcoming: UpcomingItem[];
 };
 
+export type ReportsProps = {
+  accounts: AccountReport;
+  cashFlow: CashFlowReport;
+  compare: CompareReport;
+  currency: string;
+  expenseCategories: CategoryReport;
+  incomeCategories: CategoryReport;
+  netWorth: NetWorthReport;
+  period: Period;
+  tags: TagReport;
+};
+
 export type SettingsTelegramProps = {
   alertsOn: boolean;
   created?: TelegramCode | null;
@@ -734,6 +846,7 @@ export interface PageProps {
   InviteRegister: InviteRegisterProps;
   Notifications: NotificationsProps;
   Recurrences: RecurrencesProps;
+  Reports: ReportsProps;
   "Settings/Telegram": SettingsTelegramProps;
   Setup: SetupProps;
   Tokens: TokensProps;
