@@ -20,3 +20,16 @@ carries a test written first, in its own commit, with `Refs: epic 24 task N` and
 - **Status:** open. The fix is a decision for the author, not a patch: either run with `SESSION_DRIVER=database` (a
   deployment and data decision; server-side sessions are deleted on logout) or make `POST /logout` bump
   `users.session_version`, which signs the person out of every device, not only this one.
+
+### QA-002: the base URL check accepts "localhost." and alternative spellings of an IPv4 address
+
+- **Surface:** AI, `POST /ai/key` with the OpenAI-compatible provider (`ai.CheckBaseURL`).
+- **Steps:** save a base URL of `https://localhost./v1`, `https://2130706433/v1`, `https://0x7f.0.0.1/v1`,
+  `https://017700000001/v1` or `https://127.1/v1` in the saas edition.
+- **Expected:** refused at save time, like `https://127.0.0.1/v1`.
+- **Actual:** saved. The connect-time check of the safe client still refuses to connect to an address on this machine
+  (`TestSecurity_SSRF_SaaSNeverConnectsToThisMachine` proves no connection is made), so this is a gap of the early check only.
+- **Evidence:** `TestBaseURL` and `TestSecurity_SSRF_AIBaseURLInSaaS` failed before the fix.
+- **Severity:** Low (defense in depth).
+- **Status:** fixed. A trailing dot is trimmed before the host is judged, and a host made only of decimal or `0x` labels that
+  is not a canonical IP literal is refused.
