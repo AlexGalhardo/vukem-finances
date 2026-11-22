@@ -8,6 +8,7 @@ import (
 
 func financeTransactions(g *router.Group, h *ledger.Handlers) {
 	g.Get("/transactions", h.Transactions).Name("transactions.index")
+	g.Get("/transactions/export.csv", h.ExportTransactionsCSV).Name("transactions.export")
 	g.Get("/transactions/options", h.TransactionOptions).Name("transactions.options")
 	g.Post("/transactions", h.StoreTransaction).Name("transactions.store")
 	g.Patch("/transactions/{transaction}", h.UpdateTransaction).Name("transactions.update")
