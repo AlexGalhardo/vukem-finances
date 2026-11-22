@@ -77,12 +77,12 @@ Authorization cases: 640
 | `GET /.well-known/oauth-authorization-server` | oauth.metadata (saas) | `TestDiscovery`, `TestSecurity_MCP_Authorize` |
 | `GET /.well-known/oauth-protected-resource` | mcp.resource-metadata.root (saas) | `TestOAuthDiscoveryAndDecision` |
 | `GET /.well-known/oauth-protected-resource/mcp` | mcp.resource-metadata (saas) | `TestOAuthDiscoveryAndDecision` |
-| `GET /account/deletion` | account.deletion.show (personal, saas) | `TestAccountDeletionOverTheWeb` |
-| `POST /account/deletion` | account.deletion.store (personal, saas) | `TestAccountDeletionIsRefusedForTheOnlyOwnerOfASharedWorkspace`, `TestAccountDeletionOverTheWeb` |
+| `GET /account/deletion` | account.deletion.show (personal, saas) | `TestAccountDeletionOverTheWeb`, `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson`, `TestDataLifecycle_NoSessionOutlivesThePurge` |
+| `POST /account/deletion` | account.deletion.store (personal, saas) | `TestAccountDeletionIsRefusedForTheOnlyOwnerOfASharedWorkspace`, `TestAccountDeletionOverTheWeb`, `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson` and 1 more |
 | `POST /account/deletion/cancel` | account.deletion.cancel (personal, saas) | `TestAccountDeletionOverTheWeb` |
 | `POST /account/erase` | account.erase (personal) | `TestPersonalEraseOverTheWeb`, `TestSaasHasNoEraseRoute` |
-| `POST /account/export` | account.export.confirm (personal, saas) | `TestPersonalExportNeedsThePassword`, `TestPersonalMakesNoOutboundConnection` |
-| `GET /account/export.json` | account.export (personal, saas) | `TestPersonalExportNeedsThePassword`, `TestPersonalMakesNoOutboundConnection` |
+| `POST /account/export` | account.export.confirm (personal, saas) | `TestDataLifecycle_ExportHoldsEverythingTheyOwnAndNoSecret`, `TestPersonalExportNeedsThePassword`, `TestPersonalMakesNoOutboundConnection` |
+| `GET /account/export.json` | account.export (personal, saas) | `TestDataLifecycle_ExportHoldsEverythingTheyOwnAndNoSecret`, `TestPersonalExportNeedsThePassword`, `TestPersonalMakesNoOutboundConnection` |
 | `GET /account/privacy` | account.privacy (personal, saas) | `TestPersonalEraseOverTheWeb`, `TestSaasHasNoEraseRoute`, `e2e/privacy.spec.ts` |
 | `GET /accounts` | accounts.index (personal, saas) | `TestAccountsHTTP`, `TestSoftDelete`, `TestWorkspaceRoutesAreRateLimited` and 4 more |
 | `POST /accounts` | accounts.store (personal, saas) | `TestAccountsHTTP`, `TestFreePlanLimits`, `TestLimitsPersonalHasNoCaps` and 2 more |
@@ -169,7 +169,7 @@ Authorization cases: 640
 | `GET /email/verify` | verification.notice (personal, saas) | `TestExpiredVerificationLinkOffersANewOne`, `TestUnverifiedUsersSeeTheNotice`, `TestVerificationEndsOtherSessions` |
 | `GET /email/verify/{id}` | verification.verify (personal, saas) | `TestEmailVerificationRoutes` |
 | `GET /forgot-password` | password.request (personal, saas) | `TestPasswordReset`, `TestPasswordResetAnswersAlike` |
-| `POST /forgot-password` | password.email (personal, saas) | `TestPasswordReset`, `TestPasswordResetAnswersAlike`, `TestPersonalMailNeverBlocksAFlow` and 3 more |
+| `POST /forgot-password` | password.email (personal, saas) | `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson`, `TestPasswordReset`, `TestPasswordResetAnswersAlike` and 4 more |
 | `GET /goals` | goals.index (personal, saas) | `TestGoalsHTTP`, `TestNotificationsHTTP` |
 | `POST /goals` | goals.store (personal, saas) | `TestCrossTenantMatrix`, `TestGoalLifecycleHTTP`, `TestGoalsHTTP` |
 | `DELETE /goals/{goal}` | goals.destroy (personal, saas) | `TestGoalsHTTP` |
@@ -189,7 +189,7 @@ Authorization cases: 640
 | `POST /invites/{token}/register` | invites.register (personal) | `TestPersonalInviteRegister`, `TestPersonalInviteRegisterRefusals`, `TestSecurity_InviteTokenNotInQuery` |
 | `POST /locale` | locale (personal, saas) | `TestSecurity_Web_OpenRedirect`, `TestSecurity_Web_Production`, `TestSecurity_Web_Sessions` |
 | `GET /login` | login (personal, saas) | `TestEditionIsInTheSharedProps`, `TestLoginLogoutAndThrottle`, `TestPersonalDropsAnalytics` and 7 more |
-| `POST /login` | middleware.BodyLimit, (personal, saas) | `TestAccountDeletionOverTheWeb`, `TestEmailVerificationRoutes`, `TestExpiredVerificationLinkOffersANewOne` and 21 more |
+| `POST /login` | middleware.BodyLimit, (personal, saas) | `TestAccountDeletionOverTheWeb`, `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson`, `TestDataLifecycle_NoSessionOutlivesThePurge` and 23 more |
 | `POST /logout` | logout (personal, saas) | `TestLoginLogoutAndThrottle`, `TestSecurity_Web_Sessions`, `TestTwoFactorDisableNeedsPassword` and 2 more |
 | `ANY /mcp` | mcp.endpoint (saas) | `FuzzMCPJSONRPC`, `TestDiscoveryIsAbsentInThePersonalEdition`, `TestHTTPTransport` and 2 more |
 | `GET /notifications` | notifications.index (personal, saas) | `TestNotificationsHTTP`, `e2e/alerts.spec.ts` |
@@ -247,10 +247,10 @@ Authorization cases: 640
 | `POST /user/two-factor/recovery-codes` | two-factor.recovery-codes (personal, saas) | `TestTwoFactorRecoveryCodes` |
 | `GET /workspace` | workspace.show (personal, saas) | `TestAuditEvents`, `TestAuditLogIsHiddenFromMembersAndViewers`, `TestPersonalInviteLinkShownToOwner` and 1 more |
 | `PUT /workspace` | workspace.update (personal, saas) | `TestAuditEvents`, `TestSecurity_ViewerCannotEscalate`, `TestTodayUsesWorkspaceTimezone` and 3 more |
-| `POST /workspace/deletion` | workspace.deletion.store (personal, saas) | `TestPersonalMakesNoOutboundConnection`, `TestWorkspaceDeletionOverTheWeb` |
-| `POST /workspace/deletion/cancel` | workspace.deletion.cancel (personal, saas) | `TestPendingDeletionRefusesWrites`, `TestWorkspaceDeletionOverTheWeb` |
+| `POST /workspace/deletion` | workspace.deletion.store (personal, saas) | `TestDataLifecycle_WorkspaceDeletionLeavesNoRow`, `TestPersonalMakesNoOutboundConnection`, `TestWorkspaceDeletionOverTheWeb` |
+| `POST /workspace/deletion/cancel` | workspace.deletion.cancel (personal, saas) | `TestDataLifecycle_WorkspaceDeletionLeavesNoRow`, `TestPendingDeletionRefusesWrites`, `TestWorkspaceDeletionOverTheWeb` |
 | `GET /workspace/export.json` | workspace.export (personal, saas) | `TestCrossTenantMatrixExports`, `TestExportPermissions`, `TestExportRateLimited` and 5 more |
-| `POST /workspace/invites` | workspace.invite (personal, saas) | `TestAuditEvents`, `TestExpiredInviteIsRefused`, `TestFreePlanLimits` and 10 more |
+| `POST /workspace/invites` | workspace.invite (personal, saas) | `TestAuditEvents`, `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson`, `TestExpiredInviteIsRefused` and 11 more |
 | `POST /workspace/leave` | workspace.leave (personal, saas) | `TestAuditEvents`, `TestLastOwner` |
 | `DELETE /workspace/members/{user}` | workspace.members.destroy (personal, saas) | `TestAuditEvents`, `TestLastOwner`, `TestRolesDecideWhoMayDoWhat` and 3 more |
 | `PATCH /workspace/members/{user}` | workspace.members.role (personal, saas) | `tests/roles_test.go` |
@@ -265,7 +265,7 @@ Authorization cases: 640
 | --- | --- | --- |
 | `GET /api/v1/me` | api.me.show (personal, saas) | `TestAPIAuthMatrix`, `TestAPIFailedTokenLimit`, `TestAPIRateLimit` and 3 more |
 | `GET /api/v1/openapi.json` | api.openapi (personal, saas) | `TestOpenAPIRoute`, `TestPairing_RouteIsPublicInTheDocument`, `TestSecurity_Web_Headers` |
-| `ANY /api/v1/{rest...}` | middleware.BodyLimit, (personal, saas) | `TestAPIAccounts`, `TestAPIAuthMatrix`, `TestAPIBudgets` and 62 more |
+| `ANY /api/v1/{rest...}` | middleware.BodyLimit, (personal, saas) | `TestAPIAccounts`, `TestAPIAuthMatrix`, `TestAPIBudgets` and 65 more |
 
 ## Sync routes
 
@@ -359,7 +359,7 @@ Authorization cases: 640
 | `changes_compact` | queue job ChangesCompact | `TestCompactionJob`, `TestSyncPullResync` |
 | `import_csv` | queue job ImportCSV | `TestImportJobRunsTheQueuedImportOnce` |
 | `monthly_summary` | queue job MonthlySummary | `TestMonthlySummaryJobSendsOnTheFirstOnce` |
-| `privacy_purge` | queue job PrivacyPurge | `TestPrivacyPurgeJobErasesADueWorkspaceAndSparesTheRest`, `TestSyncDeletedWorkspace` |
+| `privacy_purge` | queue job PrivacyPurge | `TestPrivacyPurgeJobErasesADueWorkspaceAndSparesTheRest`, `TestSyncDeletedWorkspace`, `tests/data_lifecycle_test.go` |
 | `recurrences_generate` | queue job RecurrencesGenerate | `TestRecurrenceJobRuns` |
 | `sync_ops_prune` | queue job SyncOpsPrune | `TestSyncOpsPruned` |
 | `telegram_prune` | queue job TelegramPrune | `TestTelegramPruneJob` |
@@ -368,14 +368,14 @@ Authorization cases: 640
 
 | Entry | Detail | Covered by |
 | --- | --- | --- |
-| `session:prune` | 0 * * * * | `tests/coverage_jobs_test.go` |
-| `job:monthly_summary` | 0 * * * * | `TestMonthlySummaryJobSendsOnTheFirstOnce`, `tests/coverage_jobs_test.go` |
-| `job:recurrences_generate` | 0 * * * * | `TestRecurrenceJobIsScheduledHourly`, `TestRecurrenceJobRuns`, `tests/coverage_jobs_test.go` |
-| `job:alerts_evaluate` | 0 * * * * | `tests/coverage_jobs_test.go` |
-| `job:changes_compact` | 30 3 * * * | `TestCompactionIsScheduledDaily`, `TestCompactionJob`, `tests/coverage_jobs_test.go` |
-| `job:sync_ops_prune` | 45 3 * * * | `TestSyncOpsPruned`, `tests/coverage_jobs_test.go` |
-| `job:ai_reseal` | 0 0 * * * | `TestJobsThatSweepRunOnAnEmptyInstallation`, `tests/coverage_jobs_test.go` |
-| `job:assistant_prune` | 20 4 * * * | `TestJobsThatSweepRunOnAnEmptyInstallation`, `tests/coverage_jobs_test.go` |
-| `job:billing_reconcile` | 15 */6 * * * | `TestJobsThatSweepRunOnAnEmptyInstallation`, `tests/coverage_jobs_test.go` |
-| `job:telegram_prune` | 10 4 * * * | `TestTelegramPruneIsScheduledDaily`, `TestTelegramPruneJob`, `tests/coverage_jobs_test.go` |
-| `job:privacy_purge` | 40 4 * * * | `TestPrivacyPurgeIsScheduledDaily`, `TestPrivacyPurgeJobErasesADueWorkspaceAndSparesTheRest`, `tests/coverage_jobs_test.go` |
+| `session:prune` | `0 * * * *` | `tests/coverage_jobs_test.go` |
+| `job:monthly_summary` | `0 * * * *` | `TestMonthlySummaryJobSendsOnTheFirstOnce`, `tests/coverage_jobs_test.go` |
+| `job:recurrences_generate` | `0 * * * *` | `TestRecurrenceJobIsScheduledHourly`, `TestRecurrenceJobRuns`, `tests/coverage_jobs_test.go` |
+| `job:alerts_evaluate` | `0 * * * *` | `tests/coverage_jobs_test.go` |
+| `job:changes_compact` | `30 3 * * *` | `TestCompactionIsScheduledDaily`, `TestCompactionJob`, `tests/coverage_jobs_test.go` |
+| `job:sync_ops_prune` | `45 3 * * *` | `TestSyncOpsPruned`, `tests/coverage_jobs_test.go` |
+| `job:ai_reseal` | `0 0 * * *` | `TestJobsThatSweepRunOnAnEmptyInstallation`, `tests/coverage_jobs_test.go` |
+| `job:assistant_prune` | `20 4 * * *` | `TestJobsThatSweepRunOnAnEmptyInstallation`, `tests/coverage_jobs_test.go` |
+| `job:billing_reconcile` | `15 */6 * * *` | `TestJobsThatSweepRunOnAnEmptyInstallation`, `tests/coverage_jobs_test.go` |
+| `job:telegram_prune` | `10 4 * * *` | `TestTelegramPruneIsScheduledDaily`, `TestTelegramPruneJob`, `tests/coverage_jobs_test.go` |
+| `job:privacy_purge` | `40 4 * * *` | `TestPrivacyPurgeIsScheduledDaily`, `TestPrivacyPurgeJobErasesADueWorkspaceAndSparesTheRest`, `tests/coverage_jobs_test.go` |

@@ -215,7 +215,7 @@ func collect(root string, hidden map[string]bool) ([]Entry, []operation, error) 
 			}
 		}
 
-		entries = append(entries, Entry{Kind: "schedule", Name: name, Detail: expr, Cover: cover})
+		entries = append(entries, Entry{Kind: "schedule", Name: name, Detail: "`" + expr + "`", Cover: cover})
 	}
 
 	if err := applyMapping(root, ix, entries); err != nil {
