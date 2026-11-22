@@ -171,6 +171,8 @@ type GoalsProps struct {
 type NotificationsProps struct {
 	Items       []alerts.View          `json:"items"`
 	Preferences []alerts.PreferenceRow `json:"preferences"`
+	// TelegramEnabled is true while the bot is on: the page then links to the Telegram settings.
+	TelegramEnabled bool `json:"telegramEnabled"`
 }
 
 // ImportProps are the props of Import.
