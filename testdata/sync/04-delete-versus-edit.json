@@ -1,0 +1,197 @@
+{
+	"name": "delete-versus-edit",
+	"description": "A delete wins over a concurrent edit; the edit is rejected with a conflict, the tombstone reaches the other device, and a restore brings the row back.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P12",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Wallet",
+							"kind": "cash"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P13",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"kind": "expense",
+							"amount_cents": 100,
+							"description": "Lunch",
+							"occurred_on": "2026-11-20"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					},
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P14",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "delete",
+						"base_seq": "$seen",
+						"fields": {}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied",
+						"row": null
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P15",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": "$seen",
+						"fields": {
+							"description": "late edit"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "rejected",
+						"error": {
+							"code": "edited_deleted_row"
+						},
+						"conflicts": [
+							{
+								"field": "description",
+								"kind": "edited_deleted_row"
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "delete",
+						"row": null
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P16",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "restore",
+						"base_seq": "$seen",
+						"fields": {}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"row": {
+							"description": "Lunch"
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"row": {
+							"description": "Lunch"
+						}
+					}
+				]
+			}
+		}
+	],
+	"final": {
+		"devices_equal": [
+			"a",
+			"b"
+		],
+		"server": {
+			"transaction": {
+				"01JD5Z8K3M0000000000000T01": {
+					"description": "Lunch"
+				}
+			}
+		}
+	}
+}

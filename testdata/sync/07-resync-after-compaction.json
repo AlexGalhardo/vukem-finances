@@ -1,0 +1,149 @@
+{
+	"name": "resync-after-compaction",
+	"description": "The server compacts its log past a device cursor: pull answers 410 resync_required, and a snapshot plus a pull rebuilds the device.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P20",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Wallet",
+							"kind": "cash"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P21",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Food",
+							"kind": "expense"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					},
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000A01"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P22",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": "$seen",
+						"fields": {
+							"name": "Purse"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "admin",
+			"note": "the log is compacted through its newest change",
+			"input": {
+				"do": "compact",
+				"target": "b"
+			},
+			"expect": {}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"status": 410,
+				"code": "resync_required"
+			}
+		},
+		{
+			"device": "b",
+			"action": "snapshot",
+			"input": {},
+			"expect": {
+				"replica_contains": {
+					"account": [
+						"01JD5Z8K3M0000000000000A01"
+					],
+					"category": [
+						"01JD5Z8K3M0000000000000C01"
+					]
+				}
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"status": 200,
+				"changes": [],
+				"has_more": false
+			}
+		}
+	],
+	"final": {
+		"devices_equal": [
+			"a",
+			"b"
+		],
+		"server": {
+			"account": {
+				"01JD5Z8K3M0000000000000A01": {
+					"name": "Purse"
+				}
+			}
+		}
+	}
+}

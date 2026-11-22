@@ -1,0 +1,275 @@
+{
+	"name": "transfer-legs",
+	"description": "The two legs of a transfer are applied together or rejected together; deleting one leg deletes the other and both come back through pull.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P23",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Checking",
+							"kind": "checking"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P24",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A02",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Savings",
+							"kind": "savings"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					},
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P25",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"kind": "expense",
+							"amount_cents": 300,
+							"occurred_on": "2026-11-20",
+							"transfer_uid": "01JD5Z8K3M0000000000000X01"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P26",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T02",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A02",
+							"kind": "income",
+							"amount_cents": 300,
+							"occurred_on": "2026-11-20",
+							"transfer_uid": "01JD5Z8K3M0000000000000X01"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					},
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"note": "a lone leg",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P27",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T03",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"kind": "expense",
+							"amount_cents": 5,
+							"occurred_on": "2026-11-20",
+							"transfer_uid": "01JD5Z8K3M0000000000000X02"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "rejected",
+						"error": {
+							"code": "transfer_incomplete"
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"note": "legs that disagree",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P28",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T04",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A01",
+							"kind": "expense",
+							"amount_cents": 5,
+							"occurred_on": "2026-11-20",
+							"transfer_uid": "01JD5Z8K3M0000000000000X03"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P29",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T05",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"account_uid": "01JD5Z8K3M0000000000000A02",
+							"kind": "income",
+							"amount_cents": 6,
+							"occurred_on": "2026-11-20",
+							"transfer_uid": "01JD5Z8K3M0000000000000X03"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "rejected",
+						"error": {
+							"code": "transfer_invalid"
+						}
+					},
+					{
+						"status": "rejected",
+						"error": {
+							"code": "transfer_invalid"
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "upsert",
+						"row": {
+							"transfer_uid": "01JD5Z8K3M0000000000000X01"
+						}
+					},
+					{
+						"uid": "01JD5Z8K3M0000000000000T02",
+						"op": "upsert",
+						"row": {
+							"transfer_uid": "01JD5Z8K3M0000000000000X01"
+						}
+					}
+				],
+				"absent_uids": [
+					"01JD5Z8K3M0000000000000T03",
+					"01JD5Z8K3M0000000000000T04",
+					"01JD5Z8K3M0000000000000T05"
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P30",
+						"entity": "transaction",
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "delete",
+						"base_seq": "$seen",
+						"fields": {}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied",
+						"effects": [
+							{
+								"entity": "transaction",
+								"uid": "01JD5Z8K3M0000000000000T02",
+								"op": "delete"
+							}
+						]
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000T01",
+						"op": "delete"
+					},
+					{
+						"uid": "01JD5Z8K3M0000000000000T02",
+						"op": "delete"
+					}
+				]
+			}
+		}
+	],
+	"final": {
+		"devices_equal": [
+			"a",
+			"b"
+		],
+		"absent": [
+			"01JD5Z8K3M0000000000000T01",
+			"01JD5Z8K3M0000000000000T02",
+			"01JD5Z8K3M0000000000000T03",
+			"01JD5Z8K3M0000000000000T04",
+			"01JD5Z8K3M0000000000000T05"
+		]
+	}
+}
