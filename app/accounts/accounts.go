@@ -86,6 +86,11 @@ func (a *Accounts) RevokeOtherSessions(ctx context.Context, userID int64, keep s
 		return err
 	}
 
+	// The AI clients the person connected go with the sessions.
+	if err := a.revokeGrants(ctx, a.DB, userID); err != nil {
+		return err
+	}
+
 	if _, err := a.DB.ExecContext(ctx, "DELETE FROM remember_tokens WHERE user_id = "+a.DB.Dialect().Placeholder(1),
 		strconv.FormatInt(userID, 10)); err != nil {
 		return err
