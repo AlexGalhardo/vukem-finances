@@ -57,6 +57,36 @@ jobs:
       - run: bunx playwright install --with-deps chromium
       - run: bunx playwright test
 
+  mobile:
+    runs-on: ubuntu-latest
+    env:
+      CI: "1"
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.4
+      # The repository tests run on Node's built-in SQLite (node:sqlite), which needs Node 22.13 or newer.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.21.0
+      - name: The theme tokens are fresh
+        run: bun run scripts/export-tokens.ts && git diff --exit-code mobile/src/theme/tokens.ts
+      - name: Install
+        working-directory: mobile
+        run: bun install --frozen-lockfile
+      - name: Typecheck
+        working-directory: mobile
+        run: bun run typecheck
+      - name: Tests
+        working-directory: mobile
+        run: bun run test
+      - name: Bundles build for both platforms
+        working-directory: mobile
+        run: |
+          bunx expo export --platform android --output-dir "$RUNNER_TEMP/vf-android"
+          bunx expo export --platform ios --output-dir "$RUNNER_TEMP/vf-ios"
+
   docs:
     runs-on: ubuntu-latest
     steps:

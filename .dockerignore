@@ -12,6 +12,9 @@ node_modules/
 # The desktop app is its own Go module and never part of the image
 /desktop/
 
+# The mobile app (epic 19) has its own toolchain and is not part of the image
+/mobile/
+
 # Local data (SQLite files, uploads)
 storage/
 
