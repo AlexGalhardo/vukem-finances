@@ -7,9 +7,11 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
+	"strings"
 
 	"github.com/AlexGalhardo/vukem/auth"
 	"github.com/AlexGalhardo/vukem/errs"
+	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/ratelimit"
 	"github.com/AlexGalhardo/vukem/web"
 
@@ -138,6 +140,9 @@ func (a *API) Authenticate(failed ratelimit.Limiter) func(http.Handler) http.Han
 				fail(w, r, status, CodeUnauthorized, "A valid token is required.")
 
 				return
+			case status == http.StatusGone:
+				web.Fail(w, r, syncproto.ErrWorkspaceDeleted)
+				return
 			case status != 0:
 				fail(w, r, status, CodeNotFound, "Not found.")
 				return
@@ -164,7 +169,17 @@ func (a *API) principal(r *http.Request) (Principal, int, error) {
 
 	tok, err := a.Tokens.Find(ctx, plain)
 	if errors.Is(err, auth.ErrInvalidToken) {
+		// A token of a purged workspace is gone, but its id is remembered so a
+		// phone that syncs late is told the workspace is deleted (410), not that
+		// it must sign in again (401).
+		if gone, gerr := a.purgedToken(ctx, plain); gerr != nil {
+			return Principal{}, 0, gerr
+		} else if gone {
+			return Principal{}, http.StatusGone, nil
+		}
+
 		web.SecurityEvent(r, "api.token.rejected")
+
 		return Principal{}, http.StatusUnauthorized, nil
 	}
 
@@ -261,4 +276,20 @@ func (a *API) Require(op Operation) func(http.Handler) http.Handler {
 
 func isNotFound(err error) bool {
 	return errors.Is(err, errs.ErrNotFound) || errors.Is(err, auth.ErrUserNotFound)
+}
+
+// purgedToken reports whether plain is a token of a workspace the purge removed.
+// Only the public id of the token is compared, never its secret.
+func (a *API) purgedToken(ctx context.Context, plain string) (bool, error) {
+	rest, ok := strings.CutPrefix(plain, a.Tokens.Prefix)
+	if !ok {
+		return false, nil
+	}
+
+	id, _, ok := strings.Cut(rest, ".")
+	if !ok || id == "" || len(id) > 64 {
+		return false, nil
+	}
+
+	return orm.QueryOf[models.PurgedToken](a.WS.DB).Where("token_id", id).Exists(ctx)
 }

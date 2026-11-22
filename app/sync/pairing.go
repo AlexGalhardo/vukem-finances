@@ -228,6 +228,14 @@ func (s *Service) Pair(ctx context.Context, rawCode, deviceName, platform string
 			return err
 		}
 
+		if w, err := orm.QueryOf[models.Workspace](tx).Find(ctx, wsID); err != nil || w.PendingDeletion() {
+			if err != nil {
+				return err
+			}
+
+			return ErrWorkspaceDeleted
+		}
+
 		tokens := auth.NewTokens(tx)
 		tokens.Prefix, tokens.Now, tokens.Log = s.Tokens.Prefix, s.Tokens.Now, s.Tokens.Log
 

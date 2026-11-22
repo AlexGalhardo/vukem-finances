@@ -160,6 +160,11 @@ type access struct {
 // can reports whether the person holds scope: the scope must be one of the
 // bot, and the role of the membership now must hold the ability behind it.
 func (a access) can(scope string) bool {
+	// A workspace waiting to be purged is read-only on every surface (epic 34).
+	if a.ws.PendingDeletion() && strings.HasSuffix(scope, ":write") {
+		return false
+	}
+
 	return slices.Contains(Scopes(), scope) && workspaces.RoleCan(a.role, api.AbilityOf(scope))
 }
 

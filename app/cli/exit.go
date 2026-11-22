@@ -56,7 +56,7 @@ func ExitForCode(code string) int {
 		return ExitAuth
 	case operations.CodeNotFound:
 		return ExitNotFound
-	case operations.CodeConflict, operations.CodeVersionConflict:
+	case operations.CodeConflict, operations.CodeVersionConflict, operations.CodePendingDeletion:
 		return ExitConflict
 	case operations.CodeRateLimited, operations.CodePlanLimit:
 		return ExitLimit

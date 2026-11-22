@@ -23,13 +23,16 @@ const (
 	CodeInternal        = "internal"
 	CodeMissingScope    = "missing_scope"
 	CodeVersionConflict = "version_conflict"
+	// CodePendingDeletion refines conflict: the workspace waits to be purged and
+	// refuses every write (epic 34).
+	CodePendingDeletion = "workspace_pending_deletion"
 )
 
 // Codes lists every stable error code.
 func Codes() []string {
 	return []string{
 		CodeNotFound, CodeForbidden, CodeValidation, CodeConflict, CodeRateLimited, CodePlanLimit, CodeInternal,
-		CodeMissingScope, CodeVersionConflict,
+		CodeMissingScope, CodeVersionConflict, CodePendingDeletion,
 	}
 }
 
@@ -106,6 +109,8 @@ func codeOf(status int) string {
 		return CodeNotFound
 	case http.StatusConflict:
 		return CodeConflict
+	case http.StatusLocked:
+		return CodePendingDeletion
 	case http.StatusTooManyRequests:
 		return CodeRateLimited
 	}

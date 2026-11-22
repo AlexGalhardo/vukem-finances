@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log/slog"
+	"net/http"
 	"reflect"
 	"slices"
 	"time"
@@ -84,6 +85,11 @@ type Config struct {
 	Log *slog.Logger
 	// Now is the clock; nil means time.Now.
 	Now func() time.Time
+	// Frozen reports whether the workspace refuses writes (it waits to be
+	// purged, epic 34). NewCatalog fills it from the workspace service; nil
+	// means no workspace is frozen. Invoke refuses every operation that is not a
+	// read, on every surface, before it validates or runs anything.
+	Frozen func(ctx context.Context, workspaceID int64) (bool, error)
 }
 
 // Registry holds the operations. It is filled at boot and only read after.
@@ -276,6 +282,17 @@ func invoke[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor, in I
 
 	if err := op.reg.Authorize(op.meta, actor); err != nil {
 		return zero, err
+	}
+
+	if op.meta.Kind != KindRead && op.reg.cfg.Frozen != nil {
+		frozen, err := op.reg.cfg.Frozen(ctx, actor.workspace)
+		if err != nil {
+			return zero, asError(err)
+		}
+
+		if frozen {
+			return zero, fail(http.StatusLocked, CodePendingDeletion, workspaces.ErrPendingDeletion.Text())
+		}
 	}
 
 	if op.check != nil {

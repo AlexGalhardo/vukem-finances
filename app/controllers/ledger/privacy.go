@@ -122,13 +122,13 @@ func (p *PrivacyHandlers) DeleteWorkspace(c *web.Ctx) error {
 		return err
 	}
 
-	in, err := web.Parse(c, requests.DeleteWorkspaceSchema)
-	if err != nil {
+	// The role is checked first, so a member learns nothing from a wrong password.
+	if err := p.h.can(c, workspaces.AbilityTransfer); err != nil {
 		return err
 	}
 
-	// The role is checked first, so a member learns nothing from a wrong password.
-	if err := p.h.can(c, workspaces.AbilityTransfer); err != nil {
+	in, err := web.Parse(c, requests.DeleteWorkspaceSchema)
+	if err != nil {
 		return err
 	}
 
