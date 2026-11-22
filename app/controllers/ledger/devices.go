@@ -1,6 +1,7 @@
 package ledger
 
 import (
+	"strings"
 	"time"
 
 	"github.com/AlexGalhardo/vukem/auth"
@@ -20,6 +21,46 @@ type DeviceHandlers struct {
 
 // Show lists the devices.
 func (d *DeviceHandlers) Show(c *web.Ctx) error {
+	return d.render(c, nil)
+}
+
+// Pair makes a pairing code and answers with the page that shows it once: no
+// redirect and no flash, so the code never goes through the session.
+func (d *DeviceHandlers) Pair(c *web.Ctx) error {
+	ctx := c.Context()
+
+	u, err := auth.UserFrom[models.User](ctx, "web")
+	if err != nil {
+		return err
+	}
+
+	ws, _ := workspaces.TenantID(ctx)
+
+	code, err := d.Sync.CreatePairingCode(ctx, syncproto.Actor{WorkspaceID: ws, UserID: u.ID})
+	if err != nil {
+		return back(c, "/devices", err)
+	}
+
+	c.Writer().Header().Set("Cache-Control", "no-store")
+
+	return d.render(c, &pages.CreatedPairing{
+		Code: code.Code[:4] + "-" + code.Code[4:], Server: serverAddress(c), ExpiresAt: code.ExpiresAt.UTC().Format(time.RFC3339),
+	})
+}
+
+// serverAddress is the address the phone types: the one this request came to.
+func serverAddress(c *web.Ctx) string {
+	r := c.Request()
+
+	scheme := "http"
+	if r.TLS != nil || strings.EqualFold(r.Header.Get("X-Forwarded-Proto"), "https") {
+		scheme = "https"
+	}
+
+	return scheme + "://" + r.Host
+}
+
+func (d *DeviceHandlers) render(c *web.Ctx, pairing *pages.CreatedPairing) error {
 	ctx := c.Context()
 
 	u, err := auth.UserFrom[models.User](ctx, "web")
@@ -53,7 +94,7 @@ func (d *DeviceHandlers) Show(c *web.Ctx) error {
 		views = append(views, v)
 	}
 
-	return pages.Devices.Render(c, pages.DevicesProps{Devices: views})
+	return pages.Devices.Render(c, pages.DevicesProps{Devices: views, Pairing: pairing})
 }
 
 // Destroy revokes a device of the person: it stops syncing at once and keeps

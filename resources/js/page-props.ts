@@ -176,6 +176,12 @@ export type CompareRow = {
   previousCents: number;
 };
 
+export type CreatedPairing = {
+  code: string;
+  expiresAt: string;
+  server: string;
+};
+
 export type CreatedToken = {
   name: string;
   secret: string;
@@ -742,6 +748,7 @@ export type DashboardProps = {
 
 export type DevicesProps = {
   devices: DeviceView[];
+  pairing?: CreatedPairing | null;
 };
 
 export type GoalsProps = {
@@ -859,8 +866,8 @@ export type WorkspaceProps = {
 
 /** PageProps maps every typed page component to its props. */
 export interface PageProps {
-  AI: AIProps;
-  Accounts: AccountsProps;
+  "AI": AIProps;
+  "Accounts": AccountsProps;
   "Admin/Dashboard": AdminDashboardProps;
   "Admin/ResourceList": AdminResourceListProps;
   "Admin/ResourceShow": AdminResourceShowProps;
@@ -873,27 +880,27 @@ export interface PageProps {
   "Auth/TwoFactorChallenge": AuthTwoFactorChallengeProps;
   "Auth/TwoFactor": AuthTwoFactorProps;
   "Auth/VerifyEmail": AuthVerifyEmailProps;
-  Billing: BillingProps;
-  Budgets: BudgetsProps;
-  CardStatement: CardStatementProps;
-  Cards: CardsProps;
-  Categories: CategoriesProps;
-  Dashboard: DashboardProps;
-  Devices: DevicesProps;
-  Goals: GoalsProps;
-  Home: HomeProps;
-  Import: ImportProps;
-  InviteAccept: InviteAcceptProps;
-  InviteRegister: InviteRegisterProps;
-  Notifications: NotificationsProps;
-  Recurrences: RecurrencesProps;
-  Reports: ReportsProps;
+  "Billing": BillingProps;
+  "Budgets": BudgetsProps;
+  "CardStatement": CardStatementProps;
+  "Cards": CardsProps;
+  "Categories": CategoriesProps;
+  "Dashboard": DashboardProps;
+  "Devices": DevicesProps;
+  "Goals": GoalsProps;
+  "Home": HomeProps;
+  "Import": ImportProps;
+  "InviteAccept": InviteAcceptProps;
+  "InviteRegister": InviteRegisterProps;
+  "Notifications": NotificationsProps;
+  "Recurrences": RecurrencesProps;
+  "Reports": ReportsProps;
   "Settings/Telegram": SettingsTelegramProps;
-  Setup: SetupProps;
-  Suggestions: SuggestionsProps;
-  Tokens: TokensProps;
-  Transactions: TransactionsProps;
-  Workspace: WorkspaceProps;
+  "Setup": SetupProps;
+  "Suggestions": SuggestionsProps;
+  "Tokens": TokensProps;
+  "Transactions": TransactionsProps;
+  "Workspace": WorkspaceProps;
 }
 
 export type PageName = keyof PageProps;

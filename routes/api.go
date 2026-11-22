@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/AlexGalhardo/vukem"
 	vukemapi "github.com/AlexGalhardo/vukem/api"
@@ -59,9 +60,11 @@ func API(r *router.Router, app *vukem.App) error {
 		operations.Config{Edition: ws.Edition, Store: store.Store(), Log: app.Log, Now: app.Now},
 		operations.Services{WS: ws, Fin: fin, Rep: reports.New(fin)},
 	)
-	a.Sync = &syncproto.Service{DB: ws.DB, WS: ws, Fin: fin, Log: app.Log, Now: app.Now}
+	a.Sync = &syncproto.Service{DB: ws.DB, WS: ws, Fin: fin, Log: app.Log, Now: app.Now, Tokens: acc.Tokens}
 	a.PullLimiter = limiters("sync.pull", syncproto.PullsPerMinute, config.APIWindow)
 	a.PushLimiter = limiters("sync.push", syncproto.PushesPerMinute, config.APIWindow)
+	a.PairLimiter = limiters("sync.pair", syncproto.PairAttemptsPerMinute, time.Minute)
+	a.PairFailLimiter = limiters("sync.pair.failed", syncproto.PairFailuresPerHour, time.Hour)
 
 	// The downloads share one limit per workspace with the exports of the web app.
 	a.Exports = ratelimit.Middleware(limiters("workspace.export", config.ExportLimit, config.ExportWindow), func(r *http.Request) string {
@@ -137,6 +140,12 @@ func API(r *router.Router, app *vukem.App) error {
 		req.Header.Set("Accept", "application/problem+json")
 		web.Fail(w, req, errs.New(http.StatusNotFound, "Not found.").WithExtension("code", api.CodeNotFound))
 	}))
+
+	// The pairing route takes no token: the code is the credential, and the limits are in the handler.
+	r.Group(api.BasePath, func(g *router.Group) {
+		g.Use(auth.ProblemJSON)
+		a.PairRoutes(g)
+	}).Name("api.").ErrorHandler(jsonErrors)
 
 	r.Group(api.BasePath, func(g *router.Group) {
 		g.Use(auth.ProblemJSON, a.Authenticate(failed), reads, writes)

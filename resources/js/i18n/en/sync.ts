@@ -15,5 +15,14 @@ const dict = {
   devicesRevoke: "Revoke",
   devicesRevokeNote:
     "Revoking a device stops its sync at once. The device keeps its local data until you clear it on the device itself. Revoking an API token revokes its devices too.",
+  devicesAdd: "Add device",
+  devicesPairTitle: "Pair a phone",
+  devicesPairBody:
+    "In the app, open Connect and type the server address and this code. The code works once and expires in 10 minutes.",
+  devicesPairServer: "Server address",
+  devicesPairCode: "Pairing code",
+  devicesPairExpires: "Expires at",
+  devicesPairCopy: "Copy code",
+  devicesPairDismiss: "Done",
 } as const;
 export default dict;

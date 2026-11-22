@@ -35,6 +35,8 @@ type Operation struct {
 	Status int
 	// MaxBody caps the request body in bytes; 0 leaves the server default.
 	MaxBody int64
+	// Public marks an operation that takes no token (the pairing code is its credential).
+	Public bool
 }
 
 // Read reports whether the operation only reads.
@@ -115,6 +117,7 @@ var table = []Operation{ //nolint:gochecknoglobals // a constant table
 	{Name: "sync.pull", Method: "GET", Path: "/sync/pull", Scope: ScopeSync, Summary: "Read the changes after a cursor, parents first", Tag: "Sync"},
 	{Name: "sync.snapshot", Method: "GET", Path: "/sync/snapshot", Scope: ScopeSync, Summary: "Read the live rows of one entity to rebuild a device", Tag: "Sync"},
 	{Name: "sync.push", Method: "POST", Path: "/sync/push", Scope: ScopeSync, Summary: "Send the mutations a device made offline", Tag: "Sync", Status: http.StatusOK, MaxBody: 1 << 20},
+	{Name: "sync.pair", Method: "POST", Path: "/sync/pair", Public: true, Summary: "Trade a pairing code for a sync token and a registered device", Tag: "Sync", Status: http.StatusCreated, MaxBody: 4 << 10},
 }
 
 // described is the registry with no services: it only describes the operations.

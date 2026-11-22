@@ -9,6 +9,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/AlexGalhardo/vukem/auth"
 	"github.com/AlexGalhardo/vukem/database"
 	"github.com/AlexGalhardo/vukem/errs"
 	"github.com/AlexGalhardo/vukem/orm"
@@ -51,6 +52,8 @@ type Service struct {
 	Fin *finance.Service
 	Log *slog.Logger
 	Now func() time.Time
+	// Tokens carries the prefix, the clock and the logger of the app's tokens; Pair issues one.
+	Tokens *auth.Tokens
 }
 
 // Actor is who calls: the person behind a token, in the workspace the token is
