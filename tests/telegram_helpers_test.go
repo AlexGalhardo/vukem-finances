@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/vukemtest"
@@ -27,6 +28,20 @@ const tgWebhookSecret = "webhook-secret-for-tests-0123456789"
 var tgUpdateSeq atomic.Int64
 
 func nextUpdate() int { return int(tgUpdateSeq.Add(1)) }
+
+// awayFromMinuteEdge waits for the next minute when the current one is ending.
+// The bot limits are fixed windows aligned to the wall clock, which the test
+// app cannot replace: a test that crosses the boundary gets a fresh budget.
+func awayFromMinuteEdge(t *testing.T) {
+	t.Helper()
+
+	const margin = 20 * time.Second
+
+	now := time.Now()
+	if left := now.Truncate(time.Minute).Add(time.Minute).Sub(now); left < margin {
+		time.Sleep(left)
+	}
+}
 
 // tgEnv is the configuration of a bot pointed at the fake Telegram server.
 func tgEnv(f *fakes.Telegram, extra ...map[string]string) map[string]string {
