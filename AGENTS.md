@@ -189,6 +189,15 @@ Read `docs/export-format.md` first.
 - Everything in the repository is in English.
 - Never commit secrets. `.env` is ignored; `.env.example` holds placeholders only.
 
+## Offline-first personal edition
+
+Read `docs/offline.md` first (D-027). The personal edition (desktop and local Docker) boots, migrates, renders and runs every core feature with no network, and makes no outbound connection unless the person turned an integration on (AI, Telegram, Google sign-in, a real mail server).
+
+- The rules live in `app/offline` and are applied by `bootstrap.New` (`offline.Gate`, a provider plus the `networkTags` view function), keyed on the edition. Never add an `if personal` for network behavior elsewhere, and never add a CDN, remote font, image, script, analytics or update check; the CSP is `default-src 'self'` and stays so.
+- A new outbound call (a provider, a webhook, a fetch of a remote document) must be off until configured, must fail with a plain message when there is no network, and gets a row in `docs/offline.md`. Screens that need the internet say so in en, pt-BR and es.
+- Mail in personal is `offline.BestEffort`: a connectivity failure never fails or changes the answer of a flow (dropped and logged on the inline queue, retried on a real one); other mail errors propagate. saas is untouched.
+- The guard is `tests/offline_test.go` (Go: `http.DefaultTransport` and `net.DefaultResolver`) and `e2e/offline.spec.ts` (browser). Extend the journey when a feature gets a new page or job. Both are blind to a bare dial to an IP literal; the container check with `--network none` in `docs/offline.md` covers it.
+
 ## Docker and deployment
 
 - The database is SQLite only, one file in WAL mode (`/app/storage/database.sqlite` in the `storage` volume), and the app is one replica. There is no PostgreSQL and no database container; do not add one.

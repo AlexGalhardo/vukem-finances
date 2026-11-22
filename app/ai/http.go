@@ -122,9 +122,12 @@ func (h *HTTP) once(ctx context.Context, url string, headers map[string]string, 
 	resp, err := h.client.Do(req)
 	if err != nil {
 		// The error text of net/http names the URL and can carry more: drop it.
+		// A blocked address and a failed connection share the class and so the message:
+		// a client must not learn from the answer which addresses the server refuses
+		// to reach. Only the logged Type (and the usage accounting that keys on it) differs.
 		pe := &ProviderError{Type: "transport", Class: ErrUnreachable}
 		if errors.Is(err, httpclient.ErrBlockedAddress) {
-			pe.Type, pe.Class = "blocked_address", ErrUnavailable
+			pe.Type = "blocked_address"
 		}
 
 		return 0, nil, pe
