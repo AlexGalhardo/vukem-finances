@@ -58,6 +58,12 @@ type Service struct {
 	Access AccessRevoker
 	// RetentionYears is PAYMENT_RECORD_RETENTION_YEARS.
 	RetentionYears int
+	// DatabaseURL is DATABASE_URL, which names the files "erase all local data"
+	// removes. Restart ends the process after an erase; nil leaves it running.
+	DatabaseURL string
+	Restart     func()
+	// EraseDelay is the wait between the answer and the erase.
+	EraseDelay time.Duration
 
 	key []byte
 	now func() time.Time
@@ -76,7 +82,11 @@ func New(app *vukem.App, ws *workspaces.Service) (*Service, error) {
 		return nil, err
 	}
 
-	return &Service{DB: ws.DB, Log: app.Log, WS: ws, RetentionYears: years, key: key, now: app.Now}, nil
+	url, _ := app.Source.Lookup("DATABASE_URL")
+
+	return &Service{
+		DB: ws.DB, Log: app.Log, WS: ws, RetentionYears: years, key: key, now: app.Now, DatabaseURL: url, EraseDelay: DefaultEraseDelay,
+	}, nil
 }
 
 // Ref is the non-reversible reference of a subject ("workspace", "user"): an
