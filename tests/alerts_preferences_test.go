@@ -278,6 +278,51 @@ func TestPendingMailFollowsCurrentPreference(t *testing.T) {
 	}
 }
 
+// A name is typed by any member and read in the mail of the others.
+func TestAlertMailEscapesNames(t *testing.T) {
+	t.Parallel()
+
+	app, _ := clockApp(t, "2027-03-18")
+	owner, _, _, _ := allRoles(t, app)
+
+	svc := alertsService(t, app)
+	fin := softService(t, app)
+	ctx := wsCtx(t, owner)
+
+	const name = `<img src=x onerror=alert(1)>`
+
+	g, err := fin.CreateGoal(ctx, finance.GoalInput{Name: name, Target: "50.00"})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := fin.AddContribution(ctx, g.ID, finance.ContributionInput{Amount: "50.00"}); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := svc.Run(ctx); err != nil {
+		t.Fatal(err)
+	}
+
+	sent := 0
+
+	for _, m := range app.Mails().SentTo("ana@example.com") {
+		if !strings.Contains(m.Subject, "Goal reached") {
+			continue
+		}
+
+		sent++
+
+		if strings.Contains(m.HTML, "<img src=x") {
+			t.Errorf("the goal name reached the mail unescaped")
+		}
+	}
+
+	if sent != 1 {
+		t.Fatalf("goal mails = %d, want 1", sent)
+	}
+}
+
 func TestStatementDueMail(t *testing.T) {
 	t.Parallel()
 
