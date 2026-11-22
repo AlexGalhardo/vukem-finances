@@ -7,6 +7,11 @@
 /bin/
 .vukem/
 
+# Desktop: the binary that `go build` leaves in desktop/, and the packages
+/desktop/desktop
+/desktop/desktop.exe
+/desktop/bin/
+
 # Local data
 storage/*
 !storage/.gitkeep
