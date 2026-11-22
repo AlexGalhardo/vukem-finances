@@ -45,7 +45,6 @@ const ptBR = {
 	kind: "Tipo",
 	errorGeneric: "Algo deu errado. Tente de novo.",
 
-	spokenMoney: "{sign}{major} {majorUnit} {minor} {minorUnit}",
 	spokenMinus: "menos ",
 	spokenPlus: "mais ",
 	incomeSign: "Receita {amount}",

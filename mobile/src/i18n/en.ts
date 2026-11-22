@@ -45,8 +45,7 @@ const en = {
 	kind: "Type",
 	errorGeneric: "Something went wrong. Try again.",
 
-	// money, spoken for screen readers
-	spokenMoney: "{sign}{major} {majorUnit} {minor} {minorUnit}",
+	// money, spoken for screen readers (the amount itself is built in spoken.ts)
 	spokenMinus: "minus ",
 	spokenPlus: "plus ",
 	incomeSign: "Income {amount}",
