@@ -25,8 +25,12 @@ func Web(r *router.Router, app *vukem.App) error {
 	apiPrefix := api.BasePath + "/"
 	// The Telegram webhook is not a browser route either: the secret header is its credential.
 	hookPrefix := config.WebhookPath + "/"
+	// The remote MCP endpoint and the token endpoints of its authorization server
+	// are bearer or client-credential routes too (epic 33): no cookie reaches them.
+	// The authorization endpoint is a browser route and keeps both.
+	mcpRoutes := append([]string{apiPrefix, hookPrefix}, MCPBypass...)
 	if err := vukem.DefaultMiddlewareWith(app, r, vukem.MiddlewareOptions{
-		SessionBypass: []string{apiPrefix, hookPrefix}, CSRFBypass: []string{apiPrefix, hookPrefix},
+		SessionBypass: mcpRoutes, CSRFBypass: mcpRoutes,
 	}); err != nil {
 		return err
 	}

@@ -119,7 +119,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 	invites := ratelimit.Middleware(limiters("workspace.invite", config.InviteLimit, config.InviteWindow), byWorkspace)
 	exports := ratelimit.Middleware(limiters("workspace.export", config.ExportLimit, config.ExportWindow), byWorkspace)
 
-	var aiErr error
+	var aiErr, mcpErr error
 
 	// Everything else lives in a workspace: the tenant middleware picks the
 	// current one from the session and answers 404 for one the user is not in.
@@ -157,6 +157,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		g.Post("/workspace/leave", h.Leave).Name("workspace.leave")
 
 		aiErr = financeAI(g, app, h)
+		mcpErr = financeConnectedApps(g, app)
 
 		if b != nil {
 			bh := ledger.NewBilling(h, b)
@@ -170,6 +171,10 @@ func Finance(r *router.Router, app *vukem.App) error {
 			g.Get("/billing/pix/{ref}", bh.PixShow).Name("billing.pix.show").Use(pixPoll)
 		}
 	})
+
+	if mcpErr != nil {
+		return mcpErr
+	}
 
 	if aiErr != nil {
 		return aiErr
