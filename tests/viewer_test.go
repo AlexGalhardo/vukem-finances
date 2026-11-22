@@ -18,8 +18,9 @@ import (
 // an API token: the role limits what it can do at every request (TestAPIScopeMatrix).
 // A viewer syncs read-only, so they also revoke their own devices (devices.destroy);
 // the pushed rows are checked against the role one by one (TestSyncPushPermissions).
+// Any member may also press Add device: the phone it pairs holds the same role ceiling (TestPairing_TokenHasTheRoleCeiling).
 var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leave", "tokens.store", "tokens.destroy",
-	"notifications.read", "notifications.read_all", "notifications.preferences", "devices.destroy"}
+	"notifications.read", "notifications.read_all", "notifications.preferences", "devices.destroy", "devices.pair"}
 
 // ownerOnlyReads are GET routes that are not open to a viewer: polling a PIX
 // payment re-reads it at the provider and can activate it, so it is billing

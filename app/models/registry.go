@@ -46,6 +46,7 @@ func TenantModels() []TenantModel {
 		tenantModel[SyncConflict](),
 		tenantModel[SyncDevice](),
 		tenantModel[SyncOp](),
+		tenantModel[PairingCode](),
 		tenantModel[AICredential](),
 		tenantModel[WorkspaceAISettings](),
 		tenantModel[AIUsage](),

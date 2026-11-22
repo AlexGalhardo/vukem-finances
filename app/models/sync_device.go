@@ -65,3 +65,25 @@ func (m *SyncOp) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant.
 func (m *SyncOp) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
+
+// PairingCode is the hash of a short code that pairs a phone with a workspace:
+// single use (UsedAt) and valid for 10 minutes. The code itself is never stored.
+// app/sync/pairing.go reads and writes the table with SQL, in one transaction.
+type PairingCode struct {
+	orm.Model
+
+	WorkspaceID int64        `json:"workspace_id"`
+	UserID      int64        `json:"user_id"`
+	CodeHash    string       `json:"-"`
+	ExpiresAt   orm.NullTime `json:"expires_at"`
+	UsedAt      orm.NullTime `json:"used_at"`
+}
+
+// Table maps PairingCode to pairing_codes.
+func (PairingCode) Table() string { return "pairing_codes" }
+
+// SetTenant implements tenancy.Scoped.
+func (m *PairingCode) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
+
+// BeforeCreate stamps the tenant.
+func (m *PairingCode) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
