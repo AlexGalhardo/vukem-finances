@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"slices"
+	"strconv"
 	"testing"
 
 	"github.com/AlexGalhardo/vukem/vukemtest"
@@ -49,6 +50,25 @@ func TestViewerIsReadOnly(t *testing.T) {
 		"name": {"Visa"}, "limit": {"1000.00"}, "closingDay": {"10"}, "dueDay": {"20"},
 	}).AssertRedirect("/cards")
 
+	// The write limit is per person and the workspace has more write routes
+	// than it allows in a minute, so viewers take turns: each route is still
+	// tried by a viewer, and a 429 can never stand in for the 403.
+	const writesPerViewer = 50
+
+	viewers, attempts := []who{vera}, len(ownerOnlyReads)
+
+	for _, route := range app.Router.Routes() {
+		if route.Method != http.MethodGet && slices.Contains(route.Middleware, tenantMiddleware) && !slices.Contains(ownScope, route.Name) {
+			attempts++
+		}
+	}
+
+	for i := 1; i <= attempts/writesPerViewer; i++ {
+		u := newVerifiedUser(t, app, "Vera", "vera"+strconv.Itoa(i)+"@example.com")
+		join(t, app, ana, u, models.RoleViewer)
+		viewers = append(viewers, who{u, ana.Workspace, browser(t, app, u, ana.Workspace.ID)})
+	}
+
 	before := map[string]int64{}
 	for _, table := range []string{"transactions", "accounts", "categories", "budgets", "imports", "invites", "memberships", "credit_cards"} {
 		before[table] = rowCount(t, app, table)
@@ -80,9 +100,9 @@ func TestViewerIsReadOnly(t *testing.T) {
 				return
 			}
 
-			writes++
+			viewers[writes/writesPerViewer].Client.Do(route.Method, target, nil, "").AssertForbidden()
 
-			vera.Client.Do(route.Method, target, nil, "").AssertForbidden()
+			writes++
 		})
 	}
 
