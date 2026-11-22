@@ -60,17 +60,11 @@ func main() {
 // run is the one code path of the app. The headless run differs only in not
 // opening the window, so CI exercises everything but the webview.
 func run(ctx context.Context, f flags, stdout io.Writer) error {
-	var (
-		paths Paths
-		err   error
-	)
-
-	if f.dataDir != "" {
-		paths, err = ResolvePaths(f.dataDir)
-	} else {
-		paths, err = DefaultPaths()
+	if !f.headless {
+		return runWindowed(ctx, f)
 	}
 
+	paths, err := resolvePaths(f)
 	if err != nil {
 		return err
 	}
@@ -91,10 +85,6 @@ func run(ctx context.Context, f flags, stdout io.Writer) error {
 		fmt.Fprintln(stdout, srv.EntryURL())
 	}
 
-	if !f.headless {
-		return errors.New("the window is not built yet; run with --headless")
-	}
-
 	select {
 	case <-ctx.Done():
 	case err := <-srv.Done():
@@ -105,4 +95,12 @@ func run(ctx context.Context, f flags, stdout io.Writer) error {
 	defer cancel()
 
 	return srv.Stop(stopCtx)
+}
+
+func resolvePaths(f flags) (Paths, error) {
+	if f.dataDir != "" {
+		return ResolvePaths(f.dataDir)
+	}
+
+	return DefaultPaths()
 }
