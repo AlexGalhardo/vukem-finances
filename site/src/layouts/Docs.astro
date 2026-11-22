@@ -1,0 +1,76 @@
+---
+import SiteFooter from "../../components/SiteFooter.astro";
+import SiteHeader from "../../components/SiteHeader.astro";
+import { catalogs } from "../../lib/copy.ts";
+import type { DocPage, NavGroup } from "../../lib/docs.ts";
+import { pagePath, twinPath } from "../../lib/docs.ts";
+import type { Heading } from "../../lib/render.ts";
+import { basePath, repoUrl } from "../../lib/site.ts";
+import "../docs/docs.css";
+import Base from "./Base.astro";
+
+interface Props {
+	page: DocPage;
+	html: string;
+	headings: Heading[];
+	groups: NavGroup[];
+	prev?: DocPage;
+	next?: DocPage;
+	updated?: string;
+}
+
+const { page, html, headings, groups, prev, next, updated } = Astro.props;
+const copy = catalogs.en;
+const href = (slug: string): string => `${basePath}${pagePath(slug)}`;
+const toc = headings.filter((h) => h.level === 2);
+const source = `${repoUrl}/blob/main/${page.file}`;
+---
+<Base
+	locale="en"
+	title={`${page.title} | vukem-finances`}
+	description={page.description}
+	path={href(page.slug)}
+	ogAlt={copy.meta.ogAlt}
+>
+	<a class="skip" href="#content">{copy.a11y.skip}</a>
+	<SiteHeader locale="en" copy={copy} />
+	<div class="wrap docs-layout">
+		<nav class="docs-nav" aria-label="Documentation">
+			{groups.map((group) => (
+				<details open={group.pages.some((p) => p.slug === page.slug)}>
+					<summary>{group.title}</summary>
+					<ul>
+						{group.pages.map((p) => (
+							<li><a href={href(p.slug)} aria-current={p.slug === page.slug ? "page" : undefined}>{p.title}</a></li>
+						))}
+					</ul>
+				</details>
+			))}
+		</nav>
+		<main id="content">
+			<article class="doc">
+				<h1>{page.title}</h1>
+				<p class="summary">{page.description}</p>
+				<ul class="doc-meta">
+					{updated && <li>Last updated {updated}</li>}
+					<li><a href={`${basePath}${twinPath(page.slug)}`}>Markdown version</a></li>
+					<li><a href={source}>{page.generated ? "Generated from the repository" : "Source on GitHub"}</a></li>
+				</ul>
+				{toc.length >= 3 && (
+					<nav class="toc" aria-label="On this page">
+						<p>On this page</p>
+						<ul>
+							{toc.map((h) => <li><a href={`#${h.id}`}>{h.text}</a></li>)}
+						</ul>
+					</nav>
+				)}
+				<div class="doc-body"><Fragment set:html={html} /></div>
+				<nav class="pager" aria-label="Pages in order">
+					{prev && <a class="prev" href={href(prev.slug)}><small>Previous</small>{prev.title}</a>}
+					{next && <a class="next" href={href(next.slug)}><small>Next</small>{next.title}</a>}
+				</nav>
+			</article>
+		</main>
+	</div>
+	<SiteFooter copy={copy} />
+</Base>

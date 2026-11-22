@@ -1,0 +1,30 @@
+---
+import { buildNavigation, loadPages, orderedSlugs, readLastUpdated } from "../../../lib/docs.ts";
+import { renderMarkdown } from "../../../lib/render.ts";
+import { basePath } from "../../../lib/site.ts";
+import Docs from "../../layouts/Docs.astro";
+
+export async function getStaticPaths() {
+	const pages = loadPages();
+	const groups = buildNavigation(pages);
+	const order = orderedSlugs(groups);
+	const updated = readLastUpdated();
+	return pages.map((page) => {
+		const at = order.indexOf(page.slug);
+		return {
+			params: { slug: page.slug === "index" ? undefined : page.slug },
+			props: {
+				page,
+				groups,
+				prev: at > 0 ? pages.find((p) => p.slug === order[at - 1]) : undefined,
+				next: at >= 0 && at < order.length - 1 ? pages.find((p) => p.slug === order[at + 1]) : undefined,
+				updated: updated[page.slug]?.date,
+			},
+		};
+	});
+}
+
+const { page, groups, prev, next, updated } = Astro.props;
+const { html, headings } = await renderMarkdown(page.body, basePath);
+---
+<Docs page={page} html={html} headings={headings} groups={groups} prev={prev} next={next} updated={updated} />
