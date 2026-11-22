@@ -374,3 +374,39 @@ func TestOutputBoundsColumns(t *testing.T) {
 		t.Fatalf("json has no column limit: %v", err)
 	}
 }
+
+func TestOutputCSVDelimiterGuard(t *testing.T) {
+	t.Parallel()
+
+	for cell, quoted := range map[string]bool{
+		"x;=1+1":  true,
+		"x;  @y":  true,
+		"a\t+b":   true,
+		"a;＝1":    true,
+		"a;​-1":   true,
+		"a;b":     false,
+		"a\tb":    false,
+		"a;b;c":   false,
+		"-10.50":  false,
+		"a-b;c+d": false,
+		"=1":      true,
+		"1;2;":    false,
+	} {
+		tm := &term{}
+		c := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
+
+		if err := c.WriteForTest([]any{map[string]any{"k": cell}}, "csv"); err != nil {
+			t.Fatal(err)
+		}
+
+		rows, err := csv.NewReader(strings.NewReader(tm.out.String())).ReadAll()
+		if err != nil || len(rows) != 2 {
+			t.Fatalf("%q: %v: %q", cell, err, tm.out.String())
+		}
+
+		got := rows[1][0]
+		if (got != cell) != quoted || (quoted && got != "'"+cell) {
+			t.Errorf("%q -> %q, quoted should be %v", cell, got, quoted)
+		}
+	}
+}
