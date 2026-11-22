@@ -10,16 +10,16 @@
     "preview": "bun --bun astro preview",
     "typecheck": "bun --bun tsc --noEmit",
     "check:claims": "bun scripts/check-claims.ts && bun scripts/check-doc-claims.ts",
+    "check:mdx": "bun scripts/check-mdx.ts",
+    "reference": "bun scripts/generate-reference.ts",
+    "reference:check": "bun scripts/reference-check.ts",
+    "last-updated": "bun scripts/last-updated.ts",
+    "check:last-updated": "bun scripts/last-updated.ts --check",
+    "test:reference": "bun test scripts/reference.test.ts",
     "check:built": "bun scripts/check-built.ts",
     "screenshots": "bun scripts/screenshots.ts",
     "og": "bun scripts/og-image.ts",
-    "test:site": "bun test scripts",
-    "reference": "bun scripts/generate-reference.ts",
-    "reference:check": "bun scripts/reference-check.ts",
-    "test:reference": "bun test scripts/reference.test.ts",
-    "last-updated": "bun scripts/last-updated.ts",
-    "check:last-updated": "bun scripts/last-updated.ts --check",
-    "check:mdx": "bun scripts/check-mdx.ts"
+    "test:site": "bun test scripts"
   },
   "dependencies": {
     "@astrojs/react": "7.1.9",

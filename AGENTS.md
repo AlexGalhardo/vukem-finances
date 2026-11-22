@@ -42,7 +42,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `desktop/`, `app/desktopgate/`, `bootstrap/desktop.go` | the desktop app: its own Go module (Wails v3.1.0, `replace` to the parent), the loopback gate, and the option that serves the handler behind it (see "The desktop app") |
 | `config/`, `bootstrap/` | configuration and application start-up |
 | `.agents/rules/` | the rules of the team: read them before editing |
-| `site/`, `docs/site.md`, `docs/landing-brief.md`, `docs/legal/` | the static Astro site (landing page in three languages, privacy notice): its own `package.json` and `bun.lock`, not a workspace of the root and not in the Docker image (see "The static site") |
+| `site/`, `docs/site.md`, `docs/landing-brief.md`, `docs/legal/` | the static Astro site (landing page in three languages, privacy notice, the documentation at `/docs/`): its own `package.json` and `bun.lock`, not a workspace of the root and not in the Docker image (see "The static site") |
 | `.github/` | CI workflows and `scopes.txt`, the list of commit scopes |
 | `scripts/` | the release train script and the Docker smoke tests (`docker-persist-test.sh`, `docker-clientip-test.sh`; they need Docker and are not part of `go test`) |
 | `Dockerfile`, `compose.yaml`, `compose.prod.yaml`, `deploy/` | the image, the local stack, the VPS stack with Caddy and the [deployment guide](deploy/README.md) |
@@ -71,6 +71,8 @@ Read `docs/site.md` and `docs/landing-brief.md`. `site/` is 100% static (D-019, 
 - Every factual sentence of the landing page is a row of the claims register in `docs/landing-brief.md` with evidence in this repository; `cd site && bun run check:claims` checks it. Do not claim what has no evidence (the mobile app, MCP and store availability are not claimed until they ship).
 - Copy lives in `site/src/landing/copy/<locale>.json` (identical keys in `en`, `pt-br`, `es`). The plan limits come from `site/generated/plans.json`, which mirrors `app/workspaces/limits.go`: change both together.
 - Run `bun install --frozen-lockfile`, `bun run typecheck`, `bun run check:claims`, `bun run test:site`, `bun run build` and `bun run check:built` in `site/` before a hand-off. Dependencies are pinned exactly; no animation or 3D library, no web font from a CDN.
+- The documentation (epic 23, `site/content/docs/` written by hand, `site/content/generated/` generated) is plain Markdown listed in `site/content/navigation.ts`. Never edit a generated page: change its source (`docs/openapi.json`, `resources/operations.json`, `docs/reference/cli.md`, `docs/reference/mcp.md`, `.env.example`, `docs/shortcuts.md`, `CHANGELOG.md`) and run `bun run reference`. A page may only name a CLI command, setting, repository path, REST route, MCP tool, link and anchor that exist (`bun run check:claims` names the page and line). It says the personal edition is 100% offline (D-027) and that the SaaS edition is self-hosted with no hosted service offered.
+- Before a hand-off also run `bun run check:mdx`, `bun run reference:check`, `bun run last-updated` and `bun run check:last-updated` in `site/` (`last-updated` rewrites `content/last-updated.json` from git: commit it with the page change).
 - DNS, the Pages custom domain and `LANDING_TERMS_APPROVED` are manual steps of the author, never a task.
 
 ## The desktop app

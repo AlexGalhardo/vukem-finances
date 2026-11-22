@@ -11,6 +11,15 @@ on:
       - "docs/legal/**"
       - "docs/landing-brief.md"
       - "app/workspaces/limits.go"
+      # Sources of the generated documentation pages and of the claims check.
+      - "docs/openapi.json"
+      - "docs/reference/**"
+      - "docs/shortcuts.md"
+      - "resources/operations.json"
+      - ".env.example"
+      - "CHANGELOG.md"
+      - "compose.yaml"
+      - "compose.prod.yaml"
       - ".github/workflows/site.yml"
   pull_request:
     paths:
@@ -18,6 +27,15 @@ on:
       - "docs/legal/**"
       - "docs/landing-brief.md"
       - "app/workspaces/limits.go"
+      # Sources of the generated documentation pages and of the claims check.
+      - "docs/openapi.json"
+      - "docs/reference/**"
+      - "docs/shortcuts.md"
+      - "resources/operations.json"
+      - ".env.example"
+      - "CHANGELOG.md"
+      - "compose.yaml"
+      - "compose.prod.yaml"
       - ".github/workflows/site.yml"
   workflow_dispatch:
 
@@ -49,7 +67,10 @@ jobs:
           bun-version: 1.4.5
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
+      - run: bun run check:mdx
+      - run: bun run reference:check
       - run: bun run check:claims
+      - run: bun run check:last-updated
       - run: bun run test:site
       - run: bun run build
       - run: bun run check:built
