@@ -31,6 +31,7 @@ func TestOutputCSVDelimiterGuard(t *testing.T) {
 		"x;=1+1":     "x;'=1+1",
 		"a\n=1+1;":   "a\n'=1+1;",
 		"a;\"=1+1;":  "a;'\"=1+1;",
+		"a\nb,=1+1,": "a\nb,'=1+1,",
 		"a\t+b":      "a\t'+b",
 		"x;  @y":     "x;'  @y",
 		"a;＝1":       "a;'＝1",

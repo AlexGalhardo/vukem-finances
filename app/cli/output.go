@@ -255,9 +255,10 @@ func quoteCSV(s string) string {
 // whitespace, control and format characters and a quote. A reader using ; or a
 // tab can misread the quoting of a comma-separated line and start a cell in the
 // middle of this one, so every segment after ; tab CR or LF is guarded with its
-// own apostrophe. A comma is not a boundary: the reader that splits on it honors
-// the quotes. A text value is exempt only when the whole of it is a plain
-// negative decimal ("-10.50"); a real number is written bare by writeCSV.
+// own apostrophe. A comma is a boundary only in a cell with a line break, where
+// a reader that splits lines first loses the quotes; otherwise the reader that
+// splits on it honors them. A text value is exempt only when the whole of it is
+// a plain negative decimal ("-10.50"); a real number is written bare by writeCSV.
 func csvSafe(s string) string {
 	if s == "" || plainNegative(s) {
 		return s
@@ -268,10 +269,11 @@ func csvSafe(s string) string {
 	b.Grow(len(s) + 1)
 
 	atStart, segment, copied := true, 0, 0
+	multiline := strings.ContainsAny(s, "\r\n")
 
 	for i, r := range s {
 		switch {
-		case r == ';' || r == '\t' || r == '\r' || r == '\n':
+		case r == ';' || r == '\t' || r == '\r' || r == '\n' || (multiline && r == ','):
 			atStart, segment = true, i+1
 		case !atStart:
 		case r == '"' || unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r):
