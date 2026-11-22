@@ -33,3 +33,24 @@ carries a test written first, in its own commit, with `Refs: epic 24 task N` and
 - **Severity:** Low (defense in depth).
 - **Status:** fixed. A trailing dot is trimmed before the host is judged, and a host made only of decimal or `0x` labels that
   is not a canonical IP literal is refused.
+
+### QA-003: a Windows-1252 bank CSV is stored as invalid UTF-8
+
+- **Surface:** statement import (`finance.CSVParser`), found by `FuzzCSVParser`.
+- **Steps:** import a CSV whose description holds a Windows-1252 byte (`Caf` then `0xE9`, a common export of a Brazilian bank).
+- **Expected:** the text is read as `Café`, as the OFX parser does (`decodeOFXText`).
+- **Actual:** the byte is kept as it is, so a description that is not valid UTF-8 reaches the database, the exports and the
+  JSON of the pages. The sync API and the tags already refuse such text.
+- **Evidence:** `FuzzCSVParser` crash `1d454fa8f124f5c0` (now a regression seed) and `TestImportCSVParserDecodesWindows1252AndDropsTheBOM`.
+- **Severity:** Low (data quality, no isolation or injection effect).
+- **Status:** fixed. The CSV is decoded like an OFX file: a BOM is dropped, valid UTF-8 is kept, anything else is Windows-1252.
+
+### QA-004: a recurrence that ends on 0001-01-01 never ends
+
+- **Surface:** the recurrence engine (`Rule.Occurrences`), found by `FuzzRecurrenceOccurrences`.
+- **Steps:** a weekly rule with interval 3, start date and end date `0001-01-01`, listed over `0001-01-01` to `0001-03-01`.
+- **Expected:** one occurrence, the start date.
+- **Actual:** three: the end date was the zero `time.Time`, which the engine read as "no end date".
+- **Evidence:** crash `ca1206377a9ce3d8` (now a regression seed) and `TestRecurrenceEndDateInYearOne`.
+- **Severity:** Low (a date no person enters; the TypeScript engine in `resources/js/lib/recurrence.ts` was not checked).
+- **Status:** fixed with an explicit `hasEnd` flag.
