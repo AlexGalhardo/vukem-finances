@@ -1,0 +1,76 @@
+name: Site
+
+# Every pull request that touches the static site builds it and runs its checks; a push to main publishes it to
+# GitHub Pages (source "GitHub Actions"). The custom domain, the DNS record and "Enforce HTTPS" are repository
+# settings made by hand by the author (docs/site.md), not by this workflow.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "docs/legal/**"
+      - "docs/landing-brief.md"
+      - "app/workspaces/limits.go"
+      - ".github/workflows/site.yml"
+  pull_request:
+    paths:
+      - "site/**"
+      - "docs/legal/**"
+      - "docs/landing-brief.md"
+      - "app/workspaces/limits.go"
+      - ".github/workflows/site.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: site
+    env:
+      # Optional repository variable; the default is https://finances.vukem.dev with the base path "/".
+      SITE_URL: ${{ vars.SITE_URL }}
+      # The terms are published only after the author approves them (repository variable).
+      LANDING_TERMS_APPROVED: ${{ vars.LANDING_TERMS_APPROVED }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version: 1.4.5
+      - run: bun install --frozen-lockfile
+      - run: bun run typecheck
+      - run: bun run check:claims
+      - run: bun run test:site
+      - run: bun run build
+      - run: bun run check:built
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        with:
+          path: site/out
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: [build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

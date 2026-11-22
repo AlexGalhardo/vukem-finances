@@ -42,6 +42,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `desktop/`, `app/desktopgate/`, `bootstrap/desktop.go` | the desktop app: its own Go module (Wails v3.1.0, `replace` to the parent), the loopback gate, and the option that serves the handler behind it (see "The desktop app") |
 | `config/`, `bootstrap/` | configuration and application start-up |
 | `.agents/rules/` | the rules of the team: read them before editing |
+| `site/`, `docs/site.md`, `docs/landing-brief.md`, `docs/legal/` | the static Astro site (landing page in three languages, privacy notice): its own `package.json` and `bun.lock`, not a workspace of the root and not in the Docker image (see "The static site") |
 | `.github/` | CI workflows and `scopes.txt`, the list of commit scopes |
 | `scripts/` | the release train script and the Docker smoke tests (`docker-persist-test.sh`, `docker-clientip-test.sh`; they need Docker and are not part of `go test`) |
 | `Dockerfile`, `compose.yaml`, `compose.prod.yaml`, `deploy/` | the image, the local stack, the VPS stack with Caddy and the [deployment guide](deploy/README.md) |
@@ -62,6 +63,15 @@ bun run build
 ```
 
 Install the JavaScript dependencies with `bun install --frozen-lockfile`. The mobile app is separate: `cd mobile && bun install --frozen-lockfile && bun run typecheck && bun run test` (Node 22.13 or newer for `node:sqlite`; CI pins 24.21.0); never add a `mobile/src/app` folder (expo-router would read it as the routes root). `bash scripts/mobile-sync-e2e.sh` runs the mobile sync client against the real server (Go, Node 22.13 or newer and Bun needed); `bunx jest` skips `mobile/__tests__/integration/` on purpose. Run every command above before a hand-off.
+
+## The static site
+
+Read `docs/site.md` and `docs/landing-brief.md`. `site/` is 100% static (D-019, D-020): no backend, form, sign-up, login, checkout, cookie or third-party resource, and the page never says a hosted service exists.
+
+- Every factual sentence of the landing page is a row of the claims register in `docs/landing-brief.md` with evidence in this repository; `cd site && bun run check:claims` checks it. Do not claim what has no evidence (the mobile app, MCP and store availability are not claimed until they ship).
+- Copy lives in `site/src/landing/copy/<locale>.json` (identical keys in `en`, `pt-br`, `es`). The plan limits come from `site/generated/plans.json`, which mirrors `app/workspaces/limits.go`: change both together.
+- Run `bun install --frozen-lockfile`, `bun run typecheck`, `bun run check:claims`, `bun run test:site`, `bun run build` and `bun run check:built` in `site/` before a hand-off. Dependencies are pinned exactly; no animation or 3D library, no web font from a CDN.
+- DNS, the Pages custom domain and `LANDING_TERMS_APPROVED` are manual steps of the author, never a task.
 
 ## The desktop app
 

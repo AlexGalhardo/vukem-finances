@@ -15,6 +15,9 @@ node_modules/
 # The mobile app (epic 19) has its own toolchain and is not part of the image
 /mobile/
 
+# The static site is published to GitHub Pages and never part of the image
+/site/
+
 # Local data (SQLite files, uploads)
 storage/
 
