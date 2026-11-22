@@ -17,6 +17,7 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/api"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
+	syncproto "github.com/AlexGalhardo/vukem-finances/app/sync"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 	"github.com/AlexGalhardo/vukem-finances/config"
 )
@@ -50,7 +51,10 @@ func API(r *router.Router, app *vukem.App) error {
 		return err
 	}
 
-	a := &api.API{Users: acc.Users, Tokens: acc.Tokens, WS: ws, Fin: fin, Now: app.Now}
+	a := &api.API{Users: acc.Users, Tokens: acc.Tokens, WS: ws, Fin: fin, Now: app.Now, Log: app.Log}
+	a.Sync = &syncproto.Service{DB: ws.DB, WS: ws, Fin: fin, Log: app.Log, Now: app.Now}
+	a.PullLimiter = limiters("sync.pull", syncproto.PullsPerMinute, config.APIWindow)
+	a.PushLimiter = limiters("sync.push", syncproto.PushesPerMinute, config.APIWindow)
 
 	// Every error of the API carries a stable "code" next to the problem+json members.
 	r.Services().ProblemDecorator = func(c *web.Ctx, p *web.Problem) {

@@ -14,6 +14,7 @@ import (
 	"github.com/AlexGalhardo/vukem/errs"
 
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	syncproto "github.com/AlexGalhardo/vukem-finances/app/sync"
 	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
@@ -173,5 +174,6 @@ func (s *TokenService) Revoke(ctx context.Context, u models.User, workspaceID in
 		return errs.ErrNotFound
 	}
 
-	return nil
+	// A revoked token takes its devices with it: they stop syncing at once.
+	return syncproto.RevokeTokenDevices(ctx, s.DB, id, s.now())
 }
