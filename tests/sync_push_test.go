@@ -310,3 +310,42 @@ func TestSecurity_PushOtherWorkspaceUID(t *testing.T) {
 		}
 	}
 }
+
+// The mutations of one row keep their request order, whatever the fields say: a
+// category created with a null parent (or with a parent) and renamed in the same
+// batch must be created first.
+func TestSyncPushKeepsTheOrderOfOneRow(t *testing.T) {
+	t.Parallel()
+
+	f := newSyncFixture(t)
+	d := f.device(t, "phone")
+
+	root, plain, kid := newULID(), newULID(), newULID()
+
+	results := d.pushOK(
+		mut("category", root, "upsert", 0, map[string]any{"name": "Root", "kind": "expense"}),
+		mut("category", plain, "upsert", 0, map[string]any{"name": "Plain", "kind": "expense", "parent_uid": nil}),
+		mut("category", plain, "upsert", 0, map[string]any{"name": "Plain renamed"}),
+		mut("category", kid, "upsert", 0, map[string]any{"name": "Kid", "kind": "expense", "parent_uid": root}),
+		mut("category", kid, "upsert", 0, map[string]any{"name": "Kid renamed"}),
+	)
+
+	for i, want := range []string{"applied", "applied", "merged", "applied", "merged"} {
+		if results[i].Status != want {
+			t.Errorf("result %d = %s (%s), want %s", i, results[i].Status, results[i].code(), want)
+		}
+	}
+
+	rows, _ := d.pullAll(0)
+	names := map[string]string{}
+
+	for _, r := range rows {
+		if r.Op == "upsert" {
+			names[r.UID], _ = r.Row["name"].(string)
+		}
+	}
+
+	if names[plain] != "Plain renamed" || names[kid] != "Kid renamed" {
+		t.Errorf("names = %v", names)
+	}
+}
