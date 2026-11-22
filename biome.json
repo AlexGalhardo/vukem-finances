@@ -10,7 +10,16 @@
       "mobile/__tests__/**",
       "*.ts",
       "*.json",
-      "!node_modules"
+      "site/lib/**",
+      "site/scripts/**",
+      "site/*.mjs",
+      "site/*.json",
+      "site/content/**",
+      "site/generated/*.json",
+      "site/src/landing/copy/*.json",
+      "!node_modules",
+      "!site/node_modules",
+      "!site/out"
     ]
   },
   "formatter": { "enabled": true, "indentStyle": "space", "indentWidth": 2, "lineWidth": 120 },
