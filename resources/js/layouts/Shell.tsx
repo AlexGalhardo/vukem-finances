@@ -3,6 +3,7 @@ import { ArrowUpRight, Keyboard, LogOut, Plus, Search, Settings, ShieldCheck } f
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import CommandPalette from "../components/CommandPalette";
 import { Shortcut } from "../components/Kbd";
+import NotificationBell from "../components/NotificationBell";
 import Preferences from "../components/Preferences";
 import ShortcutHelp from "../components/ShortcutHelp";
 import QuickAdd, { useQuickAdd } from "../components/transactions/QuickAdd";
@@ -231,6 +232,7 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
                 >
                   <Keyboard aria-hidden="true" />
                 </Button>
+                <NotificationBell />
                 <Preferences withShortcuts />
               </div>
             </header>
