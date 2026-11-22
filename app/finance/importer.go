@@ -561,6 +561,31 @@ func (s *Service) RunImport(ctx context.Context, id int64) error {
 	return nil
 }
 
+// RecoverQueuedImports runs again every import still queued, across all
+// workspaces, through dispatch (the same function ConfirmImport takes). The
+// default queue keeps its jobs in memory, so a crash between the confirm and
+// the end of the job leaves an import queued with nobody to run it (QA-501).
+// It is safe to repeat and to run next to a job that is still running in
+// another process: RunImport reads the status again inside its one
+// transaction, under the workspace lock, and writes the rows, the counts and
+// the status together. A failure of one import is logged and does not stop
+// the others. Each call carries the tenant of its import. It returns how many
+// it handed to dispatch.
+func (s *Service) RecoverQueuedImports(ctx context.Context, dispatch func(ctx context.Context, workspaceID, importID int64) error) (int, error) {
+	queued, err := orm.QueryOf[models.Import](s.DB).Where("status", models.ImportQueued).OrderBy("id", orm.Asc).Get(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	for _, imp := range queued {
+		if err := dispatch(workspaces.WithTenant(ctx, imp.WorkspaceID), imp.WorkspaceID, imp.ID); err != nil {
+			s.Log.WarnContext(ctx, "queued import not recovered", "import", imp.ID, "err", err.Error())
+		}
+	}
+
+	return len(queued), nil
+}
+
 // failImport records why an import failed. The reason is shown on the page,
 // so only a message this package wrote reaches it; anything else (a database
 // error) is logged by the job runner and shown as a plain failure.
