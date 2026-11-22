@@ -1,0 +1,100 @@
+{"description": "Rent November", "kind": "expense", "amount_cents": 7513, "expected": "Housing"}
+{"description": "Aluguel apartamento", "kind": "expense", "amount_cents": 53104, "expected": "Housing"}
+{"description": "Condomínio Edifício Aurora", "kind": "expense", "amount_cents": 12241, "expected": "Housing"}
+{"description": "Electric bill Enel", "kind": "expense", "amount_cents": 86200, "expected": "Housing"}
+{"description": "Conta de luz CPFL", "kind": "expense", "amount_cents": 63913, "expected": "Housing"}
+{"description": "Water and sewage SABESP", "kind": "expense", "amount_cents": 87904, "expected": "Housing"}
+{"description": "Internet Vivo Fibra", "kind": "expense", "amount_cents": 75841, "expected": "Housing"}
+{"description": "Home insurance premium", "kind": "expense", "amount_cents": 81400, "expected": "Housing"}
+{"description": "IPTU parcela 3", "kind": "expense", "amount_cents": 30313, "expected": "Housing"}
+{"description": "Plumber repair kitchen sink", "kind": "expense", "amount_cents": 32704, "expected": "Housing"}
+{"description": "Gas bill November", "kind": "expense", "amount_cents": 49441, "expected": "Housing"}
+{"description": "Mortgage payment", "kind": "expense", "amount_cents": 76600, "expected": "Housing"}
+{"description": "Seguro residencial", "kind": "expense", "amount_cents": 86713, "expected": "Housing"}
+{"description": "Aluguel garagem", "kind": "expense", "amount_cents": 67504, "expected": "Housing"}
+{"description": "Property tax installment", "kind": "expense", "amount_cents": 23041, "expected": "Housing"}
+{"description": "Supermercado Pão de Açúcar", "kind": "expense", "amount_cents": 71800, "expected": "Groceries"}
+{"description": "Walmart grocery run", "kind": "expense", "amount_cents": 53113, "expected": "Groceries"}
+{"description": "Padaria São João", "kind": "expense", "amount_cents": 12304, "expected": "Groceries"}
+{"description": "Mercado Livre feira", "kind": "expense", "amount_cents": 86641, "expected": "Groceries"}
+{"description": "Carrefour compras do mês", "kind": "expense", "amount_cents": 67000, "expected": "Groceries"}
+{"description": "Whole Foods Market", "kind": "expense", "amount_cents": 19513, "expected": "Groceries"}
+{"description": "Hortifruti Boa Safra", "kind": "expense", "amount_cents": 47104, "expected": "Groceries"}
+{"description": "Açougue do Zé", "kind": "expense", "amount_cents": 60241, "expected": "Groceries"}
+{"description": "Trader Joe's", "kind": "expense", "amount_cents": 62200, "expected": "Groceries"}
+{"description": "Atacadão compra mensal", "kind": "expense", "amount_cents": 75913, "expected": "Groceries"}
+{"description": "Costco bulk order", "kind": "expense", "amount_cents": 81904, "expected": "Groceries"}
+{"description": "Mercadinho Bairro Alto", "kind": "expense", "amount_cents": 33841, "expected": "Groceries"}
+{"description": "Fruit and veg stand", "kind": "expense", "amount_cents": 57400, "expected": "Groceries"}
+{"description": "Supermarket Extra", "kind": "expense", "amount_cents": 42313, "expected": "Groceries"}
+{"description": "Feira livre sábado", "kind": "expense", "amount_cents": 26704, "expected": "Groceries"}
+{"description": "Uber trip downtown", "kind": "expense", "amount_cents": 7441, "expected": "Transport"}
+{"description": "99 Pop corrida", "kind": "expense", "amount_cents": 52600, "expected": "Transport"}
+{"description": "Shell gas station", "kind": "expense", "amount_cents": 8713, "expected": "Transport"}
+{"description": "Posto Ipiranga abastecimento", "kind": "expense", "amount_cents": 61504, "expected": "Transport"}
+{"description": "Metro card top up", "kind": "expense", "amount_cents": 71041, "expected": "Transport"}
+{"description": "Bilhete Único recarga", "kind": "expense", "amount_cents": 47800, "expected": "Transport"}
+{"description": "Parking garage airport", "kind": "expense", "amount_cents": 65113, "expected": "Transport"}
+{"description": "Estacionamento Shopping", "kind": "expense", "amount_cents": 6304, "expected": "Transport"}
+{"description": "Lyft ride home", "kind": "expense", "amount_cents": 44641, "expected": "Transport"}
+{"description": "Car wash and oil change", "kind": "expense", "amount_cents": 43000, "expected": "Transport"}
+{"description": "Pedágio Ecovias", "kind": "expense", "amount_cents": 31513, "expected": "Transport"}
+{"description": "Monthly bus pass", "kind": "expense", "amount_cents": 41104, "expected": "Transport"}
+{"description": "Bike repair shop", "kind": "expense", "amount_cents": 18241, "expected": "Transport"}
+{"description": "Combustível etanol", "kind": "expense", "amount_cents": 38200, "expected": "Transport"}
+{"description": "Train ticket", "kind": "expense", "amount_cents": 87913, "expected": "Transport"}
+{"description": "Netflix subscription", "kind": "expense", "amount_cents": 75904, "expected": "Leisure"}
+{"description": "Spotify Premium", "kind": "expense", "amount_cents": 81841, "expected": "Leisure"}
+{"description": "Cinemark ingressos", "kind": "expense", "amount_cents": 33400, "expected": "Leisure"}
+{"description": "Steam game purchase", "kind": "expense", "amount_cents": 54313, "expected": "Leisure"}
+{"description": "Restaurante Outback jantar", "kind": "expense", "amount_cents": 20704, "expected": "Leisure"}
+{"description": "Bar do Zeca happy hour", "kind": "expense", "amount_cents": 55441, "expected": "Leisure"}
+{"description": "Concert tickets Ticketmaster", "kind": "expense", "amount_cents": 28600, "expected": "Leisure"}
+{"description": "Livraria Cultura", "kind": "expense", "amount_cents": 20713, "expected": "Leisure"}
+{"description": "Disney+ mensalidade", "kind": "expense", "amount_cents": 55504, "expected": "Leisure"}
+{"description": "Pizza night Domino's", "kind": "expense", "amount_cents": 29041, "expected": "Leisure"}
+{"description": "iFood pedido sexta", "kind": "expense", "amount_cents": 23800, "expected": "Leisure"}
+{"description": "Bowling with friends", "kind": "expense", "amount_cents": 77113, "expected": "Leisure"}
+{"description": "Amazon Prime Video rental", "kind": "expense", "amount_cents": 90304, "expected": "Leisure"}
+{"description": "Teatro Municipal", "kind": "expense", "amount_cents": 2641, "expected": "Leisure"}
+{"description": "Weekend trip hotel", "kind": "expense", "amount_cents": 19000, "expected": "Leisure"}
+{"description": "Farmácia Drogasil", "kind": "expense", "amount_cents": 43513, "expected": "Health"}
+{"description": "CVS pharmacy", "kind": "expense", "amount_cents": 35104, "expected": "Health"}
+{"description": "Consulta dentista", "kind": "expense", "amount_cents": 66241, "expected": "Health"}
+{"description": "Unimed mensalidade", "kind": "expense", "amount_cents": 14200, "expected": "Health"}
+{"description": "Gym membership Smart Fit", "kind": "expense", "amount_cents": 9913, "expected": "Health"}
+{"description": "Laboratório exames de sangue", "kind": "expense", "amount_cents": 69904, "expected": "Health"}
+{"description": "Dr. Silva consultation", "kind": "expense", "amount_cents": 39841, "expected": "Health"}
+{"description": "Eye doctor and glasses", "kind": "expense", "amount_cents": 9400, "expected": "Health"}
+{"description": "Óptica Diniz", "kind": "expense", "amount_cents": 66313, "expected": "Health"}
+{"description": "Physiotherapy session", "kind": "expense", "amount_cents": 14704, "expected": "Health"}
+{"description": "Hospital copay", "kind": "expense", "amount_cents": 13441, "expected": "Health"}
+{"description": "Vitamin shop GNC", "kind": "expense", "amount_cents": 4600, "expected": "Health"}
+{"description": "Psicóloga sessão", "kind": "expense", "amount_cents": 32713, "expected": "Health"}
+{"description": "Plano de saúde Amil", "kind": "expense", "amount_cents": 49504, "expected": "Health"}
+{"description": "Pharmacy prescription refill", "kind": "expense", "amount_cents": 77041, "expected": "Health"}
+{"description": "Salary ACME Corp", "kind": "income", "amount_cents": 89800, "expected": "Salary"}
+{"description": "Salário Empresa XYZ", "kind": "income", "amount_cents": 89113, "expected": "Salary"}
+{"description": "Payroll deposit", "kind": "income", "amount_cents": 84304, "expected": "Salary"}
+{"description": "Pagamento salário novembro", "kind": "income", "amount_cents": 50641, "expected": "Salary"}
+{"description": "Monthly paycheck", "kind": "income", "amount_cents": 85000, "expected": "Salary"}
+{"description": "Folha de pagamento", "kind": "income", "amount_cents": 55513, "expected": "Salary"}
+{"description": "Direct deposit employer", "kind": "income", "amount_cents": 29104, "expected": "Salary"}
+{"description": "13o salário", "kind": "income", "amount_cents": 24241, "expected": "Salary"}
+{"description": "Salary November", "kind": "income", "amount_cents": 80200, "expected": "Salary"}
+{"description": "Holerite depósito", "kind": "income", "amount_cents": 21913, "expected": "Salary"}
+{"description": "Freelance project payment", "kind": "income", "amount_cents": 63904, "expected": "Other income"}
+{"description": "Venda OLX bicicleta", "kind": "income", "amount_cents": 87841, "expected": "Other income"}
+{"description": "Tax refund", "kind": "income", "amount_cents": 75400, "expected": "Other income"}
+{"description": "Restituição imposto de renda", "kind": "income", "amount_cents": 78313, "expected": "Other income"}
+{"description": "Dividend payment", "kind": "income", "amount_cents": 8704, "expected": "Other income"}
+{"description": "Cashback credit", "kind": "income", "amount_cents": 61441, "expected": "Other income"}
+{"description": "Gift from grandma", "kind": "income", "amount_cents": 70600, "expected": "Other income"}
+{"description": "Reembolso despesas viagem", "kind": "income", "amount_cents": 44713, "expected": "Other income"}
+{"description": "Interest earned savings", "kind": "income", "amount_cents": 43504, "expected": "Other income"}
+{"description": "Rendimento poupança", "kind": "income", "amount_cents": 35041, "expected": "Other income"}
+{"description": "Livraria Saraiva", "kind": "expense", "amount_cents": 2500, "expected": "Leisure"}
+{"description": "Airbnb weekend", "kind": "expense", "amount_cents": 2871, "expected": "Leisure"}
+{"description": "Sam's Club compras", "kind": "expense", "amount_cents": 3242, "expected": "Groceries"}
+{"description": "Reparo encanamento", "kind": "expense", "amount_cents": 3613, "expected": "Housing"}
+{"description": "Clínica veterinária? não, consulta médica", "kind": "expense", "amount_cents": 3984, "expected": "Health"}
