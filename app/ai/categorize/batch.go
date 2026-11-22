@@ -46,6 +46,12 @@ Use only ids from "transactions" and uids from "categories". Use null when no ca
 // schema is the response shape asked of the provider.
 var schema = []byte(`{"type":"object","additionalProperties":false,"required":["items"],"properties":{"items":{"type":"array","items":{"type":"object","additionalProperties":false,"required":["id","category_uid","confidence"],"properties":{"id":{"type":"string"},"category_uid":{"type":["string","null"]},"confidence":{"type":"number","minimum":0,"maximum":1}}}}}}`) //nolint:gochecknoglobals // read-only
 
+// Completer is what Batch needs of the AI layer: *ai.Client is the production
+// one; the evaluation command passes a fake or a counting wrapper.
+type Completer interface {
+	Call(ctx context.Context, workspace int64, req ai.Request) (ai.Response, error)
+}
+
 // Item is one transaction of a batch, as it is sent.
 type Item struct {
 	// ID is the short local id (t1..t30) the answer must echo.
@@ -103,7 +109,7 @@ type answer struct {
 // a confidence outside 0..1 are all dropped. Text instead of JSON is
 // ErrBadOutput and yields nothing. The call goes through ai.Client, so the
 // switches, the key, the rate and the monthly limit all apply.
-func Batch(ctx context.Context, client *ai.Client, workspaceID int64, kind string, items []Item, cats []Category) ([]Proposal, error) {
+func Batch(ctx context.Context, client Completer, workspaceID int64, kind string, items []Item, cats []Category) ([]Proposal, error) {
 	if len(items) == 0 || len(items) > BatchSize {
 		return nil, fmt.Errorf("categorize: a batch has 1 to %d items", BatchSize)
 	}
