@@ -9,7 +9,7 @@ import { useFinanceI18n } from "../lib/i18n";
 import { checkConfirmation, checkPassword, passwordAdvice } from "../lib/password-policy";
 import type { SetupProps } from "../page-props";
 
-export default function Setup({ currency }: SetupProps) {
+export default function Setup({ currency, codeRequired }: SetupProps) {
   const { t } = useFinanceI18n();
   const form = useForm({ name: "", email: "", password: "", password_confirmation: "", currency, code: "" });
 
@@ -27,20 +27,22 @@ export default function Setup({ currency }: SetupProps) {
       </div>
       <form onSubmit={submit} className="flex flex-col gap-6">
         <FieldGroup>
-          <Field data-invalid={!!form.errors.code}>
-            <FieldLabel htmlFor="setup-code">{t("setupCode")}</FieldLabel>
-            <Input
-              id="setup-code"
-              type="password"
-              autoComplete="off"
-              required
-              value={form.data.code}
-              aria-invalid={!!form.errors.code}
-              onChange={(e) => form.setData("code", e.target.value)}
-            />
-            <p className="text-sm text-muted-foreground">{t("setupCodeHelp")}</p>
-            <FieldError>{form.errors.code}</FieldError>
-          </Field>
+          {codeRequired && (
+            <Field data-invalid={!!form.errors.code}>
+              <FieldLabel htmlFor="setup-code">{t("setupCode")}</FieldLabel>
+              <Input
+                id="setup-code"
+                type="password"
+                autoComplete="off"
+                required
+                value={form.data.code}
+                aria-invalid={!!form.errors.code}
+                onChange={(e) => form.setData("code", e.target.value)}
+              />
+              <p className="text-sm text-muted-foreground">{t("setupCodeHelp")}</p>
+              <FieldError>{form.errors.code}</FieldError>
+            </Field>
+          )}
           <Field data-invalid={!!form.errors.name}>
             <FieldLabel htmlFor="setup-name">{t("name")}</FieldLabel>
             <Input

@@ -9,6 +9,7 @@ import (
 	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
+	"github.com/AlexGalhardo/vukem-finances/app/desktopgate"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
 	"github.com/AlexGalhardo/vukem-finances/app/requests"
@@ -49,7 +50,10 @@ func (h *Setup) Show(c *web.Ctx) error {
 		return err
 	}
 
-	return pages.Setup.Render(c, pages.SetupProps{Currency: workspaces.DefaultCurrency})
+	return pages.Setup.Render(c, pages.SetupProps{
+		Currency:     workspaces.DefaultCurrency,
+		CodeRequired: !desktopgate.Verified(c.Context()),
+	})
 }
 
 // Store checks the setup secret, creates the owner and the workspace, and
@@ -64,7 +68,9 @@ func (h *Setup) Store(c *web.Ctx) error {
 		return err
 	}
 
-	if !h.secret.Check(in.Code) {
+	// In the desktop app the gate already proved the request comes from the
+	// app window, and nobody there can read the boot log for the code.
+	if !desktopgate.Verified(c.Context()) && !h.secret.Check(in.Code) {
 		return errBadSetupCode
 	}
 
