@@ -86,6 +86,17 @@ export async function handleResults(
   if (results.length !== batch.entries.length) {
     throw new Error("the server answered a different number of results than mutations");
   }
+  // The server leaves out what is empty (a seq of a rejected mutation, no conflicts): read it as the zero value.
+  results = results.map((r) => ({
+    ...r,
+    version: r.version ?? 0,
+    seq: r.seq ?? 0,
+    row: r.row ?? null,
+    conflicts: r.conflicts ?? [],
+    effects: r.effects ?? [],
+    replaced_by_uid: r.replaced_by_uid ?? "",
+    error: r.error ?? null,
+  }));
   const summary = emptySummary();
   const stats: ApplyStats = { upserts: 0, deletes: 0, conflicts: 0 };
 

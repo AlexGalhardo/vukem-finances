@@ -43,6 +43,8 @@ export interface EngineSnapshot {
   paused: Record<string, string>;
   /** A short code of the last failure: `unsupported`, `server`, `rate_limited`. */
   failure: string | null;
+  /** What broke, for a client failure only: never holds a token. */
+  failureMessage: string | null;
   /** Milliseconds until the next automatic try after a failure, or 0. */
   retryInMs: number;
 }
@@ -72,6 +74,7 @@ export class SyncEngine {
   private status: SyncStatus = "disconnected";
   private failures = 0;
   private failure: string | null = null;
+  private failureMessage: string | null = null;
   private retryInMs = 0;
   private current: Promise<void> | null = null;
   private wroteDuringRun = false;
@@ -87,6 +90,7 @@ export class SyncEngine {
     conflicts: 0,
     paused: {},
     failure: null,
+    failureMessage: null,
     retryInMs: 0,
   };
 
@@ -121,6 +125,7 @@ export class SyncEngine {
       conflicts: await count("SELECT COUNT(*) AS n FROM sync_conflicts WHERE dismissed_at IS NULL"),
       paused: Object.fromEntries(await pausedEntities(db)),
       failure: this.failure,
+      failureMessage: this.failureMessage,
       retryInMs: this.retryInMs,
     };
     for (const l of this.listeners) l();
@@ -212,6 +217,7 @@ export class SyncEngine {
     try {
       await this.setStatus("syncing");
       this.failure = null;
+      this.failureMessage = null;
       this.retryInMs = 0;
       if (manual) await resumeEntities(db);
 
@@ -332,6 +338,7 @@ export class SyncEngine {
     // Something in the client broke: show it, and try again later, since it may be a bad page of a flaky server.
     this.failures += 1;
     this.failure = "client";
+    this.failureMessage = error instanceof Error ? error.message : String(error);
     this.schedule(backoffDelay(this.failures, this.o.random));
     await this.setStatus("error");
   }
