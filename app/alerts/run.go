@@ -85,6 +85,11 @@ func (s *Service) sendMails(ctx context.Context, members []workspaces.Member) er
 		byUser[m.UserID] = Recipient{UserID: m.UserID, Name: m.Name, Email: m.Email, Role: m.Role}
 	}
 
+	prefs, err := s.savedPreferences(ctx)
+	if err != nil {
+		return err
+	}
+
 	// created_at is stamped by the ORM from the wall clock, so the window is
 	// measured on it too, not on the app clock a test may have moved.
 	now := s.now().UTC()
@@ -112,8 +117,20 @@ func (s *Service) sendMails(ctx context.Context, members []workspaces.Member) er
 		}
 
 		r, ok := byUser[n.UserID]
-		if !ok || r.Role == models.RoleViewer {
-			continue // left the workspace, or became a viewer: no mail
+		if !ok {
+			continue // left the workspace: no mail
+		}
+
+		// The row holds the choice from when it was made; an opt-out since then
+		// wins, and the claim above keeps the dropped mail from coming back if
+		// the person opts in again.
+		var pref *Channels
+		if v, saved := prefs[prefKey{n.UserID, n.Kind}]; saved {
+			pref = &v
+		}
+
+		if !effective(r.Role, pref).Email {
+			continue
 		}
 
 		if err := s.Email.Deliver(ctx, n, r); err != nil {
