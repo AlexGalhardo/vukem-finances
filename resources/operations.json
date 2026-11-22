@@ -1,0 +1,4115 @@
+{
+  "operations": [
+    {
+      "name": "accounts.archive",
+      "summary": "Archive an account",
+      "scope": "accounts:write",
+      "ability": "data.manage",
+      "kind": "destructive",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/accounts/{uid}/archive"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "AccountOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "opening_cents",
+          "type": "int64"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "archived_at",
+          "type": "string?"
+        },
+        {
+          "name": "position",
+          "type": "int"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "accounts.create",
+      "summary": "Create an account",
+      "scope": "accounts:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/accounts"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "opening_cents",
+          "type": "int64"
+        }
+      ],
+      "output": "AccountOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "opening_cents",
+          "type": "int64"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "archived_at",
+          "type": "string?"
+        },
+        {
+          "name": "position",
+          "type": "int"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "accounts.list",
+      "summary": "List the accounts with their balances",
+      "scope": "accounts:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/accounts"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [],
+      "output": "List<AccountOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]AccountOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "accounts.show",
+      "summary": "Read an account",
+      "scope": "accounts:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/accounts/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "AccountOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "opening_cents",
+          "type": "int64"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "archived_at",
+          "type": "string?"
+        },
+        {
+          "name": "position",
+          "type": "int"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "accounts.update",
+      "summary": "Change the name, kind and opening balance of an account",
+      "scope": "accounts:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "PATCH /api/v1/accounts/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "name",
+          "type": "string?"
+        },
+        {
+          "name": "kind",
+          "type": "string?"
+        },
+        {
+          "name": "opening_cents",
+          "type": "int64?"
+        }
+      ],
+      "output": "AccountOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "opening_cents",
+          "type": "int64"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "archived_at",
+          "type": "string?"
+        },
+        {
+          "name": "position",
+          "type": "int"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "budgets.delete",
+      "summary": "Remove a budget",
+      "scope": "budgets:write",
+      "ability": "data.manage",
+      "kind": "destructive",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "DELETE /api/v1/budgets/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "Empty",
+      "output_fields": []
+    },
+    {
+      "name": "budgets.list",
+      "summary": "List the budgets with what the month spent",
+      "scope": "budgets:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/budgets"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "month",
+          "type": "string"
+        }
+      ],
+      "output": "List<BudgetOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]BudgetOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "budgets.set",
+      "summary": "Set the monthly limit of an expense category",
+      "scope": "budgets:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/budgets"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "category_uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64"
+        }
+      ],
+      "output": "BudgetOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "category_uid",
+          "type": "string"
+        },
+        {
+          "name": "category_name",
+          "type": "string"
+        },
+        {
+          "name": "month",
+          "type": "string"
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64"
+        },
+        {
+          "name": "spent_cents",
+          "type": "int64"
+        },
+        {
+          "name": "percent",
+          "type": "int"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "cards.archive",
+      "summary": "Archive a credit card",
+      "scope": "cards:write",
+      "ability": "data.manage",
+      "kind": "destructive",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/cards/{uid}/archive"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "CardOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64"
+        },
+        {
+          "name": "closing_day",
+          "type": "int"
+        },
+        {
+          "name": "due_day",
+          "type": "int"
+        },
+        {
+          "name": "payment_account_uid",
+          "type": "string?"
+        },
+        {
+          "name": "brand",
+          "type": "string"
+        },
+        {
+          "name": "last4",
+          "type": "string"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "used_cents",
+          "type": "int64"
+        },
+        {
+          "name": "available_cents",
+          "type": "int64"
+        },
+        {
+          "name": "over_limit",
+          "type": "bool"
+        },
+        {
+          "name": "current",
+          "type": "StatementOut"
+        },
+        {
+          "name": "due",
+          "type": "StatementOut?"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "cards.create",
+      "summary": "Create a credit card with its account",
+      "scope": "cards:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/cards"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64"
+        },
+        {
+          "name": "closing_day",
+          "type": "int"
+        },
+        {
+          "name": "due_day",
+          "type": "int"
+        },
+        {
+          "name": "payment_account_uid",
+          "type": "string"
+        },
+        {
+          "name": "brand",
+          "type": "string"
+        },
+        {
+          "name": "last4",
+          "type": "string"
+        }
+      ],
+      "output": "CardOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64"
+        },
+        {
+          "name": "closing_day",
+          "type": "int"
+        },
+        {
+          "name": "due_day",
+          "type": "int"
+        },
+        {
+          "name": "payment_account_uid",
+          "type": "string?"
+        },
+        {
+          "name": "brand",
+          "type": "string"
+        },
+        {
+          "name": "last4",
+          "type": "string"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "used_cents",
+          "type": "int64"
+        },
+        {
+          "name": "available_cents",
+          "type": "int64"
+        },
+        {
+          "name": "over_limit",
+          "type": "bool"
+        },
+        {
+          "name": "current",
+          "type": "StatementOut"
+        },
+        {
+          "name": "due",
+          "type": "StatementOut?"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "cards.list",
+      "summary": "List the credit cards with their limits and statements",
+      "scope": "cards:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/cards"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [],
+      "output": "List<CardOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]CardOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "cards.show",
+      "summary": "Read a credit card",
+      "scope": "cards:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/cards/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "CardOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64"
+        },
+        {
+          "name": "closing_day",
+          "type": "int"
+        },
+        {
+          "name": "due_day",
+          "type": "int"
+        },
+        {
+          "name": "payment_account_uid",
+          "type": "string?"
+        },
+        {
+          "name": "brand",
+          "type": "string"
+        },
+        {
+          "name": "last4",
+          "type": "string"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "used_cents",
+          "type": "int64"
+        },
+        {
+          "name": "available_cents",
+          "type": "int64"
+        },
+        {
+          "name": "over_limit",
+          "type": "bool"
+        },
+        {
+          "name": "current",
+          "type": "StatementOut"
+        },
+        {
+          "name": "due",
+          "type": "StatementOut?"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "cards.unarchive",
+      "summary": "Bring an archived credit card back",
+      "scope": "cards:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/cards/{uid}/unarchive"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "CardOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64"
+        },
+        {
+          "name": "closing_day",
+          "type": "int"
+        },
+        {
+          "name": "due_day",
+          "type": "int"
+        },
+        {
+          "name": "payment_account_uid",
+          "type": "string?"
+        },
+        {
+          "name": "brand",
+          "type": "string"
+        },
+        {
+          "name": "last4",
+          "type": "string"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "used_cents",
+          "type": "int64"
+        },
+        {
+          "name": "available_cents",
+          "type": "int64"
+        },
+        {
+          "name": "over_limit",
+          "type": "bool"
+        },
+        {
+          "name": "current",
+          "type": "StatementOut"
+        },
+        {
+          "name": "due",
+          "type": "StatementOut?"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "cards.update",
+      "summary": "Change a credit card",
+      "scope": "cards:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "PATCH /api/v1/cards/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "name",
+          "type": "string?"
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64?"
+        },
+        {
+          "name": "closing_day",
+          "type": "int?"
+        },
+        {
+          "name": "due_day",
+          "type": "int?"
+        },
+        {
+          "name": "payment_account_uid",
+          "type": "string?"
+        },
+        {
+          "name": "brand",
+          "type": "string?"
+        },
+        {
+          "name": "last4",
+          "type": "string?"
+        }
+      ],
+      "output": "CardOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "limit_cents",
+          "type": "int64"
+        },
+        {
+          "name": "closing_day",
+          "type": "int"
+        },
+        {
+          "name": "due_day",
+          "type": "int"
+        },
+        {
+          "name": "payment_account_uid",
+          "type": "string?"
+        },
+        {
+          "name": "brand",
+          "type": "string"
+        },
+        {
+          "name": "last4",
+          "type": "string"
+        },
+        {
+          "name": "balance_cents",
+          "type": "int64"
+        },
+        {
+          "name": "used_cents",
+          "type": "int64"
+        },
+        {
+          "name": "available_cents",
+          "type": "int64"
+        },
+        {
+          "name": "over_limit",
+          "type": "bool"
+        },
+        {
+          "name": "current",
+          "type": "StatementOut"
+        },
+        {
+          "name": "due",
+          "type": "StatementOut?"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "categories.archive",
+      "summary": "Archive a category",
+      "scope": "categories:write",
+      "ability": "data.manage",
+      "kind": "destructive",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/categories/{uid}/archive"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "CategoryOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "parent_uid",
+          "type": "string?"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "categories.create",
+      "summary": "Create a category",
+      "scope": "categories:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/categories"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "parent_uid",
+          "type": "string"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "string"
+        }
+      ],
+      "output": "CategoryOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "parent_uid",
+          "type": "string?"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "categories.list",
+      "summary": "List the categories",
+      "scope": "categories:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/categories"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [],
+      "output": "List<CategoryOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]CategoryOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "categories.show",
+      "summary": "Read a category",
+      "scope": "categories:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/categories/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "CategoryOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "parent_uid",
+          "type": "string?"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "categories.update",
+      "summary": "Change a category",
+      "scope": "categories:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "PATCH /api/v1/categories/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "name",
+          "type": "string?"
+        },
+        {
+          "name": "parent_uid",
+          "type": "string?"
+        },
+        {
+          "name": "color",
+          "type": "string?"
+        },
+        {
+          "name": "icon",
+          "type": "string?"
+        }
+      ],
+      "output": "CategoryOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "parent_uid",
+          "type": "string?"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "icon",
+          "type": "string"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "export.transactions",
+      "summary": "Download the transactions that match the filters as a CSV file",
+      "scope": "export:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/export/transactions"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "from",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        },
+        {
+          "name": "account",
+          "type": "string"
+        },
+        {
+          "name": "category",
+          "type": "string"
+        },
+        {
+          "name": "tag",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "q",
+          "type": "string"
+        },
+        {
+          "name": "min_cents",
+          "type": "int64?"
+        },
+        {
+          "name": "max_cents",
+          "type": "int64?"
+        },
+        {
+          "name": "delimiter",
+          "type": "string"
+        },
+        {
+          "name": "bom",
+          "type": "bool"
+        }
+      ],
+      "output": "Download",
+      "output_fields": [
+        {
+          "name": "filename",
+          "type": "string"
+        },
+        {
+          "name": "content_type",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "export.workspace",
+      "summary": "Download the whole workspace as one JSON document (owner and admins)",
+      "scope": "export:read",
+      "ability": "data.manage",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/export/workspace"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [],
+      "output": "Download",
+      "output_fields": [
+        {
+          "name": "filename",
+          "type": "string"
+        },
+        {
+          "name": "content_type",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "goals.archive",
+      "summary": "Archive a goal; its contributions stay",
+      "scope": "goals:write",
+      "ability": "data.manage",
+      "kind": "destructive",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/goals/{uid}/archive"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "GoalOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "target_cents",
+          "type": "int64"
+        },
+        {
+          "name": "target_date",
+          "type": "string?"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "saved_cents",
+          "type": "int64"
+        },
+        {
+          "name": "remaining_cents",
+          "type": "int64"
+        },
+        {
+          "name": "percent",
+          "type": "int"
+        },
+        {
+          "name": "reached",
+          "type": "bool"
+        },
+        {
+          "name": "contributions",
+          "type": "int"
+        },
+        {
+          "name": "months_left",
+          "type": "int"
+        },
+        {
+          "name": "required_monthly_cents",
+          "type": "int64"
+        },
+        {
+          "name": "overdue",
+          "type": "bool"
+        },
+        {
+          "name": "projected_date",
+          "type": "string?"
+        }
+      ]
+    },
+    {
+      "name": "goals.contributions.add",
+      "summary": "Put an amount towards a goal",
+      "scope": "goals:write",
+      "ability": "transactions.record",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/goals/{uid}/contributions"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "date",
+          "type": "string"
+        },
+        {
+          "name": "note",
+          "type": "string"
+        }
+      ],
+      "output": "ContributionOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "goal_uid",
+          "type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "date",
+          "type": "string"
+        },
+        {
+          "name": "note",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "goals.contributions.delete",
+      "summary": "Delete a contribution of a goal",
+      "scope": "goals:write",
+      "ability": "transactions.record",
+      "kind": "destructive",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "DELETE /api/v1/goals/{uid}/contributions/{contribution_uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "contribution_uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "Empty",
+      "output_fields": []
+    },
+    {
+      "name": "goals.create",
+      "summary": "Create a savings goal",
+      "scope": "goals:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/goals"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "target_cents",
+          "type": "int64"
+        },
+        {
+          "name": "target_date",
+          "type": "string"
+        }
+      ],
+      "output": "GoalOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "target_cents",
+          "type": "int64"
+        },
+        {
+          "name": "target_date",
+          "type": "string?"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "saved_cents",
+          "type": "int64"
+        },
+        {
+          "name": "remaining_cents",
+          "type": "int64"
+        },
+        {
+          "name": "percent",
+          "type": "int"
+        },
+        {
+          "name": "reached",
+          "type": "bool"
+        },
+        {
+          "name": "contributions",
+          "type": "int"
+        },
+        {
+          "name": "months_left",
+          "type": "int"
+        },
+        {
+          "name": "required_monthly_cents",
+          "type": "int64"
+        },
+        {
+          "name": "overdue",
+          "type": "bool"
+        },
+        {
+          "name": "projected_date",
+          "type": "string?"
+        }
+      ]
+    },
+    {
+      "name": "goals.delete",
+      "summary": "Delete a goal and its contributions",
+      "scope": "goals:write",
+      "ability": "data.manage",
+      "kind": "destructive",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "DELETE /api/v1/goals/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "Empty",
+      "output_fields": []
+    },
+    {
+      "name": "goals.list",
+      "summary": "List the savings goals with their progress",
+      "scope": "goals:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/goals"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [],
+      "output": "List<GoalOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]GoalOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "goals.unarchive",
+      "summary": "Bring an archived goal back",
+      "scope": "goals:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/goals/{uid}/unarchive"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "GoalOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "target_cents",
+          "type": "int64"
+        },
+        {
+          "name": "target_date",
+          "type": "string?"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "saved_cents",
+          "type": "int64"
+        },
+        {
+          "name": "remaining_cents",
+          "type": "int64"
+        },
+        {
+          "name": "percent",
+          "type": "int"
+        },
+        {
+          "name": "reached",
+          "type": "bool"
+        },
+        {
+          "name": "contributions",
+          "type": "int"
+        },
+        {
+          "name": "months_left",
+          "type": "int"
+        },
+        {
+          "name": "required_monthly_cents",
+          "type": "int64"
+        },
+        {
+          "name": "overdue",
+          "type": "bool"
+        },
+        {
+          "name": "projected_date",
+          "type": "string?"
+        }
+      ]
+    },
+    {
+      "name": "goals.update",
+      "summary": "Change the name, target and date of a goal",
+      "scope": "goals:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "PATCH /api/v1/goals/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "name",
+          "type": "string?"
+        },
+        {
+          "name": "target_cents",
+          "type": "int64?"
+        },
+        {
+          "name": "target_date",
+          "type": "string?"
+        }
+      ],
+      "output": "GoalOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "target_cents",
+          "type": "int64"
+        },
+        {
+          "name": "target_date",
+          "type": "string?"
+        },
+        {
+          "name": "archived",
+          "type": "bool"
+        },
+        {
+          "name": "saved_cents",
+          "type": "int64"
+        },
+        {
+          "name": "remaining_cents",
+          "type": "int64"
+        },
+        {
+          "name": "percent",
+          "type": "int"
+        },
+        {
+          "name": "reached",
+          "type": "bool"
+        },
+        {
+          "name": "contributions",
+          "type": "int"
+        },
+        {
+          "name": "months_left",
+          "type": "int"
+        },
+        {
+          "name": "required_monthly_cents",
+          "type": "int64"
+        },
+        {
+          "name": "overdue",
+          "type": "bool"
+        },
+        {
+          "name": "projected_date",
+          "type": "string?"
+        }
+      ]
+    },
+    {
+      "name": "recurrences.create",
+      "summary": "Create a recurring rule and post what is already due",
+      "scope": "recurrences:write",
+      "ability": "transactions.record",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/recurrences"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "account_uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "category_uid",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "frequency",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "interval",
+          "type": "int"
+        },
+        {
+          "name": "start_date",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "end_date",
+          "type": "string"
+        },
+        {
+          "name": "max_count",
+          "type": "int"
+        },
+        {
+          "name": "backfill",
+          "type": "bool"
+        }
+      ],
+      "output": "RecurrenceOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "category_uid",
+          "type": "string?"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "frequency",
+          "type": "string"
+        },
+        {
+          "name": "interval",
+          "type": "int"
+        },
+        {
+          "name": "start_date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "type": "string?"
+        },
+        {
+          "name": "max_count",
+          "type": "int64?"
+        },
+        {
+          "name": "generated_through",
+          "type": "string?"
+        },
+        {
+          "name": "active",
+          "type": "bool"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "recurrences.delete",
+      "summary": "Delete a recurring rule and keep what it generated",
+      "scope": "recurrences:write",
+      "ability": "transactions.record",
+      "kind": "destructive",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "DELETE /api/v1/recurrences/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "future",
+          "type": "bool"
+        }
+      ],
+      "output": "Empty",
+      "output_fields": []
+    },
+    {
+      "name": "recurrences.list",
+      "summary": "List the recurring rules",
+      "scope": "recurrences:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/recurrences"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [],
+      "output": "List<RecurrenceOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]RecurrenceOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "recurrences.update",
+      "summary": "Change a recurring rule",
+      "scope": "recurrences:write",
+      "ability": "transactions.record",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "PATCH /api/v1/recurrences/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "account_uid",
+          "type": "string?"
+        },
+        {
+          "name": "category_uid",
+          "type": "string?"
+        },
+        {
+          "name": "kind",
+          "type": "string?"
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64?"
+        },
+        {
+          "name": "description",
+          "type": "string?"
+        },
+        {
+          "name": "frequency",
+          "type": "string?"
+        },
+        {
+          "name": "interval",
+          "type": "int?"
+        },
+        {
+          "name": "start_date",
+          "type": "string?"
+        },
+        {
+          "name": "end_date",
+          "type": "string?"
+        },
+        {
+          "name": "max_count",
+          "type": "int?"
+        },
+        {
+          "name": "active",
+          "type": "bool?"
+        }
+      ],
+      "output": "RecurrenceOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "category_uid",
+          "type": "string?"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "frequency",
+          "type": "string"
+        },
+        {
+          "name": "interval",
+          "type": "int"
+        },
+        {
+          "name": "start_date",
+          "type": "string"
+        },
+        {
+          "name": "end_date",
+          "type": "string?"
+        },
+        {
+          "name": "max_count",
+          "type": "int64?"
+        },
+        {
+          "name": "generated_through",
+          "type": "string?"
+        },
+        {
+          "name": "active",
+          "type": "bool"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "reports.accounts",
+      "summary": "Income and expense of a period by account",
+      "scope": "reports:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/reports/accounts"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "period",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        }
+      ],
+      "output": "AccountReportOut",
+      "output_fields": [
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "period",
+          "type": "PeriodOut"
+        },
+        {
+          "name": "rows",
+          "type": "[]AccountRowOut"
+        }
+      ]
+    },
+    {
+      "name": "reports.cashflow",
+      "summary": "Income against expense per month of a period",
+      "scope": "reports:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/reports/cash-flow"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "period",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        }
+      ],
+      "output": "CashFlowOut",
+      "output_fields": [
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "period",
+          "type": "PeriodOut"
+        },
+        {
+          "name": "months",
+          "type": "[]MonthFlowOut"
+        },
+        {
+          "name": "totals",
+          "type": "SumOut"
+        }
+      ]
+    },
+    {
+      "name": "reports.categories",
+      "summary": "Spending or income of a period by category",
+      "scope": "reports:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/reports/categories"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "period",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        }
+      ],
+      "output": "CategoryReportOut",
+      "output_fields": [
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "period",
+          "type": "PeriodOut"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "total_cents",
+          "type": "int64"
+        },
+        {
+          "name": "rows",
+          "type": "[]CategoryRowOut"
+        }
+      ]
+    },
+    {
+      "name": "reports.compare",
+      "summary": "A period against the one right before it",
+      "scope": "reports:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/reports/compare"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "period",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        }
+      ],
+      "output": "CompareReportOut",
+      "output_fields": [
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "period",
+          "type": "PeriodOut"
+        },
+        {
+          "name": "previous",
+          "type": "PeriodOut"
+        },
+        {
+          "name": "rows",
+          "type": "[]CompareRowOut"
+        }
+      ]
+    },
+    {
+      "name": "reports.networth",
+      "summary": "The net worth at the end of each month of a period",
+      "scope": "reports:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/reports/net-worth"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "period",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        }
+      ],
+      "output": "NetWorthReportOut",
+      "output_fields": [
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "period",
+          "type": "PeriodOut"
+        },
+        {
+          "name": "points",
+          "type": "[]NetWorthPointOut"
+        }
+      ]
+    },
+    {
+      "name": "reports.tags",
+      "summary": "Income and expense of a period by tag",
+      "scope": "reports:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/reports/tags"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "period",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        }
+      ],
+      "output": "TagReportOut",
+      "output_fields": [
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "period",
+          "type": "PeriodOut"
+        },
+        {
+          "name": "rows",
+          "type": "[]TagRowOut"
+        }
+      ]
+    },
+    {
+      "name": "statements.list",
+      "summary": "List the statements of a credit card, newest first",
+      "scope": "statements:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/cards/{uid}/statements"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "List<StatementOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]StatementOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "statements.pay",
+      "summary": "Pay a statement from a bank account",
+      "scope": "statements:write",
+      "ability": "transactions.record",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/cards/{uid}/statements/{ref}/pay"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "ref",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "from_account_uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "date",
+          "type": "string"
+        }
+      ],
+      "output": "TransferOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "TransactionOut"
+        },
+        {
+          "name": "to",
+          "type": "TransactionOut"
+        }
+      ]
+    },
+    {
+      "name": "statements.show",
+      "summary": "Read a statement of a credit card with its rows",
+      "scope": "statements:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/cards/{uid}/statements/{ref}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "ref",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "StatementDetailOut",
+      "output_fields": [
+        {
+          "name": "statement",
+          "type": "StatementOut"
+        },
+        {
+          "name": "rows",
+          "type": "[]TransactionOut"
+        }
+      ]
+    },
+    {
+      "name": "summary.show",
+      "summary": "Income, expense, net, account balances and net worth of a month",
+      "scope": "summary:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/summary"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "month",
+          "type": "string"
+        }
+      ],
+      "output": "SummaryOut",
+      "output_fields": [
+        {
+          "name": "month",
+          "type": "string"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "income_cents",
+          "type": "int64"
+        },
+        {
+          "name": "expense_cents",
+          "type": "int64"
+        },
+        {
+          "name": "net_cents",
+          "type": "int64"
+        },
+        {
+          "name": "net_worth_cents",
+          "type": "int64"
+        },
+        {
+          "name": "accounts",
+          "type": "[]SummaryAccountOut"
+        }
+      ]
+    },
+    {
+      "name": "tags.create",
+      "summary": "Create a tag",
+      "scope": "tags:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/tags"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "color",
+          "type": "string"
+        }
+      ],
+      "output": "TagOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "tags.delete",
+      "summary": "Delete a tag and take it off its transactions",
+      "scope": "tags:write",
+      "ability": "data.manage",
+      "kind": "destructive",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "DELETE /api/v1/tags/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "Empty",
+      "output_fields": []
+    },
+    {
+      "name": "tags.list",
+      "summary": "List the tags",
+      "scope": "tags:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/tags"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [],
+      "output": "List<TagOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]TagOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "tags.update",
+      "summary": "Rename or recolor a tag",
+      "scope": "tags:write",
+      "ability": "data.manage",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "PATCH /api/v1/tags/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "name",
+          "type": "string?"
+        },
+        {
+          "name": "color",
+          "type": "string?"
+        }
+      ],
+      "output": "TagOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "color",
+          "type": "string"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "transactions.create",
+      "summary": "Record a transaction",
+      "scope": "transactions:write",
+      "ability": "transactions.record",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/transactions"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "account_uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "category_uid",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "date",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "tags",
+          "type": "[]string"
+        }
+      ],
+      "output": "TransactionOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "category_uid",
+          "type": "string?"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "date",
+          "type": "string"
+        },
+        {
+          "name": "tags",
+          "type": "[]TagRefOut"
+        },
+        {
+          "name": "transfer_uid",
+          "type": "string?"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "transactions.delete",
+      "summary": "Delete a transaction",
+      "scope": "transactions:write",
+      "ability": "transactions.record",
+      "kind": "destructive",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "DELETE /api/v1/transactions/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "Empty",
+      "output_fields": []
+    },
+    {
+      "name": "transactions.list",
+      "summary": "List transactions, newest first, with filters",
+      "scope": "transactions:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/transactions"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "from",
+          "type": "string"
+        },
+        {
+          "name": "to",
+          "type": "string"
+        },
+        {
+          "name": "account",
+          "type": "string"
+        },
+        {
+          "name": "category",
+          "type": "string"
+        },
+        {
+          "name": "tag",
+          "type": "string"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "q",
+          "type": "string"
+        },
+        {
+          "name": "min_cents",
+          "type": "int64?"
+        },
+        {
+          "name": "max_cents",
+          "type": "int64?"
+        },
+        {
+          "name": "page",
+          "type": "int"
+        }
+      ],
+      "output": "List<TransactionOut>",
+      "output_fields": [
+        {
+          "name": "data",
+          "type": "[]TransactionOut"
+        },
+        {
+          "name": "meta",
+          "type": "Meta?"
+        },
+        {
+          "name": "links",
+          "type": "Links?"
+        }
+      ]
+    },
+    {
+      "name": "transactions.show",
+      "summary": "Read a transaction",
+      "scope": "transactions:read",
+      "ability": "workspace.read",
+      "kind": "read",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "GET /api/v1/transactions/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "TransactionOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "category_uid",
+          "type": "string?"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "date",
+          "type": "string"
+        },
+        {
+          "name": "tags",
+          "type": "[]TagRefOut"
+        },
+        {
+          "name": "transfer_uid",
+          "type": "string?"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "transactions.update",
+      "summary": "Change a transaction",
+      "scope": "transactions:write",
+      "ability": "transactions.record",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "PATCH /api/v1/transactions/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "account_uid",
+          "type": "string?"
+        },
+        {
+          "name": "category_uid",
+          "type": "string?"
+        },
+        {
+          "name": "kind",
+          "type": "string?"
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64?"
+        },
+        {
+          "name": "date",
+          "type": "string?"
+        },
+        {
+          "name": "description",
+          "type": "string?"
+        },
+        {
+          "name": "tags",
+          "type": "[]string?"
+        }
+      ],
+      "output": "TransactionOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "version",
+          "type": "int64"
+        },
+        {
+          "name": "account_uid",
+          "type": "string"
+        },
+        {
+          "name": "category_uid",
+          "type": "string?"
+        },
+        {
+          "name": "kind",
+          "type": "string"
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "currency",
+          "type": "string"
+        },
+        {
+          "name": "description",
+          "type": "string"
+        },
+        {
+          "name": "date",
+          "type": "string"
+        },
+        {
+          "name": "tags",
+          "type": "[]TagRefOut"
+        },
+        {
+          "name": "transfer_uid",
+          "type": "string?"
+        },
+        {
+          "name": "created_at",
+          "type": "string"
+        },
+        {
+          "name": "updated_at",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "transfers.create",
+      "summary": "Move money between two accounts",
+      "scope": "transfers:write",
+      "ability": "transactions.record",
+      "kind": "write",
+      "idempotent": true,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "POST /api/v1/transfers"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "from_account_uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "to_account_uid",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "amount_cents",
+          "type": "int64"
+        },
+        {
+          "name": "date",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "description",
+          "type": "string"
+        }
+      ],
+      "output": "TransferOut",
+      "output_fields": [
+        {
+          "name": "uid",
+          "type": "string"
+        },
+        {
+          "name": "from",
+          "type": "TransactionOut"
+        },
+        {
+          "name": "to",
+          "type": "TransactionOut"
+        }
+      ]
+    },
+    {
+      "name": "transfers.delete",
+      "summary": "Delete a transfer and both of its legs",
+      "scope": "transfers:write",
+      "ability": "transactions.record",
+      "kind": "destructive",
+      "idempotent": false,
+      "editions": [
+        "personal",
+        "saas"
+      ],
+      "surfaces": [
+        {
+          "surface": "rest",
+          "offered": true,
+          "route": "DELETE /api/v1/transfers/{uid}"
+        },
+        {
+          "surface": "cli",
+          "offered": true
+        },
+        {
+          "surface": "mcp",
+          "offered": true
+        }
+      ],
+      "input": [
+        {
+          "name": "uid",
+          "type": "string",
+          "required": true
+        }
+      ],
+      "output": "Empty",
+      "output_fields": []
+    }
+  ]
+}
