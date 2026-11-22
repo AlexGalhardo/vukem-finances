@@ -1,0 +1,39 @@
+{
+  "name": "vukem-finances-site",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "bun@1.4.5",
+  "type": "module",
+  "scripts": {
+    "dev": "bun --bun astro dev",
+    "build": "bun --bun astro build",
+    "preview": "bun --bun astro preview",
+    "typecheck": "bun --bun tsc --noEmit",
+    "check:claims": "bun scripts/check-claims.ts",
+    "check:built": "bun scripts/check-built.ts",
+    "screenshots": "bun scripts/screenshots.ts",
+    "test:site": "bun test scripts"
+  },
+  "dependencies": {
+    "@astrojs/react": "7.1.9",
+    "@mdx-js/mdx": "3.1.1",
+    "@tailwindcss/vite": "4.3.5",
+    "astro": "7.4.13",
+    "github-slugger": "2.0.0",
+    "gray-matter": "4.0.3",
+    "lucide-react": "1.72.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "rehype-slug": "6.0.0",
+    "remark-gfm": "4.0.1",
+    "shiki": "4.5.0",
+    "tailwindcss": "4.3.5"
+  },
+  "devDependencies": {
+    "@types/mdx": "2.0.14",
+    "@types/node": "26.6.6",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "typescript": "7.0.2"
+  }
+}
