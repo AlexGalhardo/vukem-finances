@@ -11,7 +11,6 @@ Each release has its own page. The format follows Keep a Changelog and the versi
 
 - [0.6.0](/docs/changelog/v0.6.0/), 2026-11-22
 - [0.5.0](/docs/changelog/v0.5.0/), 2026-11-22
-- [0.5.0](/docs/changelog/v0.5.0/), 2026-11-22
 - [0.4.0](/docs/changelog/v0.4.0/), 2026-11-22
 - [0.3.0](/docs/changelog/v0.3.0/), 2026-11-22
 - [0.2.0](/docs/changelog/v0.2.0/), 2026-11-21

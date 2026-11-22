@@ -88,11 +88,6 @@ git cliff --config .config/cliff.toml --offline --unreleased --tag vX.Y.Z --stri
 ### Security
 
 - **site:** Write the Integrate, Operate and Contribute pages ([`c78da05`](https://github.com/AlexGalhardo/vukem-finances/commit/c78da054f9a5e0c760717269518b472a5794b294))
-## [0.5.0] - 2026-11-22
-
-### Fixed
-
-- **workspace:** Install the mail suppression check once per mailer ([`4b24062`](https://github.com/AlexGalhardo/vukem-finances/commit/4b2406267fb07765da9c0baa38c41e4af0d5cfdf))
 
 ## [0.5.0] - 2026-11-22
 
