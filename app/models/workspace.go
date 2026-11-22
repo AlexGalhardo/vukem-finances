@@ -1,6 +1,7 @@
 package models
 
 import (
+	"context"
 	"database/sql"
 
 	"github.com/AlexGalhardo/vukem/orm"
@@ -94,4 +95,13 @@ type EmailSuppression struct {
 
 	Address string `json:"address"`
 	Reason  string `json:"reason"`
+}
+
+// BeforeCreate makes a new workspace active.
+func (w *Workspace) BeforeCreate(context.Context) error {
+	if w.State == "" {
+		w.State = StateActive
+	}
+
+	return nil
 }
