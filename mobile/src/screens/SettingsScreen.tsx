@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { Text, View } from "react-native";
-import { CURRENCIES, type ThemeSetting } from "../app/settings";
-import { type App, useApp, useLoad } from "../app/state";
+import { CURRENCIES, type ThemeSetting } from "../core/settings";
+import { type App, useApp, useLoad } from "../core/state";
 import { backupFileName, buildBackup } from "../backup/export";
 import type { Sharer } from "../backup/share";
 import { Button } from "../components/Button";

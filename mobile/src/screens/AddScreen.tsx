@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { type App, useApp, useLoad } from "../app/state";
+import { type App, useApp, useLoad } from "../core/state";
 import { AmountField } from "../components/AmountField";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";

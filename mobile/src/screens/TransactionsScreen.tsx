@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { FlatList, ScrollView, Text, View } from "react-native";
-import { type App, useApp, useLoad } from "../app/state";
+import { type App, useApp, useLoad } from "../core/state";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";
 import { EmptyState } from "../components/EmptyState";

@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { CURRENCIES } from "../app/settings";
-import { useApp } from "../app/state";
+import { CURRENCIES } from "../core/settings";
+import { useApp } from "../core/state";
 import { AmountField } from "../components/AmountField";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";

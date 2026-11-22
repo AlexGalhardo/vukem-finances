@@ -1,6 +1,6 @@
 import { type ReactNode, useState } from "react";
 import { Text, View } from "react-native";
-import { type App, useApp, useLoad } from "../app/state";
+import { type App, useApp, useLoad } from "../core/state";
 import { Chip } from "../components/Chip";
 import { EmptyState } from "../components/EmptyState";
 import { ListRow } from "../components/ListRow";

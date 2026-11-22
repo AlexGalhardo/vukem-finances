@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { Text, View } from "react-native";
-import { describeError } from "../app/errors";
-import { type App, useApp, useLoad } from "../app/state";
+import { describeError } from "../core/errors";
+import { type App, useApp, useLoad } from "../core/state";
 import { AmountField } from "../components/AmountField";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";

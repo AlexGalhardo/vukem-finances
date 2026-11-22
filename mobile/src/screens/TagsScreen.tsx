@@ -1,7 +1,7 @@
 import { type ReactNode, useState } from "react";
 import { Text } from "react-native";
-import { describeError } from "../app/errors";
-import { type App, useApp, useLoad } from "../app/state";
+import { describeError } from "../core/errors";
+import { type App, useApp, useLoad } from "../core/state";
 import { Button } from "../components/Button";
 import { DeleteButton } from "../components/DeleteButton";
 import { EmptyState } from "../components/EmptyState";

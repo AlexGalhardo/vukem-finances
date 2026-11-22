@@ -1,7 +1,7 @@
 import { render } from "@testing-library/react-native";
 import type { ReactElement } from "react";
-import { defaultSettings, type Settings } from "../../src/app/settings";
-import { AppProvider } from "../../src/app/state";
+import { defaultSettings, type Settings } from "../../src/core/settings";
+import { AppProvider } from "../../src/core/state";
 import { type Env, openEnv } from "./fixtures";
 
 export const NOW = new Date(Date.UTC(2027, 2, 15, 15, 0, 0));
