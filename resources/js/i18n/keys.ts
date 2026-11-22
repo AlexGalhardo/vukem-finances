@@ -8,6 +8,7 @@ import type categories from "./en/categories";
 import type common from "./en/common";
 import type components from "./en/components";
 import type goals from "./en/goals";
+import type help from "./en/help";
 import type importPage from "./en/import";
 import type mcp from "./en/mcp";
 import type privacy from "./en/privacy";
@@ -32,6 +33,7 @@ export type Key =
   | keyof typeof common
   | keyof typeof components
   | keyof typeof goals
+  | keyof typeof help
   | keyof typeof importPage
   | keyof typeof mcp
   | keyof typeof privacy
