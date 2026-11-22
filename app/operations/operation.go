@@ -209,11 +209,44 @@ type Result[Out any] struct {
 	// there (a create that repeated a client uid): an adapter says "ok", not
 	// "created".
 	Existing bool
+	// Replayed is set when an idempotency key already ran: Value is the stored
+	// answer and Run did not run again.
+	Replayed bool
+}
+
+// CallOption tunes one invocation.
+type CallOption func(*callOptions)
+
+type callOptions struct {
+	key     string
+	ifMatch int64
+	hasIf   bool
+}
+
+// WithIdempotencyKey names the call: an operation declared Idempotent runs once
+// per key and replays its answer after.
+func WithIdempotencyKey(key string) CallOption { return func(o *callOptions) { o.key = key } }
+
+// WithIfMatch states the version of the row the caller saw; Run reads it with
+// IfMatch.
+func WithIfMatch(version int64) CallOption {
+	return func(o *callOptions) { o.ifMatch, o.hasIf = version, true }
 }
 
 // call is what Run can read and set about the invocation in progress.
 type call struct {
 	existing bool
+	ifMatch  int64
+	hasIf    bool
+}
+
+// IfMatch is the version the caller named with WithIfMatch.
+func IfMatch(ctx context.Context) (int64, bool) {
+	if c, ok := ctx.Value(callKey{}).(*call); ok && c.hasIf {
+		return c.ifMatch, true
+	}
+
+	return 0, false
 }
 
 type callKey struct{}
@@ -227,8 +260,13 @@ func MarkExisting(ctx context.Context) {
 }
 
 // Invoke runs op for actor with in. It is the only way to run an operation.
-func Invoke[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor, in In) (Result[Out], error) {
+func Invoke[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor, in In, opts ...CallOption) (Result[Out], error) {
 	var zero Result[Out]
+
+	var o callOptions
+	for _, opt := range opts {
+		opt(&o)
+	}
 
 	if err := op.reg.Authorize(op.meta, actor); err != nil {
 		return zero, err
@@ -240,17 +278,21 @@ func Invoke[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor, in I
 		}
 	}
 
-	st := &call{}
+	st := &call{ifMatch: o.ifMatch, hasIf: o.hasIf}
 	ctx = context.WithValue(ctx, callKey{}, st)
 	ctx = workspaces.WithTenant(ctx, actor.workspace)
 	ctx = workspaces.WithRole(ctx, actor.role)
 
-	out, err := op.run(ctx, actor, in)
-	if err != nil {
-		return zero, asError(err)
+	if !op.meta.Idempotent || o.key == "" {
+		out, err := op.run(ctx, actor, in)
+		if err != nil {
+			return zero, asError(err)
+		}
+
+		return Result[Out]{Value: out, Existing: st.existing}, nil
 	}
 
-	return Result[Out]{Value: out, Existing: st.existing}, nil
+	return invokeKeyed(ctx, op, actor, in, o.key, st)
 }
 
 // invalid turns the issues of a failed check into a validation error.
