@@ -7,14 +7,12 @@ import (
 	"net/http"
 	"slices"
 	"strconv"
-	"time"
 
 	"github.com/AlexGalhardo/vukem/auth"
 	"github.com/AlexGalhardo/vukem/errs"
 	"github.com/AlexGalhardo/vukem/ratelimit"
 	"github.com/AlexGalhardo/vukem/web"
 
-	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/operations"
 	syncproto "github.com/AlexGalhardo/vukem-finances/app/sync"
@@ -84,15 +82,12 @@ type API struct {
 	Users  *auth.ORMProvider[models.User]
 	Tokens *auth.Tokens
 	WS     *workspaces.Service
-	Fin    *finance.Service
 	Sync   *syncproto.Service
 	// Ops is the registry every operation of the API goes through.
 	Ops *operations.Catalog
 	// PullLimiter and PushLimiter hold a device to the sync rate limits.
 	PullLimiter, PushLimiter ratelimit.Limiter
 	Log                      *slog.Logger
-	// Now is the server clock (app.Now): it bounds the uid a client may choose.
-	Now func() time.Time
 }
 
 func fail(w http.ResponseWriter, r *http.Request, status int, code, message string) {

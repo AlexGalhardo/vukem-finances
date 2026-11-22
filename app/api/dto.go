@@ -67,34 +67,11 @@ type TransactionOut = operations.TransactionOut
 type TransferOut = operations.TransferOut
 
 // BudgetOut is a budget with what the month spent against it.
-type BudgetOut struct {
-	UID          string `json:"uid"           example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	Version      int64  `json:"version"       example:"1"`
-	CategoryUID  string `json:"category_uid"  example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	CategoryName string `json:"category_name" example:"Groceries"`
-	Month        string `json:"month"         example:"2026-11"`
-	LimitCents   int64  `json:"limit_cents"   example:"50000"`
-	SpentCents   int64  `json:"spent_cents"   example:"12000"`
-	Percent      int    `json:"percent"       example:"24"`
-	Currency     string `json:"currency"      example:"USD"`
-}
+type BudgetOut = operations.BudgetOut
 
 // SummaryAccountOut is the balance of one account in the summary.
-type SummaryAccountOut struct {
-	UID          string `json:"uid"           example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	Name         string `json:"name"          example:"Checking"`
-	BalanceCents int64  `json:"balance_cents" example:"123450"`
-	Archived     bool   `json:"archived"`
-}
+type SummaryAccountOut = operations.SummaryAccountOut
 
 // SummaryOut is a month of the workspace. Transfers are neither income nor
 // expense; the balances are as of today in the workspace timezone.
-type SummaryOut struct {
-	Month         string              `json:"month"           example:"2026-11"`
-	Currency      string              `json:"currency"        example:"USD"`
-	IncomeCents   int64               `json:"income_cents"    example:"500000"`
-	ExpenseCents  int64               `json:"expense_cents"   example:"320000"`
-	NetCents      int64               `json:"net_cents"       example:"180000"`
-	NetWorthCents int64               `json:"net_worth_cents" example:"1234500"`
-	Accounts      []SummaryAccountOut `json:"accounts"`
-}
+type SummaryOut = operations.SummaryOut

@@ -53,7 +53,7 @@ func API(r *router.Router, app *vukem.App) error {
 		return err
 	}
 
-	a := &api.API{Users: acc.Users, Tokens: acc.Tokens, WS: ws, Fin: fin, Now: app.Now, Log: app.Log}
+	a := &api.API{Users: acc.Users, Tokens: acc.Tokens, WS: ws, Log: app.Log}
 	a.Ops = operations.NewCatalog(
 		operations.Config{Edition: ws.Edition, Store: store.Store(), Log: app.Log, Now: app.Now},
 		operations.Services{WS: ws, Fin: fin, Rep: reports.New(fin)},

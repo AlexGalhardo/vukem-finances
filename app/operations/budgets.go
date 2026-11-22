@@ -1,10 +1,10 @@
-package api
+package operations
 
 import (
+	"context"
 	"regexp"
 
 	"github.com/AlexGalhardo/vukem/errs"
-	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
@@ -27,10 +27,38 @@ type BudgetSetIn struct {
 	LimitCents  int64  `json:"limit_cents"  doc:"The monthly limit, a positive whole number of cents" example:"50000"`
 }
 
-// month reads and checks ?month=, today's month by default.
-func (a *API) month(c *web.Ctx, in string) (string, error) {
+type budgetOps struct {
+	List    *Op[MonthIn, List[BudgetOut]]
+	Set     *Op[BudgetSetIn, BudgetOut]
+	Delete  *Op[UIDIn, Empty]
+	Summary *Op[MonthIn, SummaryOut]
+}
+
+func (c *Catalog) defineBudgets() {
+	c.Budgets = budgetOps{
+		List: Define(c.Registry, Operation[MonthIn, List[BudgetOut]]{
+			Name: "budgets.list", Summary: "List the budgets with what the month spent", Scope: ScopeBudgetsRead, Kind: KindRead,
+			Run: func(ctx context.Context, _ Actor, in MonthIn) (List[BudgetOut], error) { return c.budgetsList(ctx, in) },
+		}),
+		Set: Define(c.Registry, Operation[BudgetSetIn, BudgetOut]{
+			Name: "budgets.set", Summary: "Set the monthly limit of an expense category", Scope: ScopeBudgetsWrite, Kind: KindWrite, Idempotent: true,
+			Run: func(ctx context.Context, _ Actor, in BudgetSetIn) (BudgetOut, error) { return c.budgetsSet(ctx, in) },
+		}),
+		Delete: Define(c.Registry, Operation[UIDIn, Empty]{
+			Name: "budgets.delete", Summary: "Remove a budget", Scope: ScopeBudgetsWrite, Kind: KindDestructive,
+			Run: func(ctx context.Context, _ Actor, in UIDIn) (Empty, error) { return c.budgetsDelete(ctx, in) },
+		}),
+		Summary: Define(c.Registry, Operation[MonthIn, SummaryOut]{
+			Name: "summary.show", Summary: "Income, expense, net, account balances and net worth of a month", Scope: ScopeSummaryRead, Kind: KindRead,
+			Run: func(ctx context.Context, _ Actor, in MonthIn) (SummaryOut, error) { return c.summaryShow(ctx, in) },
+		}),
+	}
+}
+
+// month reads and checks a month, today's month by default.
+func (c *Catalog) month(ctx context.Context, in string) (string, error) {
 	if in == "" {
-		return a.Fin.Month(c.Context()), nil
+		return c.Fin.Month(ctx), nil
 	}
 
 	if !monthShape.MatchString(in) || !finance.ValidMonth(in) {
@@ -40,15 +68,13 @@ func (a *API) month(c *web.Ctx, in string) (string, error) {
 	return in, nil
 }
 
-func (a *API) budgetViews(c *web.Ctx, month string) ([]BudgetOut, error) {
-	ctx := c.Context()
-
-	status, err := a.Fin.Budgets(ctx, month)
+func (c *Catalog) budgetViews(ctx context.Context, month string) ([]BudgetOut, error) {
+	status, err := c.Fin.Budgets(ctx, month)
 	if err != nil {
 		return nil, err
 	}
 
-	rows, err := workspaces.Scoped[models.Budget](ctx, a.WS.DB).Get(ctx)
+	rows, err := workspaces.Scoped[models.Budget](ctx, c.WS.DB).Get(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -58,7 +84,7 @@ func (a *API) budgetViews(c *web.Ctx, month string) ([]BudgetOut, error) {
 		byID[b.ID] = b
 	}
 
-	l, err := a.lookups(ctx)
+	l, err := c.lookups(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -79,35 +105,33 @@ func (a *API) budgetViews(c *web.Ctx, month string) ([]BudgetOut, error) {
 	return out, nil
 }
 
-func (a *API) budgetsList(c *web.Ctx, in MonthIn) (List[BudgetOut], error) {
-	month, err := a.month(c, in.Month)
+func (c *Catalog) budgetsList(ctx context.Context, in MonthIn) (List[BudgetOut], error) {
+	month, err := c.month(ctx, in.Month)
 	if err != nil {
 		return List[BudgetOut]{}, err
 	}
 
-	data, err := a.budgetViews(c, month)
+	data, err := c.budgetViews(ctx, month)
 
 	return List[BudgetOut]{Data: data}, err
 }
 
-func (a *API) budgetsSet(c *web.Ctx, in BudgetSetIn) (BudgetOut, error) {
-	ctx := c.Context()
-
-	cat, err := a.categoryByUID(ctx, in.CategoryUID)
+func (c *Catalog) budgetsSet(ctx context.Context, in BudgetSetIn) (BudgetOut, error) {
+	cat, err := c.categoryByUID(ctx, in.CategoryUID)
 	if err != nil {
 		return BudgetOut{}, err
 	}
 
-	if err := a.Fin.SetBudget(ctx, cat.ID, centsText(in.LimitCents)); err != nil {
+	if err := c.Fin.SetBudget(ctx, cat.ID, centsText(in.LimitCents)); err != nil {
 		return BudgetOut{}, err
 	}
 
-	set, err := workspaces.Scoped[models.Budget](ctx, a.WS.DB).Where("category_id", cat.ID).First(ctx)
+	set, err := workspaces.Scoped[models.Budget](ctx, c.WS.DB).Where("category_id", cat.ID).First(ctx)
 	if err != nil {
 		return BudgetOut{}, err
 	}
 
-	views, err := a.budgetViews(c, a.Fin.Month(ctx))
+	views, err := c.budgetViews(ctx, c.Fin.Month(ctx))
 	if err != nil {
 		return BudgetOut{}, err
 	}
@@ -121,43 +145,39 @@ func (a *API) budgetsSet(c *web.Ctx, in BudgetSetIn) (BudgetOut, error) {
 	return BudgetOut{}, errs.ErrNotFound
 }
 
-func (a *API) budgetsDelete(c *web.Ctx, in UIDIn) (Empty, error) {
-	ctx := c.Context()
-
-	b, err := a.budgetByUID(ctx, in.UID)
+func (c *Catalog) budgetsDelete(ctx context.Context, in UIDIn) (Empty, error) {
+	b, err := c.budgetByUID(ctx, in.UID)
 	if err != nil {
 		return Empty{}, err
 	}
 
-	if want, err := ifMatch(c); err != nil || (want >= 0 && want != b.Version) {
+	if want, err := precondition(ctx); err != nil || (want >= 0 && want != b.Version) {
 		if err != nil {
 			return Empty{}, err
 		}
 
-		views, verr := a.budgetViews(c, a.Fin.Month(ctx))
+		views, verr := c.budgetViews(ctx, c.Fin.Month(ctx))
 		if verr != nil {
 			return Empty{}, verr
 		}
 
 		for _, v := range views {
 			if v.UID == b.UID {
-				return Empty{}, checkVersion(c, b.Version, v)
+				return Empty{}, checkVersion(ctx, b.Version, v)
 			}
 		}
 	}
 
-	return Empty{}, a.Fin.DeleteBudget(ctx, b.ID)
+	return Empty{}, c.Fin.DeleteBudget(ctx, b.ID)
 }
 
-func (a *API) summaryShow(c *web.Ctx, in MonthIn) (SummaryOut, error) {
-	ctx := c.Context()
-
-	month, err := a.month(c, in.Month)
+func (c *Catalog) summaryShow(ctx context.Context, in MonthIn) (SummaryOut, error) {
+	month, err := c.month(ctx, in.Month)
 	if err != nil {
 		return SummaryOut{}, err
 	}
 
-	d, err := a.Fin.Dashboard(ctx, month)
+	d, err := c.Fin.Dashboard(ctx, month)
 	if err != nil {
 		return SummaryOut{}, err
 	}
@@ -172,12 +192,12 @@ func (a *API) summaryShow(c *web.Ctx, in MonthIn) (SummaryOut, error) {
 
 	out.NetCents = out.IncomeCents - out.ExpenseCents
 
-	accounts, err := a.Fin.Accounts(ctx)
+	accounts, err := c.Fin.Accounts(ctx)
 	if err != nil {
 		return SummaryOut{}, err
 	}
 
-	balances, err := a.Fin.AccountBalances(ctx, "")
+	balances, err := c.Fin.AccountBalances(ctx, "")
 	if err != nil {
 		return SummaryOut{}, err
 	}
