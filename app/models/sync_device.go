@@ -1,0 +1,67 @@
+package models
+
+import (
+	"context"
+
+	"github.com/AlexGalhardo/vukem/orm"
+	"github.com/AlexGalhardo/vukem/tenancy"
+)
+
+// Device platforms.
+const (
+	PlatformIOS     = "ios"
+	PlatformAndroid = "android"
+	PlatformWeb     = "web"
+	PlatformOther   = "other"
+)
+
+// DevicePlatforms lists the platforms a device may name.
+func DevicePlatforms() []string {
+	return []string{PlatformIOS, PlatformAndroid, PlatformWeb, PlatformOther}
+}
+
+// SyncDevice is a phone (or any client) that syncs a workspace. It belongs to
+// the API token that registered it: DeviceID is the ULID the client sends in
+// X-Device-Id, and a revoked device or a revoked token stops syncing.
+type SyncDevice struct {
+	orm.Model
+
+	WorkspaceID int64        `json:"workspace_id"`
+	UserID      int64        `json:"user_id"`
+	TokenID     string       `json:"-"`
+	DeviceID    string       `json:"device_id"`
+	Name        string       `json:"name"`
+	Platform    string       `json:"platform"`
+	LastSeenAt  orm.NullTime `json:"last_seen_at"`
+	LastPullSeq int64        `json:"last_pull_seq"`
+	RevokedAt   orm.NullTime `json:"revoked_at"`
+}
+
+// Table maps SyncDevice to sync_devices.
+func (SyncDevice) Table() string { return "sync_devices" }
+
+// SetTenant implements tenancy.Scoped.
+func (m *SyncDevice) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
+
+// BeforeCreate stamps the tenant.
+func (m *SyncDevice) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
+
+// SyncOp is the stored result of one pushed operation, kept for 30 days: a
+// retried op_id returns Result unchanged.
+type SyncOp struct {
+	orm.Model
+
+	WorkspaceID int64  `json:"workspace_id"`
+	OpID        string `json:"op_id"`
+	DeviceID    string `json:"device_id"`
+	Result      string `json:"result"`
+}
+
+// Table maps SyncOp to sync_ops.
+func (SyncOp) Table() string { return "sync_ops" }
+
+// SetTenant implements tenancy.Scoped.
+func (m *SyncOp) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
+
+// BeforeCreate stamps the tenant.
+func (m *SyncOp) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
