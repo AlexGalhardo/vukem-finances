@@ -1,27 +1,31 @@
 {
 	"changelog": {
 		"date": "2026-11-22",
-		"hash": "0ec04827d320145a"
+		"hash": "7d85b1a23ac239d3"
 	},
 	"changelog/v0.1.0": {
 		"date": "2026-11-22",
-		"hash": "3c1fff27f0c053ed"
+		"hash": "aabffe54dfc4dfe4"
 	},
 	"changelog/v0.2.0": {
 		"date": "2026-11-22",
-		"hash": "721c528f921be9ab"
+		"hash": "6ce75da1d7f37da3"
 	},
 	"changelog/v0.3.0": {
 		"date": "2026-11-22",
-		"hash": "bffbc6b2f1540bdd"
+		"hash": "6b19295ec659d7a7"
 	},
 	"changelog/v0.4.0": {
 		"date": "2026-11-22",
-		"hash": "44d301a05ef08bec"
+		"hash": "1cfc9eda3287e100"
 	},
 	"changelog/v0.5.0": {
 		"date": "2026-11-22",
-		"hash": "ac2c9dad0863e50e"
+		"hash": "363d9998eaaa4968"
+	},
+	"changelog/v0.6.0": {
+		"date": "2026-11-22",
+		"hash": "5f12f9d7a6e8bb0e"
 	},
 	"contribute/architecture": {
 		"date": "2026-11-22",

@@ -16,6 +16,84 @@ git cliff --config .config/cliff.toml --offline --unreleased --tag vX.Y.Z --stri
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-11-22
+
+### Added
+
+- **site:** Add the self-contained static Astro site project ([`7285fb1`](https://github.com/AlexGalhardo/vukem-finances/commit/7285fb1c097d0f69b29d4874d2cfe57206b441b5))
+- **site:** Configure the fully static build for finances.vukem.dev ([`0d21d8d`](https://github.com/AlexGalhardo/vukem-finances/commit/0d21d8dac1b8e87580f86a7f4dfb878e21084387))
+- **landing:** Add the claims register, catalogs and forbidden-phrase check ([`b02edc9`](https://github.com/AlexGalhardo/vukem-finances/commit/b02edc907e7fe1799df522eabc471f939a1f57b6))
+- **landing:** Add the landing page in English, Portuguese and Spanish ([`ac3594a`](https://github.com/AlexGalhardo/vukem-finances/commit/ac3594a30f4d8ca21498ca5f0d41c7603e9af673))
+- **landing:** Add the privacy notice and the gated terms draft ([`de7288a`](https://github.com/AlexGalhardo/vukem-finances/commit/de7288ada73193c53098574a2ffddef75ff326b0))
+- **site:** Add the build checks, the sitemap script and the site tests ([`e841311`](https://github.com/AlexGalhardo/vukem-finances/commit/e84131126d6e0f737d718f58137f457d0b6aa922))
+- **landing:** Add the product pictures from the demo seed and the share image ([`19f9c64`](https://github.com/AlexGalhardo/vukem-finances/commit/19f9c64953917ca1e73e46117992a8eac50a4a88))
+- **site:** Add the docs layout, Markdown renderer and sidebar ([`2d459fb`](https://github.com/AlexGalhardo/vukem-finances/commit/2d459fba943bd2d3f55905e9ac83ef5925e98b5d))
+- **site:** Publish a Markdown twin of every page and llms.txt, and check the structure ([`e1d58e2`](https://github.com/AlexGalhardo/vukem-finances/commit/e1d58e278bdcede71036f07e29a670b98e51ead9))
+- **site:** Generate the REST, CLI, MCP, environment, shortcuts and changelog references ([`c7e4dc8`](https://github.com/AlexGalhardo/vukem-finances/commit/c7e4dc8b456656018529fb0c4936489bc456964b))
+- **site:** Show the last update of every docs page from git history ([`4aa874e`](https://github.com/AlexGalhardo/vukem-finances/commit/4aa874e14c0976e7c72e652d20102a95b2d1f316))
+- **site:** Fail the build when a docs page names something that does not exist ([`4df0d88`](https://github.com/AlexGalhardo/vukem-finances/commit/4df0d88547d84583706d521e7e836a9e08991c6c))
+- **privacy:** Add the deletion state, purge date and audit tables ([`fed21c8`](https://github.com/AlexGalhardo/vukem-finances/commit/fed21c8422186f78bbf4486d046c2e00f82bb279))
+- **privacy:** Export the personal data without secrets ([`4c8dab7`](https://github.com/AlexGalhardo/vukem-finances/commit/4c8dab7fe067d87f7ce50bbfb2c283a748afa498))
+- **privacy:** Request and cancel the deletion of a workspace ([`9e5e13f`](https://github.com/AlexGalhardo/vukem-finances/commit/9e5e13fc73a579b9406e594d5962aae10e2cbafb))
+- **privacy:** Refuse writes while a workspace waits to be purged ([`d253e0b`](https://github.com/AlexGalhardo/vukem-finances/commit/d253e0ba666f208d50a327e1ecd9e0faef8f780d))
+- **privacy:** Request and cancel the deletion of an account ([`3aea17f`](https://github.com/AlexGalhardo/vukem-finances/commit/3aea17f5021338adc7a441b41fc8ce66489ec47d))
+- **billing:** Cancel the subscription of a workspace that is being deleted ([`4286290`](https://github.com/AlexGalhardo/vukem-finances/commit/42862905618183997a0a5731c99e3e5a12e5f26a))
+- **privacy:** Purge workspaces and accounts after the grace period ([`5655f39`](https://github.com/AlexGalhardo/vukem-finances/commit/5655f397eaf964608341b1af0a3a79cbb0139730))
+- **sync:** Tell a phone its workspace was deleted and erase it on confirm ([`fe27494`](https://github.com/AlexGalhardo/vukem-finances/commit/fe274946a637ff22c8fc2c0d2bdcc6df41434f0e))
+- **privacy:** Remove the local database files for the personal edition ([`85217d8`](https://github.com/AlexGalhardo/vukem-finances/commit/85217d8bb8d4f8ba5492f81a26f13436fd51ede5))
+- **privacy:** Add the privacy page, the account deletion page and the emails ([`0903206`](https://github.com/AlexGalhardo/vukem-finances/commit/09032067360aea09302498d79e935e3f5c3d32a7))
+- **privacy:** Erase all local data from the personal edition ([`a5ee001`](https://github.com/AlexGalhardo/vukem-finances/commit/a5ee0019b20528ef441f74011854de5511c50a2f))
+- **ui:** Move the theme buttons to the top bar and slim the sidebar footer ([`9ca3461`](https://github.com/AlexGalhardo/vukem-finances/commit/9ca34612e8af1adfccb967f30c2b05b760252271))
+- **ui:** Add the design tokens, Geist fonts and live system theme ([`8afd802`](https://github.com/AlexGalhardo/vukem-finances/commit/8afd802e3ae7b18836009c655b1c2cff46047376))
+- **ui:** Restyle the primitives and add select, popover, checkbox and more ([`74dde07`](https://github.com/AlexGalhardo/vukem-finances/commit/74dde077dfb9d0786e3e100369387f88210fdf02))
+- **ui:** Restyle the shared domain components and add Stat ([`901bc9f`](https://github.com/AlexGalhardo/vukem-finances/commit/901bc9ff05a4834cb0c8e77ea7f8f8dd13943c2c))
+- **ui:** Show registry shortcuts on buttons and add the help and tutorial actions ([`ae89069`](https://github.com/AlexGalhardo/vukem-finances/commit/ae8906933ea82c7bf48d18d22e3355c7a77dd7ba))
+- **ui:** Add HelpHint, TermHint, HelpSheet and the help glossary ([`8ac5cca`](https://github.com/AlexGalhardo/vukem-finances/commit/8ac5cca2419d4f64dda53c9a5dce1b5e51a6cf3d))
+- **ui:** Rebuild the app shell and add the auth layout ([`b474f9e`](https://github.com/AlexGalhardo/vukem-finances/commit/b474f9ea4cd949c03deafc6b5e2566dcde2a487a))
+- **ui:** Add the tutorial engine, copy in three languages and the welcome card ([`0a6241a`](https://github.com/AlexGalhardo/vukem-finances/commit/0a6241ad41262ab83e6ff38359f287dd450cd319))
+- **ui:** Rebuild the Dashboard and tag the Reports tour targets ([`50f9dd1`](https://github.com/AlexGalhardo/vukem-finances/commit/50f9dd138876548dd39540870ebd7ad2dec55ba6))
+- **ui:** Restyle Transactions with MoneyText, export menu and tour targets ([`1f0a250`](https://github.com/AlexGalhardo/vukem-finances/commit/1f0a2500dcff04c2d8213f87a5bbf185f9df41ba))
+- **ui:** Restyle Accounts, Cards and CardStatement with Progress and status icons ([`78f1d01`](https://github.com/AlexGalhardo/vukem-finances/commit/78f1d010333d82d340f935c17b2e8cc26e9c1ca6))
+- **ui:** Restyle Categories, Budgets and Goals with Progress and tour targets ([`2a28344`](https://github.com/AlexGalhardo/vukem-finances/commit/2a28344e399a5a370b36040afb9e4166407cf154))
+- **ui:** Restyle Recurrences, Import and Suggestions and cover the screens in e2e ([`c39aa1f`](https://github.com/AlexGalhardo/vukem-finances/commit/c39aa1fc23e0bb72b378025dd077437949d35aff))
+- **ui:** Filters sheet and list layout on Transactions, remaining hints and tour e2e ([`c873724`](https://github.com/AlexGalhardo/vukem-finances/commit/c8737244db415a73f864211ab653938765005a1a))
+- **ui:** Rebuild the auth screens on the new layout with focus on the first error ([`491ba9c`](https://github.com/AlexGalhardo/vukem-finances/commit/491ba9c292c891c8ec464eb6b859456d23a216b2))
+- **ui:** Rebuild workspace, billing, notifications and telegram as settings sections ([`cea8be1`](https://github.com/AlexGalhardo/vukem-finances/commit/cea8be14b64f45080f25fe8bcb6e4f098cfb72c7))
+- **ui:** Rebuild AI, tokens, devices and two-factor as settings sections ([`1c788f4`](https://github.com/AlexGalhardo/vukem-finances/commit/1c788f4559bcc20c0c9fc5c3b43990d6c8dc874b))
+- **admin:** Rebuild the landing page and the admin panel screens on the design tokens ([`b811561`](https://github.com/AlexGalhardo/vukem-finances/commit/b8115619697bc51793062150abe8459944ff7632))
+- **ui:** Show the running release in the bottom right corner ([`050de96`](https://github.com/AlexGalhardo/vukem-finances/commit/050de962dbb125561279d3180a3ee59aa824ed34))
+
+### Changed
+
+- **db:** Add covering indexes for the balances, totals and net worth reads ([`c66bde2`](https://github.com/AlexGalhardo/vukem-finances/commit/c66bde20225d4feaa41d24145461b84873a01c56))
+
+### Fixed
+
+- **security:** Refuse JavaScript front matter in the docs pages ([`8ea1d44`](https://github.com/AlexGalhardo/vukem-finances/commit/8ea1d44e9d97e659b7e020a6e20995f9be89d943))
+- **ai:** Refuse alternative spellings of a local host in the base URL ([`98ce886`](https://github.com/AlexGalhardo/vukem-finances/commit/98ce8864c8e7d926c918e3800cffbbff86c678ea))
+- **import:** Read a Windows-1252 bank CSV as text instead of keeping invalid UTF-8 ([`3cab598`](https://github.com/AlexGalhardo/vukem-finances/commit/3cab5987e2b69ab41440132aff09c4ebf32f1992))
+- **recurrence:** Honor an end date that is the zero time ([`a6d6a03`](https://github.com/AlexGalhardo/vukem-finances/commit/a6d6a03696534b30119822806fc9f77fa876e23f))
+- **security:** Keep sessions in the database so logout ends a copied cookie ([`fb1b026`](https://github.com/AlexGalhardo/vukem-finances/commit/fb1b026237c8d7d5db6b25a66f7c2a1b600dfed0))
+- **privacy:** Refuse a cancel after the grace period and end the process on a failed erase ([`f2547b1`](https://github.com/AlexGalhardo/vukem-finances/commit/f2547b1e40df8e10e1c67d3fb96a2ac09f86de20))
+- **privacy:** Recheck the same deletion request before purging a workspace ([`74efb4a`](https://github.com/AlexGalhardo/vukem-finances/commit/74efb4a4499717cd8c19209923fbeb5b5d82afe1))
+- **ui:** List rows no longer overlap on phones and polish found in the screen review ([`d576dff`](https://github.com/AlexGalhardo/vukem-finances/commit/d576dff7e7b8c1af07c7dd6d997b2e713c099442))
+- **finance:** Cut a long description key at a clean boundary ([`9d6a1ee`](https://github.com/AlexGalhardo/vukem-finances/commit/9d6a1eebfdba7b42b8ded3d47433966ffe36c8c0))
+- **mobile:** Follow the new palette and use the readable green for text ([`8dbbad5`](https://github.com/AlexGalhardo/vukem-finances/commit/8dbbad50504334219a70a8be14e878be9f2cb595))
+- **db:** Make a full migrate:rollback run from a fresh database ([`246bce1`](https://github.com/AlexGalhardo/vukem-finances/commit/246bce1e1b9e542b9512e1bfa37f95222616f3be))
+- **billing:** Keep the AbacatePay webhook secret out of logs with SecretPaths ([`b8790a1`](https://github.com/AlexGalhardo/vukem-finances/commit/b8790a1eebc71b011374e7e3b44e42182a4f2a77))
+- **sync:** Count the month quota by a date range so the index answers it ([`9a435f6`](https://github.com/AlexGalhardo/vukem-finances/commit/9a435f657e2f1349364aaac2c2efc8746ba8a867))
+- **import:** Run queued imports again at boot ([`82fff00`](https://github.com/AlexGalhardo/vukem-finances/commit/82fff00ad1eb61d23609b471a03aae5e0dfca613))
+- **ci:** Read the budget column of the budget table only ([`c5f6645`](https://github.com/AlexGalhardo/vukem-finances/commit/c5f6645de38084be4133109aaf403b8b10844b12))
+
+### Security
+
+- **site:** Write the Integrate, Operate and Contribute pages ([`c78da05`](https://github.com/AlexGalhardo/vukem-finances/commit/c78da054f9a5e0c760717269518b472a5794b294))
+## [0.5.0] - 2026-11-22
+
+### Fixed
+
+- **workspace:** Install the mail suppression check once per mailer ([`4b24062`](https://github.com/AlexGalhardo/vukem-finances/commit/4b2406267fb07765da9c0baa38c41e4af0d5cfdf))
+
 ## [0.5.0] - 2026-11-22
 
 ### Added
