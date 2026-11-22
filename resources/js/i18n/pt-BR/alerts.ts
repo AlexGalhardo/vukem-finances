@@ -1,0 +1,37 @@
+import type en from "../en/alerts";
+
+const dict = {
+  notificationsBell: "Notificações, {n} não lidas",
+  notificationsBellNone: "Notificações, nenhuma não lida",
+  notificationsLive: "{n} notificações não lidas",
+  notificationsEmpty: "Nenhuma notificação ainda",
+  notificationsViewAll: "Ver todas as notificações",
+  notificationsMarkRead: "Marcar como lida",
+  notificationsMarkAllRead: "Marcar todas como lidas",
+  notificationsUnread: "Não lida",
+  notificationsReadState: "Lida",
+  notificationsDescription: "Orçamentos, cartões, metas e lançamentos recorrentes que pedem a sua atenção.",
+  notificationsPreferences: "Preferências de alertas",
+  notificationsPreferencesHelp:
+    "Escolha por onde cada alerta chega até você. Donos e administradores recebem e-mail por padrão; membros veem só a lista no app.",
+  notificationsKind: "Alerta",
+  notificationsInApp: "No app",
+  notificationsEmail: "E-mail",
+  notificationsEmailViewer: "Leitores não recebem e-mail.",
+  notificationsSave: "Salvar preferências",
+  alertKindBudget80: "Um orçamento chega a 80%",
+  alertKindBudget100: "Um orçamento se esgota",
+  alertKindOverallBudget100: "O orçamento geral se esgota",
+  alertKindCardLimit80: "Um cartão chega a 80% do limite",
+  alertKindStatementDue: "Uma fatura de cartão está perto de vencer",
+  alertKindGoalReached: "Uma meta é alcançada",
+  alertKindRecurrenceFailed: "Um lançamento recorrente não pôde ser feito",
+  "alerts.budget_80": "{name} está em {percent}% do orçamento ({spent} de {limit})",
+  "alerts.budget_100": "{name} usou todo o orçamento: {spent} de {limit}",
+  "alerts.overall_budget_100": "O orçamento geral se esgotou: {spent} de {limit}",
+  "alerts.card_limit_80": "{name} usou {used} do limite de {limit}",
+  "alerts.statement_due": "A fatura de {remaining} do cartão {name} vence em {date}",
+  "alerts.goal_reached": "Meta alcançada: {name}",
+  "alerts.recurrence_failed": '"{name}" com data {date} não pôde ser lançado',
+} satisfies Record<keyof typeof en, string>;
+export default dict;

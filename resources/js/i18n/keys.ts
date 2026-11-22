@@ -1,10 +1,13 @@
 import type accounts from "./en/accounts";
 import type ai from "./en/ai";
+import type alerts from "./en/alerts";
 import type billing from "./en/billing";
+import type budgets from "./en/budgets";
 import type cards from "./en/cards";
 import type categories from "./en/categories";
 import type common from "./en/common";
 import type components from "./en/components";
+import type goals from "./en/goals";
 import type importPage from "./en/import";
 import type recurrences from "./en/recurrences";
 import type search from "./en/search";
@@ -16,11 +19,14 @@ import type transactions from "./en/transactions";
 export type Key =
   | keyof typeof accounts
   | keyof typeof ai
+  | keyof typeof alerts
   | keyof typeof billing
+  | keyof typeof budgets
   | keyof typeof cards
   | keyof typeof categories
   | keyof typeof common
   | keyof typeof components
+  | keyof typeof goals
   | keyof typeof importPage
   | keyof typeof recurrences
   | keyof typeof search

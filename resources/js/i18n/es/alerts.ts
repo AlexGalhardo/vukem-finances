@@ -1,0 +1,37 @@
+import type en from "../en/alerts";
+
+const dict = {
+  notificationsBell: "Notificaciones, {n} sin leer",
+  notificationsBellNone: "Notificaciones, ninguna sin leer",
+  notificationsLive: "{n} notificaciones sin leer",
+  notificationsEmpty: "Aún no hay notificaciones",
+  notificationsViewAll: "Ver todas las notificaciones",
+  notificationsMarkRead: "Marcar como leída",
+  notificationsMarkAllRead: "Marcar todas como leídas",
+  notificationsUnread: "Sin leer",
+  notificationsReadState: "Leída",
+  notificationsDescription: "Presupuestos, tarjetas, metas y movimientos recurrentes que necesitan tu atención.",
+  notificationsPreferences: "Preferencias de alertas",
+  notificationsPreferencesHelp:
+    "Elige por dónde te llega cada alerta. Los propietarios y administradores reciben correo por defecto; los miembros solo la lista de la app.",
+  notificationsKind: "Alerta",
+  notificationsInApp: "En la app",
+  notificationsEmail: "Correo",
+  notificationsEmailViewer: "Los lectores no reciben correo.",
+  notificationsSave: "Guardar preferencias",
+  alertKindBudget80: "Un presupuesto llega al 80%",
+  alertKindBudget100: "Un presupuesto se agota",
+  alertKindOverallBudget100: "El presupuesto general se agota",
+  alertKindCardLimit80: "Una tarjeta llega al 80% de su límite",
+  alertKindStatementDue: "Un extracto de tarjeta está por vencer",
+  alertKindGoalReached: "Se alcanza una meta",
+  alertKindRecurrenceFailed: "No se pudo registrar un movimiento recurrente",
+  "alerts.budget_80": "{name} está al {percent}% de su presupuesto ({spent} de {limit})",
+  "alerts.budget_100": "{name} usó todo su presupuesto: {spent} de {limit}",
+  "alerts.overall_budget_100": "El presupuesto general se agotó: {spent} de {limit}",
+  "alerts.card_limit_80": "{name} usó {used} de su límite de {limit}",
+  "alerts.statement_due": "El extracto de {remaining} de la tarjeta {name} vence el {date}",
+  "alerts.goal_reached": "Meta alcanzada: {name}",
+  "alerts.recurrence_failed": '"{name}" del {date} no se pudo registrar',
+} satisfies Record<keyof typeof en, string>;
+export default dict;

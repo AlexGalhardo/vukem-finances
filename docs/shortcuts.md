@@ -33,4 +33,4 @@ One registry (`resources/js/shortcuts/registry.ts`) owns every shortcut. A featu
 | `g r` | `go-reports` | epic 12 (reserved) |
 | `g k` | `go-cards` | shell |
 | `g u` | `go-recurrences` | shell |
-| `g g` | `go-goals` | epic 11 (reserved) |
+| `g g` | `go-goals` | shell |
