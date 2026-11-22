@@ -140,6 +140,78 @@ var matrixCalls = map[string]func(s seeded, name string) matrixCall{ //nolint:go
 	"summary.show": func(seeded, string) matrixCall { return matrixCall{method: "GET", path: "/summary"} },
 }
 
+// syncMatrixCalls has one entry per operation of the sync protocol. They need
+// the protocol headers and a registered device, and a viewer's push is refused
+// per mutation in a 200, so checkSyncOperation holds them to that instead.
+var syncMatrixCalls = map[string]func(name string) matrixCall{ //nolint:gochecknoglobals // a table
+	"sync.info": func(string) matrixCall { return matrixCall{method: "GET", path: "/sync/info"} },
+	"sync.devices.create": func(n string) matrixCall {
+		return matrixCall{"POST", "/sync/devices", map[string]any{"name": "D " + n, "platform": "ios"}}
+	},
+	"sync.devices.list": func(string) matrixCall { return matrixCall{method: "GET", path: "/sync/devices"} },
+	"sync.pull":         func(string) matrixCall { return matrixCall{method: "GET", path: "/sync/pull?cursor=0&limit=10"} },
+	"sync.snapshot":     func(string) matrixCall { return matrixCall{method: "GET", path: "/sync/snapshot?entity=account"} },
+	"sync.push": func(n string) matrixCall {
+		m := mut("account", newULID(), "upsert", 0, map[string]any{"name": "S " + n + " " + newULID(), "kind": "cash"})
+
+		return matrixCall{"POST", "/sync/push", map[string]any{"mutations": []map[string]any{m}}}
+	},
+}
+
+// checkSyncOperation holds one sync operation to the scope and to the role: no
+// scope is a 403, a viewer reads and registers a device but every mutation of
+// theirs is refused, and the owner's is applied.
+func checkSyncOperation(t *testing.T, f apiFixture, vera who, id string) {
+	t.Helper()
+
+	build := syncMatrixCalls[id]
+	name := strings.ReplaceAll(id, ".", "-")
+
+	without := apiClient(t, f.app, rawToken(t, f.app, f.who.User, f.who.Workspace.ID, "summary:read")).
+		WithHeader("X-Sync-Protocol", "1")
+	assertProblem(t, send(without, build(name)), http.StatusForbidden, "missing_scope")
+
+	pushStatus := func(c *vukemtest.Client) (int, pushResult) {
+		res := send(c, build(name))
+
+		var out struct {
+			Results []pushResult `json:"results"`
+		}
+
+		if id == "sync.push" {
+			if err := json.Unmarshal([]byte(res.Body()), &out); err != nil || len(out.Results) != 1 {
+				t.Fatalf("push answer: %v: %s", err, res.Body())
+			}
+
+			return res.Status(), out.Results[0]
+		}
+
+		return res.Status(), pushResult{}
+	}
+
+	viewer := newSyncDevice(t, f.app, rawToken(t, f.app, vera.User, vera.Workspace.ID, "sync"), "viewer "+name)
+
+	status, got := pushStatus(viewer.client())
+	if status < 200 || status > 299 {
+		t.Errorf("a viewer got %d", status)
+	}
+
+	if id == "sync.push" && (got.Status != "rejected" || got.code() != "forbidden") {
+		t.Errorf("a viewer's mutation = %+v, want it refused as forbidden", got)
+	}
+
+	owner := newSyncDevice(t, f.app, rawToken(t, f.app, f.who.User, f.who.Workspace.ID, "sync"), "owner "+name)
+
+	status, got = pushStatus(owner.client())
+	if status < 200 || status > 299 {
+		t.Errorf("the owner got %d", status)
+	}
+
+	if id == "sync.push" && got.Status != "applied" {
+		t.Errorf("the owner's mutation = %+v, want it applied", got)
+	}
+}
+
 func send(c *vukemtest.Client, call matrixCall) *vukemtest.Response {
 	target := api.BasePath + call.path
 
@@ -183,6 +255,18 @@ func TestAPIScopeMatrix(t *testing.T) {
 	for _, methods := range doc.Paths {
 		for _, op := range methods {
 			inDoc++
+
+			if _, isSync := syncMatrixCalls[op.ID]; isSync {
+				if op.Scope != "sync" {
+					t.Errorf("operation %s requires scope %q, want sync", op.ID, op.Scope)
+				}
+
+				t.Run(op.ID, func(t *testing.T) { checkSyncOperation(t, f, vera, op.ID) })
+
+				tested++
+
+				continue
+			}
 
 			build, ok := matrixCalls[op.ID]
 			if !ok {
@@ -239,8 +323,8 @@ func TestAPIScopeMatrix(t *testing.T) {
 		}
 	}
 
-	if tested != inDoc || tested != len(api.Operations()) || tested != len(matrixCalls) {
+	if cases := len(matrixCalls) + len(syncMatrixCalls); tested != inDoc || tested != len(api.Operations()) || tested != cases {
 		t.Errorf("tested %d operations, the document has %d, the table %d, the cases %d",
-			tested, inDoc, len(api.Operations()), len(matrixCalls))
+			tested, inDoc, len(api.Operations()), cases)
 	}
 }
