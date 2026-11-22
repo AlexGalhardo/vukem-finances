@@ -67,6 +67,8 @@ type GrantStore struct {
 	// Role is the role of a person in a workspace now, and whether they are a
 	// member; the scopes a grant may hold are cut to what it allows.
 	Role func(ctx context.Context, userID, workspaceID int64) (string, bool, error)
+	// Clients names the client of a grant for the connected-apps page.
+	Clients oauth.ClientResolver
 }
 
 // NewGrantStore returns the store over ex.
@@ -114,7 +116,7 @@ func (s *GrantStore) CreateGrant(ctx context.Context, g oauth.Grant) error {
 	_, err = s.ex.ExecContext(ctx,
 		"INSERT INTO mcp_grants (workspace_id, user_id, grant_id, client_id, client_name, scopes, created_at, updated_at) VALUES ("+
 			s.p(1)+", "+s.p(2)+", "+s.p(3)+", "+s.p(4)+", "+s.p(5)+", "+s.p(6)+", "+s.p(7)+", "+s.p(8)+")",
-		sub.WorkspaceID, sub.UserID, g.ID, g.ClientID, ClientName(g.ClientID), strings.Join(approved, " "), now, now)
+		sub.WorkspaceID, sub.UserID, g.ID, g.ClientID, s.clientName(ctx, g.ClientID), strings.Join(approved, " "), now, now)
 	if err != nil {
 		// Without its binding the grant is unusable: revoke it rather than leave it.
 		_ = s.SQLStore.RevokeGrant(ctx, g.ID)
@@ -123,6 +125,20 @@ func (s *GrantStore) CreateGrant(ctx context.Context, g oauth.Grant) error {
 	}
 
 	return nil
+}
+
+// clientName is the name the connected-apps page shows: the verified name of
+// DisplayNames, never one a metadata document merely claims.
+func (s *GrantStore) clientName(ctx context.Context, id string) string {
+	if s.Clients != nil {
+		if c, err := s.Clients.Client(ctx, id); err == nil && c != nil {
+			name, _ := DisplayNames(c)
+
+			return name
+		}
+	}
+
+	return ClientName(id)
 }
 
 // ErrScopeBeyondRole is returned when the client asks for a scope the person's

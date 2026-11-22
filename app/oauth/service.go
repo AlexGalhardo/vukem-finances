@@ -108,6 +108,8 @@ func New(app *vukem.App, ws *workspaces.Service, cfg Config) (*Service, error) {
 		clients = oauth.Resolvers{static, &oauth.MetadataDocuments{}}
 	}
 
+	store.Clients = clients
+
 	svc := &Service{Store: store, WS: ws, Issuer: issuer, Resource: resource, Log: app.Log}
 
 	server, err := oauth.New(oauth.Config{
