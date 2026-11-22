@@ -355,3 +355,9 @@ func (s *Store) ReleaseLease(ctx context.Context, owner string) error {
 
 	return err
 }
+
+// Prune drops what the bot no longer needs: processed update ids past the
+// retention, expired codes and drafts, and finished rate windows.
+func (s *Store) Prune(ctx context.Context) error {
+	return errors.Join(s.PruneUpdates(ctx), s.PruneCodes(ctx), s.PrunePending(ctx), PruneCounters(ctx, s.DB, time.Now()))
+}
