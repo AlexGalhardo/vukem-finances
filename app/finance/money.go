@@ -151,3 +151,24 @@ func FormatAmount(cents int64, currency string) string {
 
 	return sign + symbol + grouped.String() + "." + frac
 }
+
+// FormatDecimalCents renders cents for machines: a signed decimal with a dot
+// and exactly two decimals ("-12.34", "0.05", never "-0.00"), built with
+// integer arithmetic only. ParseAmount reads it back to the same cents. It is
+// the amount of the CSV export, which no locale or currency symbol touches.
+func FormatDecimalCents(cents int64) string {
+	// The magnitude is taken as uint64 so math.MinInt64 does not overflow.
+	mag := uint64(cents)
+	sign := ""
+
+	if cents < 0 {
+		mag, sign = -mag, "-"
+	}
+
+	frac := strconv.FormatUint(mag%100, 10)
+	if len(frac) < 2 {
+		frac = "0" + frac
+	}
+
+	return sign + strconv.FormatUint(mag/100, 10) + "." + frac
+}
