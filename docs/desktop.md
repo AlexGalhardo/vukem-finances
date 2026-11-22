@@ -2,7 +2,7 @@
 
 vukem-finances ships as a desktop application for Windows, macOS and Linux: the
 personal edition (one implicit workspace, no billing, no public sign-up) in a
-native window. It works offline, keeps its data in your own user folder and
+native window. It works offline (see [offline.md](offline.md) for every network path), keeps its data in your own user folder and
 needs no Docker, no terminal and no browser tab.
 
 Builds are **unsigned** (see [Unsigned builds](#unsigned-builds-and-os-warnings)).

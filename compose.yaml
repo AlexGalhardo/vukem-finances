@@ -7,6 +7,11 @@
 # Open http://localhost:3000 for the app and http://localhost:8025 for the
 # mail catcher, which holds every email the app sends.
 #
+# Personal is offline-first (docs/offline.md): once the images are built and
+# pulled, `docker compose up -d` needs no network, and Mailpit is optional
+# (`docker compose up -d --no-deps app` leaves it out; mail is then dropped
+# with a warning in the log).
+#
 # The edition defaults to personal; run the saas edition with
 #   APP_EDITION=saas docker compose up --build
 # (it needs the STRIPE_* settings in .env). For a server, see compose.prod.yaml.

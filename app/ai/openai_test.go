@@ -263,6 +263,20 @@ func TestBaseURL(t *testing.T) {
 		if pe, ok := errors.AsType[*ai.ProviderError](err); !ok || pe.Type != "blocked_address" {
 			t.Errorf("err = %v", err)
 		}
+
+		// What the client sees is what a connection that failed shows: it must not tell
+		// an address the server refuses from one that did not answer (an internal network oracle).
+		dead := httptest.NewServer(http.NotFoundHandler())
+		deadURL := dead.URL
+		dead.Close()
+
+		_, failed := ai.NewCompatible(ai.NewKey(testKey), deadURL+"/v1", "m", ai.NewHTTP(ai.HTTPOptions{
+			Retry: time.Millisecond, AllowPrivate: true,
+		})).Complete(t.Context(), chatRequest())
+
+		if !errors.Is(err, ai.ErrUnreachable) || !errors.Is(failed, ai.ErrUnreachable) || err.Error() != failed.Error() {
+			t.Errorf("blocked = %v, failed = %v; want the same class and message", err, failed)
+		}
 	})
 
 	t.Run("a redirect to the metadata address is not followed", func(t *testing.T) {
