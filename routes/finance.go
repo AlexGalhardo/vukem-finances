@@ -25,6 +25,7 @@ import (
 	appmail "github.com/AlexGalhardo/vukem-finances/app/mail"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
+	"github.com/AlexGalhardo/vukem-finances/app/telegram"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 	"github.com/AlexGalhardo/vukem-finances/config"
 )
@@ -72,7 +73,12 @@ func Finance(r *router.Router, app *vukem.App) error {
 
 	r.UseServer(resend)
 
-	h := ledger.New(ws, fin, alerts.New(app, ws, fin))
+	bot, err := telegram.New(app, ws, fin)
+	if err != nil {
+		return err
+	}
+
+	h := ledger.New(ws, fin, telegram.Attach(bot, alerts.New(app, ws, fin)))
 	admins := admin.NewAdmins(app.Source.Get("ADMIN_EMAILS"))
 	required := auth.Required(acc.Web)
 	verified := auth.Verified(acc.Web)

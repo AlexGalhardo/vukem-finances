@@ -20,10 +20,11 @@ type Service struct {
 	Log *slog.Logger
 	URL string
 
-	// InApp and Email are the ways a notification reaches a person (epic 17
-	// adds Telegram next to them).
-	InApp Channel
-	Email Channel
+	// InApp and Email are the ways a notification reaches a person; Telegram
+	// is the third and is nil while the bot is off.
+	InApp    Channel
+	Email    Channel
+	Telegram Channel
 
 	now func() time.Time
 }
