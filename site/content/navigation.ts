@@ -10,7 +10,22 @@ export const navigation: NavSection[] = [
   {
     "title": "Start",
     "items": [
-      "index"
+      "index",
+      "start/what-is-it",
+      "start/editions",
+      "start/quick-start"
+    ]
+  },
+  {
+    "title": "Run it",
+    "items": [
+      "run/docker",
+      "run/vps",
+      "run/desktop",
+      "run/mobile",
+      "run/offline",
+      "run/upgrading",
+      "run/backup-restore"
     ]
   }
 ];
