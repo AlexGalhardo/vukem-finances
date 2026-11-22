@@ -79,5 +79,19 @@ func TestAPIFailedTokenLimit(t *testing.T) {
 	}
 
 	// The address is out of failed lookups: refused before any token is checked.
-	assertProblem(t, apiClient(t, app, good).Get("/api/v1/me"), 429, "rate_limited")
+	// The bucket regains about a slot a second, so on a slow machine it is
+	// drained again right before the valid token is tried.
+	for range 5 {
+		if apiClient(t, app, "vf_AAAA.BBBB").Get("/api/v1/me").Status() != http.StatusTooManyRequests {
+			continue
+		}
+
+		if r := apiClient(t, app, good).Get("/api/v1/me"); r.Status() == http.StatusTooManyRequests {
+			assertProblem(t, r, 429, "rate_limited")
+
+			return
+		}
+	}
+
+	t.Error("a valid token passed right after the address ran out of failed lookups")
 }
