@@ -57,7 +57,7 @@ tasks:
       - cmd: wails3 generate webview2bootstrapper -dir build/windows/nsis
       - cmd: makensis -DINFO_PRODUCTVERSION={{.VERSION_NUM}} -DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user -DARG_WAILS_AMD64_BINARY="{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.APP_NAME}}.exe" build/windows/nsis/project.nsi
         platforms: [linux, darwin]
-      - cmd: makensis -DINFO_PRODUCTVERSION={{.VERSION_NUM}} -DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user -DARG_WAILS_AMD64_BINARY="{{.ROOT_DIR}}\{{.BIN_DIR}}\{{.APP_NAME}}.exe" build\windows\nsis\project.nsi
+      - cmd: makensis -DINFO_PRODUCTVERSION={{.VERSION_NUM}} -DWAILS_INSTALL_SCOPE=user -DREQUEST_EXECUTION_LEVEL=user -DARG_WAILS_AMD64_BINARY="{{.ROOT_DIR}}\{{.BIN_DIR}}\{{.APP_NAME}}.exe" "build\windows\nsis\project.nsi"
         platforms: [windows]
       - cmd: wails3 tool cp {{.BIN_DIR}}/{{.APP_NAME}}-amd64-installer.exe {{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-windows-amd64-setup.exe
 
@@ -72,6 +72,7 @@ tasks:
     cmds:
       - wails3 generate .desktop -name "{{.APP_NAME}}" -exec "{{.APP_NAME}}" -icon "{{.APP_NAME}}" -outputfile build/linux/{{.APP_NAME}}.desktop -categories "Office;Finance;"
       - wails3 tool package -name "{{.APP_NAME}}" -format deb -config build/linux/nfpm/nfpm.yaml -out {{.BIN_DIR}}
+      - mkdir -p build/linux/appimage
       - cp build/appicon.png build/linux/appimage/{{.APP_NAME}}.png
       - cp {{.BIN_DIR}}/{{.APP_NAME}} build/linux/appimage/{{.APP_NAME}}
       - wails3 generate appimage -binary build/linux/appimage/{{.APP_NAME}} -icon build/linux/appimage/{{.APP_NAME}}.png -desktopfile build/linux/{{.APP_NAME}}.desktop -outputdir {{.BIN_DIR}} -builddir build/linux/appimage/build
