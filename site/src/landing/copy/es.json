@@ -1,0 +1,159 @@
+{
+  "meta": {
+    "title": "vukem-finances: finanzas personales open source que alojas tú",
+    "description": "Controla cuentas, presupuestos y gastos con una app open source que ejecutas tú mismo, en Docker o en el escritorio. Tus datos siguen siendo tuyos.",
+    "ogAlt": "vukem-finances, finanzas personales open source que alojas tú mismo"
+  },
+  "a11y": {
+    "skip": "Saltar al contenido",
+    "language": "Idioma",
+    "mainNav": "Principal",
+    "footerNav": "Pie de página",
+    "screenshotsLabel": "Capturas de pantalla de la app"
+  },
+  "nav": {
+    "features": "Funciones",
+    "privacy": "Tus datos",
+    "editions": "Ediciones",
+    "install": "Instalar",
+    "faq": "Preguntas"
+  },
+  "hero": {
+    "eyebrow": "Open source, licencia MIT",
+    "title": "Tu dinero, en una app que es tuya",
+    "lead": "vukem-finances registra cuentas, transacciones y presupuestos, muestra adónde fue el mes y funciona en tu propio ordenador o servidor. Sin cuenta con nosotros, sin nadie más guardando tus números.",
+    "ctaDocs": "Leer la documentación",
+    "ctaGithub": "Ver en GitHub",
+    "ctaDocker": "Instalar con Docker",
+    "ctaDownload": "Descargar",
+    "note": "Software autoalojado: lo ejecutas tú, así que no hay un servicio alojado al que acceder."
+  },
+  "how": {
+    "title": "Cómo funciona",
+    "steps": [
+      { "title": "Instala", "text": "Arráncalo con Docker en tu máquina o en un VPS, o abre la app de escritorio para Windows, macOS o Linux." },
+      { "title": "Registra", "text": "Añade transacciones a mano, envía un mensaje corto al bot de Telegram o importa un extracto CSV u OFX." },
+      { "title": "Entiende", "text": "Consulta el panel y los informes, define presupuestos mensuales y metas, y exporta todo cuando quieras." }
+    ]
+  },
+  "features": {
+    "title": "Qué puedes hacer",
+    "groups": [
+      {
+        "title": "Registrar rápido",
+        "items": [
+          { "title": "Entrada rápida", "text": "Añade una transacción con pocas teclas, con atajos de teclado y una paleta de comandos." },
+          { "title": "Importar extractos", "text": "Trae archivos CSV y OFX de tu banco." },
+          { "title": "Recurrencias y cuotas", "text": "Programa movimientos que se repiten y divide una compra en varios meses." },
+          { "title": "Bot de Telegram", "text": "Vincula un chat privado y registra un gasto con un mensaje corto. El bot está apagado hasta que lo configuras." }
+        ]
+      },
+      {
+        "title": "Entender",
+        "items": [
+          { "title": "Panel", "text": "Ve saldos, ingresos y gastos del mes de un vistazo." },
+          { "title": "Informes", "text": "Flujo de caja, desgloses por categoría, cuenta y etiqueta, patrimonio a lo largo del tiempo y comparación de periodos." },
+          { "title": "Búsqueda y filtros", "text": "Encuentra cualquier transacción por texto, fecha, categoría, cuenta, etiqueta o importe." }
+        ]
+      },
+      {
+        "title": "Planificar",
+        "items": [
+          { "title": "Presupuestos", "text": "Fija un límite mensual por categoría y observa cómo se llena." },
+          { "title": "Metas y alertas", "text": "Ahorra para un objetivo y recibe avisos cuando algo requiera atención." },
+          { "title": "Tarjetas de crédito", "text": "Sigue los extractos de la tarjeta y lo que debes, aparte de tus cuentas del día a día." }
+        ]
+      },
+      {
+        "title": "Mantener el control",
+        "items": [
+          { "title": "Exporta todo", "text": "Descarga tus transacciones en CSV o todo tu espacio de trabajo en JSON cuando quieras." },
+          { "title": "Familias y roles", "text": "Invita a personas a un espacio de trabajo compartido como propietario, administrador, miembro o lector." },
+          { "title": "IA con tu propia clave", "text": "Categorización y preguntas sobre tus gastos, opcionales, con una clave que aportas tú. Apagada por defecto, y los datos personales se eliminan antes de enviar nada." }
+        ]
+      },
+      {
+        "title": "Úsalo a tu manera",
+        "items": [
+          { "title": "En el navegador", "text": "La app web funciona en cualquier navegador moderno, con temas claro y oscuro, en inglés, portugués y español." },
+          { "title": "En el escritorio", "text": "Una app nativa para Windows, macOS y Linux que funciona sin conexión y guarda los datos en tu carpeta de usuario." },
+          { "title": "Desde la terminal y el código", "text": "Una línea de comandos y una API REST con tokens de alcance limitado, construidas sobre las mismas operaciones que la app." }
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Tus datos siguen siendo tuyos",
+    "lead": "El software funciona donde tú lo pongas. No hay ningún servidor de vukem-finances en medio.",
+    "points": [
+      "La base de datos por defecto es SQLite, un archivo en tu propio disco.",
+      "Este sitio no usa cookies, no ejecuta analítica y no carga nada de otros sitios.",
+      "Las funciones de IA están apagadas hasta que añades tu propia clave, y solo se envía texto con los datos eliminados al proveedor que elegiste.",
+      "El bot de Telegram es opcional. Los mensajes pasan por los servidores de Telegram, que no usan cifrado de extremo a extremo.",
+      "El código fuente es público bajo la licencia MIT, así que puedes leer exactamente qué hace."
+    ],
+    "link": "Leer el aviso de privacidad"
+  },
+  "editions": {
+    "title": "Dos ediciones, un solo programa",
+    "lead": "El mismo binario funciona en dos ediciones, elegidas al arrancarlo.",
+    "personal": {
+      "title": "Personal",
+      "text": "Para una persona o una familia en su propio ordenador o servidor. Un espacio de trabajo, registro cerrado, sin límites de plan y con todas las funciones activas."
+    },
+    "saas": {
+      "title": "SaaS",
+      "text": "Para quien lo opera para varias personas en su propio servidor. Incluye facturación, espacios de trabajo y límites de plan para quien lo aloja."
+    },
+    "notice": "vukem-finances no ofrece actualmente un servicio alojado. Los planes de abajo describen lo que permite la edición SaaS cuando la ejecutas tú mismo.",
+    "plansTitle": "Planes de la edición SaaS",
+    "free": "Free",
+    "pro": "Pro",
+    "unlimited": "Ilimitado",
+    "yes": "Incluido",
+    "no": "No incluido",
+    "rows": {
+      "accounts": "Cuentas",
+      "transactionsPerMonth": "Transacciones al mes",
+      "members": "Miembros",
+      "csvImport": "Importación de CSV",
+      "budgets": "Presupuestos"
+    }
+  },
+  "install": {
+    "title": "Ponlo en marcha",
+    "lead": "Elige la vía que te convenga. Todo es un enlace simple a la documentación o al repositorio.",
+    "docker": "Imágenes de contenedor",
+    "dockerText": "Publicadas en GitHub Container Registry y Docker Hub:",
+    "desktop": "Escritorio",
+    "desktopText": "Los instaladores para Windows, macOS y Linux se adjuntan a cada versión en GitHub. Las compilaciones no están firmadas, así que el sistema puede mostrar una advertencia la primera vez que las abras.",
+    "copy": "Nombre de la imagen"
+  },
+  "faq": {
+    "title": "Preguntas",
+    "items": [
+      { "q": "¿Hay una versión alojada que pueda usar?", "a": "No. vukem-finances es software que ejecutas tú mismo, en tu ordenador, en un servidor o en la app de escritorio. Hoy no existe un servicio alojado." },
+      { "q": "¿Cuánto cuesta?", "a": "El software es gratuito y open source bajo la licencia MIT. Free y Pro son planes de la edición SaaS, para quien la aloja para otras personas." },
+      { "q": "¿Dónde se guardan mis datos?", "a": "En una base de datos SQLite de la máquina que lo ejecuta. Puedes exportarlos en CSV o JSON cuando quieras." },
+      { "q": "¿Funciona sin conexión?", "a": "La app de escritorio sí: se ejecuta en tu máquina y guarda los datos en tu carpeta de usuario. La app web necesita un servidor accesible, que puede ser tu propio ordenador." },
+      { "q": "¿Puede compartirlo una familia?", "a": "Sí. Un espacio de trabajo puede tener varias personas con los roles propietario, administrador, miembro y lector, añadidas por invitación." },
+      { "q": "¿Está firmada la app de escritorio?", "a": "No. Las compilaciones no están firmadas, así que Windows o macOS pueden avisarte antes del primer arranque." },
+      { "q": "¿Usa IA?", "a": "Solo si la activas y le das tu propia clave. Viene apagada por defecto." }
+    ]
+  },
+  "footer": {
+    "tagline": "Finanzas personales open source.",
+    "docs": "Documentación",
+    "github": "GitHub",
+    "releases": "Versiones",
+    "privacy": "Privacidad",
+    "terms": "Términos",
+    "license": "Licencia MIT"
+  },
+  "legal": {
+    "privacyTitle": "Aviso de privacidad",
+    "termsTitle": "Términos",
+    "back": "Volver a la página de inicio",
+    "draft": "Borrador, pendiente de revisión del autor."
+  }
+}

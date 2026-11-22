@@ -1,0 +1,159 @@
+{
+  "meta": {
+    "title": "vukem-finances: open-source personal finance you host",
+    "description": "Track accounts, budgets and spending with an open-source app you run yourself, on Docker or on your desktop. Your data stays yours.",
+    "ogAlt": "vukem-finances, open-source personal finance you host yourself"
+  },
+  "a11y": {
+    "skip": "Skip to content",
+    "language": "Language",
+    "mainNav": "Main",
+    "footerNav": "Footer",
+    "screenshotsLabel": "Screenshots of the app"
+  },
+  "nav": {
+    "features": "Features",
+    "privacy": "Your data",
+    "editions": "Editions",
+    "install": "Install",
+    "faq": "FAQ"
+  },
+  "hero": {
+    "eyebrow": "Open source, MIT license",
+    "title": "Your money, in an app you own",
+    "lead": "vukem-finances records accounts, transactions and budgets, shows where the month went, and runs on your own computer or server. No account with us, no one else holding your numbers.",
+    "ctaDocs": "Read the docs",
+    "ctaGithub": "View on GitHub",
+    "ctaDocker": "Install with Docker",
+    "ctaDownload": "Download",
+    "note": "Self-hosted software: you run it, so there is no hosted service."
+  },
+  "how": {
+    "title": "How it works",
+    "steps": [
+      { "title": "Install", "text": "Start it with Docker on your machine or a VPS, or open the desktop app for Windows, macOS or Linux." },
+      { "title": "Record", "text": "Add transactions by hand, send a short message to the Telegram bot, or import a CSV or OFX statement." },
+      { "title": "Understand", "text": "Read the dashboard and the reports, set monthly budgets and goals, and export everything whenever you want." }
+    ]
+  },
+  "features": {
+    "title": "What you can do",
+    "groups": [
+      {
+        "title": "Record fast",
+        "items": [
+          { "title": "Quick entry", "text": "Add a transaction in a few keystrokes, with keyboard shortcuts and a command palette." },
+          { "title": "Import statements", "text": "Bring in CSV and OFX files from your bank." },
+          { "title": "Recurring and installments", "text": "Schedule repeating entries and split a purchase across months." },
+          { "title": "Telegram bot", "text": "Link a private chat and record an expense with one short message. The bot is off until you configure it." }
+        ]
+      },
+      {
+        "title": "Understand",
+        "items": [
+          { "title": "Dashboard", "text": "See balances, income and spending for the month at a glance." },
+          { "title": "Reports", "text": "Cash flow, breakdowns by category, account and tag, net worth over time and period comparison." },
+          { "title": "Search and filters", "text": "Find any transaction by text, date, category, account, tag or amount." }
+        ]
+      },
+      {
+        "title": "Plan",
+        "items": [
+          { "title": "Budgets", "text": "Set a monthly limit per category and watch it fill." },
+          { "title": "Goals and alerts", "text": "Save toward a target and get notified when something needs attention." },
+          { "title": "Credit cards", "text": "Track card statements and what you owe, apart from your everyday accounts." }
+        ]
+      },
+      {
+        "title": "Stay in control",
+        "items": [
+          { "title": "Export anything", "text": "Download your transactions as CSV or your whole workspace as JSON at any time." },
+          { "title": "Families and roles", "text": "Invite people to a shared workspace as owner, admin, member or viewer." },
+          { "title": "AI with your own key", "text": "Optional categorization and questions about your spending, using a key you provide. Off by default, and personal details are removed before anything is sent." }
+        ]
+      },
+      {
+        "title": "Use it your way",
+        "items": [
+          { "title": "In the browser", "text": "The web app works in any modern browser, in light and dark themes, in English, Portuguese and Spanish." },
+          { "title": "On the desktop", "text": "A native app for Windows, macOS and Linux that works offline and keeps data in your user folder." },
+          { "title": "From the terminal and code", "text": "A command line and a REST API with scoped tokens, built on the same operations as the app." }
+        ]
+      }
+    ]
+  },
+  "privacy": {
+    "title": "Your data stays yours",
+    "lead": "The software runs where you put it. There is no vukem-finances server in the middle.",
+    "points": [
+      "The default database is SQLite, a file on your own disk.",
+      "This website sets no cookies, runs no analytics and loads nothing from other sites.",
+      "AI features are off until you add your own key, and only redacted text is sent to the provider you chose.",
+      "The Telegram bot is optional. Messages pass through Telegram's servers, which are not end-to-end encrypted.",
+      "The source is public under the MIT license, so you can read exactly what it does."
+    ],
+    "link": "Read the privacy notice"
+  },
+  "editions": {
+    "title": "Two editions, one program",
+    "lead": "The same binary runs in two editions, chosen when you start it.",
+    "personal": {
+      "title": "Personal",
+      "text": "For one person or one family on their own computer or server. One workspace, registration closed, no plan limits and every feature on."
+    },
+    "saas": {
+      "title": "SaaS",
+      "text": "For an operator who runs it for several people on their own server. It ships with billing, workspaces and plan limits for whoever hosts it."
+    },
+    "notice": "vukem-finances does not currently offer a hosted service. The plans below describe what the SaaS edition allows when you run it yourself.",
+    "plansTitle": "Plans in the SaaS edition",
+    "free": "Free",
+    "pro": "Pro",
+    "unlimited": "Unlimited",
+    "yes": "Included",
+    "no": "Not included",
+    "rows": {
+      "accounts": "Accounts",
+      "transactionsPerMonth": "Transactions per month",
+      "members": "Members",
+      "csvImport": "CSV import",
+      "budgets": "Budgets"
+    }
+  },
+  "install": {
+    "title": "Get it running",
+    "lead": "Pick the way that suits you. Everything is a plain link to the documentation or the repository.",
+    "docker": "Container images",
+    "dockerText": "Published on GitHub Container Registry and Docker Hub:",
+    "desktop": "Desktop",
+    "desktopText": "Installers for Windows, macOS and Linux are attached to each release on GitHub. The builds are not code-signed, so your system may show a warning the first time you open them.",
+    "copy": "Image name"
+  },
+  "faq": {
+    "title": "Questions",
+    "items": [
+      { "q": "Is there a hosted version I can use?", "a": "No. vukem-finances is software you run yourself, on your computer, a server or the desktop app. There is no hosted service today." },
+      { "q": "What does it cost?", "a": "The software is free and open source under the MIT license. Free and Pro are plans of the SaaS edition for people who host it for others." },
+      { "q": "Where is my data stored?", "a": "In a SQLite database on the machine that runs it. You can export it as CSV or JSON whenever you like." },
+      { "q": "Does it work offline?", "a": "The desktop app does: it runs on your own machine and keeps its data in your user folder. The web app needs a reachable server, which can be your own computer." },
+      { "q": "Can a family share it?", "a": "Yes. A workspace can have several people with the roles owner, admin, member and viewer, added by invitation." },
+      { "q": "Is the desktop app signed?", "a": "No. The builds are unsigned, so Windows or macOS may warn you before the first launch." },
+      { "q": "Does it use AI?", "a": "Only if you turn it on and give it your own key. It is off by default." }
+    ]
+  },
+  "footer": {
+    "tagline": "Open-source personal finance.",
+    "docs": "Docs",
+    "github": "GitHub",
+    "releases": "Releases",
+    "privacy": "Privacy",
+    "terms": "Terms",
+    "license": "MIT license"
+  },
+  "legal": {
+    "privacyTitle": "Privacy notice",
+    "termsTitle": "Terms",
+    "back": "Back to the home page",
+    "draft": "Draft, pending review by the author."
+  }
+}
