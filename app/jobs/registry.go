@@ -21,5 +21,6 @@ func All(app *vukem.App) []queue.Registration {
 		queue.Handle(HandleAssistantPrune(app)),
 		queue.Handle(HandleBillingReconcile(app)),
 		queue.Handle(HandleTelegramPrune(app)),
+		queue.Handle(HandlePrivacyPurge(app)),
 	}
 }

@@ -48,4 +48,9 @@ func Schedule(s *schedule.Schedule, _ *vukem.App) {
 	// Drop old Telegram update ids (7 days), expired link codes and drafts and
 	// finished rate windows; harmless while the bot is off.
 	s.Job(jobs.TelegramPrune{}).DailyAt("04:10").WithoutOverlapping()
+
+	// Erase the workspaces and accounts whose 30 day deletion grace period ended
+	// and the payment records past their retention; idempotent, and a workspace
+	// whose subscription cannot be cancelled waits for the next run.
+	s.Job(jobs.PrivacyPurge{}).DailyAt("04:40").WithoutOverlapping()
 }
