@@ -11,6 +11,7 @@ import (
 	"strconv"
 	"strings"
 	"text/tabwriter"
+	"unicode"
 
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 )
@@ -24,7 +25,7 @@ func (c *CLI) write(_ Command, res Response, format, outFile string) error {
 	case "table":
 		return writeTable(c.Env.Stdout, res.Value)
 	case "csv":
-		return writeCSV(c.Env.Stdout, res.Value)
+		return writeCSV(c.Env.Stdout, res.Value, c.Env.StdoutTTY)
 	}
 
 	return writeJSON(c.Env.Stdout, res.Value)
@@ -47,7 +48,11 @@ type grid struct {
 	rows []map[string]any
 }
 
-func gridOf(v any) grid {
+// maxColumns bounds how wide a table or CSV may get: a server decides the keys,
+// and every distinct key is a column of every row.
+const maxColumns = 256
+
+func gridOf(v any) (grid, error) {
 	var items []any
 
 	switch x := v.(type) {
@@ -76,6 +81,10 @@ func gridOf(v any) grid {
 
 		for k := range row {
 			if !seen[k] {
+				if len(g.cols) >= maxColumns {
+					return grid{}, &Failure{Code: ExitFailure, Msg: "the answer has too many columns for table/csv; use --output json"}
+				}
+
 				seen[k] = true
 				g.cols = append(g.cols, k)
 			}
@@ -91,7 +100,7 @@ func gridOf(v any) grid {
 		return a < b
 	})
 
-	return g
+	return g, nil
 }
 
 const centsSuffix = "_cents"
@@ -129,7 +138,11 @@ func tableCell(col string, v any) string {
 }
 
 func writeTable(w io.Writer, v any) error {
-	g := gridOf(v)
+	g, err := gridOf(v)
+	if err != nil {
+		return err
+	}
+
 	if len(g.rows) == 0 {
 		_, err := fmt.Fprintln(w, "No results.")
 
@@ -175,13 +188,28 @@ func writeTable(w io.Writer, v any) error {
 	return tw.Flush()
 }
 
-func writeCSV(w io.Writer, v any) error {
-	g := gridOf(v)
+// writeCSV writes the answer as CSV. On a terminal (tty) the text also goes
+// through cleanText; redirected output is byte-exact apart from the formula
+// guard.
+func writeCSV(w io.Writer, v any, tty bool) error {
+	g, err := gridOf(v)
+	if err != nil {
+		return err
+	}
+
+	text := func(s string) string {
+		if tty {
+			return cleanText(s)
+		}
+
+		return s
+	}
+
 	cw := csv.NewWriter(w)
 
 	head := make([]string, len(g.cols))
 	for i, c := range g.cols {
-		head[i] = csvSafe(c, false)
+		head[i] = csvSafe(text(c), false)
 	}
 
 	if err := cw.Write(head); err != nil {
@@ -193,7 +221,7 @@ func writeCSV(w io.Writer, v any) error {
 
 		for i, c := range g.cols {
 			_, numeric := row[c].(json.Number)
-			cells[i] = csvSafe(cellText(row[c]), numeric)
+			cells[i] = csvSafe(text(cellText(row[c])), numeric)
 		}
 
 		if err := cw.Write(cells); err != nil {
@@ -206,8 +234,10 @@ func writeCSV(w io.Writer, v any) error {
 	return cw.Error()
 }
 
-// csvSafe neutralizes formula injection: a spreadsheet runs a cell that starts
-// with = + - @ (or a tab or CR that hides them), so such a cell gets a leading
+// csvSafe neutralizes formula injection: a spreadsheet runs a cell whose first
+// meaningful character is = + - @ (or its full-width form), and it skips the
+// whitespace, control and format characters in front of it, so those are
+// skipped here too before the first rune is judged. Such a cell gets a leading
 // quote. A real number is not text and stays as it is, so -10.50 is still a
 // number in the sheet; a text value is exempt only when the whole of it is a
 // plain negative decimal ("-10.50"), which no spreadsheet reads as a formula.
@@ -216,9 +246,17 @@ func csvSafe(s string, numeric bool) string {
 		return s
 	}
 
-	switch s[0] {
-	case '=', '+', '-', '@', '\t', '\r':
-		return "'" + s
+	for _, r := range s {
+		if unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
+			continue
+		}
+
+		switch r {
+		case '=', '+', '-', '@', '＝', '＋', '－', '＠':
+			return "'" + s
+		}
+
+		break
 	}
 
 	return s
