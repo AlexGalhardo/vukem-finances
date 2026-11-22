@@ -46,7 +46,7 @@ func Transactions(ctx context.Context, fin *finance.Service, f finance.TxFilter)
 	}
 
 	return func(yield func(TransactionRow, error) bool) {
-		for t, err := range fin.EachTransaction(ctx, f) {
+		for t, err := range fin.EachExportRow(ctx, f) {
 			if err != nil {
 				yield(TransactionRow{}, err)
 
@@ -60,7 +60,7 @@ func Transactions(ctx context.Context, fin *finance.Service, f finance.TxFilter)
 	}, nil
 }
 
-func rowOf(t models.Transaction, accounts, categories map[int64]string, tags map[string]string) TransactionRow {
+func rowOf(t finance.ExportRow, accounts, categories map[int64]string, tags map[string]string) TransactionRow {
 	r := TransactionRow{
 		UID: t.UID, Date: t.OccurredOn, Account: accounts[t.AccountID], Kind: t.Kind,
 		AmountCents: t.AmountCents, Description: t.Description,
