@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -250,19 +251,48 @@ func plainNegative(s string) bool {
 
 func (c *CLI) writeFile(res Response, outFile string) error {
 	if outFile == "" {
+		if c.Env.StdoutTTY {
+			return usagef("this answer is a file: pass --out FILE, or pipe it (| or >)")
+		}
+
 		return res.Stream(c.Env.Stdout)
 	}
 
-	f, err := os.OpenFile(outFile, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0o600)
+	return writeAtomic(outFile, res.Stream)
+}
+
+// writeAtomic writes through a private temp file in the folder of the target
+// (CreateTemp makes it 0600) and renames it over the target: a failed download never truncates an
+// existing file, and a symlink or a looser mode at the target is replaced, not
+// reused.
+func writeAtomic(target string, stream func(io.Writer) error) (err error) {
+	f, err := os.CreateTemp(filepath.Dir(target), ".download-*")
 	if err != nil {
-		return fmt.Errorf("writing %s: %w", outFile, err)
+		return fmt.Errorf("writing %s: %w", target, err)
 	}
 
-	if err := res.Stream(f); err != nil {
-		_ = f.Close()
+	defer func() {
+		if err != nil {
+			_ = f.Close()
+			_ = os.Remove(f.Name())
+		}
+	}()
 
+	if err = stream(f); err != nil {
 		return err
 	}
 
-	return f.Close()
+	if err = f.Sync(); err != nil {
+		return fmt.Errorf("writing %s: %w", target, err)
+	}
+
+	if err = f.Close(); err != nil {
+		return fmt.Errorf("writing %s: %w", target, err)
+	}
+
+	if err = os.Rename(f.Name(), target); err != nil {
+		return fmt.Errorf("writing %s: %w", target, err)
+	}
+
+	return nil
 }
