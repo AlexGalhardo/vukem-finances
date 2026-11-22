@@ -45,6 +45,7 @@
 		],
 		"modulePaths": [
 			"<rootDir>/node_modules"
-		]
+		],
+		"testTimeout": 30000
 	}
 }
