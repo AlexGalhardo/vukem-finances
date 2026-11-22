@@ -19,6 +19,10 @@ const (
 	// InviteLimit is the invitations of one workspace per InviteWindow.
 	InviteLimit  = 10
 	InviteWindow = time.Hour
+	// ExportLimit is the downloads (CSV and JSON together) of one workspace per
+	// ExportWindow: an export streams a whole table, so it is the costly read.
+	ExportLimit  = 10
+	ExportWindow = time.Hour
 	// PixPollLimit is the status polls of the PIX dialog of one user per
 	// PixPollWindow: the dialog polls every 3 seconds (20 a minute).
 	PixPollLimit  = 30

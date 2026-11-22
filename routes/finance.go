@@ -111,6 +111,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 	writes := ratelimit.Middleware(limiters("workspace.write", config.WriteLimit, config.WriteWindow), onMethods(user, false))
 	imports := ratelimit.Middleware(limiters("workspace.import", config.ImportLimit, config.ImportWindow), byWorkspace)
 	invites := ratelimit.Middleware(limiters("workspace.invite", config.InviteLimit, config.InviteWindow), byWorkspace)
+	exports := ratelimit.Middleware(limiters("workspace.export", config.ExportLimit, config.ExportWindow), byWorkspace)
 
 	var aiErr error
 
@@ -132,6 +133,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		financeRecurrences(g, h)
 		financeImports(g, h, imports)
 		financeWorkspace(g, h)
+		financeExports(g, h, exports, ws.Require(workspaces.AbilityManageData))
 		financeTokens(g, app, acc, h)
 
 		// One implicit workspace in the personal edition: nothing to create or switch to.
