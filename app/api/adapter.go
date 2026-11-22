@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 	"net/http"
+	"net/url"
+	"strconv"
 
 	vukemapi "github.com/AlexGalhardo/vukem/api"
 	"github.com/AlexGalhardo/vukem/errs"
@@ -33,6 +35,12 @@ func restError(err error) error {
 // only binds the input and calls operations.Invoke: the scope, the role, the
 // validation, the idempotency key and the audit are the pipeline's.
 func route[In, Out any](a *API, g *router.Group, o *operations.Op[In, Out]) {
+	routeWith(a, g, o, nil)
+}
+
+// routeWith is route with a step that shapes the output for HTTP, such as the
+// links of a page (URLs belong to the surface, so the operation leaves them out).
+func routeWith[In, Out any](a *API, g *router.Group, o *operations.Op[In, Out], shape func(*web.Ctx, Out) Out) {
 	meta := o.Meta()
 
 	row, ok := OperationNamed(meta.Name)
@@ -62,11 +70,16 @@ func route[In, Out any](a *API, g *router.Group, o *operations.Op[In, Out]) {
 			c.SetHeader("Idempotent-Replayed", "true")
 		}
 
-		if res.Existing {
-			return zero, c.JSON(http.StatusOK, res.Value)
+		out := res.Value
+		if shape != nil {
+			out = shape(c, out)
 		}
 
-		return res.Value, nil
+		if res.Existing {
+			return zero, c.JSON(http.StatusOK, out)
+		}
+
+		return out, nil
 	}
 
 	rt := vukemapi.Register(g, row.Method+" "+row.Path, vukemapi.Op{
@@ -79,4 +92,36 @@ func route[In, Out any](a *API, g *router.Group, o *operations.Op[In, Out]) {
 	}
 
 	rt.Use(mws...)
+}
+
+// pageLinks adds the self, next and prev links of a page of the request.
+func pageLinks[R any](c *web.Ctx, out List[R]) List[R] {
+	if out.Meta == nil {
+		return out
+	}
+
+	page, last := out.Meta.Page, out.Meta.LastPage
+
+	out.Links = &vukemapi.Links{Self: pageLink(c, page)}
+
+	if page < last {
+		next := pageLink(c, page+1)
+		out.Links.Next = &next
+	}
+
+	if page > 1 {
+		prev := pageLink(c, min(page-1, last))
+		out.Links.Prev = &prev
+	}
+
+	return out
+}
+
+// pageLink is the URL of page n of the request: its path and query with page set.
+func pageLink(c *web.Ctx, n int) string {
+	u := *c.Request().URL
+	q := u.Query()
+	q.Set("page", strconv.Itoa(n))
+
+	return (&url.URL{Path: u.Path, RawQuery: q.Encode()}).RequestURI()
 }

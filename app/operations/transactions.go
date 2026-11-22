@@ -1,13 +1,10 @@
-package api
+package operations
 
 import (
-	"net/http"
-	"net/url"
-	"strconv"
+	"context"
 	"strings"
 
 	vukemapi "github.com/AlexGalhardo/vukem/api"
-	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
@@ -63,15 +60,62 @@ type TransferCreateIn struct {
 	Description    string `json:"description"      validate:"max=200" example:"Move to savings"`
 }
 
-func (a *API) transactionView(c *web.Ctx, x models.Transaction) (TransactionOut, error) {
-	ctx := c.Context()
+type transactionOps struct {
+	List       *Op[TransactionListIn, List[TransactionOut]]
+	Show       *Op[UIDIn, TransactionOut]
+	Create     *Op[TransactionCreateIn, TransactionOut]
+	Update     *Op[TransactionUpdateIn, TransactionOut]
+	Delete     *Op[UIDIn, Empty]
+	Transfer   *Op[TransferCreateIn, TransferOut]
+	Untransfer *Op[UIDIn, Empty]
+}
 
-	rows, err := a.Fin.Rows(ctx, []models.Transaction{x})
+func (c *Catalog) defineTransactions() {
+	c.Transactions = transactionOps{
+		List: Define(c.Registry, Operation[TransactionListIn, List[TransactionOut]]{
+			Name: "transactions.list", Summary: "List transactions, newest first, with filters", Scope: ScopeTransactionsRead, Kind: KindRead,
+			Run: func(ctx context.Context, _ Actor, in TransactionListIn) (List[TransactionOut], error) {
+				return c.transactionsList(ctx, in)
+			},
+		}),
+		Show: Define(c.Registry, Operation[UIDIn, TransactionOut]{
+			Name: "transactions.show", Summary: "Read a transaction", Scope: ScopeTransactionsRead, Kind: KindRead,
+			Run: func(ctx context.Context, _ Actor, in UIDIn) (TransactionOut, error) {
+				return c.transactionsShow(ctx, in)
+			},
+		}),
+		Create: Define(c.Registry, Operation[TransactionCreateIn, TransactionOut]{
+			Name: "transactions.create", Summary: "Record a transaction", Scope: ScopeTransactionsWrite, Kind: KindWrite, Idempotent: true,
+			Run: c.transactionsCreate,
+		}),
+		Update: Define(c.Registry, Operation[TransactionUpdateIn, TransactionOut]{
+			Name: "transactions.update", Summary: "Change a transaction", Scope: ScopeTransactionsWrite, Kind: KindWrite, Idempotent: true,
+			Run: c.transactionsUpdate,
+		}),
+		Delete: Define(c.Registry, Operation[UIDIn, Empty]{
+			Name: "transactions.delete", Summary: "Delete a transaction", Scope: ScopeTransactionsWrite, Kind: KindDestructive,
+			Run: func(ctx context.Context, _ Actor, in UIDIn) (Empty, error) { return c.transactionsDelete(ctx, in) },
+		}),
+		Transfer: Define(c.Registry, Operation[TransferCreateIn, TransferOut]{
+			Name: "transfers.create", Summary: "Move money between two accounts", Scope: ScopeTransfersWrite, Kind: KindWrite, Idempotent: true,
+			Run: func(ctx context.Context, _ Actor, in TransferCreateIn) (TransferOut, error) {
+				return c.transfersCreate(ctx, in)
+			},
+		}),
+		Untransfer: Define(c.Registry, Operation[UIDIn, Empty]{
+			Name: "transfers.delete", Summary: "Delete a transfer and both of its legs", Scope: ScopeTransfersWrite, Kind: KindDestructive,
+			Run: func(ctx context.Context, _ Actor, in UIDIn) (Empty, error) { return c.transfersDelete(ctx, in) },
+		}),
+	}
+}
+
+func (c *Catalog) transactionView(ctx context.Context, x models.Transaction) (TransactionOut, error) {
+	rows, err := c.Fin.Rows(ctx, []models.Transaction{x})
 	if err != nil {
 		return TransactionOut{}, err
 	}
 
-	l, err := a.lookups(ctx)
+	l, err := c.lookups(ctx)
 	if err != nil {
 		return TransactionOut{}, err
 	}
@@ -81,18 +125,18 @@ func (a *API) transactionView(c *web.Ctx, x models.Transaction) (TransactionOut,
 
 // accountID and the like turn the uid of a filter or a body into the id the
 // services take; a uid that names nothing here is a 404.
-func (a *API) accountID(c *web.Ctx, uid string) (int64, error) {
-	x, err := a.accountByUID(c.Context(), uid)
+func (c *Catalog) accountID(ctx context.Context, uid string) (int64, error) {
+	x, err := c.accountByUID(ctx, uid)
 
 	return x.ID, err
 }
 
-func (a *API) categoryID(c *web.Ctx, uid string) (int64, error) {
+func (c *Catalog) categoryID(ctx context.Context, uid string) (int64, error) {
 	if uid == "" {
 		return 0, nil
 	}
 
-	x, err := a.categoryByUID(c.Context(), uid)
+	x, err := c.categoryByUID(ctx, uid)
 
 	return x.ID, err
 }
@@ -105,8 +149,9 @@ func centsFilter(v *int64) string {
 	return centsText(*v)
 }
 
-func (a *API) transactionsList(c *web.Ctx, in TransactionListIn) (List[TransactionOut], error) {
-	ctx := c.Context()
+// transactionsList answers a page with its meta. The links are URLs of the
+// surface, so the adapter builds them from the meta.
+func (c *Catalog) transactionsList(ctx context.Context, in TransactionListIn) (List[TransactionOut], error) {
 	f := finance.TxFilter{
 		From: in.From, To: in.To, Kind: in.Kind, Q: in.Q, Min: centsFilter(in.MinCents), Max: centsFilter(in.MaxCents), Page: in.Page,
 	}
@@ -114,17 +159,17 @@ func (a *API) transactionsList(c *web.Ctx, in TransactionListIn) (List[Transacti
 	var err error
 
 	if in.Account != "" {
-		if f.AccountID, err = a.accountID(c, in.Account); err != nil {
+		if f.AccountID, err = c.accountID(ctx, in.Account); err != nil {
 			return List[TransactionOut]{}, err
 		}
 	}
 
-	if f.CategoryID, err = a.categoryID(c, in.Category); err != nil {
+	if f.CategoryID, err = c.categoryID(ctx, in.Category); err != nil {
 		return List[TransactionOut]{}, err
 	}
 
 	if in.Tag != "" {
-		tag, err := a.tagByUID(ctx, in.Tag)
+		tag, err := c.tagByUID(ctx, in.Tag)
 		if err != nil {
 			return List[TransactionOut]{}, err
 		}
@@ -132,12 +177,12 @@ func (a *API) transactionsList(c *web.Ctx, in TransactionListIn) (List[Transacti
 		f.TagIDs = []int64{tag.ID}
 	}
 
-	page, err := a.Fin.TransactionPage(ctx, f)
+	page, err := c.Fin.TransactionPage(ctx, f)
 	if err != nil {
 		return List[TransactionOut]{}, err
 	}
 
-	l, err := a.lookups(ctx)
+	l, err := c.lookups(ctx)
 	if err != nil {
 		return List[TransactionOut]{}, err
 	}
@@ -148,63 +193,39 @@ func (a *API) transactionsList(c *web.Ctx, in TransactionListIn) (List[Transacti
 	}
 
 	last := max(int((page.Total+int64(page.PageSize)-1)/int64(page.PageSize)), 1)
-	links := &vukemapi.Links{Self: pageLink(c, page.Page)}
-
-	if page.Page < last {
-		next := pageLink(c, page.Page+1)
-		links.Next = &next
-	}
-
-	if page.Page > 1 {
-		prev := pageLink(c, min(page.Page-1, last))
-		links.Prev = &prev
-	}
-
 	total := page.Total
 
 	return List[TransactionOut]{
-		Data:  data,
-		Meta:  &vukemapi.Meta{Page: page.Page, PerPage: page.PageSize, Total: &total, LastPage: last},
-		Links: links,
+		Data: data,
+		Meta: &vukemapi.Meta{Page: page.Page, PerPage: page.PageSize, Total: &total, LastPage: last},
 	}, nil
 }
 
-// pageLink is the URL of page n of the request: its path and query with page set.
-func pageLink(c *web.Ctx, n int) string {
-	u := *c.Request().URL
-	q := u.Query()
-	q.Set("page", strconv.Itoa(n))
+func (c *Catalog) transactionsShow(ctx context.Context, in UIDIn) (TransactionOut, error) {
+	x, err := c.transactionByUID(ctx, in.UID)
+	if err != nil {
+		return TransactionOut{}, err
+	}
 
-	return (&url.URL{Path: u.Path, RawQuery: q.Encode()}).RequestURI()
+	return c.transactionView(ctx, x)
 }
 
-func (a *API) transactionsShow(c *web.Ctx, in UIDIn) (TransactionOut, error) {
-	x, err := a.transactionByUID(c.Context(), in.UID)
+func (c *Catalog) transactionsCreate(ctx context.Context, actor Actor, in TransactionCreateIn) (TransactionOut, error) {
+	if err := c.checkUID(in.UID); err != nil {
+		return TransactionOut{}, err
+	}
+
+	account, err := c.accountID(ctx, in.AccountUID)
 	if err != nil {
 		return TransactionOut{}, err
 	}
 
-	return a.transactionView(c, x)
-}
-
-func (a *API) transactionsCreate(c *web.Ctx, in TransactionCreateIn) (TransactionOut, error) {
-	ctx := c.Context()
-
-	if err := a.checkUID(in.UID); err != nil {
-		return TransactionOut{}, err
-	}
-
-	account, err := a.accountID(c, in.AccountUID)
+	category, err := c.categoryID(ctx, in.CategoryUID)
 	if err != nil {
 		return TransactionOut{}, err
 	}
 
-	category, err := a.categoryID(c, in.CategoryUID)
-	if err != nil {
-		return TransactionOut{}, err
-	}
-
-	if old, found, err := existing[models.Transaction](ctx, a, in.UID); err != nil || found {
+	if old, found, err := existing[models.Transaction](ctx, c, in.UID); err != nil || found {
 		if err != nil {
 			return TransactionOut{}, err
 		}
@@ -218,55 +239,47 @@ func (a *API) transactionsCreate(c *web.Ctx, in TransactionCreateIn) (Transactio
 			return TransactionOut{}, errUIDDiffers
 		}
 
-		v, err := a.transactionView(c, old)
-		if err != nil {
-			return TransactionOut{}, err
-		}
+		MarkExisting(ctx)
 
-		return TransactionOut{}, c.JSON(http.StatusOK, v)
+		return c.transactionView(ctx, old)
 	}
 
-	if err := a.requireScopeForNewTags(ctx, in.Tags); err != nil {
+	if err := c.requireScopeForNewTags(ctx, actor, in.Tags); err != nil {
 		return TransactionOut{}, err
 	}
 
-	x, err := a.Fin.CreateTransaction(ctx, finance.TxInput{
+	x, err := c.Fin.CreateTransaction(ctx, finance.TxInput{
 		UID: in.UID, AccountID: account, CategoryID: category, Kind: in.Kind, Amount: centsText(in.AmountCents),
 		Description: in.Description, Date: in.Date, Tags: in.Tags,
 	})
 	if err != nil {
 		// Two calls with one uid at once: the unique index let one in, the other is the replay.
-		if a.WS.DB.UniqueViolation(err) {
-			if old, found, lerr := existing[models.Transaction](ctx, a, in.UID); lerr == nil && found && !old.DeletedAt.Valid {
-				v, verr := a.transactionView(c, old)
-				if verr != nil {
-					return TransactionOut{}, verr
-				}
+		if c.WS.DB.UniqueViolation(err) {
+			if old, found, lerr := existing[models.Transaction](ctx, c, in.UID); lerr == nil && found && !old.DeletedAt.Valid {
+				MarkExisting(ctx)
 
-				return TransactionOut{}, c.JSON(http.StatusOK, v)
+				return c.transactionView(ctx, old)
 			}
 		}
 
 		return TransactionOut{}, err
 	}
 
-	return a.transactionView(c, x)
+	return c.transactionView(ctx, x)
 }
 
-func (a *API) transactionsUpdate(c *web.Ctx, in TransactionUpdateIn) (TransactionOut, error) {
-	ctx := c.Context()
-
-	x, err := a.transactionByUID(ctx, in.UID)
+func (c *Catalog) transactionsUpdate(ctx context.Context, actor Actor, in TransactionUpdateIn) (TransactionOut, error) {
+	x, err := c.transactionByUID(ctx, in.UID)
 	if err != nil {
 		return TransactionOut{}, err
 	}
 
-	cur, err := a.transactionView(c, x)
+	cur, err := c.transactionView(ctx, x)
 	if err != nil {
 		return TransactionOut{}, err
 	}
 
-	if err := checkVersion(c, x.Version, cur); err != nil {
+	if err := checkVersion(ctx, x.Version, cur); err != nil {
 		return TransactionOut{}, err
 	}
 
@@ -276,13 +289,13 @@ func (a *API) transactionsUpdate(c *web.Ctx, in TransactionUpdateIn) (Transactio
 	}
 
 	if in.AccountUID != nil {
-		if next.AccountID, err = a.accountID(c, *in.AccountUID); err != nil {
+		if next.AccountID, err = c.accountID(ctx, *in.AccountUID); err != nil {
 			return TransactionOut{}, err
 		}
 	}
 
 	if in.CategoryUID != nil {
-		if next.CategoryID, err = a.categoryID(c, *in.CategoryUID); err != nil {
+		if next.CategoryID, err = c.categoryID(ctx, *in.CategoryUID); err != nil {
 			return TransactionOut{}, err
 		}
 	}
@@ -309,65 +322,61 @@ func (a *API) transactionsUpdate(c *web.Ctx, in TransactionUpdateIn) (Transactio
 			next.Tags = []string{}
 		}
 
-		if err := a.requireScopeForNewTags(ctx, next.Tags); err != nil {
+		if err := c.requireScopeForNewTags(ctx, actor, next.Tags); err != nil {
 			return TransactionOut{}, err
 		}
 	}
 
-	saved, err := a.Fin.UpdateTransaction(ctx, x.ID, next)
+	saved, err := c.Fin.UpdateTransaction(ctx, x.ID, next)
 	if err != nil {
 		return TransactionOut{}, err
 	}
 
-	return a.transactionView(c, saved)
+	return c.transactionView(ctx, saved)
 }
 
-func (a *API) transactionsDelete(c *web.Ctx, in UIDIn) (Empty, error) {
-	ctx := c.Context()
-
-	x, err := a.transactionByUID(ctx, in.UID)
+func (c *Catalog) transactionsDelete(ctx context.Context, in UIDIn) (Empty, error) {
+	x, err := c.transactionByUID(ctx, in.UID)
 	if err != nil {
 		return Empty{}, err
 	}
 
-	cur, err := a.transactionView(c, x)
+	cur, err := c.transactionView(ctx, x)
 	if err != nil {
 		return Empty{}, err
 	}
 
-	if err := checkVersion(c, x.Version, cur); err != nil {
+	if err := checkVersion(ctx, x.Version, cur); err != nil {
 		return Empty{}, err
 	}
 
-	return Empty{}, a.Fin.DeleteTransaction(ctx, x.ID)
+	return Empty{}, c.Fin.DeleteTransaction(ctx, x.ID)
 }
 
-func (a *API) transfersCreate(c *web.Ctx, in TransferCreateIn) (TransferOut, error) {
-	ctx := c.Context()
-
-	from, err := a.accountID(c, in.FromAccountUID)
+func (c *Catalog) transfersCreate(ctx context.Context, in TransferCreateIn) (TransferOut, error) {
+	from, err := c.accountID(ctx, in.FromAccountUID)
 	if err != nil {
 		return TransferOut{}, err
 	}
 
-	to, err := a.accountID(c, in.ToAccountUID)
+	to, err := c.accountID(ctx, in.ToAccountUID)
 	if err != nil {
 		return TransferOut{}, err
 	}
 
-	t, err := a.Fin.CreateTransfer(ctx, finance.TransferInput{
+	t, err := c.Fin.CreateTransfer(ctx, finance.TransferInput{
 		FromAccountID: from, ToAccountID: to, Amount: centsText(in.AmountCents), Description: in.Description, Date: in.Date,
 	})
 	if err != nil {
 		return TransferOut{}, err
 	}
 
-	rows, err := a.Fin.Rows(ctx, []models.Transaction{t.From, t.To})
+	rows, err := c.Fin.Rows(ctx, []models.Transaction{t.From, t.To})
 	if err != nil {
 		return TransferOut{}, err
 	}
 
-	l, err := a.lookups(ctx)
+	l, err := c.lookups(ctx)
 	if err != nil {
 		return TransferOut{}, err
 	}
@@ -375,13 +384,11 @@ func (a *API) transfersCreate(c *web.Ctx, in TransferCreateIn) (TransferOut, err
 	return TransferOut{UID: t.UID, From: l.transaction(rows[0]), To: l.transaction(rows[1])}, nil
 }
 
-func (a *API) transfersDelete(c *web.Ctx, in UIDIn) (Empty, error) {
-	ctx := c.Context()
-
-	leg, err := workspaces.Scoped[models.Transaction](ctx, a.WS.DB).Where("transfer_uid", in.UID).First(ctx)
+func (c *Catalog) transfersDelete(ctx context.Context, in UIDIn) (Empty, error) {
+	leg, err := workspaces.Scoped[models.Transaction](ctx, c.WS.DB).Where("transfer_uid", in.UID).First(ctx)
 	if err != nil {
 		return Empty{}, lookupErr(err)
 	}
 
-	return Empty{}, a.Fin.DeleteTransfer(ctx, leg.ID)
+	return Empty{}, c.Fin.DeleteTransfer(ctx, leg.ID)
 }
