@@ -2,8 +2,8 @@ import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import matter from "gray-matter";
 import { type NavItem, type NavSection, navigation } from "../content/navigation.ts";
+import { parseFrontMatter } from "./front-matter.ts";
 
 // Astro bundles this module into .astro/, so its own location is no guide there: the build runs in site/.
 const here = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
@@ -43,7 +43,7 @@ function walk(dir: string): string[] {
 /** Reads one page file. `root` is the content directory the file lives in. */
 export function readPage(root: string, file: string, generated: boolean): DocPage {
   const raw = fs.readFileSync(file, "utf8").replace(/\r\n/g, "\n");
-  const parsed = matter(raw);
+  const parsed = parseFrontMatter(raw, path.relative(repoRoot, file));
   const slug = path.relative(root, file).split(path.sep).join("/").replace(/\.md$/, "");
   const front = parsed.data as Record<string, unknown>;
   const consumed = raw.length - parsed.content.length;
