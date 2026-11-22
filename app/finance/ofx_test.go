@@ -103,7 +103,9 @@ func TestOFXRefusesHostileFilesQuickly(t *testing.T) {
 		start := time.Now()
 		rows, err := OFXParser{}.Parse(content)
 
-		if took := time.Since(start); took > 100*time.Millisecond {
+		// The race detector slows this code several times over; CI runs the
+		// time limits in a step of their own, without it.
+		if took := time.Since(start); !raceEnabled && took > 100*time.Millisecond {
 			t.Errorf("%s: refused after %s, want under 100ms", name, took)
 		}
 
@@ -128,8 +130,8 @@ func TestOFXBoundsWhatItReads(t *testing.T) {
 		start := time.Now()
 		rows, err := OFXParser{}.Parse([]byte(big))
 
-		if time.Since(start) > 100*time.Millisecond {
-			t.Errorf("took %s, want under 100ms", time.Since(start))
+		if took := time.Since(start); !raceEnabled && took > 100*time.Millisecond {
+			t.Errorf("took %s, want under 100ms", took)
 		}
 
 		if err != nil || len(rows) != 1 || rows[0].Problem != "field too long" {
