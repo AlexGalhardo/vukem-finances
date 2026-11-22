@@ -247,4 +247,6 @@ func (a *API) Routes(g *router.Group, idem router.Middleware) {
 	register(g, idem, "budgets.delete", a.budgetsDelete)
 
 	register(g, idem, "summary.show", a.summaryShow)
+
+	a.syncRoutes(g, idem)
 }

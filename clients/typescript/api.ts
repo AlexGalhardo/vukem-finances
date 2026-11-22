@@ -40,6 +40,27 @@ export type CategoryOut = {
   version: number;
 };
 
+export type ConflictOut = {
+  applied_value: unknown;
+  field: string;
+  kind: string;
+  lost_by_device?: string;
+  lost_value: unknown;
+};
+
+export type EffectOut = {
+  entity: string;
+  op: string;
+  seq: number;
+  uid: string;
+};
+
+export type EntityInfo = {
+  fields: FieldSpec[];
+  name: string;
+  refs: RefInfo[];
+};
+
 export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiAccountOut = {
   data: AccountOut[];
   links?: Links | null;
@@ -58,6 +79,12 @@ export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiCategoryOut = {
   meta?: Meta | null;
 };
 
+export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiSyncDeviceOut = {
+  data: SyncDeviceOut[];
+  links?: Links | null;
+  meta?: Meta | null;
+};
+
 export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiTagOut = {
   data: TagOut[];
   links?: Links | null;
@@ -70,6 +97,33 @@ export type EnvelopeGithubComAlexGalhardoVukemFinancesAppApiTransactionOut = {
   meta?: Meta | null;
 };
 
+export type ErrorOut = {
+  code: string;
+  field?: string;
+  message: string;
+};
+
+export type FieldSpec = {
+  blank?: boolean;
+  enum?: string[];
+  max?: number;
+  min?: number;
+  name: string;
+  nullable: boolean;
+  ref?: string;
+  required: boolean;
+  type: string;
+  writable: boolean;
+};
+
+export type Info = {
+  entities: EntityInfo[];
+  limits: LimitsInfo;
+  protocol: Range;
+  server_time: string;
+  workspace: WorkspaceInfo;
+};
+
 export type Issue = {
   code: string;
   key?: string;
@@ -77,6 +131,18 @@ export type Issue = {
   on?: string;
   params?: Record<string, unknown>;
   path: string;
+};
+
+export type LimitsInfo = {
+  max_body_bytes: number;
+  max_mutations: number;
+  mutations_per_hour: number;
+  op_retention_seconds: number;
+  pull_default_limit: number;
+  pull_max_limit: number;
+  pulls_per_minute: number;
+  pushes_per_minute: number;
+  snapshot_max_rows: number;
 };
 
 export type Links = {
@@ -101,6 +167,15 @@ export type Meta = {
   total?: number | null;
 };
 
+export type MutationIn = {
+  base_seq?: number;
+  entity?: string;
+  fields?: Record<string, unknown>;
+  op?: string;
+  op_id?: string;
+  uid?: string;
+};
+
 export type Problem = {
   detail?: string;
   errors?: Record<string, string[]>;
@@ -110,6 +185,55 @@ export type Problem = {
   status: number;
   title: string;
   type: string;
+};
+
+export type PullItem = {
+  entity: string;
+  op: string;
+  row: Record<string, unknown>;
+  seq: number;
+  uid: string;
+  version: number;
+};
+
+export type PullResult = {
+  changes: PullItem[];
+  has_more: boolean;
+  next_cursor: number;
+  server_time: string;
+};
+
+export type Range = {
+  max: number;
+  min: number;
+};
+
+export type RefInfo = {
+  entity: string;
+  field: string;
+};
+
+export type Result = {
+  conflicts: ConflictOut[];
+  effects: EffectOut[];
+  entity: string;
+  error?: ErrorOut | null;
+  op_id: string;
+  replaced_by_uid?: string;
+  row: Record<string, unknown>;
+  seq: number;
+  status: string;
+  uid: string;
+  version: number;
+};
+
+export type SnapshotPage = {
+  entity: string;
+  has_more: boolean;
+  next_after: string;
+  rows: Record<string, unknown>[];
+  snapshot_cursor: number;
+  snapshot_id: string;
 };
 
 export type SummaryAccountOut = {
@@ -127,6 +251,20 @@ export type SummaryOut = {
   month: string;
   net_cents: number;
   net_worth_cents: number;
+};
+
+export type SyncDeviceOut = {
+  created_at: string;
+  device_id: string;
+  last_pull_seq: number;
+  last_seen_at?: string | null;
+  name: string;
+  platform: string;
+  revoked_at?: string | null;
+};
+
+export type SyncPushOut = {
+  results: Result[];
 };
 
 export type TagOut = {
@@ -163,6 +301,12 @@ export type TransactionOut = {
 export type TransferOut = {
   from: TransactionOut;
   to: TransactionOut;
+  uid: string;
+};
+
+export type WorkspaceInfo = {
+  currency: string;
+  timezone: string;
   uid: string;
 };
 
@@ -248,6 +392,40 @@ export type SummaryShowQuery = {
 };
 
 export type SummaryShowResponse = SummaryOut;
+
+export type SyncDevicesCreateBody = {
+  name: string;
+  platform?: string;
+};
+
+export type SyncDevicesCreateResponse = SyncDeviceOut;
+
+export type SyncDevicesListResponse = EnvelopeGithubComAlexGalhardoVukemFinancesAppApiSyncDeviceOut;
+
+export type SyncInfoResponse = Info;
+
+export type SyncPullQuery = {
+  cursor?: number;
+  limit?: number;
+};
+
+export type SyncPullResponse = PullResult;
+
+export type SyncPushBody = {
+  device_id?: string;
+  mutations?: MutationIn[];
+};
+
+export type SyncPushResponse = SyncPushOut;
+
+export type SyncSnapshotQuery = {
+  after?: string;
+  entity: string;
+  limit?: number;
+  snapshot_id?: string;
+};
+
+export type SyncSnapshotResponse = SnapshotPage;
 
 export type TagsCreateBody = {
   color?: string;
@@ -609,6 +787,34 @@ export type SummaryShowError =
   | { status: 422; value: Problem }
   | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
 
+export type SyncDevicesCreateError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type SyncDevicesListError =
+  | { status: 401; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401>; value: ApiProblem | undefined };
+
+export type SyncInfoError =
+  | { status: 401; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401>; value: ApiProblem | undefined };
+
+export type SyncPullError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type SyncPushError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
+export type SyncSnapshotError =
+  | { status: 401; value: Problem }
+  | { status: 422; value: Problem }
+  | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
+
 export type TagsCreateError =
   | { status: 401; value: Problem }
   | { status: 422; value: Problem }
@@ -784,6 +990,52 @@ export interface Client {
   ): Promise<ApiResult<SummaryShowResponse, SummaryShowError>>;
 
   /**
+   * POST /sync/devices: Register a device for the calling token
+   */
+  syncDevicesCreate(
+    args: { body: SyncDevicesCreateBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<SyncDevicesCreateResponse, SyncDevicesCreateError>>;
+
+  /**
+   * GET /sync/devices: List the devices the caller registered in this workspace
+   */
+  syncDevicesList(
+    options?: CallOptions,
+  ): Promise<ApiResult<SyncDevicesListResponse, SyncDevicesListError>>;
+
+  /**
+   * GET /sync/info: The sync protocol versions, the entities and fields this server knows, and its limits
+   */
+  syncInfo(
+    options?: CallOptions,
+  ): Promise<ApiResult<SyncInfoResponse, SyncInfoError>>;
+
+  /**
+   * GET /sync/pull: Read the changes after a cursor, parents first
+   */
+  syncPull(
+    args?: { query?: SyncPullQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<SyncPullResponse, SyncPullError>>;
+
+  /**
+   * POST /sync/push: Send the mutations a device made offline
+   */
+  syncPush(
+    args: { body: SyncPushBody },
+    options?: CallOptions,
+  ): Promise<ApiResult<SyncPushResponse, SyncPushError>>;
+
+  /**
+   * GET /sync/snapshot: Read the live rows of one entity to rebuild a device
+   */
+  syncSnapshot(
+    args: { query: SyncSnapshotQuery },
+    options?: CallOptions,
+  ): Promise<ApiResult<SyncSnapshotResponse, SyncSnapshotError>>;
+
+  /**
    * POST /tags: Create a tag
    */
   tagsCreate(
@@ -906,6 +1158,18 @@ export function createClient(options: ClientOptions = {}): Client {
       request<MeShowResponse, MeShowError>("GET", "/me", undefined, options),
     summaryShow: (args, options) =>
       request<SummaryShowResponse, SummaryShowError>("GET", "/summary", args, options),
+    syncDevicesCreate: (args, options) =>
+      request<SyncDevicesCreateResponse, SyncDevicesCreateError>("POST", "/sync/devices", args, options),
+    syncDevicesList: (options) =>
+      request<SyncDevicesListResponse, SyncDevicesListError>("GET", "/sync/devices", undefined, options),
+    syncInfo: (options) =>
+      request<SyncInfoResponse, SyncInfoError>("GET", "/sync/info", undefined, options),
+    syncPull: (args, options) =>
+      request<SyncPullResponse, SyncPullError>("GET", "/sync/pull", args, options),
+    syncPush: (args, options) =>
+      request<SyncPushResponse, SyncPushError>("POST", "/sync/push", args, options),
+    syncSnapshot: (args, options) =>
+      request<SyncSnapshotResponse, SyncSnapshotError>("GET", "/sync/snapshot", args, options),
     tagsCreate: (args, options) =>
       request<TagsCreateResponse, TagsCreateError>("POST", "/tags", args, options),
     tagsDelete: (args, options) =>

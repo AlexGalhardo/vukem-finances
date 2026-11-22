@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"net/http"
 	"slices"
 	"strconv"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	syncproto "github.com/AlexGalhardo/vukem-finances/app/sync"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
@@ -82,6 +84,10 @@ type API struct {
 	Tokens *auth.Tokens
 	WS     *workspaces.Service
 	Fin    *finance.Service
+	Sync   *syncproto.Service
+	// PullLimiter and PushLimiter hold a device to the sync rate limits.
+	PullLimiter, PushLimiter ratelimit.Limiter
+	Log                      *slog.Logger
 	// Now is the server clock (app.Now): it bounds the uid a client may choose.
 	Now func() time.Time
 }

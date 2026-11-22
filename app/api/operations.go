@@ -24,6 +24,8 @@ type Operation struct {
 	Tag     string
 	// Status is the success status; 0 takes the framework default.
 	Status int
+	// MaxBody caps the request body in bytes; 0 leaves the server default.
+	MaxBody int64
 }
 
 // Read reports whether the operation only reads.
@@ -63,6 +65,12 @@ var operations = []Operation{ //nolint:gochecknoglobals // a constant table
 	{Name: "budgets.delete", Method: "DELETE", Path: "/budgets/{uid}", Scope: ScopeBudgetsWrite, Summary: "Remove a budget", Tag: "Budgets"},
 
 	{Name: "summary.show", Method: "GET", Path: "/summary", Scope: ScopeSummaryRead, Summary: "Income, expense, net, account balances and net worth of a month", Tag: "Summary"},
+	{Name: "sync.info", Method: "GET", Path: "/sync/info", Scope: ScopeSync, Summary: "The sync protocol versions, the entities and fields this server knows, and its limits", Tag: "Sync"},
+	{Name: "sync.devices.create", Method: "POST", Path: "/sync/devices", Scope: ScopeSync, Summary: "Register a device for the calling token", Tag: "Sync", Status: http.StatusCreated},
+	{Name: "sync.devices.list", Method: "GET", Path: "/sync/devices", Scope: ScopeSync, Summary: "List the devices the caller registered in this workspace", Tag: "Sync"},
+	{Name: "sync.pull", Method: "GET", Path: "/sync/pull", Scope: ScopeSync, Summary: "Read the changes after a cursor, parents first", Tag: "Sync"},
+	{Name: "sync.snapshot", Method: "GET", Path: "/sync/snapshot", Scope: ScopeSync, Summary: "Read the live rows of one entity to rebuild a device", Tag: "Sync"},
+	{Name: "sync.push", Method: "POST", Path: "/sync/push", Scope: ScopeSync, Summary: "Send the mutations a device made offline", Tag: "Sync", Status: http.StatusOK, MaxBody: 1 << 20},
 }
 
 // Operations lists every operation of the API.
