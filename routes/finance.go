@@ -25,6 +25,7 @@ import (
 	appmail "github.com/AlexGalhardo/vukem-finances/app/mail"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/pages"
+	"github.com/AlexGalhardo/vukem-finances/app/privacy"
 	"github.com/AlexGalhardo/vukem-finances/app/telegram"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 	"github.com/AlexGalhardo/vukem-finances/config"
@@ -79,6 +80,13 @@ func Finance(r *router.Router, app *vukem.App) error {
 	}
 
 	h := ledger.New(ws, fin, telegram.Attach(bot, alerts.New(app, ws, fin)))
+
+	priv, err := privacy.New(app, ws)
+	if err != nil {
+		return err
+	}
+
+	priv.Fin = fin
 	admins := admin.NewAdmins(app.Source.Get("ADMIN_EMAILS"))
 	required := auth.Required(acc.Web)
 	verified := auth.Verified(acc.Web)
@@ -119,6 +127,8 @@ func Finance(r *router.Router, app *vukem.App) error {
 	invites := ratelimit.Middleware(limiters("workspace.invite", config.InviteLimit, config.InviteWindow), byWorkspace)
 	exports := ratelimit.Middleware(limiters("workspace.export", config.ExportLimit, config.ExportWindow), byWorkspace)
 
+	privacyConfirm := ratelimit.Middleware(limiters("privacy.confirm", 5, time.Minute), user)
+
 	var aiErr, mcpErr error
 
 	// Everything else lives in a workspace: the tenant middleware picks the
@@ -140,6 +150,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		financeImports(g, h, imports)
 		financeReports(g, h)
 		financeWorkspace(g, h)
+		financePrivacy(g, ledger.NewPrivacy(h, acc, priv, app.Now), privacyConfirm)
 		financeExports(g, h, exports, ws.Require(workspaces.AbilityManageData))
 		financeTokens(g, app, acc, h)
 		financeTelegram(g, bot, h.Alerts)
