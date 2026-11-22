@@ -71,10 +71,44 @@ Completion suggests account and category names, periods and months, at most 100 
 opaque cursors, reports send progress when the client gives a progress token, and cancelling a request cancels the
 context of the operation.
 
+## Remote endpoint (saas edition)
+
+A customer can connect an AI client to one workspace by signing in and approving what the client may do. The
+personal edition has none of this: `/mcp`, the metadata and the authorization endpoints answer 404.
+
+- **Endpoint.** `POST /mcp` only (`GET` and `DELETE` answer 405). No `Mcp-Session-Id`, no state between requests.
+  `Origin` is checked (403), and `MCP-Protocol-Version`, `Mcp-Method` and `Mcp-Name` must agree with the body (400).
+- **Discovery.** `/.well-known/oauth-protected-resource` (RFC 9728, also under `/mcp`) and
+  `/.well-known/oauth-authorization-server` (RFC 8414). A 401 carries `WWW-Authenticate` with the metadata URL.
+- **Authorization.** Authorization code with PKCE `S256` only, exact redirect match, `resource` required (RFC 8707),
+  `iss` in the response (RFC 9207). Clients are pre-registered (`MCP_OAUTH_CLIENTS`) or identified by a Client ID
+  Metadata Document, fetched over HTTPS only, public addresses only after DNS, no redirects, 5 s and 5 KiB.
+  A client of the second kind is named by its verified host; the name it claims is shown apart as unverified.
+- **Tokens.** Access tokens live 15 minutes, are signed with a key derived from `APP_KEY`, and name this server as
+  the only audience. Refresh tokens rotate and are stored hashed; using one twice revokes the grant. Tokens from
+  another issuer or audience are refused and never read from a query string.
+- **Consent.** The signed-in person is in one workspace (they can change it on the screen). The screen shows the client,
+  where it returns to, the workspace and the scopes, and marks the scopes the role cannot grant. The decision is
+  refused on the server when the role cannot grant a requested scope, and the approved scopes are stored with the grant.
+- **Every call.** The membership and the role are read again on every request through `Invoke`: removing a member, a
+  password reset or logout-everywhere ends the grants, a downgrade cuts what the token can do, and a promotion never
+  widens a grant. Tools that remove data are for owners and admins, and still ask for a confirmation.
+- **Limits and audit.** 120 reads and 60 writes a minute per person, workspace and client; 300 requests a minute per
+  address on `/mcp`; 30 a minute per address on each OAuth endpoint. Every call writes a `mcp call` line with the
+  client, the tool and the outcome, never an input, an amount or a description.
+- **Connected apps.** The page `/connected-apps` lists a person's grants with the client, scopes and last use, and
+  revokes them: the next call gets 401 and the refresh token stops.
+- **Settings.** `APP_URL` must be `https` (otherwise remote MCP stays off with a warning), `MCP_TOOLSETS` and
+  `MCP_ALLOW_DESTRUCTIVE` apply to the remote endpoint too, and `MCP_OAUTH_CLIENTS` is a JSON list of
+  `{"id", "name", "redirect_uris"}` public clients.
+- **Proxy.** `deploy/Caddyfile` routes `/mcp` with `flush_interval -1` and no compression, so streamed progress
+  arrives incrementally.
+
 ## Check it with the MCP Inspector
 
 ```sh
 npx @modelcontextprotocol/inspector -- go run ./cmd/app mcp:serve --stdio
 ```
 
-List the tools, resources and prompts and run one of each. The Inspector is a manual check and is not part of CI.
+List the tools, resources and prompts and run one of each. The Inspector is a manual check and is not part of CI. For the remote endpoint, point it at
+`https://<your domain>/mcp` and run the OAuth flow from its authentication panel.
