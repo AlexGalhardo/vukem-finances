@@ -259,8 +259,19 @@ func MarkExisting(ctx context.Context) {
 	}
 }
 
-// Invoke runs op for actor with in. It is the only way to run an operation.
+// Invoke runs op for actor with in. It is the only way to run an operation:
+// authorize, validate, apply the idempotency key, run, audit.
 func Invoke[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor, in In, opts ...CallOption) (Result[Out], error) {
+	res, err := invoke(ctx, op, actor, in, opts)
+
+	if op.meta.Kind != KindRead {
+		op.reg.audit(ctx, op.meta, actor, res.Existing, res.Replayed, err)
+	}
+
+	return res, err
+}
+
+func invoke[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor, in In, opts []CallOption) (Result[Out], error) {
 	var zero Result[Out]
 
 	var o callOptions
