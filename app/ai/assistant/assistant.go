@@ -137,6 +137,13 @@ func (s *Service) Ask(ctx context.Context, userID, conversationID int64, questio
 		return Reply{}, ErrLongQuestion
 	}
 
+	// What is stored and sent is the sanitized text (normalized, then redacted):
+	// a card number typed in a question never reaches the database.
+	question = ai.Sanitize(question, QuestionMax)
+	if question == "" {
+		return Reply{}, ErrEmptyQuestion
+	}
+
 	if conversationID != 0 {
 		if _, err := s.mine(ctx, s.DB, userID, conversationID); err != nil {
 			return Reply{}, err
@@ -227,7 +234,7 @@ func (s *Service) planStep(ctx context.Context, workspace int64, question, today
 	}
 
 	body, err := json.Marshal(map[string]any{
-		"question": ai.Sanitize(question, QuestionMax), "today": today, "currency": currency,
+		"question": question, "today": today, "currency": currency,
 		"reports": reportHelp, "categories": list,
 	})
 	if err != nil {
@@ -252,11 +259,11 @@ func (s *Service) answerStep(
 
 	results := make([]result, len(tables))
 	for i, t := range tables {
-		results[i] = result{Title: t.Title, Rows: t.Rows}
+		results[i] = result{Title: t.Title, Rows: t.model}
 	}
 
 	body, err := json.Marshal(map[string]any{
-		"question": ai.Sanitize(question, QuestionMax), "today": today, "currency": currency, "results": results,
+		"question": question, "today": today, "currency": currency, "results": results,
 	})
 	if err != nil {
 		return "", nil, err
@@ -282,7 +289,12 @@ func (s *Service) answerStep(
 		figures = append(figures, Figure{Label: f.Label, Cents: f.Cents})
 	}
 
-	return answerText(a.Answer), figures, nil
+	text := answerText(a.Answer)
+	if len(tables) > 0 && tables[0].book != nil {
+		text = tables[0].book.restore(text)
+	}
+
+	return text, figures, nil
 }
 
 // differs reports whether the model quoted a number that no table holds (in

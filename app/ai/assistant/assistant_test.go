@@ -502,3 +502,106 @@ func TestConversationsArePrivate(t *testing.T) {
 }
 
 func financeFilter() finance.TxFilter { return finance.TxFilter{} }
+
+func TestProviderNeverSeesAccountOrTagNames(t *testing.T) {
+	t.Parallel()
+
+	r, svc := rig(t)
+	seed(t, r)
+
+	const account, tag = "Zorbank Salary Account", "ZorbankTripTag"
+
+	accounts, _ := r.Fin.Accounts(r.Ctx)
+	if _, err := r.Fin.UpdateAccount(r.Ctx, accounts[0].ID, account, accounts[0].Kind, "0.00"); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := r.Fin.CreateTag(r.Ctx, tag, ""); err != nil {
+		t.Fatal(err)
+	}
+
+	script(r,
+		planOf(
+			assistant.Query{Report: "by_account", From: "2026-10-01", To: "2026-10-31"},
+			assistant.Query{Report: "by_tag", From: "2026-10-01", To: "2026-10-31"},
+			assistant.Query{Report: "net_worth", From: "2026-10-01", To: "2026-10-31"}),
+		`{"answer":"Account 1 spent a lot.","figures":[]}`)
+
+	reply, err := svc.Ask(r.Ctx, r.User.ID, 0, "how did my accounts do?")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, req := range r.Provider.Requests() {
+		all := strings.ToLower(req.System + req.Messages[0].Content)
+		for _, name := range []string{"zorbank", strings.ToLower(account), strings.ToLower(tag)} {
+			if strings.Contains(all, name) {
+				t.Errorf("%q reached the provider: %s", name, all)
+			}
+		}
+	}
+
+	answerReq := r.Provider.Requests()[1].Messages[0].Content
+	if !strings.Contains(answerReq, "Account 1 income") {
+		t.Errorf("the provider should see opaque labels: %s", answerReq)
+	}
+
+	// The person sees real names in the tables, and in the text the opaque label is mapped back locally.
+	raw, _ := json.Marshal(reply.Tables)
+	if !strings.Contains(string(raw), account+" income") {
+		t.Errorf("tables = %s", raw)
+	}
+
+	if !strings.Contains(reply.Text, account) || strings.Contains(reply.Text, "Account 1") {
+		t.Errorf("text = %q", reply.Text)
+	}
+}
+
+func TestQuestionIsStoredSanitized(t *testing.T) {
+	t.Parallel()
+
+	r, svc := rig(t)
+	script(r, planOf(assistant.Query{Report: "cash_flow", From: "2026-10-01", To: "2026-10-31"}), `{"answer":"ok","figures":[]}`)
+
+	for _, q := range []string{
+		"did card 4111  1111  1111  1111 pay?",
+		"did card 4111 1111 1111 1111 pay?",
+		"did card 4111\t1111\t1111\t1111 pay?",
+		"iban GB82  WEST  1234  5698  7654  32 and ana@example.com",
+	} {
+		if _, err := svc.Ask(r.Ctx, r.User.ID, 0, q); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	for _, table := range []string{"assistant_conversations", "assistant_messages"} {
+		rows, err := r.DB.QueryContext(r.Ctx, "SELECT * FROM "+table)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		cols, _ := rows.Columns()
+
+		for rows.Next() {
+			vals := make([]any, len(cols))
+			ptrs := make([]any, len(cols))
+
+			for i := range vals {
+				ptrs[i] = &vals[i]
+			}
+
+			if err := rows.Scan(ptrs...); err != nil {
+				t.Fatal(err)
+			}
+
+			row := fmt.Sprint(vals...)
+			for _, leaked := range []string{"4111", "1111", "WEST", "5698", "ana@example.com"} {
+				if strings.Contains(row, leaked) {
+					t.Errorf("%s holds %q: %s", table, leaked, row)
+				}
+			}
+		}
+
+		_ = rows.Close()
+	}
+}
