@@ -15,7 +15,16 @@ type User struct {
 	Password        string       `json:"-"`
 	EmailVerifiedAt orm.NullTime `json:"email_verified_at"`
 	SessionVersion  int64        `json:"-"`
+
+	// DeletionRequestedAt is set while the account is in its grace period;
+	// PurgeAt is when the purge job removes it.
+	DeletionRequestedAt orm.NullTime `json:"-"`
+	PurgeAt             orm.NullTime `json:"-"`
 }
+
+// PendingDeletion reports whether the account asked to be deleted and the grace
+// period has not ended.
+func (u User) PendingDeletion() bool { return u.DeletionRequestedAt.Valid }
 
 // AuthID implements auth.Authenticatable.
 func (u User) AuthID() string { return strconv.FormatInt(u.ID, 10) }
