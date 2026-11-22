@@ -2,6 +2,9 @@ package assistant
 
 import (
 	"context"
+	"regexp"
+	"strconv"
+	"strings"
 
 	"github.com/AlexGalhardo/vukem/orm"
 
@@ -29,6 +32,66 @@ type Table struct {
 	Rows   []Figure `json:"rows"`
 	// Truncated says rows were cut at MaxRows.
 	Truncated bool `json:"truncated"`
+
+	// model is what the provider sees of Rows: the same figures, with the names
+	// of accounts and tags replaced by opaque labels ("Account 1", "Tag 2").
+	// It is never serialized or stored.
+	model []Figure
+	book  *aliasBook
+}
+
+// aliasBook hands out the opaque labels of one question: the same name gets
+// the same label in every table, and the labels map back to names locally.
+type aliasBook struct {
+	n    map[string]int
+	real map[string]string
+}
+
+func newBook() *aliasBook { return &aliasBook{n: map[string]int{}, real: map[string]string{}} }
+
+// label returns "<noun> <n>" for name, numbering in order of first sight.
+func (b *aliasBook) label(noun, name string) string {
+	key := noun + "|" + name
+
+	i, ok := b.n[key]
+	if !ok {
+		i = 1
+		for k := range b.n {
+			if strings.HasPrefix(k, noun+"|") {
+				i++
+			}
+		}
+
+		b.n[key] = i
+	}
+
+	alias := noun + " " + strconv.Itoa(i)
+	b.real[alias] = name
+
+	return alias
+}
+
+var aliasRe = regexp.MustCompile(`\b(Account|Tag) (\d+)\b`)
+
+// restore puts the real names back into text the model wrote, locally: the
+// provider never learns them.
+func (b *aliasBook) restore(text string) string {
+	return aliasRe.ReplaceAllStringFunc(text, func(m string) string {
+		if name, ok := b.real[m]; ok {
+			return name
+		}
+
+		return m
+	})
+}
+
+// add appends a row the provider sees under the same label as the person.
+func (t *Table) add(label string, cents int64) { t.addAs(label, label, cents) }
+
+// addAs appends a row with a real label for the person and an opaque one for the provider.
+func (t *Table) addAs(label, modelLabel string, cents int64) {
+	t.Rows = append(t.Rows, Figure{Label: label, Cents: cents})
+	t.model = append(t.model, Figure{Label: modelLabel, Cents: cents})
 }
 
 // Execute runs resolved queries with the report functions, inside the
@@ -36,15 +99,16 @@ type Table struct {
 // inputs are the validated dates, kind and category.
 func (s *Service) Execute(ctx context.Context, queries []Resolved) ([]Table, error) {
 	tables := make([]Table, 0, len(queries))
+	book := newBook()
 
 	for _, q := range queries {
-		t, err := s.run(ctx, q)
+		t, err := s.run(ctx, q, book)
 		if err != nil {
 			return nil, err
 		}
 
 		if len(t.Rows) > MaxRows {
-			t.Rows, t.Truncated = t.Rows[:MaxRows], true
+			t.Rows, t.model, t.Truncated = t.Rows[:MaxRows], t.model[:MaxRows], true
 		}
 
 		tables = append(tables, t)
@@ -53,8 +117,8 @@ func (s *Service) Execute(ctx context.Context, queries []Resolved) ([]Table, err
 	return tables, nil
 }
 
-func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
-	t := Table{Report: q.Report, Title: q.Describe(), From: q.From, To: q.To, Rows: []Figure{}}
+func (s *Service) run(ctx context.Context, q Resolved, book *aliasBook) (Table, error) {
+	t := Table{Report: q.Report, Title: q.Describe(), From: q.From, To: q.To, Rows: []Figure{}, model: []Figure{}, book: book}
 
 	if q.Report == ReportTransactions {
 		return s.transactions(ctx, q, t)
@@ -78,10 +142,10 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 				label = "Uncategorized"
 			}
 
-			t.Rows = append(t.Rows, Figure{Label: ai.Sanitize(label, labelMax), Cents: r.Cents})
+			t.add(ai.Sanitize(label, labelMax), r.Cents)
 		}
 
-		t.Rows = append(t.Rows, Figure{Label: "Total", Cents: rep.TotalCents})
+		t.add("Total", rep.TotalCents)
 	case ReportCashFlow:
 		rep, err := s.Rep.CashFlow(ctx, p)
 		if err != nil {
@@ -89,16 +153,14 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 		}
 
 		for _, m := range rep.Months {
-			t.Rows = append(t.Rows,
-				Figure{Label: m.Month + " income", Cents: m.IncomeCents},
-				Figure{Label: m.Month + " expense", Cents: m.ExpenseCents},
-				Figure{Label: m.Month + " net", Cents: m.NetCents})
+			t.add(m.Month+" income", m.IncomeCents)
+			t.add(m.Month+" expense", m.ExpenseCents)
+			t.add(m.Month+" net", m.NetCents)
 		}
 
-		t.Rows = append(t.Rows,
-			Figure{Label: "Total income", Cents: rep.Totals.IncomeCents},
-			Figure{Label: "Total expense", Cents: rep.Totals.ExpenseCents},
-			Figure{Label: "Total net", Cents: rep.Totals.NetCents})
+		t.add("Total income", rep.Totals.IncomeCents)
+		t.add("Total expense", rep.Totals.ExpenseCents)
+		t.add("Total net", rep.Totals.NetCents)
 	case ReportByAccount:
 		rep, err := s.Rep.ByAccount(ctx, p)
 		if err != nil {
@@ -106,9 +168,9 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 		}
 
 		for _, r := range rep.Rows {
-			t.Rows = append(t.Rows,
-				Figure{Label: ai.Sanitize(r.Name, labelMax) + " income", Cents: r.IncomeCents},
-				Figure{Label: ai.Sanitize(r.Name, labelMax) + " expense", Cents: r.ExpenseCents})
+			name, alias := ai.Sanitize(r.Name, labelMax), book.label("Account", r.Name)
+			t.addAs(name+" income", alias+" income", r.IncomeCents)
+			t.addAs(name+" expense", alias+" expense", r.ExpenseCents)
 		}
 	case ReportByTag:
 		rep, err := s.Rep.ByTag(ctx, p)
@@ -117,9 +179,9 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 		}
 
 		for _, r := range rep.Rows {
-			t.Rows = append(t.Rows,
-				Figure{Label: ai.Sanitize(r.Name, labelMax) + " income", Cents: r.IncomeCents},
-				Figure{Label: ai.Sanitize(r.Name, labelMax) + " expense", Cents: r.ExpenseCents})
+			name, alias := ai.Sanitize(r.Name, labelMax), book.label("Tag", r.Name)
+			t.addAs(name+" income", alias+" income", r.IncomeCents)
+			t.addAs(name+" expense", alias+" expense", r.ExpenseCents)
 		}
 	case ReportNetWorth:
 		rep, err := s.Rep.NetWorthSeries(ctx, p)
@@ -128,7 +190,7 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 		}
 
 		for _, pt := range rep.Points {
-			t.Rows = append(t.Rows, Figure{Label: pt.Month, Cents: pt.BalanceCents})
+			t.add(pt.Month, pt.BalanceCents)
 		}
 	case ReportCompare:
 		rep, err := s.Rep.Compare(ctx, p)
@@ -139,10 +201,9 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 		t.Title += " (previous: " + rep.Previous.From + " to " + rep.Previous.To + ")"
 
 		for _, r := range rep.Rows {
-			t.Rows = append(t.Rows,
-				Figure{Label: r.Key + ", this period", Cents: r.CurrentCents},
-				Figure{Label: r.Key + ", previous period", Cents: r.PreviousCents},
-				Figure{Label: r.Key + ", difference", Cents: r.DiffCents})
+			t.add(r.Key+", this period", r.CurrentCents)
+			t.add(r.Key+", previous period", r.PreviousCents)
+			t.add(r.Key+", difference", r.DiffCents)
 		}
 	}
 
@@ -184,7 +245,7 @@ func (s *Service) transactions(ctx context.Context, q Resolved, t Table) (Table,
 			cents = -cents
 		}
 
-		t.Rows = append(t.Rows, Figure{Label: r.OccurredOn + " " + ai.Sanitize(r.Description, labelMax), Cents: cents})
+		t.add(r.OccurredOn+" "+ai.Sanitize(r.Description, labelMax), cents)
 	}
 
 	return t, nil
