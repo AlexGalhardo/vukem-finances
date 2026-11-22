@@ -58,13 +58,15 @@ func (s *Service) Run(ctx context.Context) error {
 			}
 
 			ch := effective(m.Role, pref)
-			if !ch.InApp && !ch.Email {
+			// Telegram only counts while there is a channel to send it with.
+			tg := ch.Telegram && s.Telegram != nil
+			if !ch.InApp && !ch.Email && !tg {
 				continue
 			}
 
 			n := models.Notification{
 				UserID: m.UserID, Kind: c.Kind, SubjectKey: c.Subject, TitleKey: TitleKey(c.Kind),
-				Params: string(raw), InApp: ch.InApp, Email: ch.Email,
+				Params: string(raw), InApp: ch.InApp, Email: ch.Email, Telegram: tg,
 			}
 
 			// The unique key is the dedupe: an existing row is the answer.
@@ -73,6 +75,8 @@ func (s *Service) Run(ctx context.Context) error {
 			}
 		}
 	}
+
+	s.sendTelegram(ctx, members)
 
 	return errors.Join(failed, s.sendMails(ctx, members))
 }

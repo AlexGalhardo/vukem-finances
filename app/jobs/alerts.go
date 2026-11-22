@@ -7,6 +7,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/alerts"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
+	"github.com/AlexGalhardo/vukem-finances/app/telegram"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
@@ -29,7 +30,12 @@ func HandleAlertsEvaluate(app *vukem.App) func(ctx context.Context, j AlertsEval
 			return err
 		}
 
-		svc := alerts.New(app, ws, fin)
+		bot, err := telegram.New(app, ws, fin)
+		if err != nil {
+			return err
+		}
+
+		svc := telegram.Attach(bot, alerts.New(app, ws, fin))
 
 		if j.WorkspaceID == 0 {
 			return svc.RunAll(ctx)

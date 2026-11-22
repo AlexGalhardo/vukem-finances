@@ -11,6 +11,9 @@ import (
 type Channels struct {
 	InApp bool `json:"inApp"`
 	Email bool `json:"email"`
+	// Telegram is off until the person turns it on (docs/telegram.md): there
+	// is no default for a role.
+	Telegram bool `json:"telegram"`
 }
 
 // Default is what a person with this role gets when they never chose: the
@@ -48,7 +51,7 @@ func (s *Service) savedPreferences(ctx context.Context) (map[prefKey]Channels, e
 
 	out := make(map[prefKey]Channels, len(rows))
 	for _, r := range rows {
-		out[prefKey{r.UserID, r.Kind}] = Channels{InApp: r.InApp, Email: r.Email}
+		out[prefKey{r.UserID, r.Kind}] = Channels{InApp: r.InApp, Email: r.Email, Telegram: r.Telegram}
 	}
 
 	return out, nil
