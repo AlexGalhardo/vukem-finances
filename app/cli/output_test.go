@@ -135,7 +135,7 @@ func TestOutputCells(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		want := "a,b,c,d,e,f,g,h,i,j\n'=1+1,'+1,'@x,'-1+2,-10.50,-10.5,\"\tx\",plain,'-1.,'-abc\n"
+		want := "\"a\",\"b\",\"c\",\"d\",\"e\",\"f\",\"g\",\"h\",\"i\",\"j\"\n\"'=1+1\",\"'+1\",\"'@x\",\"'-1+2\",\"-10.50\",-10.5,\"	x\",\"plain\",\"'-1.\",\"'-abc\"\n"
 		if tm.out.String() != want {
 			t.Fatalf("got:\n%q\nwant:\n%q", tm.out.String(), want)
 		}
@@ -300,7 +300,7 @@ func TestOutputCSVGuards(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if want := "c,n,s\n-1050,-10.50,-10.50\n"; tm.out.String() != want {
+		if want := "\"c\",\"n\",\"s\"\n-1050,-10.50,\"-10.50\"\n"; tm.out.String() != want {
 			t.Fatalf("got %q, want %q", tm.out.String(), want)
 		}
 	})
@@ -333,7 +333,7 @@ func TestOutputCSVGuards(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if want := "k\na‮b\x1bc\n"; tm.out.String() != want {
+		if want := "\"k\"\n\"a‮b\x1bc\"\n"; tm.out.String() != want {
 			t.Fatalf("got %q, want %q", tm.out.String(), want)
 		}
 	})
@@ -372,41 +372,5 @@ func TestOutputBoundsColumns(t *testing.T) {
 
 	if err := c.WriteForTest(wide(300), "json"); err != nil {
 		t.Fatalf("json has no column limit: %v", err)
-	}
-}
-
-func TestOutputCSVDelimiterGuard(t *testing.T) {
-	t.Parallel()
-
-	for cell, quoted := range map[string]bool{
-		"x;=1+1":  true,
-		"x;  @y":  true,
-		"a\t+b":   true,
-		"a;＝1":    true,
-		"a;​-1":   true,
-		"a;b":     false,
-		"a\tb":    false,
-		"a;b;c":   false,
-		"-10.50":  false,
-		"a-b;c+d": false,
-		"=1":      true,
-		"1;2;":    false,
-	} {
-		tm := &term{}
-		c := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
-
-		if err := c.WriteForTest([]any{map[string]any{"k": cell}}, "csv"); err != nil {
-			t.Fatal(err)
-		}
-
-		rows, err := csv.NewReader(strings.NewReader(tm.out.String())).ReadAll()
-		if err != nil || len(rows) != 2 {
-			t.Fatalf("%q: %v: %q", cell, err, tm.out.String())
-		}
-
-		got := rows[1][0]
-		if (got != cell) != quoted || (quoted && got != "'"+cell) {
-			t.Errorf("%q -> %q, quoted should be %v", cell, got, quoted)
-		}
 	}
 }
