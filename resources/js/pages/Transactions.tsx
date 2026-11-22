@@ -1,5 +1,8 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import { ArrowLeftRight, Pencil, Search, Trash2, Upload } from "lucide-react";
+import ExportMenu from "../components/ExportMenu";
+import { MoneyText } from "../components/MoneyText";
+import { HelpHint } from "../help/HelpHint";
 import { type FormEvent, useEffect, useRef, useState } from "react";
 import ConfirmDelete from "../components/ConfirmDelete";
 import { Mark } from "../components/categories/look";
@@ -48,7 +51,7 @@ export default function Transactions({
   page: pageNumber,
   pageSize,
 }: Page<"Transactions">) {
-  const { t, money, date } = useFinanceI18n();
+  const { t, date, locale } = useFinanceI18n();
   const page = usePage<SharedProps>();
   const currency = page.props.workspace?.current.currency ?? "USD";
   const { openTransaction, openTransfer, canRecord } = useQuickAdd();
@@ -56,19 +59,18 @@ export default function Transactions({
   const [editing, setEditing] = useState<number | null>(null);
   const asked = useRef(false);
   // `x` downloads the CSV of the filters the list is showing (the applied ones, not the draft in the form).
-  useExportAction(() =>
-    transactionsCsvUrl({
-      q: filters.q,
-      category: filters.categoryId,
-      tag: filters.tagId,
-      account: filters.accountId,
-      kind: filters.kind,
-      from: filters.from,
-      to: filters.to,
-      min: filters.min,
-      max: filters.max,
-    }),
-  );
+  const exportFilters = {
+    q: filters.q,
+    category: filters.categoryId,
+    tag: filters.tagId,
+    account: filters.accountId,
+    kind: filters.kind,
+    from: filters.from,
+    to: filters.to,
+    min: filters.min,
+    max: filters.max,
+  };
+  useExportAction(() => transactionsCsvUrl(exportFilters));
   const searchRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState({
     q: filters.q,
@@ -165,12 +167,25 @@ export default function Transactions({
         title={t("transactions")}
         description={t("transactionDescription")}
         actions={
-          canRecord && (
-            <Button variant="outline" onClick={() => openTransfer()}>
-              <ArrowLeftRight data-icon="inline-start" />
-              {t("newTransfer")}
-            </Button>
-          )
+          <>
+            <span data-tour="transactions-export">
+              <ExportMenu
+                csvUrl={transactionsCsvUrl(exportFilters)}
+                csvExcelUrl={transactionsCsvUrl(exportFilters, { excel: true })}
+              />
+            </span>
+            {canRecord && (
+              <Button
+                variant="outline"
+                data-tour="transactions-transfer"
+                shortcutAction="new-transfer"
+                onClick={() => openTransfer()}
+              >
+                <ArrowLeftRight data-icon="inline-start" />
+                {t("newTransfer")}
+              </Button>
+            )}
+          </>
         }
       />
       <Dialog open={open} onOpenChange={setOpen}>
@@ -270,8 +285,13 @@ export default function Transactions({
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <search>
-            <form onSubmit={applyFilters} aria-label={t("filters")} className="flex flex-col gap-4">
-              <Field>
+            <form
+              onSubmit={applyFilters}
+              aria-label={t("filters")}
+              className="flex flex-col gap-4"
+              data-tour="transactions-filters"
+            >
+              <Field data-tour="transactions-search">
                 <FieldLabel htmlFor="filter-q">{t("searchLabel")}</FieldLabel>
                 <div className="relative">
                   <Search
@@ -316,7 +336,10 @@ export default function Transactions({
                   </NativeSelect>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="filter-tag">{t("tag")}</FieldLabel>
+                  <span className="flex items-center gap-1">
+                    <FieldLabel htmlFor="filter-tag">{t("tag")}</FieldLabel>
+                    <HelpHint id="hintTxTags" />
+                  </span>
                   <NativeSelect
                     id="filter-tag"
                     name="tag"
@@ -348,7 +371,10 @@ export default function Transactions({
                   </NativeSelect>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="filter-kind">{t("kind")}</FieldLabel>
+                  <span className="flex items-center gap-1">
+                    <FieldLabel htmlFor="filter-kind">{t("kind")}</FieldLabel>
+                    <HelpHint id="hintTxType" />
+                  </span>
                   <NativeSelect
                     id="filter-kind"
                     name="kind"
@@ -418,78 +444,92 @@ export default function Transactions({
               </EmptyContent>
             </Empty>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  {(["date", "description", "category", "account", "amount", "actions"] as const).map((key) => (
-                    <TableHead key={key}>{t(key)}</TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transactions.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell className="whitespace-nowrap text-muted-foreground">{date(item.occurred_on)}</TableCell>
-                    <TableCell className="font-medium">
-                      {item.transferId !== null ? (
-                        <span className="flex flex-wrap items-center gap-2">
-                          <Badge variant="secondary">{t("transfer")}</Badge>
-                          <span>
-                            {t(item.kind === "expense" ? "transferTo" : "transferFrom")} {item.transferAccountName}
-                          </span>
-                          {item.description && (
-                            <span className="font-normal text-muted-foreground">{item.description}</span>
-                          )}
-                        </span>
-                      ) : (
-                        <span className="flex flex-wrap items-center gap-2">
-                          <span>{item.description || t(item.kind === "income" ? "income" : "expense")}</span>
-                          {item.tags.map((tag) => (
-                            <Badge key={tag.id} variant="outline" className="gap-1 font-normal">
-                              <Mark color={tag.color} icon="tag" />
-                              {tag.name}
-                            </Badge>
-                          ))}
-                        </span>
-                      )}
-                    </TableCell>
-                    <TableCell>{item.categoryName || "—"}</TableCell>
-                    <TableCell>{item.accountName}</TableCell>
-                    <TableCell className="whitespace-nowrap tabular-nums">
-                      {item.kind === "income" ? "+" : "−"}
-                      {money(item.amount_cents, currency)}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex justify-end gap-1">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          disabled={!canRecord}
-                          onClick={() => edit(item)}
-                          aria-label={`${t("edit")} ${item.description}`}
-                        >
-                          <Pencil />
-                        </Button>
-                        <ConfirmDelete
-                          href={item.transferId !== null ? `/transfers/${item.id}` : `/transactions/${item.id}`}
-                          name={item.description || t(item.kind === "income" ? "income" : "expense")}
-                          trigger={
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              aria-label={`${t("delete")} ${item.description}`}
-                            >
-                              <Trash2 />
-                            </Button>
-                          }
-                        />
-                      </div>
-                    </TableCell>
+            <div data-tour="transactions-table">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    {(["date", "description", "category", "account", "amount", "actions"] as const).map((key) => (
+                      <TableHead key={key} className={key === "amount" ? "text-right" : undefined}>
+                        {t(key)}
+                      </TableHead>
+                    ))}
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                </TableHeader>
+                <TableBody>
+                  {transactions.map((item) => (
+                    <TableRow key={item.id}>
+                      <TableCell className="whitespace-nowrap text-muted-foreground">
+                        {date(item.occurred_on)}
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        {item.transferId !== null ? (
+                          <span className="flex flex-wrap items-center gap-2">
+                            <Badge variant="secondary">{t("transfer")}</Badge>
+                            <span>
+                              {t(item.kind === "expense" ? "transferTo" : "transferFrom")} {item.transferAccountName}
+                            </span>
+                            {item.description && (
+                              <span className="font-normal text-muted-foreground">{item.description}</span>
+                            )}
+                          </span>
+                        ) : (
+                          <span className="flex flex-wrap items-center gap-2">
+                            <span>{item.description || t(item.kind === "income" ? "income" : "expense")}</span>
+                            {item.tags.map((tag) => (
+                              <Badge key={tag.id} variant="outline" className="gap-1 font-normal">
+                                <Mark color={tag.color} icon="tag" />
+                                {tag.name}
+                              </Badge>
+                            ))}
+                          </span>
+                        )}
+                      </TableCell>
+                      <TableCell>{item.categoryName || "—"}</TableCell>
+                      <TableCell>{item.accountName}</TableCell>
+                      <TableCell className="whitespace-nowrap text-right">
+                        <MoneyText
+                          cents={item.kind === "income" ? item.amount_cents : -item.amount_cents}
+                          currency={currency}
+                          locale={locale}
+                          kind={item.transferId !== null ? "transfer" : item.kind === "income" ? "income" : "expense"}
+                          sign={item.transferId !== null ? "never" : "always"}
+                          labels={{ minus: t("moneyMinus"), plus: t("moneyPlus") }}
+                          colored
+                          showIcon
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            disabled={!canRecord}
+                            onClick={() => edit(item)}
+                            aria-label={`${t("edit")} ${item.description}`}
+                          >
+                            <Pencil />
+                          </Button>
+                          <ConfirmDelete
+                            href={item.transferId !== null ? `/transfers/${item.id}` : `/transactions/${item.id}`}
+                            name={item.description || t(item.kind === "income" ? "income" : "expense")}
+                            trigger={
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                aria-label={`${t("delete")} ${item.description}`}
+                              >
+                                <Trash2 />
+                              </Button>
+                            }
+                          />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           )}
           <Pagination page={pageNumber} pageCount={pageCount} hrefFor={pageHref} />
         </CardContent>
