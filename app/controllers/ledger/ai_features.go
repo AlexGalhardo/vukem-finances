@@ -303,12 +303,10 @@ func (a *AIFeatureHandlers) AssistantMessages(c *web.Ctx) error {
 	return c.JSON(http.StatusOK, map[string]any{"messages": msgs})
 }
 
-// AssistantDelete deletes one of the caller's conversations.
+// AssistantDelete deletes one of the caller's conversations. Anyone can erase
+// what they asked, a person demoted to viewer included; a viewer who names
+// anything else is refused like on every other write.
 func (a *AIFeatureHandlers) AssistantDelete(c *web.Ctx) error {
-	if err := a.h.can(c, workspaces.AbilityRecord); err != nil {
-		return err
-	}
-
 	cid, err := c.ParamInt("conversation")
 	if err != nil {
 		return err
@@ -320,6 +318,12 @@ func (a *AIFeatureHandlers) AssistantDelete(c *web.Ctx) error {
 	}
 
 	if err := a.assistant.Delete(c.Context(), uid, cid); err != nil {
+		if errors.Is(err, orm.ErrNotFound) {
+			if denied := a.h.can(c, workspaces.AbilityRecord); denied != nil {
+				return denied
+			}
+		}
+
 		return err
 	}
 
@@ -327,11 +331,8 @@ func (a *AIFeatureHandlers) AssistantDelete(c *web.Ctx) error {
 }
 
 // AssistantDeleteAll deletes every conversation of the caller in the workspace.
+// A viewer with nothing of their own to erase is refused.
 func (a *AIFeatureHandlers) AssistantDeleteAll(c *web.Ctx) error {
-	if err := a.h.can(c, workspaces.AbilityRecord); err != nil {
-		return err
-	}
-
 	uid, err := a.user(c)
 	if err != nil {
 		return err
@@ -340,6 +341,12 @@ func (a *AIFeatureHandlers) AssistantDeleteAll(c *web.Ctx) error {
 	n, err := a.assistant.DeleteAll(c.Context(), uid)
 	if err != nil {
 		return err
+	}
+
+	if n == 0 {
+		if denied := a.h.can(c, workspaces.AbilityRecord); denied != nil {
+			return denied
+		}
 	}
 
 	return c.JSON(http.StatusOK, map[string]any{"deleted": n})
