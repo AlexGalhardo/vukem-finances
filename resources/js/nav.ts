@@ -7,6 +7,7 @@ import {
   ListChecks,
   type LucideIcon,
   PiggyBank,
+  Plug,
   Smartphone,
   Target,
   Repeat,
@@ -49,6 +50,7 @@ export const navItems: readonly NavItem[] = [
   { id: "ai", labelKey: "ai", href: "/ai", icon: Sparkles },
   { id: "tokens", labelKey: "tokens", href: "/tokens", icon: KeyRound },
   { id: "devices", labelKey: "devices", href: "/devices", icon: Smartphone },
+  { id: "connectedApps", labelKey: "connectedApps", href: "/connected-apps", icon: Plug, edition: "saas" },
   { id: "billing", labelKey: "billing", href: "/billing", icon: CreditCard, edition: "saas" },
 ];
 

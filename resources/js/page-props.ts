@@ -176,6 +176,32 @@ export type CompareRow = {
   previousCents: number;
 };
 
+export type ConnectedApp = {
+  client: string;
+  createdAt: string;
+  id: string;
+  lastUsedAt: string;
+  scopes: string[];
+  status: string;
+};
+
+export type ConsentField = {
+  name: string;
+  value: string;
+};
+
+export type ConsentScope = {
+  allowed: boolean;
+  name: string;
+  writes: boolean;
+};
+
+export type ConsentWorkspace = {
+  current: boolean;
+  id: string;
+  name: string;
+};
+
 export type CreatedPairing = {
   code: string;
   expiresAt: string;
@@ -741,6 +767,10 @@ export type CategoriesProps = {
   tags: Tag[];
 };
 
+export type ConnectedAppsProps = {
+  apps: ConnectedApp[];
+};
+
 export type DashboardProps = {
   dashboard: Dashboard;
   upcoming: UpcomingItem[];
@@ -780,6 +810,19 @@ export type NotificationsProps = {
   items: View[];
   preferences: PreferenceRow[];
   telegramEnabled: boolean;
+};
+
+export type OAuthConsentProps = {
+  action: string;
+  clientId: string;
+  clientName: string;
+  fields: ConsentField[];
+  redirectHost: string;
+  returnTo: string;
+  role: string;
+  scopes: ConsentScope[];
+  workspace: string;
+  workspaces: ConsentWorkspace[];
 };
 
 export type RecurrencesProps = {
@@ -866,8 +909,8 @@ export type WorkspaceProps = {
 
 /** PageProps maps every typed page component to its props. */
 export interface PageProps {
-  "AI": AIProps;
-  "Accounts": AccountsProps;
+  AI: AIProps;
+  Accounts: AccountsProps;
   "Admin/Dashboard": AdminDashboardProps;
   "Admin/ResourceList": AdminResourceListProps;
   "Admin/ResourceShow": AdminResourceShowProps;
@@ -880,27 +923,29 @@ export interface PageProps {
   "Auth/TwoFactorChallenge": AuthTwoFactorChallengeProps;
   "Auth/TwoFactor": AuthTwoFactorProps;
   "Auth/VerifyEmail": AuthVerifyEmailProps;
-  "Billing": BillingProps;
-  "Budgets": BudgetsProps;
-  "CardStatement": CardStatementProps;
-  "Cards": CardsProps;
-  "Categories": CategoriesProps;
-  "Dashboard": DashboardProps;
-  "Devices": DevicesProps;
-  "Goals": GoalsProps;
-  "Home": HomeProps;
-  "Import": ImportProps;
-  "InviteAccept": InviteAcceptProps;
-  "InviteRegister": InviteRegisterProps;
-  "Notifications": NotificationsProps;
-  "Recurrences": RecurrencesProps;
-  "Reports": ReportsProps;
+  Billing: BillingProps;
+  Budgets: BudgetsProps;
+  CardStatement: CardStatementProps;
+  Cards: CardsProps;
+  Categories: CategoriesProps;
+  ConnectedApps: ConnectedAppsProps;
+  Dashboard: DashboardProps;
+  Devices: DevicesProps;
+  Goals: GoalsProps;
+  Home: HomeProps;
+  Import: ImportProps;
+  InviteAccept: InviteAcceptProps;
+  InviteRegister: InviteRegisterProps;
+  Notifications: NotificationsProps;
+  OAuthConsent: OAuthConsentProps;
+  Recurrences: RecurrencesProps;
+  Reports: ReportsProps;
   "Settings/Telegram": SettingsTelegramProps;
-  "Setup": SetupProps;
-  "Suggestions": SuggestionsProps;
-  "Tokens": TokensProps;
-  "Transactions": TransactionsProps;
-  "Workspace": WorkspaceProps;
+  Setup: SetupProps;
+  Suggestions: SuggestionsProps;
+  Tokens: TokensProps;
+  Transactions: TransactionsProps;
+  Workspace: WorkspaceProps;
 }
 
 export type PageName = keyof PageProps;
