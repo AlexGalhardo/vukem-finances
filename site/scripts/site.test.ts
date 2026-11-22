@@ -18,6 +18,7 @@ async function build(out: string, env: Record<string, string> = {}): Promise<voi
   for (const cmd of [
     ["bun", "--bun", "astro", "build"],
     ["bun", "scripts/sitemap.ts"],
+    ["bun", "scripts/twins.ts"],
   ]) {
     const proc = Bun.spawn(cmd, { cwd: root, env: full, stdout: "pipe", stderr: "pipe" });
     const code = await proc.exited;
