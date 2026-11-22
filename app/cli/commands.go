@@ -10,7 +10,13 @@ import (
 
 // OSEnv is the environment of the real process.
 func OSEnv(open OpenLocal) Env {
+	var store CredentialStore
+	if s, err := DefaultStore(); err == nil {
+		store = s
+	}
+
 	return Env{
+		Store: store, HTTP: NewHTTPClient(),
 		Stdin: os.Stdin, Stdout: os.Stdout, Stderr: os.Stderr, Getenv: os.LookupEnv,
 		StdinTTY: isTerminal(os.Stdin), StdoutTTY: isTerminal(os.Stdout),
 		OpenLocal: LocalFrom(open),
@@ -34,7 +40,7 @@ func Commands(c *CLI) []vukem.Command {
 		out = append(out, &resourceCommand{cli: c, resource: r})
 	}
 
-	return out
+	return append(out, &authCommand{cli: c})
 }
 
 type resourceCommand struct {
@@ -67,4 +73,20 @@ func exitError(err error) error {
 	}
 
 	return &vukem.ExitError{Code: ExitOf(err), Err: err}
+}
+
+type authCommand struct{ cli *CLI }
+
+func (a *authCommand) Name() string { return "auth" }
+
+func (a *authCommand) Description() string {
+	return "Log in to a server (`auth login --server URL`), log out, or show the login"
+}
+
+func (a *authCommand) Flags(*flag.FlagSet) {}
+func (a *authCommand) NoBoot() bool        { return true }
+func (a *authCommand) RawArgs()            {}
+
+func (a *authCommand) Run(ctx context.Context, _ *vukem.App, args []string) error {
+	return exitError(a.cli.Run(ctx, "auth", args))
 }
