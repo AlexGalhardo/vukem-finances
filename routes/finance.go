@@ -64,7 +64,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		// Resend authenticate with a signature, not with cookies.
 		r.UseServer(b.Webhook())
 		r.UseServer(b.PixWebhook())
-		r.Handle("POST "+billing.PixWebhookPath+"/{secret}", b.PixWebhookWithSecret()).SecretParams("secret")
+		r.SecretPaths(billing.PixWebhookSecretPath)
 		events.Listen(app.Events, b.HandleWebhook)
 	}
 

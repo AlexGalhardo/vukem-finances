@@ -162,7 +162,7 @@ because the caller is a server.
 
 - The shared secret (`ABACATEPAY_WEBHOOK_SECRET`) is compared in constant time.
   It is read from the `X-Webhook-Secret` header or from a path segment
-  (`/abacatepay/webhook/{secret}`, declared with `SecretParams`). The query
+  (`/abacatepay/webhook/{secret}`, served by the same server middleware and declared with `Router.SecretPaths`, so every log line shows `{secret}`). The query
   string is never read: a request whose only credential is the query string is
   refused with 401. Register the URL without a query; AbacatePay appends
   `?webhookSecret=` on its own, so keep access logs of this path off or

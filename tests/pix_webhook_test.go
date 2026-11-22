@@ -148,3 +148,29 @@ func TestPixConcurrentWebhookRequests(t *testing.T) {
 		t.Errorf("paid months = %d after 50 deliveries, want 1", ent.PaidMonths)
 	}
 }
+
+// TestSecurity_PixWebhookPathSecretStaysOutOfLogs sends deliveries whose path
+// carries the secret (accepted, refused, and with a method the hook refuses)
+// and checks that the request lines log the placeholder, never the value.
+func TestSecurity_PixWebhookPathSecretStaysOutOfLogs(t *testing.T) {
+	t.Parallel()
+
+	clock := newPixClock(time.Date(2027, 1, 31, 10, 0, 0, 0, time.UTC))
+	_, app := pixApp(t, clock)
+	paid := pixBody("transparent.completed", "pix_char_unknown")
+
+	sendPix(t, app, pixDelivery{body: paid, path: billing.PixWebhookPath + "/" + abacateSecret}).AssertOK()
+	sendPix(t, app, pixDelivery{body: paid, path: billing.PixWebhookPath + "/" + abacateSecret + "x"}).AssertUnauthorized()
+	app.Client(t).Do(http.MethodGet, billing.PixWebhookPath+"/"+abacateSecret, nil, "").
+		AssertStatus(http.StatusMethodNotAllowed)
+
+	logs := app.Logs()
+
+	if strings.Contains(logs, abacateSecret) {
+		t.Errorf("the secret path segment reached the logs:\n%s", logs)
+	}
+
+	if !strings.Contains(logs, billing.PixWebhookPath+"/{secret}") {
+		t.Errorf("the request line does not show the placeholder:\n%s", logs)
+	}
+}
