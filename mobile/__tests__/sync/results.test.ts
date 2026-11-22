@@ -251,6 +251,20 @@ describe("handling push results", () => {
     expect(await lone.repo.outboxCount()).toBe(1);
   });
 
+  it("reads a result the server sent without its empty members", async () => {
+    const env = await openEnv();
+    const { uid, batch } = await oneAccount(env);
+    const bare = {
+      op_id: batch.entries[0]?.op_id,
+      status: "applied",
+      entity: "account",
+      uid,
+      row: accountRow(uid),
+    } as unknown as PushResult;
+    await expect(handleResults(env.db, batch, [bare], NOW)).resolves.toMatchObject({ applied: 1 });
+    expect(await env.repo.outboxCount()).toBe(0);
+  });
+
   it("refuses an answer that does not match the batch and changes nothing", async () => {
     const env = await openEnv();
     await env.repo.create("account", ACCOUNT);

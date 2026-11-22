@@ -12,6 +12,7 @@ import {
   type Transport,
   TransportError,
 } from "../../src/sync/types";
+import type { Harness, Role } from "./scenario-runner";
 
 /**
  * A small model of the server of docs/specs/sync-protocol.md, enough to run the
@@ -21,8 +22,6 @@ import {
  * compaction and the op_id store. The Go server is the real thing; this model
  * and the real server are held to the same scenario files.
  */
-
-export type Role = "owner" | "admin" | "member" | "viewer";
 
 interface StoredRow {
   uid: string;
@@ -549,4 +548,20 @@ export class ReferenceTransport implements Transport {
   async pair(_code: string, name: string, _platform: DevicePlatform): Promise<PairResult> {
     return this.server.pair("", name);
   }
+}
+
+/** The reference server behind the scenario runner's Harness. */
+export function referenceHarness(
+  plan: "pro" | "free",
+  devices: Record<string, Role>,
+): Harness & { server: ReferenceServer } {
+  const server = new ReferenceServer({ plan, devices });
+  return {
+    server,
+    transportFor: async (device) => server.transportFor(device),
+    revoke: async (device) => server.revoke(device),
+    compact: async () => server.compact(),
+    ageTombstones: async () => server.ageTombstones(),
+    live: async (entity) => server.live(entity),
+  };
 }
