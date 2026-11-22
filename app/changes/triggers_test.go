@@ -161,7 +161,8 @@ func TestVerifyTriggersAfterRebuild(t *testing.T) {
 		tb.BigInteger("version").Default(1)
 		tb.UniqueIndex("workspace_id", "uid")
 		tb.UniqueIndex("workspace_id", "name").Where("deleted_at IS NULL")
-	}, schema.DropTriggers())
+	}, schema.DropTriggers(), schema.DropColumns("parent_id", "color", "icon", "archived_at"),
+		schema.DropIndexes("categories_workspace_id_parent_id_index"))
 	if err != nil {
 		t.Fatal(err)
 	}
