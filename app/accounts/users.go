@@ -138,7 +138,7 @@ func (a *Accounts) VerifyEmail(ctx context.Context, u *models.User, keep string)
 }
 
 // revokeAccess deletes userID's remember-me tokens, revokes its API tokens
-// and bumps its session version, using ex (a.DB or the transaction in
+// and OAuth grants, and bumps its session version, using ex (a.DB or the transaction in
 // progress).
 func (a *Accounts) revokeAccess(ctx context.Context, ex database.Executor, userID int64) error {
 	id := strconv.FormatInt(userID, 10)
@@ -157,7 +157,26 @@ func (a *Accounts) revokeAccess(ctx context.Context, ex database.Executor, userI
 		return err
 	}
 
+	if err := a.revokeGrants(ctx, ex, userID); err != nil {
+		return err
+	}
+
 	return a.bumpSessionVersion(ctx, ex, userID)
+}
+
+// revokeGrants ends every OAuth grant the person made to an AI client (remote
+// MCP, epic 33), in every workspace: the refresh token stops working and the
+// access token fails on its next call. It uses ex, so it commits or rolls back
+// with the rest of the revocation.
+func (a *Accounts) revokeGrants(ctx context.Context, ex database.Executor, userID int64) error {
+	p := ex.Dialect().Placeholder
+
+	_, err := ex.ExecContext(ctx,
+		"UPDATE oauth_grants SET revoked_at = "+p(1)+" WHERE revoked_at IS NULL AND id IN "+
+			"(SELECT grant_id FROM mcp_grants WHERE user_id = "+p(2)+")",
+		a.now().UTC(), userID)
+
+	return err
 }
 
 // MarkVerified sets email_verified_at using ex (a.DB, or the transaction
