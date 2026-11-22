@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { catalogs, flatten } from "../lib/copy.ts";
 import { checkCatalogs, checkRegister, findForbidden } from "../lib/claims.ts";
+import { catalogs, flatten } from "../lib/copy.ts";
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", "..");
 const brief = await Bun.file(path.join(repoRoot, "docs", "landing-brief.md")).text();
