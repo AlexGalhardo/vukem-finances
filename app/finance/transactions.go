@@ -157,6 +157,10 @@ func (s *Service) persistTransaction(
 			return err
 		}
 
+		if err := s.learnFrom(ctx, tx, in, row, *previous); err != nil {
+			return err
+		}
+
 		saved, err := reload[models.Transaction](ctx, tx, out.ID)
 		if err != nil {
 			return err
@@ -172,6 +176,10 @@ func (s *Service) persistTransaction(
 	}
 
 	if err := s.applyTags(ctx, tx, id, in.Tags); err != nil {
+		return err
+	}
+
+	if err := s.learnFrom(ctx, tx, in, row, *previous); err != nil {
 		return err
 	}
 
@@ -227,4 +235,19 @@ func updateTransaction(ctx context.Context, tx *database.Tx, id int64, row model
 	})
 
 	return err
+}
+
+// learnFrom teaches the memory of descriptions when a person picks a category
+// by hand: a new entry with one, or an edit that changed it. Generated rows
+// (recurrences, installments) are not a choice and teach nothing.
+func (s *Service) learnFrom(ctx context.Context, tx *database.Tx, in TxInput, row, previous models.Transaction) error {
+	if !row.CategoryID.Valid || in.recurrenceUID != "" || in.installment.group != "" {
+		return nil
+	}
+
+	if previous.ID != 0 && previous.CategoryID == row.CategoryID {
+		return nil
+	}
+
+	return s.LearnRule(ctx, tx, row.Description, row.CategoryID.V, models.RuleSourceUser)
 }
