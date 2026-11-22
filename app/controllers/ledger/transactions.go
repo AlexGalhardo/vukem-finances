@@ -11,8 +11,9 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
-// Transactions lists the transactions with the filters of the query string.
-func (h *Handlers) Transactions(c *web.Ctx) error {
+// txFilters reads the filters of the transaction list from the query string:
+// the page shows them back, the CSV export applies them.
+func txFilters(c *web.Ctx) (pages.TxFilters, finance.TxFilter) {
 	f := pages.TxFilters{
 		From: c.Query("from"), To: c.Query("to"), CategoryID: first(c.Query("category"), c.Query("categoryId")),
 		AccountID: first(c.Query("account"), c.Query("accountId")), Kind: c.Query("kind"),
@@ -24,10 +25,17 @@ func (h *Handlers) Transactions(c *web.Ctx) error {
 		tagIDs = []int64{tid}
 	}
 
-	page, err := h.Fin.TransactionPage(c.Context(), finance.TxFilter{
+	return f, finance.TxFilter{
 		From: f.From, To: f.To, CategoryID: id(f.CategoryID), AccountID: id(f.AccountID), Kind: f.Kind,
 		Q: f.Q, TagIDs: tagIDs, Min: f.Min, Max: f.Max, Page: int(id(c.Query("page"))),
-	})
+	}
+}
+
+// Transactions lists the transactions with the filters of the query string.
+func (h *Handlers) Transactions(c *web.Ctx) error {
+	f, filter := txFilters(c)
+
+	page, err := h.Fin.TransactionPage(c.Context(), filter)
 	if err != nil {
 		return back(c, "/transactions", err)
 	}
