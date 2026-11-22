@@ -35,6 +35,13 @@ const source = `${repoUrl}/blob/main/${page.file}`;
 	<a class="skip" href="#content">{copy.a11y.skip}</a>
 	<SiteHeader locale="en" copy={copy} />
 	<div class="wrap docs-layout">
+		<aside class="docs-side">
+		<div class="docs-search" role="search" data-docs-search data-base={basePath} hidden>
+			<label for="docs-search-input">Search the documentation</label>
+			<input id="docs-search-input" type="search" autocomplete="off" spellcheck="false" />
+			<p data-search-status role="status" aria-live="polite"></p>
+			<ul data-search-results></ul>
+		</div>
 		<nav class="docs-nav" aria-label="Documentation">
 			{groups.map((group) => (
 				<details open={group.pages.some((p) => p.slug === page.slug)}>
@@ -47,8 +54,9 @@ const source = `${repoUrl}/blob/main/${page.file}`;
 				</details>
 			))}
 		</nav>
+		</aside>
 		<main id="content">
-			<article class="doc">
+			<article class="doc" data-pagefind-body>
 				<h1>{page.title}</h1>
 				<p class="summary">{page.description}</p>
 				<ul class="doc-meta">
@@ -73,4 +81,7 @@ const source = `${repoUrl}/blob/main/${page.file}`;
 		</main>
 	</div>
 	<SiteFooter copy={copy} />
+	<script>
+		import "../scripts/docs-search.ts";
+	</script>
 </Base>

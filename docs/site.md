@@ -11,7 +11,8 @@ Run them in `site/` after `bun install --frozen-lockfile`.
 | Command | What it does |
 | --- | --- |
 | `bun run dev` | Astro dev server |
-| `bun run build` | Builds `site/out` and writes `sitemap.xml`, `robots.txt`, the Markdown twin of every docs page (`/docs/<page>.md`) and `llms.txt` |
+| `bun run build` | Builds `site/out` and writes `sitemap.xml`, `robots.txt`, the Markdown twin of every docs page (`/docs/<page>.md`), `llms.txt` and the search index (`/pagefind/`) |
+| `bun run build:search` | Indexes the built docs with Pagefind into `site/out/pagefind/` (part of `build`) |
 | `bun run check:built` | Scans `site/out`: no form, other origin, network API, server or worker file; one `h1`, no skipped heading level, landmarks, skip link, alt text, title and description lengths, JSON-LD without a price, hreflang, no hosted-service phrase on the landing page, weight budgets, and a Markdown twin and an `llms.txt` line for every docs page |
 | `bun run check:claims` | Checks the claims register of `docs/landing-brief.md` (every evidence path exists), the forbidden phrases of the three catalogs, and the documentation claims: every `app <resource> <verb>` command is in the CLI reference, every setting, repository path, REST route and MCP tool exists, every link and anchor resolves, no bare URL; a failure names the page and line |
 | `bun run check:mdx` | Checks every docs page: front matter, title of at most 43 characters, description of at most 160, no `h1`, no raw HTML, a language on every code fence, no skipped heading level, and that the page is in `content/navigation.ts` |
@@ -31,7 +32,7 @@ Run them in `site/` after `bun install --frozen-lockfile`.
 - Links between pages are absolute `/docs/.../` paths with a trailing slash; the build adds the base path. Link outside only to the repository, and put any other URL in code: a bare URL becomes a link to another origin and fails `check:built`.
 - The reference pages are generated, never edited. After a change to `docs/openapi.json`, `docs/reference/*.md`, `resources/operations.json`, `.env.example`, `docs/shortcuts.md` or `CHANGELOG.md`, run `bun run reference` and commit the pages with it. The generators read their sources from `site/lib/reference-config.ts`.
 - The pages use no script: the sidebar is `details` elements, code blocks and wide tables are focusable named regions, and the colors follow the system theme.
-- Search (Pagefind) is not added: it needs a new dependency that the author has not approved.
+- Search is [Pagefind](https://pagefind.app) 1.6.0, pinned exactly: `scripts/search.ts` indexes the pages that carry `data-pagefind-body` (the docs only) into `out/pagefind/` and drops the stock UI files. The search box is the site's own (`src/scripts/docs-search.ts`): a labelled input with results in a live region, hidden in the HTML and shown by the script, so the pages still need no JavaScript. Its only requests are same-origin GETs of the static files under `/pagefind/` (the index, the WebAssembly and Pagefind's worker); `check:built` allows `fetch` only inside that folder and requires the index when a page has the box.
 - The documentation says the personal edition is 100% offline (D-027) and that the SaaS edition is software an operator hosts, with no hosted service offered.
 
 ## Configuration

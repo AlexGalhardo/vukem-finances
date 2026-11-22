@@ -16,6 +16,8 @@ export const budgets = { htmlBytes: 60 * 1024, cssGzipBytes: 40 * 1024, totalGzi
 
 const SERVER_NAMES = /worker|server|functions|_routes\.json/i;
 const NETWORK_API = /\bfetch\s*\(|XMLHttpRequest|WebSocket|EventSource|sendBeacon/;
+// Pagefind reads its own static index with same-origin GET requests; its files are the only ones allowed to.
+const SEARCH_DIR = "pagefind/";
 
 function walk(dir: string): string[] {
   return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
@@ -75,6 +77,9 @@ export function checkPage(dir: string, file: string, options: BuiltOptions): str
   for (const script of html.matchAll(/<script(?=[\s>])([^>]*)>([\s\S]*?)<\/script>/gi)) {
     const type = attr(`<script${script[1]}>`, "type");
     if (type === "application/ld+json") continue;
+    // The documentation search is the one enhancement: a module that shows the search box. Everything else is
+    // readable without JavaScript.
+    if (type === "module" && rel.startsWith("docs/")) continue;
     fail("contains a script, but content must work without JavaScript");
   }
   if (/\son[a-z]+\s*=/i.test(html.replace(/<script[\s\S]*?<\/script>/gi, ""))) fail("contains an inline event handler");
@@ -186,6 +191,24 @@ function checkDocs(dir: string, files: string[]): string[] {
   return problems;
 }
 
+/** The search box needs the index, and the index must hold nothing but static Pagefind files. */
+function checkSearch(dir: string, files: string[], pages: string[]): string[] {
+  const problems: string[] = [];
+  const hasBox = pages.some((f) => fs.readFileSync(f, "utf8").includes("data-docs-search"));
+  if (hasBox && !fs.existsSync(path.join(dir, SEARCH_DIR, "pagefind.js"))) {
+    problems.push(`${SEARCH_DIR}pagefind.js: the docs have a search box but no index`);
+  }
+  for (const file of files) {
+    const rel = path.relative(dir, file).split(path.sep).join("/");
+    if (!rel.startsWith(SEARCH_DIR)) continue;
+    if (/\.html?$/.test(rel)) problems.push(`${rel}: an HTML page inside the search index`);
+    if (/pagefind-(ui|component-ui|modular-ui|highlight)\./.test(rel)) {
+      problems.push(`${rel}: a Pagefind UI file; the site uses its own search box`);
+    }
+  }
+  return problems;
+}
+
 /** Problems of a whole build output directory. */
 export function checkBuilt(dir: string, options: BuiltOptions): string[] {
   if (!fs.existsSync(dir)) return [`${dir} does not exist: run the build first`];
@@ -196,7 +219,7 @@ export function checkBuilt(dir: string, options: BuiltOptions): string[] {
   const files = walk(dir);
   for (const file of files) {
     const rel = path.relative(dir, file).split(path.sep).join("/");
-    if (/\.(m?js|cjs)$/.test(file) && NETWORK_API.test(fs.readFileSync(file, "utf8"))) {
+    if (/\.(m?js|cjs)$/.test(file) && !rel.startsWith(SEARCH_DIR) && NETWORK_API.test(fs.readFileSync(file, "utf8"))) {
       problems.push(`${rel}: calls a network API (fetch, XMLHttpRequest, WebSocket, EventSource or sendBeacon)`);
     }
     if (/\.css$/.test(file) && /@import\s+(url\()?["']?https?:/i.test(fs.readFileSync(file, "utf8"))) {
@@ -207,6 +230,7 @@ export function checkBuilt(dir: string, options: BuiltOptions): string[] {
   for (const file of pages) problems.push(...checkPage(dir, file, options));
 
   problems.push(...checkDocs(dir, files));
+  problems.push(...checkSearch(dir, files, pages));
 
   for (const locale of locales) {
     const page = path.join(dir, locale === "en" ? "index.html" : `${locale}/index.html`);

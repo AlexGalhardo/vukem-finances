@@ -19,6 +19,7 @@ async function build(out: string, env: Record<string, string> = {}): Promise<voi
     ["bun", "--bun", "astro", "build"],
     ["bun", "scripts/sitemap.ts"],
     ["bun", "scripts/twins.ts"],
+    ["bun", "scripts/search.ts"],
   ]) {
     const proc = Bun.spawn(cmd, { cwd: root, env: full, stdout: "pipe", stderr: "pipe" });
     const code = await proc.exited;
@@ -41,7 +42,11 @@ const read = (dir: string, file: string): string => fs.readFileSync(path.join(di
 /** Copies the good build, applies a change and returns the problems the check finds. */
 function planted(change: (dir: string) => void, options = { origin, termsApproved: false }): string {
   const dir = fs.mkdtempSync(path.join(tmp, "planted-"));
-  fs.cpSync(normal, dir, { recursive: true });
+  fs.cpSync(normal, dir, {
+    recursive: true,
+    // The checks only look for the Pagefind library; its many index fragments would slow every copy.
+    filter: (source) => !/[/\\]pagefind[/\\](fragment|index)([/\\]|$)/.test(source),
+  });
   change(dir);
   return checkBuilt(dir, options).join("\n");
 }
@@ -282,6 +287,53 @@ describe("the checks fail on planted problems", () => {
   test("a missing landing page", () => {
     expect(planted((dir) => fs.rmSync(path.join(dir, "es"), { recursive: true }))).toContain(
       "es: landing page missing",
+    );
+  });
+});
+
+describe("search", () => {
+  const docsIndex = (dir: string): string => read(dir, "docs/index.html");
+  const pagefind = (dir: string, ...rest: string[]): string => path.join(dir, "pagefind", ...rest);
+
+  test("the index holds every docs page and nothing else", () => {
+    const entry = JSON.parse(read(normal, "pagefind/pagefind-entry.json")) as {
+      languages: Record<string, { page_count: number }>;
+    };
+    const docsPages = fs
+      .readdirSync(path.join(normal, "docs"), { recursive: true })
+      .filter((f) => String(f).endsWith("index.html")).length;
+    expect(entry.languages.en?.page_count).toBe(docsPages);
+    expect(Object.keys(entry.languages)).toEqual(["en"]);
+    expect(fs.existsSync(pagefind(normal, "pagefind.js"))).toBe(true);
+    expect(
+      fs.readdirSync(pagefind(normal)).filter((n) => /pagefind-(ui|component-ui|modular-ui|highlight)\./.test(n)),
+    ).toEqual([]);
+  });
+
+  test("the box has a label, announces its results and is shown only by the script", () => {
+    const html = docsIndex(normal);
+    expect(html).toContain('<label for="docs-search-input">');
+    expect(html).toMatch(/<input id="docs-search-input" type="search"/);
+    expect(html).toMatch(/<p data-search-status role="status" aria-live="polite">/);
+    expect(html).toMatch(/data-docs-search[^>]*\shidden/);
+    expect(html).toContain("data-pagefind-body");
+    expect(read(normal, "index.html")).not.toContain("data-docs-search");
+  });
+
+  test("the Pagefind files may read their own index, nothing else may call the network", () => {
+    expect(fs.readFileSync(pagefind(normal, "pagefind.js"), "utf8")).toMatch(/\bfetch\s*\(/);
+    expect(checkBuilt(normal, { origin, termsApproved: false })).toEqual([]);
+    expect(
+      planted((dir) => fs.writeFileSync(path.join(dir, "_astro", "search.js"), "fetch('/pagefind/x');")),
+    ).toContain("calls a network API");
+  });
+
+  test("planted: no index, a stock UI file, a module script outside the docs", () => {
+    expect(planted((dir) => fs.rmSync(pagefind(dir), { recursive: true }))).toContain("no index");
+    expect(planted((dir) => fs.writeFileSync(pagefind(dir, "pagefind-ui.js"), ""))).toContain("Pagefind UI file");
+    expect(planted((dir) => fs.writeFileSync(pagefind(dir, "page.html"), ""))).toContain("HTML page inside");
+    expect(planted(editIndex((h) => h.replace("</body>", '<script type="module">1</script></body>')))).toContain(
+      "without JavaScript",
     );
   });
 });
