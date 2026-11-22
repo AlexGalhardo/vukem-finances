@@ -69,6 +69,16 @@ workspace settings and the AI layer have no scope and are not in the API.
 | `budgets:read` | list budgets with what the month spent | any |
 | `budgets:write` | set and remove budgets | owner, admin |
 | `summary:read` | the monthly summary | any |
+| `cards:read` | list and read credit cards with their limits and statements | any |
+| `cards:write` | create, edit, archive and unarchive credit cards | owner, admin |
+| `statements:read` | list and read the statements of a card | any |
+| `statements:write` | pay a statement from a bank account | owner, admin, member |
+| `recurrences:read` | list recurring rules | any |
+| `recurrences:write` | create, edit and delete recurring rules | owner, admin, member |
+| `goals:read` | list savings goals with their progress | any |
+| `goals:write` | create, edit, archive and delete goals; add and delete contributions | owner, admin to manage a goal; owner, admin, member for contributions |
+| `reports:read` | the reports: cash flow, by category, account and tag, net worth, comparison | any |
+| `export:read` | download the transactions as CSV; download the whole workspace as JSON | any for the CSV; owner, admin for the workspace JSON |
 | `sync` | the [sync protocol](specs/sync-protocol.md): devices, pull, snapshot and push | any to read; each pushed row needs the role of its entity |
 
 The `sync` scope is a ceiling too: a viewer's token pulls but every pushed mutation is rejected `forbidden`, and a member pushes transactions but not accounts. Its routes (`/api/v1/sync/...`) also need the header `X-Sync-Protocol: 1` and, after the device is registered, `X-Device-Id`; they are REST only (no CLI or MCP surface) and are written in [the sync protocol](specs/sync-protocol.md).
@@ -147,7 +157,9 @@ safely. A `uid` that belongs to a deleted row, or to a row that differs, is
 The first request runs and its answer is kept for 24 hours; the same key with the
 same request replays that answer with `Idempotent-Replayed: true`. The same key
 while the first request still runs is `409`. The same key with a different
-request is `422`. Keys are per token.
+request is `422`. Keys are per token. A request that fails does not keep its key:
+repeat it, corrected, under the same key. The key is applied by the operation
+registry (`operations.Invoke`), so the CLI and MCP surfaces behave the same.
 
 ### If-Match
 
@@ -194,16 +206,29 @@ server, a script or a mobile app.
 
 ## Adding an operation
 
-1. Add its row to `app/api/operations.go` (name, method, path, scope, summary).
-   A new scope goes in `app/api/scopes.go` with the role ability it needs.
-2. Write the handler in `app/api/` as a thin function (bind the input, call a
-   service of `app/finance` or `app/workspaces`, return the output) and register
-   it in `API.Routes`. The scope check and the `Idempotency-Key` replay come from
-   the table.
-3. Regenerate the document and the client (command above).
-4. Add its case to `matrixCalls` in `tests/api_scope_matrix_test.go`, and, when
-   the path takes a `{uid}`, to `apiCrossTenantCases` in
-   `tests/cross_tenant_matrix_test.go`. Both tests fail until it is done.
+Every operation is declared once in `app/operations/` (the registry, epic 30);
+REST is an adapter over it.
+
+1. Declare it: `operations.Define` with its name, summary, scope, kind (`read`,
+   `write` or `destructive`), `Idempotent` for a `POST` or `PATCH`, typed input
+   and output, and a thin `Run(ctx, actor, in)` that calls a service of
+   `app/finance`, `app/reports` or `app/workspaces`. `Run` never takes a
+   workspace id from its input: the workspace is the actor's. A new scope goes in
+   `app/operations/scopes.go` with the role ability it needs; an operation that
+   asks more or less of the role than its scope implies sets `Ability`.
+2. Add its REST row to `app/api/operations.go` (name, method, path, tag, status)
+   and its `route(a, g, a.Ops...)` line to `API.Routes`. The scope and the summary
+   come from the registry; the scope, the role, the validation, the
+   `Idempotency-Key` and the audit entry come from `Invoke`.
+3. Regenerate the document and the client (command above) and the inventory
+   (`go run ./cmd/app operations:inventory`, which writes
+   `resources/operations.json`; a test fails when it is stale).
+4. Add its case to `matrixCalls` in `tests/api_scope_matrix_test.go`, to
+   `apiCrossTenantCases` in `tests/cross_tenant_matrix_test.go` when the path
+   takes a `{uid}`, and to `operationCalls` in `tests/operation_isolation_test.go`.
+   The tests fail until it is done. `TestSurfaceParity` fails when an operation
+   has no REST route; an operation leaves a surface only with a written reason
+   (`OptOut`).
 
 ## Examples
 
@@ -237,4 +262,18 @@ curl -H "Authorization: Bearer $TOKEN" "$BASE/api/v1/budgets?month=2026-11"
 
 # summary:read
 curl -H "Authorization: Bearer $TOKEN" "$BASE/api/v1/summary?month=2026-11"
+
+# cards:read, statements:read
+curl -H "Authorization: Bearer $TOKEN" "$BASE/api/v1/cards"
+curl -H "Authorization: Bearer $TOKEN" "$BASE/api/v1/cards/$CARD/statements/2026-11-10"
+
+# statements:write (amount_cents 0 pays what is left)
+curl -X POST -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+  -d '{"from_account_uid":"'$ACCOUNT'","amount_cents":0}' "$BASE/api/v1/cards/$CARD/statements/2026-11-10/pay"
+
+# reports:read
+curl -H "Authorization: Bearer $TOKEN" "$BASE/api/v1/reports/categories?period=last_3_months&kind=expense"
+
+# export:read
+curl -H "Authorization: Bearer $TOKEN" -o transactions.csv "$BASE/api/v1/export/transactions?from=2026-11-01"
 ```

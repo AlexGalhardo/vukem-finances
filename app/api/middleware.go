@@ -85,6 +85,9 @@ type API struct {
 	Sync   *syncproto.Service
 	// Ops is the registry every operation of the API goes through.
 	Ops *operations.Catalog
+	// Exports holds the downloads of a workspace to the limit they share with
+	// the exports of the web app.
+	Exports func(http.Handler) http.Handler
 	// PullLimiter and PushLimiter hold a device to the sync rate limits.
 	PullLimiter, PushLimiter ratelimit.Limiter
 	Log                      *slog.Logger

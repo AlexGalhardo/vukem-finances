@@ -21,6 +21,16 @@ const (
 	ScopeBudgetsRead       = "budgets:read"
 	ScopeBudgetsWrite      = "budgets:write"
 	ScopeSummaryRead       = "summary:read"
+	ScopeCardsRead         = "cards:read"
+	ScopeCardsWrite        = "cards:write"
+	ScopeStatementsRead    = "statements:read"
+	ScopeStatementsWrite   = "statements:write"
+	ScopeRecurrencesRead   = "recurrences:read"
+	ScopeRecurrencesWrite  = "recurrences:write"
+	ScopeGoalsRead         = "goals:read"
+	ScopeGoalsWrite        = "goals:write"
+	ScopeReportsRead       = "reports:read"
+	ScopeExportRead        = "export:read"
 	// ScopeSync is the sync protocol (docs/specs/sync-protocol.md). It needs
 	// only the read ability: what a push may change is checked per row, against
 	// the role of the token's person.
@@ -46,6 +56,16 @@ var scopes = []Scope{ //nolint:gochecknoglobals // a constant table
 	{ScopeBudgetsRead, workspaces.AbilityRead},
 	{ScopeBudgetsWrite, workspaces.AbilityManageData},
 	{ScopeSummaryRead, workspaces.AbilityRead},
+	{ScopeCardsRead, workspaces.AbilityRead},
+	{ScopeCardsWrite, workspaces.AbilityManageData},
+	{ScopeStatementsRead, workspaces.AbilityRead},
+	{ScopeStatementsWrite, workspaces.AbilityRecord},
+	{ScopeRecurrencesRead, workspaces.AbilityRead},
+	{ScopeRecurrencesWrite, workspaces.AbilityRecord},
+	{ScopeGoalsRead, workspaces.AbilityRead},
+	{ScopeGoalsWrite, workspaces.AbilityManageData},
+	{ScopeReportsRead, workspaces.AbilityRead},
+	{ScopeExportRead, workspaces.AbilityRead},
 	{ScopeSync, workspaces.AbilityRead},
 }
 

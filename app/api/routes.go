@@ -75,5 +75,40 @@ func (a *API) Routes(g *router.Group, idem router.Middleware) {
 
 	route(a, g, a.Ops.Budgets.Summary)
 
+	route(a, g, a.Ops.Cards.List)
+	route(a, g, a.Ops.Cards.Show)
+	route(a, g, a.Ops.Cards.Create)
+	route(a, g, a.Ops.Cards.Update)
+	route(a, g, a.Ops.Cards.Archive)
+	route(a, g, a.Ops.Cards.Unarchive)
+
+	route(a, g, a.Ops.Cards.Statements)
+	route(a, g, a.Ops.Cards.Statement)
+	route(a, g, a.Ops.Cards.PayStatement)
+
+	route(a, g, a.Ops.Recurrences.List)
+	route(a, g, a.Ops.Recurrences.Create)
+	route(a, g, a.Ops.Recurrences.Update)
+	route(a, g, a.Ops.Recurrences.Delete)
+
+	route(a, g, a.Ops.Goals.List)
+	route(a, g, a.Ops.Goals.Create)
+	route(a, g, a.Ops.Goals.Update)
+	route(a, g, a.Ops.Goals.Archive)
+	route(a, g, a.Ops.Goals.Unarchive)
+	route(a, g, a.Ops.Goals.Delete)
+	route(a, g, a.Ops.Goals.Add)
+	route(a, g, a.Ops.Goals.Remove)
+
+	route(a, g, a.Ops.Reports.CashFlow)
+	route(a, g, a.Ops.Reports.Categories)
+	route(a, g, a.Ops.Reports.Accounts)
+	route(a, g, a.Ops.Reports.Tags)
+	route(a, g, a.Ops.Reports.NetWorth)
+	route(a, g, a.Ops.Reports.Compare)
+
+	download(a, g, a.Ops.Exports.Transactions)
+	download(a, g, a.Ops.Exports.Workspace)
+
 	a.syncRoutes(g, idem)
 }
