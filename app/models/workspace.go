@@ -24,7 +24,25 @@ type Workspace struct {
 	Currency         string           `json:"currency"`
 	Timezone         string           `json:"timezone"`
 	StripeCustomerID sql.Null[string] `json:"-"`
+
+	// State is StateActive or StatePending (an empty value, a row made before
+	// epic 34, is active). PurgeAt is when the purge job removes a pending
+	// workspace; PurgeError is the reason the last purge attempt stopped.
+	State               string       `json:"-"`
+	PurgeAt             orm.NullTime `json:"-"`
+	DeletionRequestedAt orm.NullTime `json:"-"`
+	DeletionRequestedBy int64        `json:"-"`
+	PurgeError          string       `json:"-"`
 }
+
+// States of a workspace.
+const (
+	StateActive          = "active"
+	StatePendingDeletion = "pending_deletion"
+)
+
+// PendingDeletion reports whether the workspace is in its grace period.
+func (w Workspace) PendingDeletion() bool { return w.State == StatePendingDeletion }
 
 // MonthlySummarySent records that the summary of Month ("2026-11") went out
 // for the workspace, so a missed or doubled scheduler run is harmless.

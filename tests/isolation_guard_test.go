@@ -38,6 +38,10 @@ var sharedTables = []string{
 	// bound to its workspace by mcp_grants, the tenant table, and every call reads
 	// the live membership.
 	"oauth_grants", "oauth_codes", "oauth_refresh_tokens",
+	// Data lifecycle (epic 34): what may outlive a purged workspace or person. A
+	// deletion event with a hashed subject, the minimal payment record the law
+	// asks to keep, and the public id of an API token of a purged workspace.
+	"privacy_audit", "payment_records", "purged_tokens",
 	// Framework tables (queue, cache, sessions, locks, migrations).
 	"migrations", "jobs", "failed_jobs", "cache", "cache_locks", "sessions",
 }
