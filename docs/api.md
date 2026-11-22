@@ -81,7 +81,7 @@ workspace settings and the AI layer have no scope and are not in the API.
 | `export:read` | download the transactions as CSV; download the whole workspace as JSON | any for the CSV; owner, admin for the workspace JSON |
 | `sync` | the [sync protocol](specs/sync-protocol.md): devices, pull, snapshot and push | any to read; each pushed row needs the role of its entity |
 
-The `sync` scope is a ceiling too: a viewer's token pulls but every pushed mutation is rejected `forbidden`, and a member pushes transactions but not accounts. Its routes (`/api/v1/sync/...`) also need the header `X-Sync-Protocol: 1` and, after the device is registered, `X-Device-Id`; they are REST only (no CLI or MCP surface) and are written in [the sync protocol](specs/sync-protocol.md).
+The `sync` scope is a ceiling too: a viewer's token pulls but every pushed mutation is rejected `forbidden`, and a member pushes transactions but not accounts. Its routes (`/api/v1/sync/...`) also need the header `X-Sync-Protocol: 1` and, after the device is registered, `X-Device-Id`; they are REST only (no CLI or MCP surface) and are written in [the sync protocol](specs/sync-protocol.md). A phone gets its `sync` token by pairing: `POST /api/v1/sync/pair` is the one operation that takes no token, only a single-use code from the Devices page (see [Pairing](specs/sync-protocol.md#pairing)).
 
 `GET /api/v1/me` needs a valid token and no scope. The scope of every operation
 is in the document as `x-required-scope`.
