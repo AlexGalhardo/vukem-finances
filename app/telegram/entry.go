@@ -262,6 +262,9 @@ func (b *Bot) confirmEntry(ctx context.Context, link models.TelegramLink, q Call
 	}
 
 	if err := b.Store.MarkCreated(ctx, ref, tx.UID); err != nil {
+		// The redelivery finds the row by its uid and records it, keeping the undo.
+		_ = b.Store.Unconsume(ctx, ref)
+
 		return "", err
 	}
 
