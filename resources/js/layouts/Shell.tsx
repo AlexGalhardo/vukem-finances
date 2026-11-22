@@ -1,5 +1,15 @@
 import { Link, router, usePage } from "@inertiajs/react";
-import { ArrowUpRight, Keyboard, LogOut, Plus, Search, Settings, ShieldCheck } from "lucide-react";
+import {
+  ArrowUpRight,
+  BookOpen,
+  CircleUser,
+  Keyboard,
+  LogOut,
+  Plus,
+  Search,
+  Settings,
+  ShieldCheck,
+} from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import AssistantHost from "../components/assistant/AssistantHost";
 import CommandPalette from "../components/CommandPalette";
@@ -7,9 +17,17 @@ import { Shortcut } from "../components/Kbd";
 import NotificationBell from "../components/NotificationBell";
 import Preferences from "../components/Preferences";
 import ShortcutHelp from "../components/ShortcutHelp";
+import ThemeToggle from "../components/ThemeToggle";
 import QuickAdd, { useQuickAdd } from "../components/transactions/QuickAdd";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../components/ui/dropdown-menu";
 import { NativeSelect, NativeSelectOption } from "../components/ui/native-select";
 import {
   Sidebar,
@@ -31,6 +49,8 @@ import { isActivePath, navItemsFor } from "../nav";
 import type { SharedProps } from "../page-props";
 import ShellKeyboard from "../shortcuts/ShellKeyboard";
 import { useIsMac } from "../shortcuts/useIsMac";
+
+const DOCS_URL = "https://finances.vukem.dev/docs/";
 
 /** On a new path, moves focus to the page h1 (or main) and announces the title in a polite live region. */
 function useRouteFocus(): string {
@@ -170,36 +190,45 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
             </SidebarContent>
             <SidebarFooter className="p-4">
               <SidebarMenu>
-                {workspace.admin && (
-                  <SidebarMenuItem>
-                    <SidebarMenuButton asChild tooltip={t("admin")}>
-                      <Link href="/admin">
-                        <ShieldCheck aria-hidden="true" />
-                        <span>{t("admin")}</span>
-                      </Link>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                )}
                 <SidebarMenuItem>
-                  <SidebarMenuButton tooltip={t("openShortcutHelp")} onClick={() => setHelpOpen(true)}>
-                    <Keyboard aria-hidden="true" />
-                    <span>{t("openShortcutHelp")}</span>
-                  </SidebarMenuButton>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuButton tooltip={t("myAccount")}>
+                        <CircleUser aria-hidden="true" />
+                        <span>{t("myAccount")}</span>
+                      </SidebarMenuButton>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent side="top" align="start">
+                      <p className="truncate px-2 py-1.5 text-xs text-muted-foreground">{auth.user.name}</p>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem asChild>
+                        <Link href="/user/two-factor">
+                          <Settings aria-hidden="true" />
+                          {t("accountSettings")}
+                        </Link>
+                      </DropdownMenuItem>
+                      {workspace.admin && (
+                        <DropdownMenuItem asChild>
+                          <Link href="/admin">
+                            <ShieldCheck aria-hidden="true" />
+                            {t("admin")}
+                          </Link>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem onSelect={() => router.post("/logout")}>
+                        <LogOut aria-hidden="true" />
+                        {t("logout")}
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </SidebarMenuItem>
                 <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={auth.user.name}>
-                    <Link href="/user/two-factor">
-                      <Settings aria-hidden="true" />
-                      <span>{auth.user.name}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton asChild tooltip={t("logout")}>
-                    <Link href="/logout" method="post" as="button">
-                      <LogOut aria-hidden="true" />
-                      <span>{t("logout")}</span>
-                    </Link>
+                  <SidebarMenuButton asChild tooltip={t("documentation")}>
+                    <a href={DOCS_URL} target="_blank" rel="noreferrer">
+                      <BookOpen aria-hidden="true" />
+                      <span>{t("documentation")}</span>
+                    </a>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               </SidebarMenu>
@@ -240,6 +269,7 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
                 </Button>
                 <NotificationBell />
                 <Preferences withShortcuts />
+                <ThemeToggle />
               </div>
             </header>
             <main id="content" tabIndex={-1} className="outline-none">

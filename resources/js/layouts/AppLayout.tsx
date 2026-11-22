@@ -2,6 +2,7 @@ import { Link, usePage } from "@inertiajs/react";
 import { ArrowUpRight } from "lucide-react";
 import type { ReactNode } from "react";
 import Preferences from "../components/Preferences";
+import ThemeToggle from "../components/ThemeToggle";
 import { Button } from "../components/ui/button";
 import { TooltipProvider } from "../components/ui/tooltip";
 import { useFinanceI18n } from "../lib/i18n";
@@ -53,6 +54,7 @@ export default function AppLayout({ children }: { children: ReactNode }) {
           <Button asChild variant="ghost">
             <Link href="/login">{t("login")}</Link>
           </Button>
+          <ThemeToggle />
         </div>
       </header>
       {landing ? (
