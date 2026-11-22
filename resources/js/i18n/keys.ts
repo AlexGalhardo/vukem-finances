@@ -9,6 +9,7 @@ import type common from "./en/common";
 import type components from "./en/components";
 import type goals from "./en/goals";
 import type importPage from "./en/import";
+import type mcp from "./en/mcp";
 import type recurrences from "./en/recurrences";
 import type reports from "./en/reports";
 import type search from "./en/search";
@@ -31,6 +32,7 @@ export type Key =
   | keyof typeof components
   | keyof typeof goals
   | keyof typeof importPage
+  | keyof typeof mcp
   | keyof typeof recurrences
   | keyof typeof reports
   | keyof typeof search
