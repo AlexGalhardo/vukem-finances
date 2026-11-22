@@ -390,3 +390,36 @@ type TelegramAlerts struct {
 var TelegramAlertsSchema = z.Struct[TelegramAlerts](z.Shape{
 	"enabled": z.String().Trim().Min(4).Max(5),
 })
+
+// AcceptAll is the input of "accept all above a confidence": min is a whole percent.
+type AcceptAll struct {
+	Min string `json:"min" form:"min"`
+}
+
+// AcceptAllSchema validates AcceptAll.
+var AcceptAllSchema = z.Struct[AcceptAll](z.Shape{
+	"min": z.String().Trim().Min(1).Max(3),
+})
+
+// EntryDraft is the input of the sentence to draft.
+type EntryDraft struct {
+	Text string `json:"text" form:"text"`
+}
+
+// EntryDraftSchema validates EntryDraft; the service enforces the exact length.
+var EntryDraftSchema = z.Struct[EntryDraft](z.Shape{
+	"text": z.String().Trim().Min(1).Max(1000),
+})
+
+// AssistantAsk is the input of a question to the assistant. ConversationID is
+// empty to start a new conversation.
+type AssistantAsk struct {
+	Question       string `json:"question"       form:"question"`
+	ConversationID string `json:"conversationId" form:"conversationId"`
+}
+
+// AssistantAskSchema validates AssistantAsk; the service enforces the exact length.
+var AssistantAskSchema = z.Struct[AssistantAsk](z.Shape{
+	"question":       z.String().Trim().Min(1).Max(2000),
+	"conversationId": z.String().Trim().Max(20).Optional(),
+})

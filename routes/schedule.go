@@ -38,6 +38,9 @@ func Schedule(s *schedule.Schedule, _ *vukem.App) {
 	// Keys sealed with a former APP_KEY are re-sealed with the current one.
 	s.Job(jobs.AIReseal{}).Daily().WithoutOverlapping()
 
+	// Assistant conversations are kept 90 days after their last message.
+	s.Job(jobs.AssistantPrune{}).DailyAt("04:20").WithoutOverlapping()
+
 	// Re-read the PIX charges that can still change (refunds, disputes, timers)
 	// every 6 hours; a no-op in the personal edition and while PIX is off.
 	s.Job(jobs.BillingReconcile{}).Cron("15 */6 * * *").WithoutOverlapping()
