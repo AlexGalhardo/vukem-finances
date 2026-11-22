@@ -120,6 +120,50 @@ func TestDesktopOpenExternalOnlyWebAddresses(t *testing.T) {
 	}
 }
 
+type failingSource struct{ read bool }
+
+func (f *failingSource) Seek(int64, int) (int64, error) { return 0, nil }
+
+func (f *failingSource) Read(p []byte) (int, error) {
+	if !f.read {
+		f.read = true
+		return copy(p, "partial"), nil
+	}
+
+	return 0, io.ErrUnexpectedEOF
+}
+
+func TestCopyToKeepsTheOldFileWhenTheWriteFails(t *testing.T) {
+	t.Parallel()
+
+	dir := t.TempDir()
+	dest := filepath.Join(dir, "backup.zip")
+
+	if err := os.WriteFile(dest, []byte("the old backup"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if err := copyTo(&failingSource{}, dest); err == nil {
+		t.Fatal("a failed write was reported as saved")
+	}
+
+	if got, _ := os.ReadFile(dest); string(got) != "the old backup" {
+		t.Fatalf("the old file became %q", got)
+	}
+
+	if entries, _ := os.ReadDir(dir); len(entries) != 1 {
+		t.Fatalf("%d files left in the folder, want only the old one", len(entries))
+	}
+
+	if err := copyTo(strings.NewReader("the new backup"), dest); err != nil {
+		t.Fatal(err)
+	}
+
+	if got, _ := os.ReadFile(dest); string(got) != "the new backup" {
+		t.Fatalf("the replaced file = %q", got)
+	}
+}
+
 func TestSafeFileName(t *testing.T) {
 	for in, want := range map[string]string{
 		"a.csv": "a.csv", "../../x.csv": "x.csv", `C:\temp\y.csv`: "y.csv", "": "download", "..": "download", "/": "download",
