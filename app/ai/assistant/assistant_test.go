@@ -594,6 +594,13 @@ func TestQuestionIsStoredSanitized(t *testing.T) {
 				t.Fatal(err)
 			}
 
+			// The nanoseconds of a timestamp can spell 1111 by chance.
+			for i, v := range vals {
+				if _, isTime := v.(time.Time); isTime {
+					vals[i] = nil
+				}
+			}
+
 			row := fmt.Sprint(vals...)
 			for _, leaked := range []string{"4111", "1111", "WEST", "5698", "ana@example.com"} {
 				if strings.Contains(row, leaked) {
