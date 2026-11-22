@@ -31,25 +31,56 @@ var (
 )
 
 // readOp runs a read operation as the caller and returns its JSON. Every
-// resource goes through here, so it has the scope, role and isolation of the
-// tool of the same operation. A refusal looks like a missing resource.
+// resource and every completion goes through here, so it passes the same hooks
+// as a tool call (the rate limit of the grant and the audit line) and has the
+// scope, role and isolation of the tool of the same operation. A refusal looks
+// like a missing resource, except a rate limit, which says so: it reveals
+// nothing about the resource.
 func (h *host) readOp(ctx context.Context, op string, input any) ([]byte, error) {
-	dyn, ok := h.cat.Dynamic(op)
-	if !ok {
+	m, ok := h.cat.Named(op)
+	dyn, found := h.cat.Dynamic(op)
+
+	if !ok || !found {
+		return nil, vmcp.ErrNotFound
+	}
+
+	finish := func(err error) {
+		if h.done != nil {
+			h.done(ctx, m, err)
+		}
+	}
+
+	refuse := func(err error) ([]byte, error) {
+		finish(err)
+
+		if operations.IsCode(err, operations.CodeRateLimited) {
+			return nil, operations.ToolError(err)
+		}
+
 		return nil, vmcp.ErrNotFound
 	}
 
 	actor, err := h.actor(ctx)
 	if err != nil {
-		return nil, vmcp.ErrNotFound
+		return refuse(err)
+	}
+
+	if h.before != nil {
+		if err := h.before(ctx, m, actor); err != nil {
+			return refuse(err)
+		}
 	}
 
 	body, err := json.Marshal(input)
 	if err != nil {
+		finish(err)
+
 		return nil, err
 	}
 
 	res, err := dyn.CallJSON(ctx, actor, body)
+	finish(err)
+
 	if err != nil {
 		if e, ok := errors.AsType[*operations.Error](err); ok && e.Code != operations.CodeInternal {
 			return nil, vmcp.ErrNotFound
