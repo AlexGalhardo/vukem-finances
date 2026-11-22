@@ -86,6 +86,8 @@ type User struct {
 	ID       int64  `json:"id"`
 	IsBot    bool   `json:"is_bot"`
 	Username string `json:"username"`
+	// LanguageCode is the IETF tag of the person's Telegram app ("pt-br").
+	LanguageCode string `json:"language_code"`
 }
 
 // Chat is a Telegram chat. Only Type "private" is served.
