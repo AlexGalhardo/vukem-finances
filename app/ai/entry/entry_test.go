@@ -51,10 +51,10 @@ func TestParseEntry(t *testing.T) {
 	today := r.Fin.Today(r.Ctx)
 
 	say(r, replyOf(map[string]any{
-		"amount_text": "R$ 45,90", "category_uid": groceries.UID, "account_uid": accounts[0].UID, "description": "Mercado",
+		"amount_text": "R$ 45,90", "category_uid": groceries.UID, "description": "Mercado",
 	}))
 
-	d, err := svc.Parse(r.Ctx, "mercado R$ 45,90")
+	d, err := svc.Parse(r.Ctx, "mercado R$ 45,90 on "+strings.ToUpper(accounts[0].Name))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -219,6 +219,33 @@ func TestParseDate(t *testing.T) {
 		got, err := entry.ParseDate(c.text, c.today)
 		if (err != nil) != (c.want == "") || got != c.want {
 			t.Errorf("ParseDate(%q, %s) = %q, %v; want %q", c.text, c.today, got, err, c.want)
+		}
+	}
+}
+
+func TestEntrySendsNoAccountName(t *testing.T) {
+	t.Parallel()
+
+	r, svc := rig(t)
+	accounts, _ := r.Fin.Accounts(r.Ctx)
+	say(r, replyOf(map[string]any{"account_uid": accounts[0].UID}))
+
+	// The sentence does not name the account: it stays unset, whatever the model says.
+	d, err := svc.Parse(r.Ctx, "lunch 12.50")
+	if err != nil || d.AccountID != 0 {
+		t.Fatalf("draft = %+v, %v", d, err)
+	}
+
+	for _, req := range r.Provider.Requests() {
+		body := strings.ToLower(req.Messages[0].Content + req.System)
+		for _, a := range accounts {
+			if strings.Contains(body, strings.ToLower(a.Name)) || strings.Contains(body, a.UID) {
+				t.Errorf("account %q reached the provider: %s", a.Name, body)
+			}
+		}
+
+		if strings.Contains(body, "accounts") {
+			t.Error("the payload has an accounts list")
 		}
 	}
 }
