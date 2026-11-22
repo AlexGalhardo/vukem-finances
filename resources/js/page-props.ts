@@ -884,6 +884,7 @@ export type SharedProps = {
   googleEnabled: boolean;
   locale: string;
   notifications?: SharedNotifications | null;
+  release?: string;
   workspace?: SharedWorkspace | null;
 };
 
