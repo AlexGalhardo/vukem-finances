@@ -2,8 +2,8 @@ import { createContext, type ReactNode, useCallback, useContext, useEffect, useM
 import { type Scheme, UiProvider } from "../components/ui";
 import type { Database } from "../db/database";
 import type { Repository } from "../db/repository";
-import { todayIn } from "../domain/time";
 import type { Ledger } from "../domain/ledger";
+import { todayIn } from "../domain/time";
 import { type Settings, saveSettings } from "./settings";
 
 export interface App {

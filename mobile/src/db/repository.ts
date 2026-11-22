@@ -1,5 +1,5 @@
-import { MAX_CENTS } from "../domain/money";
 import { newUid } from "../domain/ids";
+import { MAX_CENTS } from "../domain/money";
 import { type Database, getOne, type SqlValue } from "./database";
 import { ENTITIES, type EntityFields, type EntityName, type FieldKind, type Row } from "./entities";
 

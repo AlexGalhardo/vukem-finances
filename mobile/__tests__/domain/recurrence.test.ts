@@ -1,12 +1,12 @@
 import vectors from "../../../testdata/recurrence-vectors.json";
 import {
   createInstallments,
-  generateDue,
+  type Frequency,
   GENERATE_CAP,
+  generateDue,
   installmentDates,
   installmentLabel,
   occurrences,
-  type Frequency,
   splitInstallments,
   upcoming,
   validateRule,

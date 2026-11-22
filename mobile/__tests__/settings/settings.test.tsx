@@ -1,11 +1,11 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react-native";
+import schema from "../../../docs/export-format.schema.json";
 import type { Sharer } from "../../src/backup/share";
-import type { LockPlatform, LockStore } from "../../src/lock/lock";
 import { OUTBOX_SOFT_CAP } from "../../src/db/repository";
-import { type SettingsServices, SettingsScreen } from "../../src/screens/SettingsScreen";
+import type { LockPlatform, LockStore } from "../../src/lock/lock";
+import { SettingsScreen, type SettingsServices } from "../../src/screens/SettingsScreen";
 import { renderApp } from "../helpers/app";
 import { ACCOUNT, type Env, openEnv } from "../helpers/fixtures";
-import schema from "../../../docs/export-format.schema.json";
 import { type Schema, validate } from "../helpers/json-schema";
 
 let env: Env;

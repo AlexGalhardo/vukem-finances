@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { Page } from "../components/Page";
 import { ListRow } from "../components/ListRow";
+import { Page } from "../components/Page";
 import { useUi } from "../components/ui";
 import type { MessageKey } from "../i18n";
 
