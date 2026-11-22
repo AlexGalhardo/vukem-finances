@@ -22,6 +22,8 @@ name: vukem-finances
 services:
   app:
     build: .
+    # "Erase all local data" ends the process after it removes the database; this brings it back, empty.
+    restart: unless-stopped
     # .env drives the app; the overrides below are the values that are only
     # true inside this network.
     env_file: [.env]
