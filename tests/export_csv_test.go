@@ -190,26 +190,16 @@ func insertRows(t *testing.T, app *vukemtest.App, w who, account int64, n int) {
 		t.Fatal(err)
 	}
 
-	tx, err := db.SQL().BeginTx(t.Context(), nil)
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	stmt, err := tx.PrepareContext(t.Context(), `INSERT INTO transactions
+	// One statement: 200k round trips through the driver take minutes under -race.
+	_, err = db.SQL().ExecContext(t.Context(), `WITH RECURSIVE seq(i) AS (
+			SELECT 0 UNION ALL SELECT i + 1 FROM seq WHERE i + 1 < ?
+		)
+		INSERT INTO transactions
 		(workspace_id, uid, account_id, kind, amount_cents, description, occurred_on, created_at, updated_at)
-		VALUES (?, ?, ?, 'expense', 100, 'bulk', ?, datetime('now'), datetime('now'))`)
+		SELECT ?, printf('BULK%022d', i), ?, 'expense', 100, 'bulk',
+			printf('2025-%02d-%02d', 1 + i % 12, 1 + i % 28), datetime('now'), datetime('now')
+		FROM seq`, n, w.Workspace.ID, account)
 	if err != nil {
-		t.Fatal(err)
-	}
-
-	for i := range n {
-		date := fmt.Sprintf("2025-%02d-%02d", 1+i%12, 1+i%28)
-		if _, err := stmt.ExecContext(t.Context(), w.Workspace.ID, fmt.Sprintf("BULK%022d", i), account, date); err != nil {
-			t.Fatal(err)
-		}
-	}
-
-	if err := tx.Commit(); err != nil {
 		t.Fatal(err)
 	}
 }
