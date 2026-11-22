@@ -104,5 +104,12 @@ const dict = {
   aiOffline: "No connection to the AI provider. This feature needs the internet; the rest of the app keeps working.",
   aiNeedsInternet:
     "This installation works offline. AI is the exception: it sends your request to the provider you chose, so it needs the internet (a model server on this computer or your network does not).",
+  aiHelpKey: "About storing the key",
+  aiHelpBaseUrl: "About the endpoint address",
+  aiHelpLimit: "About the monthly call limit",
+  aiStatusDescription: "Whether AI is on for this workspace and what it needs to work.",
+  aiKeyDescription: "Your own key from the provider. It is stored encrypted and never shown again.",
+  aiSettingsDescription: "What AI may do in this workspace and how much it may be used.",
+  aiUsageDescription: "How much AI was used this month.",
 } as const;
 export default dict;

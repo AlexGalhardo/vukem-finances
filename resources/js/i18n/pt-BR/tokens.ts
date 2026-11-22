@@ -26,5 +26,10 @@ const dict = {
   tokensStatusRevoked: "Revogado",
   tokensRevoke: "Revogar",
   tokensLimit: "Você pode ter no máximo {max} tokens ativos por workspace.",
+  tokensHelpScopes: "Sobre os escopos",
+  tokensHelpExpiry: "Sobre a validade",
+  tokensCopied: "Copiado",
+  tokensCreateDescription: "Escolha um nome, o que o token pode fazer e quando ele deixa de funcionar.",
+  tokensListDescription: "Os tokens que você criou aqui. Revogar um o interrompe na hora.",
 } satisfies Record<keyof typeof en, string>;
 export default dict;
