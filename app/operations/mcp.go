@@ -29,10 +29,15 @@ func (o *Op[In, Out]) AddTool(s *mcp.Server, t mcp.Tool, gate ToolGate) {
 			return zero, err
 		}
 
+		// Sent only when the client asked for progress with a token.
+		mcp.Progress(ctx, 0, 1, o.meta.Summary)
+
 		res, err := Invoke(ctx, o, actor, in)
 		if err != nil {
 			return zero, ToolError(err)
 		}
+
+		mcp.Progress(ctx, 1, 1, "done")
 
 		return res.Value, nil
 	})

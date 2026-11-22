@@ -33,6 +33,13 @@ type fixture struct {
 func newFixture(t *testing.T, cfg config.MCP, prepare func(*operations.Catalog), opts ...mcptest.Option) *fixture {
 	t.Helper()
 
+	return newSizedFixture(t, cfg, 500, prepare, opts...)
+}
+
+// newSizedFixture is newFixture with the page size of the lists.
+func newSizedFixture(t *testing.T, cfg config.MCP, pageSize int, prepare func(*operations.Catalog), opts ...mcptest.Option) *fixture {
+	t.Helper()
+
 	app := vukemtest.New(t, bootstrap.New, vukemtest.Options{Env: map[string]string{"APP_EDITION": "personal"}})
 
 	db, err := app.DB()
@@ -66,7 +73,7 @@ func newFixture(t *testing.T, cfg config.MCP, prepare func(*operations.Catalog),
 	}
 
 	srv, err := appmcp.New(appmcp.Options{
-		Catalog: cat, Actor: appmcp.LocalActor(ws, cat, cfg), Config: cfg, Version: "1.2.3", PageSize: 500,
+		Catalog: cat, Actor: appmcp.LocalActor(ws, cat, cfg), Config: cfg, Version: "1.2.3", PageSize: pageSize,
 	})
 	if err != nil {
 		t.Fatal(err)
