@@ -16,6 +16,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/alerts"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
+	"github.com/AlexGalhardo/vukem-finances/app/reports"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
@@ -24,11 +25,12 @@ type Handlers struct {
 	WS     *workspaces.Service
 	Fin    *finance.Service
 	Alerts *alerts.Service
+	Rep    *reports.Service
 }
 
 // New returns the handlers.
 func New(ws *workspaces.Service, fin *finance.Service, al *alerts.Service) *Handlers {
-	return &Handlers{WS: ws, Fin: fin, Alerts: al}
+	return &Handlers{WS: ws, Fin: fin, Alerts: al, Rep: reports.New(fin)}
 }
 
 // first returns the first of values that is not empty.

@@ -29,8 +29,8 @@ One registry (`resources/js/shortcuts/registry.ts`) owns every shortcut. A featu
 | `n i` | `new-income` | epic 07 |
 | `n t` | `new-transfer` | epic 07 |
 | `/` | `search-transactions` | epic 08 |
-| `x` | `export` | epic 12 (reserved) |
-| `g r` | `go-reports` | epic 12 (reserved) |
+| `x` | `export-transactions` | epic 12 |
+| `g r` | `go-reports` | shell |
 | `g k` | `go-cards` | shell |
 | `g u` | `go-recurrences` | shell |
 | `g g` | `go-goals` | shell |

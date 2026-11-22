@@ -25,8 +25,10 @@ import { Field, FieldError, FieldGroup, FieldLabel } from "../components/ui/fiel
 import { Input } from "../components/ui/input";
 import { NativeSelect, NativeSelectOption } from "../components/ui/native-select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../components/ui/table";
+import { transactionsCsvUrl } from "../lib/exports";
 import { useFinanceI18n } from "../lib/i18n";
 import type { Page, SharedProps } from "../page-props";
+import { useExportAction } from "../shortcuts/useExportAction";
 /** The query string of the list: only the filters that are set, with their URL names. */
 function queryOf(filters: Record<string, string>, page = 1): Record<string, string> {
   const query: Record<string, string> = {};
@@ -53,6 +55,20 @@ export default function Transactions({
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState<number | null>(null);
   const asked = useRef(false);
+  // `x` downloads the CSV of the filters the list is showing (the applied ones, not the draft in the form).
+  useExportAction(() =>
+    transactionsCsvUrl({
+      q: filters.q,
+      category: filters.categoryId,
+      tag: filters.tagId,
+      account: filters.accountId,
+      kind: filters.kind,
+      from: filters.from,
+      to: filters.to,
+      min: filters.min,
+      max: filters.max,
+    }),
+  );
   const searchRef = useRef<HTMLInputElement>(null);
   const [draft, setDraft] = useState({
     q: filters.q,

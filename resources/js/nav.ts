@@ -1,6 +1,7 @@
 import {
   ArrowLeftRight,
   ChartNoAxesCombined,
+  ChartPie,
   CreditCard,
   KeyRound,
   type LucideIcon,
@@ -39,6 +40,7 @@ export const navItems: readonly NavItem[] = [
   { id: "budgets", labelKey: "budgets", href: "/budgets", icon: PiggyBank, keys: "g b" },
   { id: "goals", labelKey: "goals", href: "/goals", icon: Target, keys: "g g" },
   { id: "recurrences", labelKey: "recurrences", href: "/recurrences", icon: Repeat, keys: "g u" },
+  { id: "reports", labelKey: "reports", href: "/reports", icon: ChartPie, keys: "g r" },
   { id: "import", labelKey: "import", href: "/import", icon: Upload, keys: "g i" },
   { id: "workspace", labelKey: "workspace", href: "/workspace", icon: Users, keys: "g w" },
   { id: "ai", labelKey: "ai", href: "/ai", icon: Sparkles },

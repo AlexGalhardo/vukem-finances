@@ -13,7 +13,14 @@ export default function BarChart({ points, currency }: { points: Point[]; curren
   const bar = Math.min(28, group / 3);
 
   return (
-    <svg viewBox={`0 0 ${width} ${height + 24}`} role="img" aria-label={t("cashFlow")} className="w-full">
+    <svg viewBox={`0 0 ${width} ${height + 44}`} role="img" aria-label={t("cashFlow")} className="w-full">
+      <defs>
+        {/* Expense bars are hatched, so the two series differ by pattern and not by color alone. */}
+        <pattern id="bar-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="6" height="6" className="fill-chart-2" />
+          <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2.5" className="stroke-background" />
+        </pattern>
+      </defs>
       {points.map((p, i) => {
         const x = i * group + group / 2;
         const hi = (p.incomeCents / max) * height;
@@ -23,7 +30,7 @@ export default function BarChart({ points, currency }: { points: Point[]; curren
             <rect x={x - bar - 1} y={height - hi} width={bar} height={hi} className="fill-chart-1">
               <title>{`${monthLabel(p.month)}: ${t("income")} ${formatMoney(p.incomeCents, currency)}`}</title>
             </rect>
-            <rect x={x + 1} y={height - he} width={bar} height={he} className="fill-chart-2">
+            <rect x={x + 1} y={height - he} width={bar} height={he} fill="url(#bar-hatch)">
               <title>{`${monthLabel(p.month)}: ${t("expenses")} ${formatMoney(p.expenseCents, currency)}`}</title>
             </rect>
             <text x={x} y={height + 16} textAnchor="middle" className="fill-muted-foreground text-[11px]">
@@ -33,6 +40,14 @@ export default function BarChart({ points, currency }: { points: Point[]; curren
         );
       })}
       <line x1="0" x2={width} y1={height} y2={height} className="stroke-border" />
+      <rect x="0" y={height + 28} width="10" height="10" className="fill-chart-1" />
+      <text x="14" y={height + 37} className="fill-muted-foreground text-[11px]">
+        {t("income")}
+      </text>
+      <rect x="90" y={height + 28} width="10" height="10" fill="url(#bar-hatch)" />
+      <text x="104" y={height + 37} className="fill-muted-foreground text-[11px]">
+        {t("expenses")}
+      </text>
     </svg>
   );
 }

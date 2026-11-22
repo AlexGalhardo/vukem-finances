@@ -7,6 +7,7 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/alerts"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/reports"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
@@ -22,6 +23,7 @@ var (
 	Notifications  = inertia.Define[NotificationsProps]("Notifications")
 	Recurrences    = inertia.Define[RecurrencesProps]("Recurrences")
 	Import         = inertia.Define[ImportProps]("Import")
+	Reports        = inertia.Define[ReportsProps]("Reports")
 	Workspace      = inertia.Define[WorkspaceProps]("Workspace")
 	InviteAccept   = inertia.Define[InviteAcceptProps]("InviteAccept")
 	InviteRegister = inertia.Define[InviteRegisterProps]("InviteRegister")
@@ -47,6 +49,20 @@ type SharedWorkspace struct {
 	Plan    string          `json:"plan"`
 	Admin   bool            `json:"admin"`
 	Edition string          `json:"edition"` // personal or saas
+}
+
+// ReportsProps are the props of Reports: every report of one period, so the
+// tabs switch without a round trip.
+type ReportsProps struct {
+	Period            reports.Period         `json:"period"`
+	Currency          string                 `json:"currency"`
+	CashFlow          reports.CashFlowReport `json:"cashFlow"`
+	ExpenseCategories reports.CategoryReport `json:"expenseCategories"`
+	IncomeCategories  reports.CategoryReport `json:"incomeCategories"`
+	Accounts          reports.AccountReport  `json:"accounts"`
+	Tags              reports.TagReport      `json:"tags"`
+	NetWorth          reports.NetWorthReport `json:"netWorth"`
+	Compare           reports.CompareReport  `json:"compare"`
 }
 
 // DashboardProps are the props of Dashboard.
