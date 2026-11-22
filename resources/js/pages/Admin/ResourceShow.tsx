@@ -1,10 +1,14 @@
 import { Link } from "@inertiajs/react";
+import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
-
+import { Alert, AlertDescription } from "../../components/ui/alert";
+import { buttonVariants } from "../../components/ui/button";
 import AdminLayout from "../../layouts/AdminLayout";
 import { getJSON, type RecordData } from "../../lib/adminApi";
+import { useFinanceI18n } from "../../lib/i18n";
 
 export default function ResourceShow({ slug, id, dataUrl }: { slug: string; id: string; dataUrl: string }) {
+  const { t } = useFinanceI18n();
   const [data, setData] = useState<RecordData | null>(null);
   const [error, setError] = useState("");
 
@@ -20,21 +24,29 @@ export default function ResourceShow({ slug, id, dataUrl }: { slug: string; id: 
     <AdminLayout title={data ? `${data.resource.singular} ${data.id}` : id}>
       <Link
         href={`/admin/${encodeURIComponent(slug)}`}
-        className="mb-4 inline-block text-sm text-zinc-500 hover:underline"
+        className={`${buttonVariants({ variant: "ghost", size: "sm" })} self-start`}
       >
-        ← Back
+        <ArrowLeft aria-hidden="true" />
+        {t("admBack")}
       </Link>
       {error && (
-        <p role="alert" className="text-red-600">
-          {error}
+        <Alert variant="error">
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+      {!data && !error && (
+        <p role="status" className="text-muted-foreground">
+          {t("admLoading")}
         </p>
       )}
-      {!data && !error && <p className="text-zinc-500">Loading…</p>}
       {data && (
-        <dl className="grid max-w-3xl grid-cols-[12rem_1fr] gap-x-6 gap-y-3 text-sm">
+        <dl
+          data-tour="admin-show-fields"
+          className="grid max-w-3xl gap-x-6 gap-y-3 text-body sm:grid-cols-[12rem_minmax(0,1fr)]"
+        >
           {(data.fields ?? []).map((f) => (
             <div key={f.label} className="contents">
-              <dt className="text-zinc-500">{f.label}</dt>
+              <dt className="text-muted-foreground">{f.label}</dt>
               <dd className="break-words">{f.value}</dd>
             </div>
           ))}

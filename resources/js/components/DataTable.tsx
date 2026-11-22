@@ -67,7 +67,7 @@ export default function DataTable<Row>({
   const rowClass = cn(
     compact && "h-9",
     listed &&
-      "max-md:h-auto max-md:grid max-md:grid-cols-[1fr_auto] max-md:items-baseline max-md:gap-x-3 max-md:px-0 max-md:py-2",
+      "max-md:grid max-md:h-auto max-md:grid-cols-[1fr_auto] max-md:items-baseline max-md:gap-x-3 max-md:px-0 max-md:py-2",
   );
   const alignment = (align: DataTableColumn<Row>["align"]): string => (align === "end" ? "text-right" : "text-left");
   return (
