@@ -54,6 +54,29 @@ func (h *Handlers) ExportTransactionsCSV(c *web.Ctx) error {
 
 	_, err = export.WriteCSV(c.Writer(), rows, opt)
 
+	return finishDownload(c.Writer(), err)
+}
+
+type downloadWriter interface {
+	Written() bool
+	Header() http.Header
+}
+
+// finishDownload ends a streamed file that failed. Before the first byte the
+// error page must not be saved as the file. After it, the status is gone and a
+// clean end would make a cut file look complete, so the connection is aborted
+// and the browser reports a failed download.
+func finishDownload(w downloadWriter, err error) error {
+	if err == nil {
+		return nil
+	}
+
+	if w.Written() {
+		panic(http.ErrAbortHandler)
+	}
+
+	w.Header().Del("Content-Disposition")
+
 	return err
 }
 
@@ -72,5 +95,5 @@ func (h *Handlers) ExportWorkspaceJSON(c *web.Ctx) error {
 	c.SetHeader("X-Content-Type-Options", "nosniff")
 	c.SetHeader("Cache-Control", "no-store")
 
-	return export.WriteJSON(ctx, c.Writer(), h.Fin, h.Fin.Now())
+	return finishDownload(c.Writer(), export.WriteJSON(ctx, c.Writer(), h.Fin, h.Fin.Now()))
 }
