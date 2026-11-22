@@ -50,19 +50,19 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| Session theft or fixation | The framework session rotates on login; cookie is `HttpOnly`, `SameSite`, `Secure` in production | `TestSecurity_Web_*` |
+| Session theft or fixation | The framework session rotates on login; cookie is `HttpOnly`, `SameSite`, `Secure` in production | `TestSecurity_Web_Sessions` (see QA-001 in `docs/qa/rounds.md`) |
 | Credential stuffing | Per-IP and per-account limits; failed two-factor codes limited per account | `TestSecurity_TwoFactorPerAccountLimit` |
-| User enumeration through login, reset and registration | The same answer for a known and an unknown address | `TestSecurity_Web_Enumeration*` |
+| User enumeration through login, reset and registration | The same answer for a known and an unknown address | `TestSecurity_Web_Enumeration` |
 | Self-asserted admin or unverified email | Verified email is required in saas; an address is never marked verified at sign-up | `TestSecurity_SaaSRequiresEmailVerification`, `TestSecurity_SelfAssertedAdminEmailIsNotAdmin` |
 
 ### Web: tampering and request forgery
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| CSRF on a state-changing route | The framework CSRF middleware on every browser route; the API, the Telegram webhook and the MCP endpoints skip it because no cookie authenticates them | `TestSecurity_Web_CSRF*` |
-| Open redirect | Redirect targets are same-origin paths only | `TestSecurity_Web_OpenRedirect*` |
-| SQL injection through search, filters and sort | Query builder with bound parameters; sort keys are an allow-list | `TestSecurity_SearchTakesSQLMetacharactersAsText`, `TestSecurity_Injection_*` |
-| Formula injection in an export | Every text cell passes `finance.SpreadsheetSafe` | `TestSecurity_Injection_CSVFormula*` |
+| CSRF on a state-changing route | The framework CSRF middleware on every browser route; the API, the Telegram webhook and the MCP endpoints skip it because no cookie authenticates them | `TestSecurity_Web_CSRF` |
+| Open redirect | Redirect targets are same-origin paths only | `TestSecurity_Web_OpenRedirect` |
+| SQL injection through search, filters and sort | Query builder with bound parameters; sort keys are an allow-list | `TestSecurity_SearchTakesSQLMetacharactersAsText`, `TestSecurity_Injection_SQL` |
+| Formula injection in an export | Every text cell passes `finance.SpreadsheetSafe` | `TestSecurity_Injection_CSVFormula` |
 
 ### Web: information disclosure and elevation
 
@@ -70,8 +70,8 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 | --- | --- | --- |
 | A row of another workspace | Every query goes through the workspace scope; a foreign id is a 404 | `TestIsolationGuard`, `TestCrossTenantMatrix` |
 | A role does more than its table says | Each write handler starts with `h.can(c, ability)`; the table is `app/workspaces/policy.go` | `TestSecurity_ViewerCannotEscalate`, `TestSecurity_AdminCannotPromoteToOwner` |
-| Missing security headers, clickjacking | CSP with `default-src 'self'` and `frame-ancestors`, `X-Content-Type-Options`, `Referrer-Policy`; HSTS in production | `TestSecurity_Web_Headers*` |
-| Stored XSS through a description or a name | React escapes text; Telegram and mail text pass `EscapeHTML`; no `dangerouslySetInnerHTML` of user text | `TestSecurity_Injection_HTML*` |
+| Missing security headers, clickjacking | CSP with `default-src 'self'` and `frame-ancestors`, `X-Content-Type-Options`, `Referrer-Policy`; HSTS in production | `TestSecurity_Web_Headers`, `TestSecurity_Web_Production` |
+| Stored XSS through a description or a name | React escapes text; Telegram and mail text pass `EscapeHTML`; no `dangerouslySetInnerHTML` of user text | `TestSecurity_Injection_HTML` |
 | Secrets in a page prop, flash or log | The AI field is `apiSecret` so the framework never flashes it; secrets print `[redacted]` | `TestSecurity_AIKeyNeverReturned` |
 
 ## Public API
@@ -90,7 +90,7 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| Hostile JSON (duplicate keys, deep nesting, huge numbers) | Strict binding, `validate` tags, amounts through `finance.ParseAmount`, `models.MaxCents` | `TestSecurity_Injection_JSON*` |
+| Hostile JSON (duplicate keys, deep nesting, huge numbers) | Strict binding, `validate` tags, amounts through `finance.ParseAmount`, `models.MaxCents` | `TestSecurity_Injection_JSON` |
 | A replayed write | The idempotency key of a write, 24 hours, per caller | operation registry tests |
 | Floods | 120 reads and 60 writes a minute per token | `TestAPIRateLimit*` |
 | Secrets or internal errors in a response | Problem+json with a stable code; an internal error has a generic message | `TestSecurity_InternalErrorsAreGeneric` |
@@ -101,7 +101,7 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| The server is exposed to the network | `mcp:serve --stdio` runs only in the personal edition and opens no listener; with saas it exits before serving | `TestStdio*`, `TestSecurity_MCP_StdioOpensNoListener` |
+| The server is exposed to the network | `mcp:serve --stdio` runs only in the personal edition and opens no listener; with saas it exits before serving | `TestStdoutOnlyProtocol`, `TestEditionRefusal`, `TestSecurity_MCP_NoRemoteExposure` |
 | The agent writes or deletes without being asked | Read only by default (`MCP_TOOLSETS`); destructive tools are off unless `MCP_ALLOW_DESTRUCTIVE` and then ask the person through `mcp.Confirm` | `TestDestructiveGate`, `TestWritesAreRefusedByDefault` |
 | A tool outside the toolset | It is not registered and the actor holds no scope for it | `TestToolsets` |
 
@@ -111,7 +111,7 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 | --- | --- | --- |
 | Prompt injection from stored text (a transaction description) | Results are data fields; the server adds no instruction built from a result; no tool acts on what it reads | `TestSecurity_InjectedDescriptionIsOnlyData`, `TestSecurity_MCP_ResultsHoldNoServerInstruction` |
 | A secret in a result | A result never carries a password hash, a token or the app key | `TestSecurity_NoSecretLeaves` |
-| Output on stdout corrupts the protocol | Only protocol messages go to stdout; logs go to stderr | `TestStdio*` |
+| Output on stdout corrupts the protocol | Only protocol messages go to stdout; logs go to stderr | `TestStdoutOnlyProtocol`, `TestEditionRefusal` |
 
 ## MCP remote with OAuth (saas edition)
 
@@ -119,31 +119,31 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| An authorization code intercepted | PKCE `S256` only, exact `redirect_uri`, code single use and short lived; a replay ends the grant | `TestSecurity_MCP_PKCE*`, `TestSecurity_MCP_Code*` |
-| A stolen refresh token | Rotation with reuse detection that revokes the whole grant; tokens stored hashed | `TestSecurity_MCP_Refresh*` |
-| A token meant for another resource (confused deputy, passthrough) | The audience is this server only; tokens of another issuer or audience are refused; the server calls no other service with a client token | `TestSecurity_MCP_Audience*` |
-| A forged or tampered token | Signed with a key derived from `APP_KEY`; `alg none` and other algorithms refused | `TestSecurity_MCP_Token*` |
+| An authorization code intercepted | PKCE `S256` only, exact `redirect_uri`, code single use and short lived; a replay ends the grant | `TestSecurity_MCP_Authorize`, `TestSecurity_MCP_Code` |
+| A stolen refresh token | Rotation with reuse detection that revokes the whole grant; tokens stored hashed | `TestSecurity_MCP_Refresh` |
+| A token meant for another resource (confused deputy, passthrough) | The audience is this server only; tokens of another issuer or audience are refused; the server calls no other service with a client token | `TestSecurity_MCP_AccessToken` |
+| A forged or tampered token | Signed with a key derived from `APP_KEY`; `alg none` and other algorithms refused | `TestSecurity_MCP_AccessToken` |
 | A client that lies about who it is | A client named by a metadata document is shown by its verified host; the claimed name is shown apart | `TestOAuthConsentDoesNotTrustAClaimedName` |
-| Dynamic Client Registration abuse | Registration is absent: clients are pre-registered or identified by a metadata document | `TestSecurity_MCP_NoDynamicRegistration` |
+| Dynamic Client Registration abuse | Registration is absent: clients are pre-registered or identified by a metadata document | `TestSecurity_MCP_Authorize` |
 
 ### MCP remote: authorization and isolation
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| A grant of workspace A reaches workspace B | The grant is bound to `<user>:<workspace>` in `mcp_grants`; the workspace never comes from arguments | `TestSecurity_MCP_Isolation*` |
-| Scope escalation by parameter or by tool arguments | Scopes are fixed at consent and cut to the role at consent and at every call; a promotion never widens a grant | `TestSecurity_MCP_Scope*`, `TestMCPPromotionDoesNotWidenAGrant` |
-| A removed member or a reset password keeps access | The verifier reads the membership on every request; `revokeAccess`, `RevokeOtherSessions` and `revokeTokens` end the grants | `TestMCPGrantsEndWithTheirPerson`, `TestSecurity_MCP_RemovedMember*` |
-| A destructive tool runs unconfirmed, or the same call confirms itself | Tools that remove data are for owners and admins and ask the person through the protocol; a client that cannot ask is refused; no argument confirms | `TestSecurity_MCP_Destructive*` |
-| Error text leaks another workspace's data | A foreign uid is `not_found`; internal errors are generic | `TestSecurity_MCP_Errors*` |
+| A grant of workspace A reaches workspace B | The grant is bound to `<user>:<workspace>` in `mcp_grants`; the workspace never comes from arguments | `TestSecurity_MCP_Isolation` |
+| Scope escalation by parameter or by tool arguments | Scopes are fixed at consent and cut to the role at consent and at every call; a promotion never widens a grant | `TestSecurity_MCP_Scopes`, `TestMCPPromotionDoesNotWidenAGrant` |
+| A removed member or a reset password keeps access | The verifier reads the membership on every request; `revokeAccess`, `RevokeOtherSessions` and `revokeTokens` end the grants | `TestMCPGrantsEndWithTheirPerson`, `TestMCPRemoteIsolation` |
+| A destructive tool runs unconfirmed, or the same call confirms itself | Tools that remove data are for owners and admins and ask the person through the protocol; a client that cannot ask is refused; no argument confirms | `TestSecurity_MCP_Destructive` |
+| Error text leaks another workspace's data | A foreign uid is `not_found`; internal errors are generic | `TestSecurity_MCP_Errors` |
 
 ### MCP remote: transport and denial of service
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| DNS rebinding and cross-site calls | `Origin` is validated on every request (403); only `POST` is served | `TestSecurity_MCP_Origin*`, `TestSecurity_MCP_Rebinding*` |
-| Session confusion | No `Mcp-Session-Id` is issued or honored (revision `2026-07-28` has no protocol sessions) | `TestSecurity_MCP_NoSession*` |
-| SSRF through the client metadata document | HTTPS only, public addresses after DNS, no redirects, 5 s and 5 KiB | `TestClientMetadataSSRF`, `TestSecurity_MCP_ClientMetadata*` |
-| Floods | 120 reads and 60 writes a minute per grant, 300 requests a minute per address on `/mcp`, 30 a minute per address on each OAuth endpoint | `TestMCPRateLimit`, `TestSecurity_MCP_RateLimit*` |
+| DNS rebinding and cross-site calls | `Origin` is validated on every request (403); only `POST` is served | `TestSecurity_MCP_Transport` |
+| Session confusion | No `Mcp-Session-Id` is issued or honored (revision `2026-07-28` has no protocol sessions) | `TestSecurity_MCP_Transport` |
+| SSRF through the client metadata document | HTTPS only, public addresses after DNS, no redirects, 5 s and 5 KiB | `TestClientMetadataSSRF`, `TestSecurity_MCP_ClientMetadata` |
+| Floods | 120 reads and 60 writes a minute per grant, 300 requests a minute per address on `/mcp`, 30 a minute per address on each OAuth endpoint | `TestMCPRateLimit`, `TestSecurity_MCP_RateLimit` |
 | A call without a trace | Every call writes a `mcp call` line with client, tool and outcome, never an input | `TestMCPAudit` |
 
 ## Sync (mobile)
@@ -177,12 +177,12 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 
 | Threat | Control | Test |
 | --- | --- | --- |
-| A forged Stripe or AbacatePay event | Stripe signature with 5 minutes of tolerance; AbacatePay shared secret in constant time and HMAC, never from the query string, 64 KiB cap; the body only names the charge, which is re-read at the provider | `TestSecurity_PixWebhook`, `TestSecurity_Webhook_*` |
-| A replayed or reordered event | Conditional `UPDATE`s with the affected rows checked; `SyncSubscription` never writes the revocation columns | `TestPixWebhook*`, `TestSecurity_Webhook_Replay*` |
-| Double activation under concurrent deliveries | One conditional `UPDATE ... WHERE status IN ('pending','expired')` in the entitlement transaction | `TestSecurity_Money_*` |
-| A refund or dispute keeps access | Revocation through `access_revoked_at`; access is derived in `Entitled`, never a stored plan flag | `TestBillingRevoke*`, `TestPixRefund*` |
-| A client names the price or the months | The amount is computed on the server from `PIX_PRICE_PRO_MONTHLY_CENTS` and `PIX_MONTHS_OPTIONS` | `TestSecurity_Money_*` |
-| The plan quota passes its limit under concurrency | The check runs under the workspace lock in the writing transaction | `TestQuotaAtomic*`, `TestSecurity_Money_Quota*` |
+| A forged Stripe or AbacatePay event | Stripe signature with 5 minutes of tolerance; AbacatePay shared secret in constant time and HMAC, never from the query string, 64 KiB cap; the body only names the charge, which is re-read at the provider | `TestSecurity_PixWebhook`, `TestSecurity_Webhook_StripeForgery`, `TestSecurity_Webhook_ResendForgery` |
+| A replayed or reordered event | Conditional `UPDATE`s with the affected rows checked; `SyncSubscription` never writes the revocation columns | `TestPixConcurrentWebhookRequests`, `TestSecurity_Webhook_StripeReplayAndConcurrency` |
+| Double activation under concurrent deliveries | One conditional `UPDATE ... WHERE status IN ('pending','expired')` in the entitlement transaction | `TestSecurity_Money_ServerOwnsThePrice`, `TestSecurity_Webhook_ConcurrentPixDeliveriesActivateOnce` |
+| A refund or dispute keeps access | Revocation through `access_revoked_at`; access is derived in `Entitled`, never a stored plan flag | `TestRefundRevokesPlan`, `TestDisputeRevokesPlan`, `TestPixRefund*` |
+| A client names the price or the months | The amount is computed on the server from `PIX_PRICE_PRO_MONTHLY_CENTS` and `PIX_MONTHS_OPTIONS` | `TestSecurity_Money_ServerOwnsThePrice`, `TestSecurity_Webhook_ConcurrentPixDeliveriesActivateOnce` |
+| The plan quota passes its limit under concurrency | The check runs under the workspace lock in the writing transaction | `TestQuotaAtomicWhenPlanChanges`, `TestSecurity_Money_PlanLimitsHoldUnderConcurrency` |
 
 ## AI layer
 
@@ -192,9 +192,9 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 | --- | --- | --- |
 | The provider key leaks | `ai.Key` prints `[redacted]`; sealed at rest with the workspace as additional data; never in a response, prop, log, audit event or export | `TestSecurity_AIKeyNeverReturned`, `TestAIExcludedFromExportAndAPI` |
 | Prompt injection from a description | Untrusted text is data in a JSON field, passes `ai.Sanitize`; output is accepted only as the JSON of a schema, for ids the server sent, and never writes | `TestSecurity_DescriptionInjection`, `TestSecurity_DescriptionInjectionWithAutoApply` |
-| SSRF through the custom base URL | `ai.CheckBaseURL` and the safe client (30 s, 1 MiB, no redirects); `AI_ALLOW_PRIVATE_HOSTS` works only in the personal edition | `TestSecurity_SSRF_*` |
+| SSRF through the custom base URL | `ai.CheckBaseURL` and the safe client (30 s, 1 MiB, no redirects); `AI_ALLOW_PRIVATE_HOSTS` works only in the personal edition | `TestSecurity_SSRF_AIBaseURLInSaaS`, `TestSecurity_SSRF_SaaSNeverConnectsToThisMachine` |
 | Someone else's spend | Bring your own key; 20 calls a minute and a monthly limit per workspace | `ai_test` limits |
-| Personal data sent to the provider | Free text goes through `ai.Redact`; account and tag names go as opaque labels | `TestAI*Redact*` |
+| Personal data sent to the provider | Free text goes through `ai.Redact`; account and tag names go as opaque labels | `TestEntrySendsOnlyRedactedText`, `TestKeyRedacted` |
 
 ## Mobile app
 
@@ -224,6 +224,8 @@ a family such as `TestSecurity_MCP_*`, it is the suite of that area in `tests/se
 Open and closed problems of the campaign are in `docs/qa/rounds.md`; problems the author accepted are in
 `docs/qa/accepted.md`. Known limits of this model:
 
+- **A copied session cookie survives logout** until it expires (QA-001): the default session is an encrypted cookie, so the
+  server holds no state to end. Open, waiting for the author's choice between a database session store and a session version bump.
 - **Financial data is not encrypted at rest** (D-005: SQL must sum and filter it). Protect the host, the volume and the backups.
 - **Backups are retained until rotated**: `db:backup` files hold a full copy and live outside the controls of the app.
 - **Desktop builds are unsigned.**
