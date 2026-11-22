@@ -6,12 +6,17 @@ import (
 	"io"
 	"net/http"
 	"regexp"
+	"strings"
 )
 
 // PixWebhookPath is where AbacatePay sends events. The secret may also be the
 // last path segment (PixWebhookPath + "/" + secret) when the provider only lets
 // us configure a URL.
 const PixWebhookPath = "/abacatepay/webhook"
+
+// PixWebhookSecretPath is the pattern of PixWebhookPath with the secret segment,
+// for Router.SecretPaths, which keeps the secret out of the logs.
+const PixWebhookSecretPath = PixWebhookPath + "/{secret}"
 
 // pixWebhookMaxBody caps a delivery: real ones are a few KiB.
 const pixWebhookMaxBody = 64 << 10
@@ -36,29 +41,21 @@ type pixEvent struct {
 // segment, never the query string, which lands in access logs), the HMAC
 // signature of the raw body, a body size cap and a strict decode. Even then the
 // body decides nothing: the charge is re-read from the provider before access
-// changes. Register it with r.UseServer.
+// changes. Register it with r.UseServer, and PixWebhookSecretPath with
+// r.SecretPaths so the segment never reaches a log line.
 func (b *Billing) PixWebhook() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			if r.URL.Path != PixWebhookPath {
+			switch segment, ok := strings.CutPrefix(r.URL.Path, PixWebhookPath+"/"); {
+			case r.URL.Path == PixWebhookPath:
+				b.servePixWebhook(w, r, "")
+			case ok && segment != "" && !strings.Contains(segment, "/"):
+				b.servePixWebhook(w, r, segment)
+			default:
 				next.ServeHTTP(w, r)
-				return
 			}
-
-			b.servePixWebhook(w, r, "")
 		})
 	}
-}
-
-// PixWebhookWithSecret serves PixWebhookPath/{secret}. It is a route, not a
-// server middleware, so that SecretParams("secret") keeps the secret out of
-// every log line; the route skips the session but the CSRF check passes a
-// request that carries no browser headers. Register it with
-// r.Handle("POST "+PixWebhookPath+"/{secret}", b.PixWebhookWithSecret()).SecretParams("secret").
-func (b *Billing) PixWebhookWithSecret() http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		b.servePixWebhook(w, r, r.PathValue("secret"))
-	})
 }
 
 func (b *Billing) servePixWebhook(w http.ResponseWriter, r *http.Request, segment string) {
