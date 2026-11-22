@@ -183,8 +183,10 @@ SELECT id, ?, ? FROM access_tokens WHERE resource = ?`, s.now().UTC(), s.now().U
 
 	// What lives outside the tenant tables and points at the workspace.
 	if err := s.DB.Tx(ctx, func(tx *database.Tx) error {
-		// A cancel that committed just before the grace period ended wins.
-		still, err := orm.QueryOf[models.Workspace](tx).Where("id", id).Where("state", models.StatePendingDeletion).Count(ctx)
+		// A cancel that committed just before the grace period ended wins, also when
+		// a new request followed it: that one has its own, later purge date.
+		still, err := orm.QueryOf[models.Workspace](tx).Where("id", id).Where("state", models.StatePendingDeletion).
+			Where("purge_at", "<=", s.now().UTC()).Where("deletion_requested_at", ws.DeletionRequestedAt.V).Count(ctx)
 		if err != nil {
 			return err
 		}
