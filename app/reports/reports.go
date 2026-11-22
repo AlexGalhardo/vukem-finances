@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"math/big"
+	"slices"
 
 	"github.com/AlexGalhardo/vukem/database"
 	"github.com/AlexGalhardo/vukem/orm"
@@ -68,16 +69,45 @@ type Sum struct {
 	NetCents     int64 `json:"netCents"`
 }
 
-// put adds the cents of a group to the income or expense side.
-func (m *Sum) put(g group) {
-	cents := mul(g.Amount, g.N)
-	if g.Kind == models.KindIncome {
+// put adds cents to the income or expense side.
+func (m *Sum) put(kind string, cents int64) {
+	if kind == models.KindIncome {
 		m.IncomeCents = add(m.IncomeCents, cents)
 	} else {
 		m.ExpenseCents = add(m.ExpenseCents, cents)
 	}
 
 	m.NetCents = add(m.IncomeCents, -m.ExpenseCents)
+}
+
+// bucket holds the exact income and expense of a set of summary rows.
+type bucket struct{ income, expense big.Int }
+
+func (b *bucket) add(r models.TransactionMonthTotal) {
+	if r.Kind == models.KindIncome {
+		b.income.Add(&b.income, r.Sum())
+	} else {
+		b.expense.Add(&b.expense, r.Sum())
+	}
+}
+
+// sum is the bucket as a Sum, clamped at capCents.
+func (b *bucket) sum() Sum {
+	in, out := finance.ClampCents(&b.income), finance.ClampCents(&b.expense)
+
+	return Sum{IncomeCents: in, ExpenseCents: out, NetCents: add(in, -out)}
+}
+
+// ordinaryTotals reads the live rows of the period from the monthly summary,
+// never a transfer leg. Future-dated rows count only when the period reaches
+// their date.
+func (s *Service) ordinaryTotals(ctx context.Context, p Period, by finance.Dim) ([]models.TransactionMonthTotal, error) {
+	rows, err := s.Fin.MonthTotals(ctx, p.From, p.To, by)
+	if err != nil {
+		return nil, err
+	}
+
+	return slices.DeleteFunc(rows, func(r models.TransactionMonthTotal) bool { return r.Transfer != 0 }), nil
 }
 
 // ordinary is the base query of the income and expense reports: live rows of

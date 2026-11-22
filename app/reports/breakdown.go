@@ -2,11 +2,13 @@ package reports
 
 import (
 	"context"
+	"math/big"
 	"slices"
 	"strings"
 
 	"github.com/AlexGalhardo/vukem/orm"
 
+	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 )
 
@@ -62,12 +64,7 @@ func (s *Service) ByCategory(ctx context.Context, p Period, kind string) (Catego
 
 	out := CategoryReport{Currency: ws.Currency, Period: p, Kind: kind, Rows: []CategoryRow{}}
 
-	groups, err := s.ordinary(ctx, p).Where("kind", kind).
-		GroupBy("category_id", "amount_cents").
-		SelectAs("category_id", "category_id").
-		SelectAs("amount_cents", "amount_cents").
-		SelectExpr(orm.Count("*"), "n").
-		Scan[group](ctx)
+	totals, err := s.ordinaryTotals(ctx, p, finance.ByCategory)
 	if err != nil {
 		return out, err
 	}
@@ -78,20 +75,30 @@ func (s *Service) ByCategory(ctx context.Context, p Period, kind string) (Catego
 		return out, err
 	}
 
-	own := map[int64]int64{}
+	own := map[int64]*big.Int{}
+	total, none := new(big.Int), new(big.Int)
 
-	var uncategorized int64
-
-	for _, g := range groups {
-		cents := mul(g.Amount, g.N)
-		out.TotalCents = add(out.TotalCents, cents)
-
-		if g.CategoryID.Valid {
-			own[g.CategoryID.V] = add(own[g.CategoryID.V], cents)
-		} else {
-			uncategorized = add(uncategorized, cents)
+	for _, r := range totals {
+		if r.Kind != kind {
+			continue
 		}
+
+		total.Add(total, r.Sum())
+
+		if r.CategoryID == 0 {
+			none.Add(none, r.Sum())
+			continue
+		}
+
+		if own[r.CategoryID] == nil {
+			own[r.CategoryID] = new(big.Int)
+		}
+
+		own[r.CategoryID].Add(own[r.CategoryID], r.Sum())
 	}
+
+	out.TotalCents = finance.ClampCents(total)
+	uncategorized := finance.ClampCents(none)
 
 	byID := make(map[int64]models.Category, len(cats))
 	for _, c := range cats {
@@ -102,7 +109,8 @@ func (s *Service) ByCategory(ctx context.Context, p Period, kind string) (Catego
 
 	var top []int64
 
-	for id, cents := range own {
+	for id, sum := range own {
+		cents := finance.ClampCents(sum)
 		c, ok := byID[id]
 		if !ok {
 			continue
@@ -178,13 +186,7 @@ func (s *Service) ByAccount(ctx context.Context, p Period) (AccountReport, error
 
 	out := AccountReport{Currency: ws.Currency, Period: p, Rows: []AccountRow{}}
 
-	groups, err := s.ordinary(ctx, p).
-		GroupBy("account_id", "kind", "amount_cents").
-		SelectAs("account_id", "account_id").
-		SelectAs("kind", "kind").
-		SelectAs("amount_cents", "amount_cents").
-		SelectExpr(orm.Count("*"), "n").
-		Scan[group](ctx)
+	rows, err := s.ordinaryTotals(ctx, p, finance.ByAccount)
 	if err != nil {
 		return out, err
 	}
@@ -194,27 +196,25 @@ func (s *Service) ByAccount(ctx context.Context, p Period) (AccountReport, error
 		return out, err
 	}
 
-	byID := make(map[int64]*AccountRow, len(accounts))
+	byID := make(map[int64]*bucket, len(accounts))
 	order := []int64{}
 
-	for _, g := range groups {
-		a, ok := accounts[g.AccountID]
-		if !ok {
+	for _, g := range rows {
+		if _, ok := accounts[g.AccountID]; !ok {
 			continue
 		}
 
-		r := byID[g.AccountID]
-		if r == nil {
-			r = &AccountRow{UID: a.UID, Name: a.Name, Kind: a.Kind}
-			byID[g.AccountID] = r
+		if byID[g.AccountID] == nil {
+			byID[g.AccountID] = &bucket{}
 			order = append(order, g.AccountID)
 		}
 
-		r.put(g)
+		byID[g.AccountID].add(g)
 	}
 
 	for _, id := range order {
-		out.Rows = append(out.Rows, *byID[id])
+		a := accounts[id]
+		out.Rows = append(out.Rows, AccountRow{UID: a.UID, Name: a.Name, Kind: a.Kind, Sum: byID[id].sum()})
 	}
 
 	slices.SortFunc(out.Rows, func(a, b AccountRow) int {
@@ -292,7 +292,7 @@ func (s *Service) ByTag(ctx context.Context, p Period) (TagReport, error) {
 			order = append(order, g.TagID)
 		}
 
-		r.put(g)
+		r.put(g.Kind, mul(g.Amount, g.N))
 	}
 
 	for _, id := range order {
