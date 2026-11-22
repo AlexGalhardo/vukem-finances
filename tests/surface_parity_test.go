@@ -12,6 +12,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/api"
 	"github.com/AlexGalhardo/vukem-finances/app/cli"
+	appmcp "github.com/AlexGalhardo/vukem-finances/app/mcp"
 	"github.com/AlexGalhardo/vukem-finances/app/operations"
 	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 )
@@ -133,6 +134,41 @@ func cliGaps(reg *operations.Registry, cmds []cli.Command, registered []string) 
 	return gaps
 }
 
+// mcpGaps lists what is wrong between the registry and the MCP tools: an
+// operation offered on MCP with no tool, or a tool that is no operation. An
+// operation leaves MCP only through OptOut, with a reason.
+func mcpGaps(reg *operations.Registry, tools []string) []string {
+	var gaps []string
+
+	offered := map[string]bool{}
+
+	for _, m := range reg.Operations() {
+		name := appmcp.ToolName(m.Name)
+
+		if !m.Offered(operations.SurfaceMCP) {
+			if slices.Contains(tools, name) {
+				gaps = append(gaps, m.Name+" opts out of MCP and still has the tool "+name)
+			}
+
+			continue
+		}
+
+		offered[name] = true
+
+		if !slices.Contains(tools, name) {
+			gaps = append(gaps, m.Name+" has no MCP tool "+name)
+		}
+	}
+
+	for _, tool := range tools {
+		if !offered[tool] {
+			gaps = append(gaps, "the MCP tool "+tool+" is not an operation MCP offers")
+		}
+	}
+
+	return gaps
+}
+
 func registeredCLICommands() []string {
 	var names []string
 	for _, c := range bootstrap.EarlyCommands() {
@@ -144,7 +180,7 @@ func registeredCLICommands() []string {
 
 // TestSurfaceParity: every operation the registry offers on REST has its route,
 // and every route is an operation; every operation it offers on the CLI has its
-// command. Epic 32 adds the MCP surface to this test; an operation leaves a surface only through OptOut, with a reason.
+// command. and every operation it offers on MCP has its tool. An operation leaves a surface only through OptOut, with a reason.
 func TestSurfaceParity(t *testing.T) {
 	t.Parallel()
 
@@ -165,6 +201,15 @@ func TestSurfaceParity(t *testing.T) {
 	}
 
 	for _, gap := range cliGaps(reg, tree.Commands, registeredCLICommands()) {
+		t.Error(gap)
+	}
+
+	tools, err := appmcp.ToolNames()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, gap := range mcpGaps(reg, tools) {
 		t.Error(gap)
 	}
 
@@ -210,6 +255,31 @@ func TestSurfaceParityFailsWithoutACLICommand(t *testing.T) {
 		if gaps := cliGaps(reg, tree.Commands, without); len(gaps) != len(tree.Of(resource)) {
 			t.Errorf("without the resource command %s the gaps are %v, want one per verb", resource, gaps)
 		}
+	}
+}
+
+// Removing the MCP tool of any operation must fail the parity check.
+func TestSurfaceParityFailsWithoutAnMCPTool(t *testing.T) {
+	t.Parallel()
+
+	reg := api.Describe().Registry
+
+	tools, err := appmcp.ToolNames()
+	if err != nil || len(tools) == 0 {
+		t.Fatalf("tools %v: %v", tools, err)
+	}
+
+	for i, tool := range tools {
+		without := slices.Delete(slices.Clone(tools), i, i+1)
+
+		gaps := mcpGaps(reg, without)
+		if len(gaps) != 1 || !strings.Contains(gaps[0], "has no MCP tool "+tool) {
+			t.Errorf("without the tool %s the gaps are %v, want exactly that one", tool, gaps)
+		}
+	}
+
+	if gaps := mcpGaps(reg, append(slices.Clone(tools), "made_up_tool")); len(gaps) != 1 {
+		t.Errorf("an extra tool gives the gaps %v, want one", gaps)
 	}
 }
 
