@@ -95,7 +95,8 @@ carries a test written first, in its own commit, with `Refs: epic 24 task N` and
 - **Actual:** the guide only says "Old snapshots are not removed for you".
 - **Evidence:** `TestDataLifecycle_BackupsAreDocumentedAsRetainedUntilRotated`.
 - **Severity:** Low (documentation).
-- **Status:** open.
+- **Status:** fixed. "Backup" now says that a snapshot keeps what was deleted until the operator rotates it. Regression test:
+  `TestDataLifecycle_BackupsAreDocumentedAsRetainedUntilRotated`.
 
 The entries of task 10 (load, budgets and drills) are numbered from QA-500.
 
