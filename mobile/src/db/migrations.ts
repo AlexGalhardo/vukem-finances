@@ -66,6 +66,21 @@ export const MIGRATIONS: readonly Migration[] = [
 			"CREATE INDEX outbox_row ON outbox (entity, uid)",
 		],
 	},
+	{
+		version: 2,
+		// The overall budget has no category (the server allows a null category_id), so the column must be nullable.
+		statements: [
+			"DROP INDEX budgets_category_live",
+			"ALTER TABLE budgets RENAME TO budgets_v1",
+			`CREATE TABLE budgets (${SYNCED}, category_uid TEXT, limit_cents INTEGER NOT NULL,
+				rollover INTEGER NOT NULL DEFAULT 0)`,
+			`INSERT INTO budgets (uid, version, server_seq, deleted_at, dirty, updated_local_at, category_uid, limit_cents, rollover)
+				SELECT uid, version, server_seq, deleted_at, dirty, updated_local_at, category_uid, limit_cents, rollover
+				FROM budgets_v1`,
+			"DROP TABLE budgets_v1",
+			"CREATE UNIQUE INDEX budgets_category_live ON budgets (COALESCE(category_uid, '')) WHERE deleted_at IS NULL",
+		],
+	},
 ];
 
 export const LATEST_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;
