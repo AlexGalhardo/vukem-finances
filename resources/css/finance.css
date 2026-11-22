@@ -252,6 +252,18 @@
 	}
 }
 
+/* Forced colors: series lose their hue, so the hatch and the legend carry the difference. */
+@media (forced-colors: active) {
+	svg [class*="fill-chart"],
+	svg [class*="fill-income"],
+	svg [class*="fill-expense"] {
+		fill: CanvasText;
+	}
+	svg [class*="stroke-chart"] {
+		stroke: CanvasText;
+	}
+}
+
 /* Landing rules stay until T16 of the migration plan. */
 .finance-landing { background: #bdfb6b; color: #102d1d; min-height: calc(100svh - 5rem); }
 .finance-landing-grid { background-image: linear-gradient(#163c2010 1px, transparent 1px), linear-gradient(90deg,#163c2010 1px,transparent 1px); background-size: 64px 64px; }

@@ -1,3 +1,4 @@
+import { ArrowDownLeft, ArrowLeftRight, ArrowUpRight } from "lucide-react";
 import { cn } from "../lib/utils";
 
 export type MoneySign = "auto" | "always" | "never";
@@ -30,29 +31,79 @@ export function formatMoneyParts(
   return { text, label: `${word}${spoken}`, negative };
 }
 
+export type MoneyKind = "income" | "expense" | "transfer" | "neutral";
+export type MoneySize = "sm" | "md" | "lg" | "hero";
+
 export interface MoneyTextProps {
   cents: number;
   currency: string;
   locale?: string;
+  /** Defaults to "always" for a colored positive amount, so income never relies on color alone. */
   sign?: MoneySign;
-  /** Colors expenses and income; the sign or label still carries the meaning. */
+  /** Derived from the sign of the amount when omitted. */
+  kind?: MoneyKind;
+  size?: MoneySize;
+  /** A direction icon before the amount: for lists. */
+  showIcon?: boolean;
+  /** Colors income and expense; the sign still carries the meaning. */
+  colored?: boolean;
+  /** The former name of `colored`. */
   tone?: boolean;
   labels?: { minus: string; plus: string };
   className?: string;
 }
 
-export function MoneyText({ cents, currency, locale, sign, tone = false, labels, className }: MoneyTextProps) {
-  const parts = formatMoneyParts(cents, currency, locale, sign, labels);
+const sizeClass: Record<MoneySize, string> = {
+  sm: "text-caption",
+  md: "",
+  lg: "text-h2",
+  hero: "text-hero-number",
+};
+
+const kindClass: Record<MoneyKind, string> = {
+  income: "text-income",
+  expense: "text-expense",
+  transfer: "text-muted-foreground",
+  neutral: "",
+};
+
+const kindIcon = { income: ArrowDownLeft, expense: ArrowUpRight, transfer: ArrowLeftRight } as const;
+
+function kindOf(cents: number): MoneyKind {
+  return cents > 0 ? "income" : cents < 0 ? "expense" : "neutral";
+}
+
+/** The only way to show money: tabular figures, the sign before the symbol (U+2212 for minus), a spoken label. */
+export function MoneyText({
+  cents,
+  currency,
+  locale,
+  sign,
+  kind,
+  size = "md",
+  showIcon = false,
+  colored,
+  tone = false,
+  labels,
+  className,
+}: MoneyTextProps) {
+  const paint = colored ?? tone;
+  const resolved = kind ?? kindOf(cents);
+  const effectiveSign = sign ?? (paint && cents > 0 ? "always" : "auto");
+  const parts = formatMoneyParts(cents, currency, locale, effectiveSign, labels);
+  const Icon = showIcon && resolved !== "neutral" ? kindIcon[resolved] : null;
   return (
     <span
       className={cn(
-        "tabular-nums",
-        tone && cents < 0 && "text-(--vf-expense)",
-        tone && cents > 0 && "text-(--vf-income)",
+        "inline-flex items-center gap-1 tabular-nums",
+        sizeClass[size],
+        paint && cents !== 0 && kindClass[resolved],
+        paint && cents === 0 && "text-muted-foreground",
         className,
       )}
     >
-      <span aria-hidden="true">{parts.text}</span>
+      {Icon && <Icon aria-hidden="true" className="size-[1em] shrink-0" />}
+      <span aria-hidden="true">{parts.text.replace("-", "−")}</span>
       <span className="sr-only">{parts.label}</span>
     </span>
   );

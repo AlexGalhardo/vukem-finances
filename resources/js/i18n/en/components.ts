@@ -8,5 +8,14 @@ const dict = {
   notifications: "Notifications",
   moneyMinus: "minus",
   moneyPlus: "plus",
+  showPassword: "Show password",
+  hidePassword: "Hide password",
+  passwordMet: "met",
+  passwordNotMet: "not met yet",
+  passwordStrength: "Strength",
+  passwordAdviceNote: "advice, not a requirement",
+  confirmTypeName: "Type the name to confirm:",
+  chartOther: "Other",
+  confirmNameLabel: "Name",
 } as const;
 export default dict;

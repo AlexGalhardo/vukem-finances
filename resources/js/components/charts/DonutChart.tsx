@@ -6,8 +6,16 @@ const colors = ["var(--chart-1)", "var(--chart-2)", "var(--chart-3)", "var(--cha
 
 // DonutChart draws the spending by category as SVG circle strokes with a
 // legend; each slice is a dash array of one circle, so there is no path maths.
-export default function DonutChart({ slices, currency }: { slices: Slice[]; currency: string }) {
+export default function DonutChart({ slices: all, currency }: { slices: Slice[]; currency: string }) {
   const { t, money: formatMoney } = useFinanceI18n();
+  // The five categorical colors are never cycled: everything past the fourth slice folds into "Other".
+  const slices: Slice[] =
+    all.length > colors.length
+      ? [
+          ...all.slice(0, colors.length - 1),
+          { category: t("chartOther"), cents: all.slice(colors.length - 1).reduce((sum, s) => sum + s.cents, 0) },
+        ]
+      : all;
   const total = slices.reduce((sum, s) => sum + s.cents, 0);
   const radius = 50;
   const circumference = 2 * Math.PI * radius;
@@ -29,7 +37,7 @@ export default function DonutChart({ slices, currency }: { slices: Slice[]; curr
               cy="70"
               r={radius}
               fill="none"
-              stroke={colors[i % colors.length]}
+              stroke={colors[i]}
               strokeWidth="22"
               strokeDasharray={`${length} ${circumference - length}`}
               strokeDashoffset={-offset}
@@ -44,7 +52,7 @@ export default function DonutChart({ slices, currency }: { slices: Slice[]; curr
       <ul className="flex flex-col gap-1 text-sm">
         {slices.map((s, i) => (
           <li key={s.category} className="flex items-center gap-2">
-            <span className="inline-block size-3 rounded-sm" style={{ backgroundColor: colors[i % colors.length] }} />
+            <span className="inline-block size-3 rounded-sm" style={{ backgroundColor: colors[i] }} />
             {s.category}: {formatMoney(s.cents, currency)}
           </li>
         ))}

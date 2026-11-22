@@ -13,12 +13,12 @@ export interface PaginationProps {
 export default function Pagination({ page, pageCount, hrefFor }: PaginationProps) {
   const { t } = useFinanceI18n();
   if (pageCount <= 1) return null;
-  const linkClass = buttonVariants({ variant: "outline", size: "sm" });
-  const disabledClass = `${linkClass} pointer-events-none opacity-50`;
+  const linkClass = buttonVariants({ variant: "outline" });
+  const disabledClass = linkClass;
   return (
     <nav aria-label={t("pagination")} className="flex items-center justify-between gap-3">
       {page > 1 ? (
-        <Link href={hrefFor(page - 1)} className={`${linkClass} pointer-coarse:min-h-11`} preserveScroll>
+        <Link href={hrefFor(page - 1)} className={linkClass} preserveScroll>
           <ChevronLeft aria-hidden="true" />
           {t("previousPage")}
         </Link>
@@ -28,11 +28,11 @@ export default function Pagination({ page, pageCount, hrefFor }: PaginationProps
           {t("previousPage")}
         </span>
       )}
-      <span className="text-sm tabular-nums text-muted-foreground">
+      <span className="text-body tabular-nums text-muted-foreground">
         {t("page")} {page} {t("of")} {pageCount}
       </span>
       {page < pageCount ? (
-        <Link href={hrefFor(page + 1)} className={`${linkClass} pointer-coarse:min-h-11`} preserveScroll>
+        <Link href={hrefFor(page + 1)} className={linkClass} preserveScroll>
           {t("nextPage")}
           <ChevronRight aria-hidden="true" />
         </Link>
