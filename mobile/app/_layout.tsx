@@ -1,6 +1,6 @@
 import { Stack } from "expo-router";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { Bootstrap } from "../src/app/Bootstrap";
+import { Bootstrap } from "../src/core/Bootstrap";
 
 function Screens(): React.JSX.Element {
 	const insets = useSafeAreaInsets();
