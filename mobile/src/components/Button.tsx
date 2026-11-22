@@ -13,6 +13,9 @@ export function Button(props: {
   const { label, onPress, variant = "primary", disabled = false } = props;
   const filled = variant === "primary";
   const accent = variant === "destructive" ? ui.colors.expense : ui.colors.brand;
+  // The brand green is for fills: as text on a light surface it misses AA.
+  const outlineLabel = variant === "destructive" ? ui.colors.expense : ui.colors.brandText;
+  const labelColor = filled ? ui.colors.onBrand : outlineLabel;
 
   return (
     <Pressable
@@ -33,9 +36,7 @@ export function Button(props: {
         opacity: disabled ? 0.5 : 1,
       }}
     >
-      <Text style={{ color: filled ? ui.colors.onBrand : accent, fontSize: ui.fontSize.base, fontWeight: "600" }}>
-        {label}
-      </Text>
+      <Text style={{ color: labelColor, fontSize: ui.fontSize.base, fontWeight: "600" }}>{label}</Text>
     </Pressable>
   );
 }

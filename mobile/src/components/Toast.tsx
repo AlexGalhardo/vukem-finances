@@ -22,7 +22,7 @@ export function Toast(props: {
       onPress={onPress}
       style={{ minHeight: TOUCH_MIN, minWidth: TOUCH_MIN, justifyContent: "center", paddingHorizontal: ui.spacing[3] }}
     >
-      <Text style={{ color: ui.colors.brand, fontSize: ui.fontSize.base, fontWeight: "600" }}>{label}</Text>
+      <Text style={{ color: ui.colors.brandText, fontSize: ui.fontSize.base, fontWeight: "600" }}>{label}</Text>
     </Pressable>
   );
 

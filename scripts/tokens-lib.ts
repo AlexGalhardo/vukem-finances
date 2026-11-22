@@ -6,11 +6,15 @@
 
 const BASE_PX = 16;
 
+/** Every top-level block of the selector: colors and structure tokens live in separate ones. */
 function block(css: string, selector: string): string {
-  const start = css.indexOf(`${selector} {`);
-  if (start < 0) throw new Error(`tokens.css has no ${selector} block`);
-  const end = css.indexOf("}", start);
-  return css.slice(start, end);
+  const head = `${selector} {`;
+  const bodies: string[] = [];
+  for (let at = css.indexOf(head); at >= 0; at = css.indexOf(head, at + head.length)) {
+    if (at === 0 || css[at - 1] === "\n") bodies.push(css.slice(at, css.indexOf("}", at)));
+  }
+  if (bodies.length === 0) throw new Error(`tokens.css has no ${selector} block`);
+  return bodies.join("\n");
 }
 
 function declarations(body: string): [string, string][] {

@@ -13,15 +13,15 @@ describe("theme tokens", () => {
 
   it("carries the palette of both themes with the same names", () => {
     expect(Object.keys(colors.dark)).toEqual(Object.keys(colors.light));
-    expect(colors.light.brand).toBe("#1c7448");
-    expect(colors.dark.text).toBe("#edf3ef");
+    expect(colors.light.brand).toBe("#009e00");
+    expect(colors.dark.text).toBe("#f5f5f5");
   });
 
   it("converts rem to density-independent pixels", () => {
     expect(spacing[4]).toBe(16);
     expect(fontSize.base).toBe(16);
-    expect(radius).toBe(10);
-    expect(duration.base).toBe(200);
+    expect(radius).toBe(8);
+    expect(duration.base).toBe(150);
   });
 
   it("keeps touch targets at least 44 dp (the spec asks 48 on the controls that use it)", () => {
