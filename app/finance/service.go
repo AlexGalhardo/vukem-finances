@@ -2,7 +2,6 @@ package finance
 
 import (
 	"context"
-	"database/sql"
 	"errors"
 	"net/http"
 	"strings"
@@ -187,105 +186,6 @@ func firstErr(err, fallback error) error {
 	return fallback
 }
 
-// ---- budgets ----
-
-// BudgetStatus is a budget with what the month has spent against it.
-type BudgetStatus struct {
-	ID         int64  `json:"id"`
-	CategoryID int64  `json:"categoryId"`
-	Category   string `json:"category"`
-	LimitCents int64  `json:"limitCents"`
-	SpentCents int64  `json:"spentCents"`
-	Percent    int    `json:"percent"`
-}
-
-// SetBudget sets the monthly limit of an expense category (Pro).
-func (s *Service) SetBudget(ctx context.Context, categoryID int64, limit string) error {
-	lim, err := s.WS.Limits(ctx)
-	if err != nil {
-		return err
-	}
-
-	if err := lim.CheckBudgets(); err != nil {
-		return err
-	}
-
-	cents, err := ParseAmount(limit)
-	if err != nil || cents <= 0 {
-		return errAmountIn
-	}
-
-	ok, err := workspaces.Scoped[models.Category](
-		ctx,
-		s.DB,
-	).Where("id", categoryID).
-		Where("kind", models.KindExpense).
-		Exists(ctx)
-	if err != nil || !ok {
-		return firstErr(err, errExpense)
-	}
-
-	n, err := workspaces.Scoped[models.Budget](ctx, s.DB).Where("category_id", categoryID).
-		Update(ctx, orm.Set{"limit_cents": cents})
-	if err != nil || n > 0 {
-		return err
-	}
-
-	err = orm.Create(ctx, s.DB, &models.Budget{CategoryID: sql.Null[int64]{V: categoryID, Valid: true}, LimitCents: cents})
-	if s.DB.UniqueViolation(err) {
-		// A concurrent writer created the budget first: this one is an edit.
-		_, err = workspaces.Scoped[models.Budget](ctx, s.DB).Where("category_id", categoryID).
-			Update(ctx, orm.Set{"limit_cents": cents})
-	}
-
-	return err
-}
-
-func (s *Service) spent(ctx context.Context, categoryID int64, month string) (int64, error) {
-	from, to := monthBounds(month)
-
-	return workspaces.Scoped[models.Transaction](ctx, s.DB).Where("category_id", categoryID).
-		WhereNull("transfer_uid").Where("kind", models.KindExpense).WhereBetween("occurred_on", from, to).Sum[int64](ctx, "amount_cents")
-}
-
-// Budgets lists the budgets with what month has spent against each.
-func (s *Service) Budgets(ctx context.Context, month string) ([]BudgetStatus, error) {
-	budgets, err := workspaces.Scoped[models.Budget](ctx, s.DB).OrderBy("id", orm.Asc).Get(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	cats, err := s.Categories(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	names := map[int64]string{}
-	for _, c := range cats {
-		names[c.ID] = c.Name
-	}
-
-	out := make([]BudgetStatus, 0, len(budgets))
-
-	for _, b := range budgets {
-		if !b.CategoryID.Valid {
-			continue
-		}
-
-		spent, err := s.spent(ctx, b.CategoryID.V, month)
-		if err != nil {
-			return nil, err
-		}
-
-		out = append(out, BudgetStatus{
-			ID: b.ID, CategoryID: b.CategoryID.V, Category: names[b.CategoryID.V], LimitCents: b.LimitCents,
-			SpentCents: spent, Percent: int(spent * 100 / b.LimitCents),
-		})
-	}
-
-	return out, nil
-}
-
 // alertBudget emails the owners when delta (cents just added to the month's
 // spending of the category) made it cross 80% or 100% of the budget. It
 // compares the spending before and after, so no alert is ever sent twice.
@@ -299,7 +199,7 @@ func (s *Service) alertBudget(ctx context.Context, categoryID int64, month strin
 		return err
 	}
 
-	spent, err := s.spent(ctx, categoryID, month)
+	spent, err := s.categorySpent(ctx, categoryID, month)
 	if err != nil {
 		return err
 	}

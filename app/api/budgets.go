@@ -6,6 +6,7 @@ import (
 	"github.com/AlexGalhardo/vukem/errs"
 	"github.com/AlexGalhardo/vukem/web"
 
+	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
@@ -32,7 +33,7 @@ func (a *API) month(c *web.Ctx, in string) (string, error) {
 		return a.Fin.Month(c.Context()), nil
 	}
 
-	if !monthShape.MatchString(in) {
+	if !monthShape.MatchString(in) || !finance.ValidMonth(in) {
 		return "", errMonth
 	}
 
@@ -64,6 +65,10 @@ func (a *API) budgetViews(c *web.Ctx, month string) ([]BudgetOut, error) {
 
 	out := make([]BudgetOut, 0, len(status))
 	for _, s := range status {
+		if s.Overall {
+			continue // the overall budget has no category; the API lists category budgets only
+		}
+
 		b := byID[s.ID]
 		out = append(out, BudgetOut{
 			UID: b.UID, Version: b.Version, CategoryUID: l.categories[s.CategoryID], CategoryName: s.Category, Month: month,
