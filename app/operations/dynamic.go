@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+
+	"github.com/AlexGalhardo/vukem/mcp"
 )
 
 // Dynamic is an operation called by name with its input as JSON text, the way
@@ -17,6 +19,8 @@ type Dynamic interface {
 	// CallJSON decodes body (the whole input as a JSON object; empty means the
 	// zero input) and invokes the operation. An unknown field is refused.
 	CallJSON(ctx context.Context, actor Actor, body []byte, opts ...CallOption) (Result[any], error)
+	// AddTool registers the operation as an MCP tool.
+	AddTool(s *mcp.Server, t mcp.Tool, gate ToolGate)
 }
 
 // CallJSON implements Dynamic.
