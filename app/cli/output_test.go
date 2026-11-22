@@ -282,7 +282,9 @@ func TestOutputCSVGuards(t *testing.T) {
 
 		for i, name := range rows[0] {
 			got := rows[1][i]
-			quoted := strings.HasPrefix(got, "'")
+			// After a line break the apostrophe must follow it: a reader that splits
+			// the record there would otherwise see the bare formula.
+			quoted := strings.HasPrefix(strings.TrimLeft(got, "\n"), "'")
 
 			if want := name != "i" && name != "j"; quoted != want {
 				t.Errorf("%s = %q, quoted %v, want %v", name, got, quoted, want)

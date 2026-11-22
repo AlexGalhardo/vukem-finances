@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -207,39 +208,38 @@ func writeCSV(w io.Writer, v any, tty bool) error {
 		return s
 	}
 
-	var b strings.Builder
+	// bufio keeps the first write error, so only Flush needs checking.
+	b := bufio.NewWriter(w)
 
 	for i, c := range g.cols {
 		if i > 0 {
-			b.WriteByte(',')
+			_ = b.WriteByte(',')
 		}
 
-		b.WriteString(quoteCSV(csvSafe(text(c), false)))
+		_, _ = b.WriteString(quoteCSV(csvSafe(text(c))))
 	}
 
-	b.WriteByte('\n')
+	_ = b.WriteByte('\n')
 
 	for _, row := range g.rows {
 		for i, c := range g.cols {
 			if i > 0 {
-				b.WriteByte(',')
+				_ = b.WriteByte(',')
 			}
 
 			if n, ok := row[c].(json.Number); ok && plainNumber.MatchString(n.String()) {
-				b.WriteString(n.String())
+				_, _ = b.WriteString(n.String())
 
 				continue
 			}
 
-			b.WriteString(quoteCSV(csvSafe(text(cellText(row[c])), false)))
+			_, _ = b.WriteString(quoteCSV(csvSafe(text(cellText(row[c])))))
 		}
 
-		b.WriteByte('\n')
+		_ = b.WriteByte('\n')
 	}
 
-	_, err = io.WriteString(w, b.String())
-
-	return err
+	return b.Flush()
 }
 
 // plainNumber is what a bare cell may hold: digits, a sign, a dot and an
@@ -251,31 +251,46 @@ func quoteCSV(s string) string {
 }
 
 // csvSafe neutralizes formula injection: a spreadsheet runs a cell whose first
-// meaningful character is = + - @ (or its full-width form), and it skips the
-// whitespace, control and format characters (and a quote) in front of it, so
-// those are skipped here too before the first rune is judged. Such a cell gets
-// a leading apostrophe. A text value is exempt only when the whole of it is a
-// plain negative decimal ("-10.50"), which no spreadsheet reads as a formula;
-// a real number is written bare by writeCSV and never reaches here.
-func csvSafe(s string, _ bool) string {
+// meaningful character is = + - @ (or its full-width form), after skipping
+// whitespace, control and format characters and a quote. A reader using ; or a
+// tab can misread the quoting of a comma-separated line and start a cell in the
+// middle of this one, so every segment after ; tab CR or LF is guarded with its
+// own apostrophe. A comma is not a boundary: the reader that splits on it honors
+// the quotes. A text value is exempt only when the whole of it is a plain
+// negative decimal ("-10.50"); a real number is written bare by writeCSV.
+func csvSafe(s string) string {
 	if s == "" || plainNegative(s) {
 		return s
 	}
 
-	for _, r := range s {
-		if r == '"' || unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
-			continue
-		}
+	var b strings.Builder
 
-		switch r {
-		case '=', '+', '-', '@', '＝', '＋', '－', '＠':
-			return "'" + s
-		}
+	b.Grow(len(s) + 1)
 
-		return s
+	atStart, segment, copied := true, 0, 0
+
+	for i, r := range s {
+		switch {
+		case r == ';' || r == '\t' || r == '\r' || r == '\n':
+			atStart, segment = true, i+1
+		case !atStart:
+		case r == '"' || unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r):
+		default:
+			atStart = false
+
+			switch r {
+			case '=', '+', '-', '@', '＝', '＋', '－', '＠':
+				b.WriteString(s[copied:segment])
+				b.WriteByte('\'')
+
+				copied = segment
+			}
+		}
 	}
 
-	return s
+	b.WriteString(s[copied:])
+
+	return b.String()
 }
 
 // plainNegative matches -123 and -123.45 and nothing else.
