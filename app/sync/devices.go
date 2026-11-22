@@ -21,13 +21,14 @@ import (
 
 // Error codes of the protocol that are not mutation errors.
 const (
-	CodeDeviceRevoked   = "device_revoked"
-	CodeResyncRequired  = "resync_required"
-	CodeUnsupported     = "protocol_unsupported"
-	CodeBadRequest      = "bad_request"
-	CodeBatchTooLarge   = "batch_too_large"
-	CodeRateLimited     = "rate_limited"
-	CodeInvalidSnapshot = "invalid_snapshot"
+	CodeDeviceRevoked    = "device_revoked"
+	CodeWorkspaceDeleted = "workspace_deleted"
+	CodeResyncRequired   = "resync_required"
+	CodeUnsupported      = "protocol_unsupported"
+	CodeBadRequest       = "bad_request"
+	CodeBatchTooLarge    = "batch_too_large"
+	CodeRateLimited      = "rate_limited"
+	CodeInvalidSnapshot  = "invalid_snapshot"
 )
 
 // Limits of the protocol, published by /info.
@@ -70,6 +71,11 @@ func fail(status int, code, message string) error {
 }
 
 var (
+	// ErrWorkspaceDeleted answers every sync call once the workspace waits to be
+	// purged or is gone: the client tells the person and erases the workspace locally.
+	ErrWorkspaceDeleted = fail(http.StatusGone, CodeWorkspaceDeleted,
+		"This workspace was deleted: stop syncing it and erase its local data.")
+
 	errDeviceRevoked = fail(http.StatusForbidden, CodeDeviceRevoked, "This device is unknown or was revoked: stop syncing it.")
 	errDeviceName    = fail(http.StatusUnprocessableEntity, "validation_failed", "Name the device with 1 to 80 characters.")
 	errPlatform      = fail(http.StatusUnprocessableEntity, "validation_failed", "The platform must be ios, android, web or other.")

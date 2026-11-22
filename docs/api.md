@@ -124,7 +124,9 @@ An error looks like this (RFC 9457):
 | 403 | `missing_scope`, `forbidden` | the token lacks the scope, or the role cannot do it |
 | 404 | `not_found` | no such row in this workspace |
 | 409 | `conflict`, `version_conflict` | a rule (a name taken, an archived parent), or a stale `If-Match` |
+| 410 | `workspace_deleted` | sync only: the workspace was deleted or is waiting to be, stop syncing it and erase its local data |
 | 422 | `validation_failed` | the body breaks a rule |
+| 423 | `workspace_pending_deletion` | the workspace is in the grace period before its deletion: every write is refused, reads still work |
 | 429 | `rate_limited` | over a rate limit |
 | 503 | `unavailable` | the server cannot answer now; retry |
 

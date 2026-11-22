@@ -105,6 +105,13 @@ func (a *API) syncActor(c *web.Ctx) (syncproto.Actor, error) {
 		return syncproto.Actor{}, errs.New(http.StatusUnauthorized, "A valid token is required.").WithExtension("code", CodeUnauthorized)
 	}
 
+	// A workspace waiting to be purged is gone for a device: it erases it locally.
+	if pending, err := a.WS.PendingDeletion(c.Context(), p.WorkspaceID); err != nil {
+		return syncproto.Actor{}, err
+	} else if pending {
+		return syncproto.Actor{}, syncproto.ErrWorkspaceDeleted
+	}
+
 	return syncproto.Actor{WorkspaceID: p.WorkspaceID, UserID: p.User.ID, TokenID: p.Token.ID, Role: p.Role}, nil
 }
 

@@ -169,7 +169,7 @@ The role of the person behind the token, read at the request, decides per row: `
 
 ## Errors
 
-Problem codes of a whole request: `bad_request` (400), `unauthorized` (401), `missing_scope` and `forbidden` (403), `device_revoked` (403), `unknown_entity`, `invalid_snapshot` (400), `batch_too_large` (413), `resync_required` (410), `protocol_unsupported` (426), `rate_limited` (429, with `Retry-After`), `unavailable` (503).
+Problem codes of a whole request: `bad_request` (400), `unauthorized` (401), `missing_scope` and `forbidden` (403), `device_revoked` (403), `unknown_entity`, `invalid_snapshot` (400), `batch_too_large` (413), `resync_required` (410), `workspace_deleted` (410: the workspace waits to be purged or was purged; the client tells the person and erases that workspace locally), `protocol_unsupported` (426), `rate_limited` (429, with `Retry-After`), `unavailable` (503).
 
 Codes of one mutation (`error.code` of a `rejected` result):
 

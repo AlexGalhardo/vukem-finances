@@ -37,6 +37,10 @@ type Catalog struct {
 
 // NewCatalog declares every operation of the application.
 func NewCatalog(cfg Config, svc Services) *Catalog {
+	if cfg.Frozen == nil && svc.WS != nil {
+		cfg.Frozen = svc.WS.PendingDeletion
+	}
+
 	c := &Catalog{Registry: NewRegistry(cfg), Services: svc}
 
 	c.defineAccounts()

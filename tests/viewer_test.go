@@ -20,7 +20,10 @@ import (
 // the pushed rows are checked against the role one by one (TestSyncPushPermissions).
 // Any member may also press Add device: the phone it pairs holds the same role ceiling (TestPairing_TokenHasTheRoleCeiling).
 var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leave", "tokens.store", "tokens.destroy",
-	"notifications.read", "notifications.read_all", "notifications.preferences", "devices.destroy", "devices.pair"}
+	"notifications.read", "notifications.read_all", "notifications.preferences", "devices.destroy", "devices.pair",
+	// The personal export and the account deletion are about the person, not the workspace: any member, a viewer too,
+	// confirms their own password first (tests/privacy_*_test.go).
+	"account.export.confirm", "account.export"}
 
 // ownerOnlyReads are GET routes that are not open to a viewer: polling a PIX
 // payment re-reads it at the provider and can activate it, so it is billing

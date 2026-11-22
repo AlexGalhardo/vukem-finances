@@ -135,7 +135,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 	// current one from the session and answers 404 for one the user is not in.
 	// The limits come after it: they need the signed-in user and the workspace.
 	r.Group("", func(g *router.Group) {
-		g.Use(required, verified, ws.Middleware(), ws.Require(workspaces.AbilityRead), reads, writes,
+		g.Use(required, verified, ws.Middleware(), ws.Require(workspaces.AbilityRead), ws.RefuseWritesWhilePending(), reads, writes,
 			shareWorkspace(ws, acc, admins, h.Alerts))
 
 		financeDashboard(g, h)
