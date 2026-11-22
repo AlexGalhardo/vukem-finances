@@ -34,7 +34,7 @@ func TestTelegramMigrationRoundTrip(t *testing.T) {
 		t.Fatal("two links for one chat were accepted")
 	}
 
-	if _, err := m.Rollback(t.Context(), 1); err != nil {
+	if _, err := m.Rollback(t.Context(), migrationsFrom(t, "20261123100000_create_telegram_tables")); err != nil {
 		t.Fatalf("rollback: %v", err)
 	}
 
@@ -47,4 +47,23 @@ func TestTelegramMigrationRoundTrip(t *testing.T) {
 	if _, err := m.Up(t.Context()); err != nil {
 		t.Fatalf("apply again: %v", err)
 	}
+}
+
+// migrationsFrom counts the migrations from id to the last one, so a rollback
+// that must undo id (and what depends on it) does not break when a later epic
+// adds a migration after it.
+func migrationsFrom(t *testing.T, id string) int {
+	t.Helper()
+
+	all := migrations.All()
+
+	for i, m := range all {
+		if m.ID == id {
+			return len(all) - i
+		}
+	}
+
+	t.Fatalf("migration %s is not registered", id)
+
+	return 0
 }
