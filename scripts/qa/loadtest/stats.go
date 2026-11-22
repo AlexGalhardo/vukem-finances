@@ -91,10 +91,22 @@ func parseBudgets(path string) (map[string]budget, error) {
 
 		cells := cellSplit.Split(strings.Trim(line, "| "), -1)
 
-		for i, c := range cells {
-			if strings.EqualFold(c, "p95 budget (ms)") {
-				col = i
+		// A row that is not a scenario is a header (or the separator): each
+		// table has its own columns, and only the budget table counts.
+		if strings.HasPrefix(cells[0], "-") {
+			continue
+		}
+
+		if !strings.HasPrefix(cells[0], "`") {
+			col = -1
+
+			for i, c := range cells {
+				if strings.EqualFold(c, "p95 budget (ms)") {
+					col = i
+				}
 			}
+
+			continue
 		}
 
 		if col < 0 || col >= len(cells) || !strings.HasPrefix(cells[0], "`") {
