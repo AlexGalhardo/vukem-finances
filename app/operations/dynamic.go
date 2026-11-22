@@ -20,7 +20,7 @@ type Dynamic interface {
 	// zero input) and invokes the operation. An unknown field is refused.
 	CallJSON(ctx context.Context, actor Actor, body []byte, opts ...CallOption) (Result[any], error)
 	// AddTool registers the operation as an MCP tool.
-	AddTool(s *mcp.Server, t mcp.Tool, gate ToolGate)
+	AddTool(s *mcp.Server, t mcp.Tool, gate ToolGate, done ToolDone)
 }
 
 // CallJSON implements Dynamic.
