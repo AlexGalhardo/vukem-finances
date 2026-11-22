@@ -13,6 +13,7 @@ import type recurrences from "./en/recurrences";
 import type reports from "./en/reports";
 import type search from "./en/search";
 import type shell from "./en/shell";
+import type telegram from "./en/telegram";
 import type tokens from "./en/tokens";
 import type transactions from "./en/transactions";
 
@@ -33,5 +34,6 @@ export type Key =
   | keyof typeof reports
   | keyof typeof search
   | keyof typeof shell
+  | keyof typeof telegram
   | keyof typeof tokens
   | keyof typeof transactions;
