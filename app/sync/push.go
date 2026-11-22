@@ -166,16 +166,27 @@ func (s *Service) Push(ctx context.Context, a Actor, dev models.SyncDevice, muts
 }
 
 // order sorts the indexes of a batch parents first (a category with a parent
-// after the others of its entity), keeping the request order otherwise.
+// after the others of its entity), keeping the request order otherwise, and the
+// request order of the mutations of one row always.
 func order(muts []MutationIn, rank map[string]int) []int {
 	idx := make([]int, len(muts))
 	for i := range idx {
 		idx[i] = i
 	}
 
+	// A row is a child when any of its mutations names a parent. All of its mutations then
+	// weigh the same, so a create and a later edit of it keep their request order.
+	children := map[string]bool{}
+
+	for _, m := range muts {
+		if parent, ok := m.Fields["parent_uid"]; ok && parent != nil && m.Op != "delete" {
+			children[m.Entity+"/"+m.UID] = true
+		}
+	}
+
 	weight := func(m MutationIn) int {
 		w := rank[m.Entity] * 2
-		if _, child := m.Fields["parent_uid"]; child && m.Op != "delete" {
+		if children[m.Entity+"/"+m.UID] && m.Op != "delete" {
 			w++
 		}
 
