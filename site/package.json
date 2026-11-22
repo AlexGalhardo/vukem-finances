@@ -9,7 +9,7 @@
     "build": "bun --bun astro build && bun scripts/sitemap.ts && bun scripts/twins.ts",
     "preview": "bun --bun astro preview",
     "typecheck": "bun --bun tsc --noEmit",
-    "check:claims": "bun scripts/check-claims.ts",
+    "check:claims": "bun scripts/check-claims.ts && bun scripts/check-doc-claims.ts",
     "check:built": "bun scripts/check-built.ts",
     "screenshots": "bun scripts/screenshots.ts",
     "og": "bun scripts/og-image.ts",
@@ -18,7 +18,8 @@
     "reference:check": "bun scripts/reference-check.ts",
     "test:reference": "bun test scripts/reference.test.ts",
     "last-updated": "bun scripts/last-updated.ts",
-    "check:last-updated": "bun scripts/last-updated.ts --check"
+    "check:last-updated": "bun scripts/last-updated.ts --check",
+    "check:mdx": "bun scripts/check-mdx.ts"
   },
   "dependencies": {
     "@astrojs/react": "7.1.9",
