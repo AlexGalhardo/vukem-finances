@@ -36,6 +36,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `resources/js/shortcuts/`, `resources/js/nav.ts`, `resources/js/i18n/` | the shortcut registry, the sidebar items, the translation files (see "The application shell") |
 | `docs/` | `design.md` (brief and tokens), `shortcuts.md` (key allocation), `api.md` and `openapi.json` (the public API), `export-format.md` and `export-format.schema.json` (the exports), `telegram.md` (the Telegram bot) |
 | `clients/typescript/` | the generated TypeScript client of the API (`api.ts`) |
+| `mobile/` | the React Native app (Expo, local SQLite, offline): its own `package.json` and `bun.lock`, not a workspace of the root; see `docs/mobile.md` |
 | `cmd/app/` | the binary entry point |
 | `desktop/`, `app/desktopgate/`, `bootstrap/desktop.go` | the desktop app: its own Go module (Wails v3.1.0, `replace` to the parent), the loopback gate, and the option that serves the handler behind it (see "The desktop app") |
 | `config/`, `bootstrap/` | configuration and application start-up |
@@ -59,7 +60,7 @@ bun run lint:md
 bun run build
 ```
 
-Install the JavaScript dependencies with `bun install --frozen-lockfile`. Run every command above before a hand-off.
+Install the JavaScript dependencies with `bun install --frozen-lockfile`. The mobile app is separate: `cd mobile && bun install --frozen-lockfile && bun run typecheck && bun run test` (Node 22.13 or newer for `node:sqlite`; CI pins 24.21.0); never add a `mobile/src/app` folder (expo-router would read it as the routes root). Run every command above before a hand-off.
 
 ## The desktop app
 
