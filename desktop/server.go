@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"net"
+	"net/http"
 	"os"
 	"path/filepath"
 	"slices"
@@ -49,6 +50,9 @@ type Server struct {
 type startOptions struct {
 	appOptions []vukem.Option
 	version    string
+	// shell answers /desktop/ (native actions of the window); nil in tests
+	// that only need the app.
+	shell http.Handler
 }
 
 // StartServer prepares the data directory, migrates the database and starts
@@ -147,7 +151,7 @@ func (s *Server) build(_ Paths, env map[string]string, gate *desktopgate.Gate, o
 		return err
 	}
 
-	all := append(bootstrap.DesktopOptions(gate, s.ln), vukem.WithSource(src), vukem.WithLogOutput(s.logs))
+	all := append(bootstrap.DesktopOptions(gate, s.ln, opts.shell), vukem.WithSource(src), vukem.WithLogOutput(s.logs))
 	all = append(all, opts.appOptions...)
 
 	s.app, err = bootstrap.New(all...)
