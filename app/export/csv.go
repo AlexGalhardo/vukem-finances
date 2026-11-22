@@ -128,14 +128,34 @@ func WriteCSV(w io.Writer, rows iter.Seq2[TransactionRow, error], opt CSVOptions
 
 func csvRecord(r TransactionRow) []string {
 	return []string{
-		finance.SpreadsheetSafe(r.UID),
-		finance.SpreadsheetSafe(r.Date),
-		finance.SpreadsheetSafe(r.Account),
-		finance.SpreadsheetSafe(r.Category),
-		finance.SpreadsheetSafe(strings.Join(r.Tags, ";")),
-		finance.SpreadsheetSafe(r.Kind),
+		textCell(r.UID),
+		textCell(r.Date),
+		textCell(r.Account),
+		textCell(r.Category),
+		textCell(strings.Join(r.Tags, ";")),
+		textCell(r.Kind),
 		finance.FormatDecimalCents(r.AmountCents),
-		finance.SpreadsheetSafe(r.Description),
-		finance.SpreadsheetSafe(r.TransferUID),
+		textCell(r.Description),
+		textCell(r.TransferUID),
+	}
+}
+
+// textCell guards every piece of s between commas and semicolons. Excel in a
+// locale whose list separator is the other one (pt-BR reads ";") splits the
+// row there without honoring the quoting, so each piece can become a cell.
+func textCell(s string) string {
+	var b strings.Builder
+
+	for {
+		i := strings.IndexAny(s, ",;")
+		if i < 0 {
+			b.WriteString(finance.SpreadsheetSafe(s))
+
+			return b.String()
+		}
+
+		b.WriteString(finance.SpreadsheetSafe(s[:i]))
+		b.WriteByte(s[i])
+		s = s[i+1:]
 	}
 }
