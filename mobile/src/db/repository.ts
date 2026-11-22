@@ -26,11 +26,11 @@ export interface RepositoryOptions {
   uid?: () => string;
 }
 
-interface RawRow {
+export interface RawRow {
   [column: string]: SqlValue;
 }
 
-function encode(kind: FieldKind, value: unknown): SqlValue {
+export function encode(kind: FieldKind, value: unknown): SqlValue {
   if (value === null || value === undefined) {
     return null;
   }
@@ -68,7 +68,7 @@ function sameValue(a: unknown, b: unknown): boolean {
   return JSON.stringify(a) === JSON.stringify(b);
 }
 
-function toRow<E extends EntityName>(entity: E, raw: RawRow): Row<E> {
+export function toRow<E extends EntityName>(entity: E, raw: RawRow): Row<E> {
   const row: Record<string, unknown> = {
     uid: raw.uid,
     version: raw.version,

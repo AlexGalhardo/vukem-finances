@@ -81,6 +81,29 @@ export const MIGRATIONS: readonly Migration[] = [
       "CREATE UNIQUE INDEX budgets_category_live ON budgets (COALESCE(category_uid, '')) WHERE deleted_at IS NULL",
     ],
   },
+  {
+    version: 3,
+    // Epic 20, the sync client: the outbox retry count and the tables of conflicts, problems, resync staging and the data check.
+    statements: [
+      // How many runs a retryable rejection (unknown_reference, parent_deleted) already survived.
+      "ALTER TABLE outbox ADD COLUMN retries INTEGER NOT NULL DEFAULT 0",
+      // The values that lost a merge, for the person to look at and re-apply.
+      `CREATE TABLE sync_conflicts (
+				id INTEGER PRIMARY KEY AUTOINCREMENT, entity TEXT NOT NULL, uid TEXT NOT NULL, field TEXT NOT NULL,
+				kind TEXT NOT NULL, lost_value TEXT, applied_value TEXT, created_at TEXT NOT NULL, dismissed_at TEXT)`,
+      // Mutations the server refused for good: the person discards them or edits the row again.
+      `CREATE TABLE sync_problems (
+				id INTEGER PRIMARY KEY AUTOINCREMENT, entity TEXT NOT NULL, uid TEXT NOT NULL, op_id TEXT NOT NULL,
+				op TEXT NOT NULL, code TEXT NOT NULL, message TEXT NOT NULL DEFAULT '', field TEXT NOT NULL DEFAULT '',
+				fields TEXT NOT NULL DEFAULT '{}', created_at TEXT NOT NULL, dismissed_at TEXT)`,
+      // The snapshot of a resync, held here until every entity is downloaded.
+      "CREATE TABLE sync_staging (entity TEXT NOT NULL, uid TEXT NOT NULL, row TEXT NOT NULL, PRIMARY KEY (entity, uid))",
+      // References that still name nothing after the integrity pass: the data check list. Never deleted by the app.
+      `CREATE TABLE sync_ref_missing (
+				entity TEXT NOT NULL, uid TEXT NOT NULL, field TEXT NOT NULL, missing TEXT NOT NULL,
+				PRIMARY KEY (entity, uid, field))`,
+    ],
+  },
 ];
 
 export const LATEST_VERSION = MIGRATIONS[MIGRATIONS.length - 1]?.version ?? 0;
