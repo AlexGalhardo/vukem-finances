@@ -1,10 +1,16 @@
 package operations
 
 import (
+	"context"
+	"errors"
+	"net/http"
 	"slices"
 	"strconv"
 
+	"github.com/AlexGalhardo/vukem/orm"
+
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
 // Surface is a way into the registry.
@@ -74,4 +80,30 @@ func (a Actor) idempotencyScope() string {
 	}
 
 	return string(a.surface) + "-user:" + strconv.FormatInt(a.user.ID, 10) + ":" + strconv.FormatInt(a.workspace, 10)
+}
+
+// LocalOwner is the actor of the person at the console of a personal
+// installation: its owner, in its one workspace, with the scopes given. It is
+// how the CLI acts without a token. Only the personal edition has it: a saas
+// server has no local owner, and a surface there needs a token.
+func LocalOwner(ctx context.Context, ws *workspaces.Service, surface Surface, scopes []string) (Actor, error) {
+	if !ws.Edition.Personal() {
+		return Actor{}, fail(http.StatusForbidden, CodeForbidden, "There is no local owner outside the personal edition: use a token.")
+	}
+
+	m, err := orm.QueryOf[models.Membership](ws.DB).Where("role", models.RoleOwner).OrderBy("id", orm.Asc).First(ctx)
+	if errors.Is(err, orm.ErrNotFound) {
+		return Actor{}, fail(http.StatusNotFound, CodeNotFound, "This installation has no owner yet: finish the setup first.")
+	}
+
+	if err != nil {
+		return Actor{}, err
+	}
+
+	u, err := orm.QueryOf[models.User](ws.DB).Find(ctx, m.UserID)
+	if err != nil {
+		return Actor{}, err
+	}
+
+	return NewActor(surface, u, m.WorkspaceID, m.Role, scopes, ""), nil
 }
