@@ -35,7 +35,7 @@ One `h1` and landmarks, a skip link first. Hero with the calls to action, how it
 | Free and Pro limits | editions.rows | `app/workspaces/limits.go`, `site/generated/plans.json` | the page reads the JSON; the JSON mirrors the Go values |
 | There is no hosted service today | hero.note, editions.notice, faq.items | `docs/landing-brief.md` | decision D-020; forbidden phrases in the catalogs |
 | The default database is SQLite | privacy.points, faq.items | `config/edition.go`, `AGENTS.md` | files exist |
-| The site sets no cookie, runs no analytics, loads nothing from other sites | privacy.points | `site/astro.config.mjs` | static build, no integration that adds scripts |
+| The site sets no cookie, runs no analytics, loads nothing from other sites | privacy.points | `site/lib/built.ts` | `check:built` on every page of the build |
 | Desktop app for Windows, macOS and Linux, offline, data in the user folder | features.groups, how.steps, faq.items | `docs/desktop.md`, `.github/workflows/desktop.yml` | files exist |
 | Desktop builds are unsigned | install.desktopText, faq.items | `docs/desktop.md` | files exist |
 | Installers are attached to releases on GitHub | install.desktopText | `.github/workflows/desktop.yml` | files exist |
@@ -52,6 +52,7 @@ One `h1` and landmarks, a skip link first. Hero with the calls to action, how it
 | Budgets | features.groups, how.steps | `app/finance/budgets.go` | file exists |
 | Goals and alerts | features.groups, how.steps | `app/finance/goals.go`, `app/alerts/alerts.go` | files exist |
 | Credit cards and statements | features.groups | `app/finance/cards.go`, `app/finance/card_statements.go` | files exist |
+| The pictures are screenshots of this app on its demo seed, not a live demo | screenshots.note | `site/scripts/screenshots.ts`, `database/seeders/finance_demo_seeder.go` | files exist; images at most 150 KB (script) |
 | Light and dark themes and three languages in the web app | features.groups | `docs/design.md`, `resources/js/i18n/keys.ts` | files exist |
 | Command line and REST API with scoped tokens | features.groups | `docs/reference/cli.md`, `docs/api.md`, `app/cli/run.go` | files exist |
 | The source is public | privacy.points | `README.md` | file exists |

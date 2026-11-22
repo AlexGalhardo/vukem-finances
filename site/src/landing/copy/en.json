@@ -45,6 +45,24 @@
       }
     ]
   },
+  "screenshots": {
+    "title": "A look at the app",
+    "note": "Pictures of the app running on the sample data of its demo seed. They are screenshots, not a live demo.",
+    "items": [
+      {
+        "title": "Overview",
+        "alt": "The overview page of the app: total balance, income and expenses of the month, a cash flow chart by month and spending by category."
+      },
+      {
+        "title": "Transactions",
+        "alt": "The transactions page: filters by text, category, tag, account, type, date and amount above a list of transactions with date, description, category, account and amount."
+      },
+      {
+        "title": "Reports",
+        "alt": "The reports page with a period selector, tabs for cash flow, categories, accounts and tags, net worth and comparison, and a cash flow chart."
+      }
+    ]
+  },
   "features": {
     "title": "What you can do",
     "groups": [
@@ -55,7 +73,10 @@
             "title": "Quick entry",
             "text": "Add a transaction in a few keystrokes, with keyboard shortcuts and a command palette."
           },
-          { "title": "Import statements", "text": "Bring in CSV and OFX files from your bank." },
+          {
+            "title": "Import statements",
+            "text": "Bring in CSV and OFX files from your bank."
+          },
           {
             "title": "Recurring and installments",
             "text": "Schedule repeating entries and split a purchase across months."
@@ -69,7 +90,10 @@
       {
         "title": "Understand",
         "items": [
-          { "title": "Dashboard", "text": "See balances, income and spending for the month at a glance." },
+          {
+            "title": "Dashboard",
+            "text": "See balances, income and spending for the month at a glance."
+          },
           {
             "title": "Reports",
             "text": "Cash flow, breakdowns by category, account and tag, net worth over time and period comparison."
@@ -83,7 +107,10 @@
       {
         "title": "Plan",
         "items": [
-          { "title": "Budgets", "text": "Set a monthly limit per category and watch it fill." },
+          {
+            "title": "Budgets",
+            "text": "Set a monthly limit per category and watch it fill."
+          },
           {
             "title": "Goals and alerts",
             "text": "Save toward a target and get notified when something needs attention."
@@ -204,7 +231,10 @@
         "q": "Is the desktop app signed?",
         "a": "No. The builds are unsigned, so Windows or macOS may warn you before the first launch."
       },
-      { "q": "Does it use AI?", "a": "Only if you turn it on and give it your own key. It is off by default." }
+      {
+        "q": "Does it use AI?",
+        "a": "Only if you turn it on and give it your own key. It is off by default."
+      }
     ]
   },
   "footer": {

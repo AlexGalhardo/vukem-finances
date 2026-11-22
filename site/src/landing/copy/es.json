@@ -45,6 +45,24 @@
       }
     ]
   },
+  "screenshots": {
+    "title": "Un vistazo a la app",
+    "note": "Imágenes de la app funcionando con los datos de ejemplo de su seed de demostración. Son capturas de pantalla, no una demostración en vivo.",
+    "items": [
+      {
+        "title": "Resumen",
+        "alt": "La página de resumen de la app, en inglés: saldo total, ingresos y gastos del mes, un gráfico de flujo de caja por mes y los gastos por categoría."
+      },
+      {
+        "title": "Transacciones",
+        "alt": "La página de transacciones, en inglés: filtros por texto, categoría, etiqueta, cuenta, tipo, fecha e importe sobre una lista de transacciones con fecha, descripción, categoría, cuenta e importe."
+      },
+      {
+        "title": "Informes",
+        "alt": "La página de informes, en inglés, con selector de periodo, pestañas de flujo de caja, categorías, cuentas y etiquetas, patrimonio y comparación, y un gráfico de flujo de caja."
+      }
+    ]
+  },
   "features": {
     "title": "Qué puedes hacer",
     "groups": [
@@ -55,7 +73,10 @@
             "title": "Entrada rápida",
             "text": "Añade una transacción con pocas teclas, con atajos de teclado y una paleta de comandos."
           },
-          { "title": "Importar extractos", "text": "Trae archivos CSV y OFX de tu banco." },
+          {
+            "title": "Importar extractos",
+            "text": "Trae archivos CSV y OFX de tu banco."
+          },
           {
             "title": "Recurrencias y cuotas",
             "text": "Programa movimientos que se repiten y divide una compra en varios meses."
@@ -69,7 +90,10 @@
       {
         "title": "Entender",
         "items": [
-          { "title": "Panel", "text": "Ve saldos, ingresos y gastos del mes de un vistazo." },
+          {
+            "title": "Panel",
+            "text": "Ve saldos, ingresos y gastos del mes de un vistazo."
+          },
           {
             "title": "Informes",
             "text": "Flujo de caja, desgloses por categoría, cuenta y etiqueta, patrimonio a lo largo del tiempo y comparación de periodos."
@@ -83,7 +107,10 @@
       {
         "title": "Planificar",
         "items": [
-          { "title": "Presupuestos", "text": "Fija un límite mensual por categoría y observa cómo se llena." },
+          {
+            "title": "Presupuestos",
+            "text": "Fija un límite mensual por categoría y observa cómo se llena."
+          },
           {
             "title": "Metas y alertas",
             "text": "Ahorra para un objetivo y recibe avisos cuando algo requiera atención."
@@ -204,7 +231,10 @@
         "q": "¿Está firmada la app de escritorio?",
         "a": "No. Las compilaciones no están firmadas, así que Windows o macOS pueden avisarte antes del primer arranque."
       },
-      { "q": "¿Usa IA?", "a": "Solo si la activas y le das tu propia clave. Viene apagada por defecto." }
+      {
+        "q": "¿Usa IA?",
+        "a": "Solo si la activas y le das tu propia clave. Viene apagada por defecto."
+      }
     ]
   },
   "footer": {

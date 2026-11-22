@@ -486,3 +486,13 @@ details p {
 	clip-path: inset(50%);
 	white-space: nowrap;
 }
+
+.shots figure {
+	margin: 0;
+}
+
+.shots figcaption {
+	margin-block-start: 0.5rem;
+	color: var(--vf-text-muted);
+	font-size: 0.95rem;
+}

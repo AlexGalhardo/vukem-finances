@@ -45,6 +45,24 @@
       }
     ]
   },
+  "screenshots": {
+    "title": "Uma olhada no app",
+    "note": "Imagens do app rodando com os dados de exemplo do seu seed de demonstração. São capturas de tela, não uma demonstração ao vivo.",
+    "items": [
+      {
+        "title": "Visão geral",
+        "alt": "A página de visão geral do app, em inglês: saldo total, receitas e despesas do mês, um gráfico de fluxo de caixa por mês e os gastos por categoria."
+      },
+      {
+        "title": "Transações",
+        "alt": "A página de transações, em inglês: filtros por texto, categoria, tag, conta, tipo, data e valor acima de uma lista de transações com data, descrição, categoria, conta e valor."
+      },
+      {
+        "title": "Relatórios",
+        "alt": "A página de relatórios, em inglês, com seletor de período, abas de fluxo de caixa, categorias, contas e tags, patrimônio e comparação, e um gráfico de fluxo de caixa."
+      }
+    ]
+  },
   "features": {
     "title": "O que você pode fazer",
     "groups": [
@@ -55,7 +73,10 @@
             "title": "Lançamento rápido",
             "text": "Adicione uma transação com poucas teclas, com atalhos de teclado e uma paleta de comandos."
           },
-          { "title": "Importar extratos", "text": "Traga arquivos CSV e OFX do seu banco." },
+          {
+            "title": "Importar extratos",
+            "text": "Traga arquivos CSV e OFX do seu banco."
+          },
           {
             "title": "Recorrências e parcelas",
             "text": "Agende lançamentos que se repetem e divida uma compra em meses."
@@ -69,7 +90,10 @@
       {
         "title": "Entender",
         "items": [
-          { "title": "Painel", "text": "Veja saldos, receitas e gastos do mês de relance." },
+          {
+            "title": "Painel",
+            "text": "Veja saldos, receitas e gastos do mês de relance."
+          },
           {
             "title": "Relatórios",
             "text": "Fluxo de caixa, detalhamento por categoria, conta e tag, patrimônio ao longo do tempo e comparação de períodos."
@@ -83,7 +107,10 @@
       {
         "title": "Planejar",
         "items": [
-          { "title": "Orçamentos", "text": "Defina um limite mensal por categoria e acompanhe o uso." },
+          {
+            "title": "Orçamentos",
+            "text": "Defina um limite mensal por categoria e acompanhe o uso."
+          },
           {
             "title": "Metas e alertas",
             "text": "Guarde dinheiro para um objetivo e receba avisos quando algo precisar de atenção."
@@ -204,7 +231,10 @@
         "q": "O app desktop é assinado?",
         "a": "Não. As compilações não são assinadas, então o Windows ou o macOS podem exibir um aviso antes da primeira abertura."
       },
-      { "q": "Usa IA?", "a": "Só se você ligar e informar a sua própria chave. Vem desligada por padrão." }
+      {
+        "q": "Usa IA?",
+        "a": "Só se você ligar e informar a sua própria chave. Vem desligada por padrão."
+      }
     ]
   },
   "footer": {
