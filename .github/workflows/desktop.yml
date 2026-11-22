@@ -85,6 +85,11 @@ jobs:
           case "$v" in *[!0-9A-Za-z.-]* | "") echo "bad version: $v" >&2; exit 1 ;; esac
           echo "version=$v" >> "$GITHUB_OUTPUT"
 
+      # The tests render real pages, which need the gitignored Vite manifest.
+      - name: Build the web assets
+        shell: bash
+        run: bun install --frozen-lockfile && bun run build
+
       - name: Test the desktop module
         shell: bash
         working-directory: desktop
