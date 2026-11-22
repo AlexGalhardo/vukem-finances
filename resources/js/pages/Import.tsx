@@ -1,3 +1,4 @@
+import { HelpHint } from "../help/HelpHint";
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import { FileUp } from "lucide-react";
 import { type FormEvent, useId } from "react";
@@ -63,8 +64,8 @@ function MappedTable({ mapped, currency }: { mapped: MappedPreview; currency: st
   const { t, locale, date } = useFinanceI18n();
   const labels = { minus: t("moneyMinus"), plus: t("moneyPlus") };
   return (
-    <div className="flex flex-col gap-2">
-      <p className="text-sm text-muted-foreground">
+    <div className="flex flex-col gap-2" data-tour="import-preview">
+      <p className="text-body text-muted-foreground">
         {t("previewFirstRows")} {mapped.rows.length} / {mapped.read}
       </p>
       <Table>
@@ -75,7 +76,12 @@ function MappedTable({ mapped, currency }: { mapped: MappedPreview; currency: st
             <TableHead>{t("description")}</TableHead>
             <TableHead>{t("category")}</TableHead>
             <TableHead className="text-end">{t("amount")}</TableHead>
-            <TableHead>{t("rowStatus")}</TableHead>
+            <TableHead>
+              <span className="flex items-center gap-1">
+                {t("rowStatus")}
+                <HelpHint id="hintImpDuplicate" />
+              </span>
+            </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
@@ -194,7 +200,7 @@ function Statement({
                 </TableBody>
               </Table>
             </div>
-            <form onSubmit={previewIt} className="flex flex-col gap-4">
+            <form onSubmit={previewIt} className="flex flex-col gap-4" data-tour="import-mapping">
               <FieldGroup className="grid gap-4 sm:grid-cols-3">
                 {columnField("date", "dateColumn")}
                 {columnField("description", "descriptionColumn")}
@@ -211,7 +217,10 @@ function Statement({
                   </NativeSelect>
                 </Field>
                 <Field>
-                  <FieldLabel htmlFor="map-format">{t("dateFormat")}</FieldLabel>
+                  <span className="flex items-center gap-1">
+                    <FieldLabel htmlFor="map-format">{t("dateFormat")}</FieldLabel>
+                    <HelpHint id="hintImpDateFormat" />
+                  </span>
                   <NativeSelect
                     id="map-format"
                     value={form.data.dateFormat}
@@ -232,6 +241,7 @@ function Statement({
                     onChange={(e) => form.setData("invert", String(e.target.checked))}
                   />
                   <FieldLabel htmlFor="map-invert">{t("positiveAreExpenses")}</FieldLabel>
+                  <HelpHint id="hintImpPositiveExpenses" />
                 </Field>
               </FieldGroup>
               <div>
@@ -323,6 +333,40 @@ function ImportRow({ item }: { item: ImportView }) {
   );
 }
 
+/** The three steps as a numbered list; the current one is announced with aria-current. */
+function ImportSteps({ current }: { current: 1 | 2 | 3 }) {
+  const { t } = useFinanceI18n();
+  const steps = ["importStepUpload", "importStepMap", "importStepPreview"] as const;
+  return (
+    <ol className="flex flex-wrap gap-x-6 gap-y-2 text-body">
+      {steps.map((key, index) => {
+        const n = index + 1;
+        return (
+          <li
+            key={key}
+            aria-current={n === current ? "step" : undefined}
+            className={
+              n === current ? "flex items-center gap-2 font-medium" : "flex items-center gap-2 text-muted-foreground"
+            }
+          >
+            <span
+              aria-hidden="true"
+              className={
+                n === current
+                  ? "flex size-6 items-center justify-center rounded-full bg-primary text-caption text-primary-foreground"
+                  : "flex size-6 items-center justify-center rounded-full border border-control text-caption"
+              }
+            >
+              {n}
+            </span>
+            {t(key)}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 export default function Import({ accounts, imports, preview, dateFormats, enabled }: Page<"Import">) {
   const { t } = useFinanceI18n();
   const currency = usePage<SharedProps>().props.workspace?.current.currency ?? "USD";
@@ -340,6 +384,7 @@ export default function Import({ accounts, imports, preview, dateFormats, enable
     <>
       <Head title={t("importTitle")} />
       <PageHeader title={t("importTitle")} description={t("importDescription")} />
+      <ImportSteps current={preview ? (preview.mapped ? 3 : 2) : 1} />
       {!enabled && (
         <p role="note" className="rounded-md border px-4 py-3">
           {t("importProOnly")}{" "}
@@ -357,7 +402,7 @@ export default function Import({ accounts, imports, preview, dateFormats, enable
             <CardDescription>{t("uploadHelp")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={submit} className="flex flex-col gap-4">
+            <form onSubmit={submit} className="flex flex-col gap-4" data-tour="import-upload">
               <FieldGroup className="grid gap-4 sm:grid-cols-3">
                 <Field data-invalid={!!form.errors.accountId}>
                   <FieldLabel htmlFor="import-account">{t("account")}</FieldLabel>

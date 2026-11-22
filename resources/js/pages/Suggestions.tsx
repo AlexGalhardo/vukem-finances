@@ -1,3 +1,5 @@
+import { HelpHint } from "../help/HelpHint";
+import { Alert, AlertDescription } from "../components/ui/alert";
 import { Head, router, usePage } from "@inertiajs/react";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { Kbd } from "../components/Kbd";
@@ -102,7 +104,11 @@ export default function Suggestions({ pending, applied, aiOn, canRecord }: Page<
         }
       />
       {!aiOn && <p className="rounded-lg border bg-muted p-4 text-sm">{t("suggestionsAiOff")}</p>}
-      {!canRecord && <p className="rounded-lg border bg-muted p-4 text-sm">{t("suggestionsViewerNote")}</p>}
+      {!canRecord && (
+        <Alert variant="info">
+          <AlertDescription>{t("suggestionsViewerNote")}</AlertDescription>
+        </Alert>
+      )}
       <div role="status" aria-live="polite" className="sr-only">
         {announcement}
       </div>
@@ -111,17 +117,17 @@ export default function Suggestions({ pending, applied, aiOn, canRecord }: Page<
           <p className="text-muted-foreground">{t("suggestionsEmpty")}</p>
         ) : (
           <div className="flex flex-col gap-4">
-            <p className="text-sm text-muted-foreground">{t("suggestionsKeys")}</p>
-            <div className="flex flex-wrap items-end gap-2">
+            <p className="text-body text-muted-foreground">{t("suggestionsKeys")}</p>
+            <div className="flex flex-wrap items-end gap-2" data-tour="suggestions-actions">
               <button type="button" className={primary} disabled={!canRecord || busy} onClick={accept}>
                 {t("suggestionsAccept")} <Kbd>Enter</Kbd>
               </button>
               <button type="button" className={secondary} disabled={!canRecord || busy} onClick={reject}>
                 {t("suggestionsReject")} <Kbd>Backspace</Kbd>
               </button>
-              <div className="flex items-end gap-2">
+              <div className="flex items-end gap-2" data-tour="suggestions-bulk">
                 <div className="flex flex-col gap-1">
-                  <label htmlFor={minId} className="text-xs text-muted-foreground">
+                  <label htmlFor={minId} className="text-caption text-muted-foreground">
                     {t("suggestionsMin")}
                   </label>
                   <Input
@@ -141,6 +147,7 @@ export default function Suggestions({ pending, applied, aiOn, canRecord }: Page<
             </div>
             <div
               ref={listRef}
+              data-tour="suggestions-list"
               role="listbox"
               aria-label={t("suggestionsList")}
               className="divide-y divide-border rounded-lg border"
@@ -170,10 +177,16 @@ export default function Suggestions({ pending, applied, aiOn, canRecord }: Page<
                       </span>
                     </span>
                     <span className="flex items-center gap-2">
-                      <Badge variant="secondary">{p.categoryName}</Badge>
-                      <span className="text-xs text-muted-foreground">
+                      <Badge variant="neutral">{p.categoryName}</Badge>
+                      <span className="text-caption text-muted-foreground">
                         {sourceLabel(p.source)} · {t("suggestionsConfidence")} {p.confidence}%
                       </span>
+                      {i === 0 && (
+                        <>
+                          <HelpHint id="hintSugSource" />
+                          <HelpHint id="hintSugConfidence" />
+                        </>
+                      )}
                     </span>
                   </div>
                 );

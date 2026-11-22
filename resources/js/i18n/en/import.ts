@@ -1,4 +1,7 @@
 const dict = {
+  importStepUpload: "Upload",
+  importStepMap: "Map columns",
+  importStepPreview: "Preview",
   importTitle: "Import a bank statement",
   importDescription: "Bring in a CSV or OFX statement. You see what will happen before anything is saved.",
   importProOnly: "Statement import is a Pro feature.",

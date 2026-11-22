@@ -1,3 +1,4 @@
+import { HelpHint } from "../help/HelpHint";
 import { Head, useForm, usePage } from "@inertiajs/react";
 import { Pencil, Plus, Repeat } from "lucide-react";
 import type { FormEvent } from "react";
@@ -235,7 +236,7 @@ export default function Recurrences({ recurrences, upcoming, accounts, categorie
     <>
       <Head title={t("recurrences")} />
       <PageHeader title={t("recurrences")} description={t("recurrencesDescription")} />
-      <p className="text-sm text-muted-foreground">{t("recurrencesHelp")}</p>
+      <p className="max-w-[65ch] text-body text-muted-foreground">{t("recurrencesHelp")}</p>
       {recurrences.length === 0 ? (
         <Empty>
           <EmptyHeader>
@@ -247,12 +248,14 @@ export default function Recurrences({ recurrences, upcoming, accounts, categorie
           </EmptyHeader>
         </Empty>
       ) : (
-        <DataTable columns={columns} rows={recurrences} rowKey={(r) => r.id} caption={t("recurrencesTable")} />
+        <div data-tour="recurrences-table">
+          <DataTable columns={columns} rows={recurrences} rowKey={(r) => r.id} caption={t("recurrencesTable")} />
+        </div>
       )}
       {recurrences.length > 0 && canManage && (
-        <p className="text-xs text-muted-foreground">{t("recurrenceDeleteHelp")}</p>
+        <p className="text-caption text-muted-foreground">{t("recurrenceDeleteHelp")}</p>
       )}
-      <Card>
+      <Card data-tour="recurrences-upcoming">
         <CardHeader>
           <CardTitle>{t("upcoming")}</CardTitle>
           <CardDescription>{t("upcomingDescription")}</CardDescription>
@@ -262,7 +265,7 @@ export default function Recurrences({ recurrences, upcoming, accounts, categorie
         </CardContent>
       </Card>
       {canManage && (
-        <Card>
+        <Card data-tour="recurrences-new">
           <CardHeader>
             <CardTitle>{editing ? t("recurrenceEdit") : t("recurrenceNew")}</CardTitle>
           </CardHeader>
@@ -338,7 +341,10 @@ export default function Recurrences({ recurrences, upcoming, accounts, categorie
                   <FieldError>{fieldError("categoryId")}</FieldError>
                 </Field>
                 <Field data-invalid={!!fieldError("frequency")}>
-                  <FieldLabel htmlFor="rule-frequency">{t("recurrenceFrequency")}</FieldLabel>
+                  <span className="flex items-center gap-1">
+                    <FieldLabel htmlFor="rule-frequency">{t("recurrenceFrequency")}</FieldLabel>
+                    <HelpHint id="hintRecFrequency" />
+                  </span>
                   <NativeSelect
                     id="rule-frequency"
                     value={form.data.frequency}
