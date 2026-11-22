@@ -1,6 +1,8 @@
 import { getCalendars, getLocales } from "expo-localization";
 import { type ReactNode, useEffect, useState } from "react";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
+import { LockGate } from "../lock/LockGate";
+import { devicePlatform, secureLockStore } from "../lock/platform";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { TransactionalDatabase } from "../db/database";
 import { openLocalDatabase } from "../db/expo";
@@ -36,6 +38,7 @@ export function Bootstrap(props: { children: ReactNode }): ReactNode {
 			);
 			const settings = await loadSettings(db, device);
 			const repo = new Repository(db);
+			repo.setKeepOutbox(settings.keepSyncQueue);
 			if (live) setReady({ db, repo, ledger: new Ledger(db, repo), settings });
 		})().catch((error: unknown) => {
 			if (live) setFailure(error);
@@ -72,7 +75,9 @@ export function Bootstrap(props: { children: ReactNode }): ReactNode {
 function Gate(props: { children: ReactNode }): ReactNode {
 	const app = useApp();
 	return app.settings.onboarded ? (
-		props.children
+		<LockGate store={secureLockStore} platform={devicePlatform}>
+			{props.children}
+		</LockGate>
 	) : (
 		<SafeAreaView style={{ flex: 1 }}>
 			<FirstRunScreen />

@@ -218,6 +218,8 @@ const en = {
 	settingsLicense: "Open source license",
 	settingsQueueKeep: "Keep the sync queue",
 	settingsQueueFull: "The sync queue is over {count} entries. Drop the oldest ones?",
+	settingsQueueOffConfirm: "Turn off the sync queue? The {count} waiting changes will be discarded.",
+	settingsQueueCount: "{count} changes waiting to sync",
 } as const;
 
 export type MessageKey = keyof typeof en;

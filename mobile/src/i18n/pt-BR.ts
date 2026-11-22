@@ -207,6 +207,8 @@ const ptBR = {
 	settingsLicense: "Licença de código aberto",
 	settingsQueueKeep: "Manter a fila de sincronização",
 	settingsQueueFull: "A fila de sincronização passou de {count} itens. Descartar os mais antigos?",
+	settingsQueueOffConfirm: "Desligar a fila de sincronização? As {count} alterações em espera serão descartadas.",
+	settingsQueueCount: "{count} alterações esperando para sincronizar",
 } satisfies Record<MessageKey, string>;
 
 export default ptBR;

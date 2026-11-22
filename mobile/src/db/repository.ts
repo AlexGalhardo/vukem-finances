@@ -99,6 +99,7 @@ export class OutboxCapError extends Error {
 export class Repository {
 	private readonly now: () => string;
 	private readonly uid: () => string;
+	private keepOutbox = true;
 
 	constructor(
 		private readonly db: Database,
@@ -202,6 +203,16 @@ export class Repository {
 		await this.mark(entity, uid, current.server_seq ?? 0, "restore", at);
 	}
 
+	/** With the sync queue off, writes still change the row and mark it dirty but queue nothing. */
+	setKeepOutbox(keep: boolean): void {
+		this.keepOutbox = keep;
+	}
+
+	/** Discards every queued mutation; the caller asks the person first. */
+	async clearOutbox(): Promise<void> {
+		await this.db.run("DELETE FROM outbox");
+	}
+
 	nowStamp(): string {
 		return this.now();
 	}
@@ -282,6 +293,9 @@ export class Repository {
 		fields: Record<string, unknown>,
 		stamp: string,
 	): Promise<void> {
+		if (!this.keepOutbox) {
+			return;
+		}
 		await this.db.run(
 			"INSERT INTO outbox (op_id, entity, uid, op, base_seq, fields, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
 			[this.uid(), entity, uid, op, baseSeq, JSON.stringify(fields), stamp],
