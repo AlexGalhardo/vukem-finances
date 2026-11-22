@@ -10,6 +10,8 @@ export interface Settings {
 	timezone: string;
 	theme: ThemeSetting;
 	onboarded: boolean;
+	/** Keep the queue of changes for a future sync (default on). */
+	keepSyncQueue: boolean;
 }
 
 export const CURRENCIES = ["USD", "EUR", "GBP", "BRL"] as const;
@@ -21,12 +23,13 @@ export function defaultSettings(deviceLocale: Locale, deviceTimezone: string): S
 		timezone: deviceTimezone,
 		theme: "system",
 		onboarded: false,
+		keepSyncQueue: true,
 	};
 }
 
 export async function loadSettings(db: Database, defaults: Settings): Promise<Settings> {
 	const rows = await db.all<{ key: string; value: string }>(
-		"SELECT key, value FROM meta WHERE key IN ('locale', 'currency', 'timezone', 'theme', 'onboarded')",
+		"SELECT key, value FROM meta WHERE key IN ('locale', 'currency', 'timezone', 'theme', 'onboarded', 'keep_sync_queue')",
 	);
 	const stored = new Map(rows.map((r) => [r.key, r.value]));
 	const locale = stored.get("locale");
@@ -37,6 +40,7 @@ export async function loadSettings(db: Database, defaults: Settings): Promise<Se
 		timezone: stored.get("timezone") ?? defaults.timezone,
 		theme: theme === "light" || theme === "dark" || theme === "system" ? theme : defaults.theme,
 		onboarded: stored.get("onboarded") === "1",
+		keepSyncQueue: stored.get("keep_sync_queue") !== "0",
 	};
 }
 
@@ -47,6 +51,7 @@ export async function saveSettings(db: Database, patch: Partial<Settings>): Prom
 	if (patch.timezone !== undefined) entries.push(["timezone", patch.timezone]);
 	if (patch.theme !== undefined) entries.push(["theme", patch.theme]);
 	if (patch.onboarded !== undefined) entries.push(["onboarded", patch.onboarded ? "1" : "0"]);
+	if (patch.keepSyncQueue !== undefined) entries.push(["keep_sync_queue", patch.keepSyncQueue ? "1" : "0"]);
 	await db.transaction(async () => {
 		for (const [key, value] of entries) {
 			await db.run(

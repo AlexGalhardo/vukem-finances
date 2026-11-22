@@ -47,9 +47,10 @@ export function AppProvider(props: {
 	const updateSettings = useCallback(
 		async (patch: Partial<Settings>): Promise<void> => {
 			await saveSettings(db, patch);
+			if (patch.keepSyncQueue !== undefined) repo.setKeepOutbox(patch.keepSyncQueue);
 			setSettings((s) => ({ ...s, ...patch }));
 		},
-		[db],
+		[db, repo],
 	);
 	const changed = useCallback(() => setVersion((v) => v + 1), []);
 	const timezone = settings.timezone;

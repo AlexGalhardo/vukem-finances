@@ -207,6 +207,8 @@ const es = {
 	settingsLicense: "Licencia de código abierto",
 	settingsQueueKeep: "Mantener la cola de sincronización",
 	settingsQueueFull: "La cola de sincronización supera {count} entradas. ¿Descartar las más antiguas?",
+	settingsQueueOffConfirm: "¿Apagar la cola de sincronización? Los {count} cambios en espera se descartarán.",
+	settingsQueueCount: "{count} cambios esperando para sincronizar",
 } satisfies Record<MessageKey, string>;
 
 export default es;
