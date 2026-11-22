@@ -61,6 +61,22 @@ tasks:
         platforms: [windows]
       - cmd: wails3 tool cp {{.BIN_DIR}}/{{.APP_NAME}}-amd64-installer.exe {{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-windows-amd64-setup.exe
 
+  # Packs the exe that `windows:build` left in bin/ (run `package` or `windows:build`
+  # first) into an unsigned MSIX. The identity defaults are fake: pass the values of
+  # Partner Center for a package meant for the Store (docs/desktop.md).
+  #   wails3 task windows:msix VERSION=0.1.0 MSIX_IDENTITY_NAME=... MSIX_PUBLISHER="CN=..." MSIX_PUBLISHER_DISPLAY_NAME=...
+  windows:msix:
+    summary: Packs the Windows exe into an unsigned MSIX
+    vars:
+      MSIX_IDENTITY_NAME: '{{.MSIX_IDENTITY_NAME | default "VukemFinances.CI"}}'
+      MSIX_PUBLISHER: '{{.MSIX_PUBLISHER | default "CN=VukemFinancesCI"}}'
+      MSIX_PUBLISHER_DISPLAY_NAME: '{{.MSIX_PUBLISHER_DISPLAY_NAME | default "vukem-finances CI (fake identity)"}}'
+    preconditions:
+      - sh: test -f {{.BIN_DIR}}/{{.APP_NAME}}.exe || powershell -NoProfile -Command "if (-not (Test-Path '{{.BIN_DIR}}/{{.APP_NAME}}.exe')) { exit 1 }"
+        msg: build the exe first (wails3 package, or wails3 task windows:build)
+    cmds:
+      - powershell -NoProfile -ExecutionPolicy Bypass -File build/windows/msix/build.ps1 -Exe "{{.BIN_DIR}}/{{.APP_NAME}}.exe" -Out "{{.BIN_DIR}}/{{.APP_NAME}}-{{.VERSION}}-windows-amd64.msix" -Version "{{.VERSION}}" -IdentityName "{{.MSIX_IDENTITY_NAME}}" -Publisher "{{.MSIX_PUBLISHER}}" -PublisherDisplayName "{{.MSIX_PUBLISHER_DISPLAY_NAME}}"
+
   linux:build:
     cmds:
       - go build -tags production -trimpath -buildvcs=false -ldflags "-w -s {{.LDFLAGS}}" -o {{.BIN_DIR}}/{{.APP_NAME}} .
