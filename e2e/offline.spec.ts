@@ -27,6 +27,7 @@ const PAGES = [
   "/ai",
   "/settings/telegram",
   "/tokens",
+  "/account/privacy",
 ];
 
 test("the main pages load nothing from another origin", async ({ page, context }) => {

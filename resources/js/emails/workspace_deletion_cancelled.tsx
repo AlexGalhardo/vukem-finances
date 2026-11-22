@@ -6,10 +6,7 @@ import { Shell } from "./Layout";
 // Props mirror the Go mailable's fields (app/mail/privacy.go).
 type Props = { workspace: string; url: string };
 
-export default function WorkspaceDeletionCancelled({
-  workspace = go(".Workspace"),
-  url = go(".URL"),
-}: Partial<Props>) {
+export default function WorkspaceDeletionCancelled({ workspace = go(".Workspace"), url = go(".URL") }: Partial<Props>) {
   return (
     <Shell
       preview="The deletion of a workspace was cancelled"

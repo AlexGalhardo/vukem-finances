@@ -12,9 +12,15 @@ import (
 
 // financePrivacy registers the personal data export. The password checks share
 // one small bucket per person, so the password cannot be guessed through them.
-func financePrivacy(g *router.Group, ph *ledger.PrivacyHandlers, confirm func(http.Handler) http.Handler) {
+func financePrivacy(g *router.Group, ph *ledger.PrivacyHandlers, personal bool, confirm func(http.Handler) http.Handler) {
+	g.Get("/account/privacy", ph.Show).Name("account.privacy")
 	g.Post("/account/export", ph.ConfirmExport).Name("account.export.confirm").Use(confirm)
 	g.Get("/account/export.json", ph.Export).Name("account.export")
+
+	// The personal edition's own action: no route exists in saas.
+	if personal {
+		g.Post("/account/erase", ph.EraseLocal).Name("account.erase").Use(confirm)
+	}
 
 	g.Post("/account/deletion", ph.DeleteAccount).Name("account.deletion.store").Use(confirm)
 	g.Post("/workspace/deletion", ph.DeleteWorkspace).Name("workspace.deletion.store").Use(confirm)
@@ -38,7 +44,7 @@ func pendingAccountGate() func(http.Handler) http.Handler {
 
 // accountDeletionRoutes are the two routes a pending account may use: outside
 // the workspace group, so they need no workspace.
-func accountDeletionRoutes(r *router.Router, ph *ledger.PrivacyHandlers, signedIn router.Middleware, confirm func(http.Handler) http.Handler) {
+func accountDeletionRoutes(r *router.Router, ph *ledger.PrivacyHandlers, signedIn router.Middleware) {
 	r.Get("/account/deletion", ph.ShowAccountDeletion).Name("account.deletion.show").Use(signedIn)
-	r.Post("/account/deletion/cancel", ph.CancelAccountDeletion).Name("account.deletion.cancel").Use(signedIn, confirm)
+	r.Post("/account/deletion/cancel", ph.CancelAccountDeletion).Name("account.deletion.cancel").Use(signedIn)
 }

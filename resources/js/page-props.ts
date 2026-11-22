@@ -698,6 +698,11 @@ export type AdminRevenueProps = {
   workspaces: number;
 };
 
+export type AuthAccountDeletionProps = {
+  email: string;
+  purgeDate: string;
+};
+
 export type AuthCheckEmailProps = Record<string, never>;
 
 export type AuthForgotPasswordProps = Record<string, never>;
@@ -826,6 +831,18 @@ export type OAuthConsentProps = {
   workspaces: ConsentWorkspace[];
 };
 
+export type PrivacyProps = {
+  canErase: boolean;
+  erased: boolean;
+  exportReady: boolean;
+  graceDays: number;
+  isOwner: boolean;
+  pending: boolean;
+  personal: boolean;
+  purgeDate: string;
+  workspaceName: string;
+};
+
 export type RecurrencesProps = {
   accounts: Account[];
   categories: Category[];
@@ -916,6 +933,7 @@ export interface PageProps {
   "Admin/ResourceList": AdminResourceListProps;
   "Admin/ResourceShow": AdminResourceShowProps;
   "Admin/Revenue": AdminRevenueProps;
+  "Auth/AccountDeletion": AuthAccountDeletionProps;
   "Auth/CheckEmail": AuthCheckEmailProps;
   "Auth/ForgotPassword": AuthForgotPasswordProps;
   "Auth/Login": AuthLoginProps;
@@ -939,6 +957,7 @@ export interface PageProps {
   InviteRegister: InviteRegisterProps;
   Notifications: NotificationsProps;
   OAuthConsent: OAuthConsentProps;
+  Privacy: PrivacyProps;
   Recurrences: RecurrencesProps;
   Reports: ReportsProps;
   "Settings/Telegram": SettingsTelegramProps;

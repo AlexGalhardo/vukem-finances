@@ -16,6 +16,18 @@ var DeleteWorkspaceSchema = z.Struct[DeleteWorkspace](z.Shape{
 	"password": z.String().Min(1).Max(256),
 })
 
+// EraseLocal confirms "erase all local data": the typed word and the password.
+type EraseLocal struct {
+	Confirmation string `json:"confirmation" form:"confirmation"`
+	Password     string `json:"password"     form:"password"`
+}
+
+// EraseLocalSchema validates EraseLocal.
+var EraseLocalSchema = z.Struct[EraseLocal](z.Shape{
+	"confirmation": z.String().Min(1).Max(50),
+	"password":     z.String().Min(1).Max(256),
+})
+
 // DeleteAccount confirms the deletion of the account: the typed confirmation and
 // the password.
 type DeleteAccount struct {

@@ -51,9 +51,10 @@ func (p *PrivacyHandlers) confirmPassword(c *web.Ctx, u models.User, password st
 	return nil
 }
 
-// ConfirmExport checks the password and sends the browser to the download. The
-// download is a GET so the browser saves it as a file, and it is allowed only
-// once after this confirmation, within five minutes.
+// ConfirmExport checks the password and sends the browser back to the privacy
+// page, which then starts the download. The download is a plain GET so the
+// browser saves it as a file, and it is allowed only once after this
+// confirmation, within five minutes.
 func (p *PrivacyHandlers) ConfirmExport(c *web.Ctx) error {
 	u, err := auth.User[models.User](c, "web")
 	if err != nil {
@@ -71,7 +72,7 @@ func (p *PrivacyHandlers) ConfirmExport(c *web.Ctx) error {
 
 	c.Session().Put(reauthKey, p.now().Add(reauthWindow).Unix())
 
-	return c.Redirect("/account/export.json")
+	return c.Redirect("/account/privacy?export=ready")
 }
 
 // Export streams the personal export. Without a fresh password confirmation it
@@ -224,4 +225,63 @@ func (p *PrivacyHandlers) CancelAccountDeletion(c *web.Ctx) error {
 	}
 
 	return done(c, "/dashboard", "The deletion of your account was cancelled.")
+}
+
+// Show renders the privacy page for the current workspace.
+func (p *PrivacyHandlers) Show(c *web.Ctx) error {
+	ctx := c.Context()
+
+	ws, err := p.h.WS.Current(ctx)
+	if err != nil {
+		return err
+	}
+
+	props := pages.PrivacyProps{
+		WorkspaceName: ws.Name, IsOwner: p.h.can(c, workspaces.AbilityTransfer) == nil, Personal: p.h.WS.Edition.Personal(),
+		ExportReady: c.Query("export") == "ready", Erased: c.Query("erased") == "1", CanErase: p.h.WS.Edition.Personal() && p.h.can(c, workspaces.AbilityTransfer) == nil, Pending: ws.PendingDeletion(), GraceDays: int(privacy.GracePeriod.Hours() / 24),
+	}
+
+	if ws.PendingDeletion() && ws.PurgeAt.Valid {
+		props.PurgeDate = ws.PurgeAt.V.UTC().Format("2006-01-02")
+	}
+
+	return pages.Privacy.Render(c, props)
+}
+
+// EraseLocal is the personal edition's "erase all local data": the owner, the
+// password and the typed word. The database file and its WAL and SHM files are
+// removed a moment later and the process ends, so the next start is a new empty
+// installation. It works with no network, and sends no mail.
+func (p *PrivacyHandlers) EraseLocal(c *web.Ctx) error {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	if !p.h.WS.Edition.Personal() {
+		return errs.ErrNotFound
+	}
+
+	if err := p.h.can(c, workspaces.AbilityTransfer); err != nil {
+		return err
+	}
+
+	in, err := web.Parse(c, requests.EraseLocalSchema)
+	if err != nil {
+		return err
+	}
+
+	if err := p.confirmPassword(c, u, in.Password); err != nil {
+		return err
+	}
+
+	if in.Confirmation != privacy.EraseWord {
+		return errs.NewValidation().Add("confirmation", "Type "+privacy.EraseWord+" exactly to confirm.")
+	}
+
+	if err := p.svc.ScheduleErase(in.Confirmation); err != nil {
+		return back(c, "/account/privacy", err)
+	}
+
+	return c.Redirect("/account/privacy?erased=1")
 }

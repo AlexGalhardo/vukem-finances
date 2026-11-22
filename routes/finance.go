@@ -3,6 +3,7 @@ package routes
 import (
 	"context"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -89,6 +90,12 @@ func Finance(r *router.Router, app *vukem.App) error {
 	priv.Fin = fin
 	priv.Access = acc
 
+	// Only the real server ends its process after "erase all local data": a
+	// test app keeps running, and its in-memory database has no file to remove.
+	if app.Kind == vukem.KindWeb {
+		priv.Restart = func() { os.Exit(0) }
+	}
+
 	if b != nil {
 		priv.Billing = b
 	}
@@ -135,7 +142,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 	privacyConfirm := ratelimit.Middleware(limiters("privacy.confirm", 5, time.Minute), user)
 	privacyHandlers := ledger.NewPrivacy(h, acc, priv, app.Now)
 
-	accountDeletionRoutes(r, privacyHandlers, required, privacyConfirm)
+	accountDeletionRoutes(r, privacyHandlers, required)
 
 	var aiErr, mcpErr error
 
@@ -158,7 +165,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		financeImports(g, h, imports)
 		financeReports(g, h)
 		financeWorkspace(g, h)
-		financePrivacy(g, privacyHandlers, privacyConfirm)
+		financePrivacy(g, privacyHandlers, ws.Edition.Personal(), privacyConfirm)
 		financeExports(g, h, exports, ws.Require(workspaces.AbilityManageData))
 		financeTokens(g, app, acc, h)
 		financeTelegram(g, bot, h.Alerts)
