@@ -1,3 +1,4 @@
+import { HelpHint } from "../help/HelpHint";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { Archive, ArchiveRestore, Pencil, Trash2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
@@ -152,7 +153,10 @@ export default function Categories({ categories, tags, colors, icons, maxTags }:
     return (
       <>
         <Field data-invalid={!!form.errors.parentId}>
-          <FieldLabel htmlFor={`${prefix}-parent`}>{t("parentCategory")}</FieldLabel>
+          <span className="flex items-center gap-1">
+            <FieldLabel htmlFor={`${prefix}-parent`}>{t("parentCategory")}</FieldLabel>
+            <HelpHint id="hintCatParent" />
+          </span>
           <NativeSelect
             id={`${prefix}-parent`}
             value={form.data.parentId}
@@ -195,7 +199,7 @@ export default function Categories({ categories, tags, colors, icons, maxTags }:
           </Button>
         }
       />
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2" data-tour="categories-kind">
         {kinds.map((kind) => (
           <Card key={kind}>
             <CardHeader>
@@ -203,9 +207,11 @@ export default function Categories({ categories, tags, colors, icons, maxTags }:
             </CardHeader>
             <CardContent>
               {tops(kind).length === 0 ? (
-                <p className="text-sm text-muted-foreground">{t("emptyCategories")}</p>
+                <p className="text-body text-muted-foreground">{t("emptyCategories")}</p>
               ) : (
-                <ul>{tops(kind).map((c) => row(c, false))}</ul>
+                <ul data-tour={kind === "expense" ? "categories-list" : undefined}>
+                  {tops(kind).map((c) => row(c, false))}
+                </ul>
               )}
             </CardContent>
           </Card>
@@ -256,7 +262,7 @@ export default function Categories({ categories, tags, colors, icons, maxTags }:
         </Card>
       )}
 
-      <Card>
+      <Card data-tour="categories-tags">
         <CardHeader>
           <CardTitle>{t("tagsTitle")}</CardTitle>
         </CardHeader>
