@@ -93,6 +93,12 @@ export function checkPage(dir: string, file: string, options: BuiltOptions): str
     if (tags(html, landmark).length === 0) fail(`has no <${landmark}>`);
   }
   if (tags(html, "main").length !== 1) fail("needs exactly one <main>");
+  let level = 0;
+  for (const heading of html.matchAll(/<h([1-6])(?=[\s>])/gi)) {
+    const next = Number(heading[1]);
+    if (level > 0 && next > level + 1) fail(`heading level jumps from h${level} to h${next}`);
+    level = next;
+  }
   const lang = attr(tags(html, "html")[0] ?? "", "lang");
   if (!lang) fail("<html> has no lang");
   const bodyAnchors = tags(html.slice(html.search(/<body/i)), "a");
@@ -128,7 +134,8 @@ export function checkPage(dir: string, file: string, options: BuiltOptions): str
 
   // Hosted-service phrases in the visible text.
   const text = stripTags(html);
-  for (const locale of Object.keys(catalogs)) {
+  // The documentation describes the CLI, which has a login command; the phrases guard the landing copy.
+  for (const locale of rel.startsWith("docs/") ? [] : Object.keys(catalogs)) {
     const matches = lang && locale.toLowerCase() === lang.toLowerCase() ? findForbidden(text, locale) : [];
     for (const phrase of matches) fail(`visible text contains the forbidden phrase "${phrase}"`);
   }
@@ -160,6 +167,25 @@ export function checkPage(dir: string, file: string, options: BuiltOptions): str
   return problems;
 }
 
+/** Every documentation page has a Markdown twin and a line of llms.txt. */
+function checkDocs(dir: string, files: string[]): string[] {
+  const problems: string[] = [];
+  const llmsFile = path.join(dir, "llms.txt");
+  const llms = fs.existsSync(llmsFile) ? fs.readFileSync(llmsFile, "utf8") : "";
+  if (files.some((f) => f.endsWith(`${path.sep}docs${path.sep}index.html`)) && !llms)
+    problems.push("llms.txt is missing");
+  for (const file of files) {
+    const rel = path.relative(dir, file).split(path.sep).join("/");
+    const match = rel.match(/^docs\/(?:(.*)\/)?index\.html$/);
+    if (!match) continue;
+    const slug = match[1];
+    const twin = slug ? `docs/${slug}.md` : "docs/index.md";
+    if (!fs.existsSync(path.join(dir, twin))) problems.push(`${rel}: no Markdown twin at /${twin}`);
+    if (!llms.includes(`/${twin})`)) problems.push(`${rel}: not listed in llms.txt`);
+  }
+  return problems;
+}
+
 /** Problems of a whole build output directory. */
 export function checkBuilt(dir: string, options: BuiltOptions): string[] {
   if (!fs.existsSync(dir)) return [`${dir} does not exist: run the build first`];
@@ -179,6 +205,8 @@ export function checkBuilt(dir: string, options: BuiltOptions): string[] {
   }
   const pages = files.filter((f) => f.endsWith(".html"));
   for (const file of pages) problems.push(...checkPage(dir, file, options));
+
+  problems.push(...checkDocs(dir, files));
 
   for (const locale of locales) {
     const page = path.join(dir, locale === "en" ? "index.html" : `${locale}/index.html`);

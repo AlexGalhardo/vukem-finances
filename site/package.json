@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "dev": "bun --bun astro dev",
-    "build": "bun --bun astro build && bun scripts/sitemap.ts",
+    "build": "bun --bun astro build && bun scripts/sitemap.ts && bun scripts/twins.ts",
     "preview": "bun --bun astro preview",
     "typecheck": "bun --bun tsc --noEmit",
     "check:claims": "bun scripts/check-claims.ts",
