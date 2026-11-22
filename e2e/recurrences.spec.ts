@@ -47,8 +47,8 @@ test("an installment purchase on a card lands on the right statements", async ({
   await page.getByRole("heading", { level: 1 }).waitFor();
   await page.getByLabel("Card name").fill(name);
   await page.getByLabel("Credit limit").fill("2000.00");
-  await page.getByLabel("Closing day").fill("10");
-  await page.getByLabel("Due day").fill("25");
+  await page.getByLabel("Closing day", { exact: true }).fill("10");
+  await page.getByLabel("Due day", { exact: true }).fill("25");
   await page.getByRole("button", { name: "Add card" }).click();
   await expect(page.getByRole("listitem").filter({ hasText: name })).toBeVisible();
 

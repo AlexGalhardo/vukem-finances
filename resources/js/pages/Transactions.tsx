@@ -524,14 +524,14 @@ export default function Transactions({
                   {actionsBlock}
                 </>
               ) : (
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <Button type="button" variant="outline" aria-haspopup="dialog" onClick={() => setFiltersOpen(true)}>
                     <SlidersHorizontal aria-hidden="true" />
                     {t("filters")}
                     {activeFilters > 0 && <Badge variant="neutral">{activeFilters}</Badge>}
                   </Button>
                   <Button type="submit">{t("applyFilters")}</Button>
-                  <p role="status" className="ms-auto text-body text-muted-foreground tabular-nums">
+                  <p role="status" className="w-full text-body text-muted-foreground tabular-nums">
                     {total} {t("transactionsWord")}
                   </p>
                 </div>

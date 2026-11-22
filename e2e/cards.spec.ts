@@ -25,8 +25,8 @@ test("a card takes a purchase after the closing day onto the next statement, and
 
   await page.getByLabel("Card name").fill(name);
   await page.getByLabel("Credit limit").fill("2000.00");
-  await page.getByLabel("Closing day").fill("10");
-  await page.getByLabel("Due day").fill("25");
+  await page.getByLabel("Closing day", { exact: true }).fill("10");
+  await page.getByLabel("Due day", { exact: true }).fill("25");
   await page.getByLabel("Last 4 digits").fill("4242");
   await page.getByRole("button", { name: "Add card" }).click();
 

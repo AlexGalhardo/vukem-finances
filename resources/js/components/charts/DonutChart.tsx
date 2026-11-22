@@ -26,7 +26,7 @@ export default function DonutChart({ slices: all, currency }: { slices: Slice[];
   }
 
   return (
-    <div className="flex items-center gap-6">
+    <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
       <svg viewBox="0 0 140 140" role="img" aria-label={t("spending")} className="size-36 shrink-0 -rotate-90">
         {slices.map((s, i) => {
           const length = (s.cents / total) * circumference;
@@ -49,10 +49,10 @@ export default function DonutChart({ slices: all, currency }: { slices: Slice[];
           return circle;
         })}
       </svg>
-      <ul className="flex flex-col gap-1 text-sm">
+      <ul className="flex min-w-0 flex-1 basis-40 flex-col gap-1 text-body">
         {slices.map((s, i) => (
-          <li key={s.category} className="flex items-center gap-2">
-            <span className="inline-block size-3 rounded-sm" style={{ backgroundColor: colors[i] }} />
+          <li key={s.category} className="flex items-start gap-2 break-words">
+            <span className="mt-1 inline-block size-3 shrink-0 rounded-sm" style={{ backgroundColor: colors[i] }} />
             {s.category}: {formatMoney(s.cents, currency)}
           </li>
         ))}

@@ -115,7 +115,11 @@ export function Mark({ color, icon, className }: { color: string; icon?: string;
   return (
     <span
       aria-hidden="true"
-      className={cn("size-3 shrink-0 rounded-full border", swatchClass[color] ?? "bg-transparent", className)}
+      className={cn(
+        "size-3 shrink-0 rounded-full border",
+        swatchClass[color] ?? "border-control bg-transparent",
+        className,
+      )}
     />
   );
 }

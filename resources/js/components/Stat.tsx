@@ -19,7 +19,7 @@ export default function Stat({ label, value, help, delta, size = "md", className
   const Arrow = delta?.direction === "down" ? ArrowDownRight : ArrowUpRight;
   return (
     <div data-slot="stat" className={cn("flex min-w-0 flex-col gap-1", className)}>
-      <div className="flex items-center gap-1.5 text-caption text-muted-foreground">
+      <div className="flex min-h-6 items-center gap-1.5 text-caption text-muted-foreground">
         <span>{label}</span>
         {help}
       </div>

@@ -34,7 +34,7 @@ export function HelpHint({ id, labelKey, side = "top", tutorialStep }: HelpHintP
           variant="ghost"
           size="icon-xs"
           aria-label={labelKey ? t(labelKey) : `${t("helpAbout")} ${t(helpTitleKey(id))}`}
-          className="size-6 text-subtle hover:text-foreground"
+          className="-my-1 size-6 text-subtle hover:text-foreground"
           data-print="hide"
         >
           <CircleHelp aria-hidden="true" className="size-4" />
