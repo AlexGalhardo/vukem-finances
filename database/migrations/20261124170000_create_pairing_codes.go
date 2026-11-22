@@ -5,9 +5,9 @@ import "github.com/AlexGalhardo/vukem/schema"
 // Epic 20: the short codes that pair a phone with a workspace. Only the hash of
 // a code is stored; a code is single use (used_at) and lives 10 minutes. The
 // table is server state, not synced.
-func m20261124090000CreatePairingCodes() schema.Migration {
+func m20261124170000CreatePairingCodes() schema.Migration {
 	return schema.Migration{
-		ID: "20261124090000_create_pairing_codes",
+		ID: "20261124170000_create_pairing_codes",
 		Up: func(s *schema.Schema) error {
 			return s.Create("pairing_codes", func(t *schema.Table) {
 				t.ID()
