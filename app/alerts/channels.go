@@ -73,6 +73,29 @@ func (e *Email) Deliver(ctx context.Context, n models.Notification, r Recipient)
 			Limit: finance.FormatAmount(p.num("limit_cents"), ws.Currency),
 			URL:   e.URL + "/budgets",
 		})
+	case KindStatementDue:
+		return e.WS.Notify(ctx, appmail.StatementDue{
+			To: r.Email, Workspace: ws.Name, Card: p.str("name"), DueOn: p.str("due_on"),
+			Remaining: finance.FormatAmount(p.num("remaining_cents"), ws.Currency), URL: e.URL + "/cards",
+		})
+	case KindGoalReached:
+		return e.WS.Notify(ctx, appmail.GoalReached{
+			To: r.Email, Workspace: ws.Name, Goal: p.str("name"),
+			Target: finance.FormatAmount(p.num("target_cents"), ws.Currency), URL: e.URL + "/goals",
+		})
+	case KindCardLimit80:
+		return e.WS.Notify(ctx, appmail.AlertNotice{
+			To: r.Email, Workspace: ws.Name, Title: p.str("name") + " is near its limit",
+			Body: "The card has used " + finance.FormatAmount(p.num("used_cents"), ws.Currency) + " of its " +
+				finance.FormatAmount(p.num("limit_cents"), ws.Currency) + " limit.",
+			URL: e.URL + "/cards",
+		})
+	case KindRecurrenceFailed:
+		return e.WS.Notify(ctx, appmail.AlertNotice{
+			To: r.Email, Workspace: ws.Name, Title: "A recurring entry could not be posted",
+			Body: "\"" + p.str("name") + "\" due on " + p.str("date") + " was not posted. Open the rule to see why.",
+			URL:  e.URL + "/recurrences",
+		})
 	default:
 		return errNoTemplate
 	}
