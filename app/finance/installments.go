@@ -133,9 +133,7 @@ func (s *Service) CreateInstallments(ctx context.Context, in InstallmentInput) (
 		return nil, err
 	}
 
-	for _, t := range out {
-		_ = s.notifyBudget(ctx, t, models.Transaction{})
-	}
+	s.requestAlerts(ctx, out...)
 
 	return out, nil
 }

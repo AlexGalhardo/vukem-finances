@@ -95,9 +95,7 @@ func (s *Service) saveTransaction(ctx context.Context, id int64, in TxInput) (mo
 		return models.Transaction{}, err
 	}
 
-	if err := s.notifyBudget(ctx, out, previous); err != nil {
-		return out, err
-	}
+	s.requestAlerts(ctx, out)
 
 	return out, nil
 }
@@ -229,25 +227,4 @@ func updateTransaction(ctx context.Context, tx *database.Tx, id int64, row model
 	})
 
 	return err
-}
-
-func (s *Service) notifyBudget(ctx context.Context, out, previous models.Transaction) error {
-	if out.Kind != models.KindExpense || !out.CategoryID.Valid {
-		return nil
-	}
-
-	delta := out.AmountCents
-	sameCategory := previous.Kind == out.Kind && previous.CategoryID == out.CategoryID
-	// MonthOf needs a real date. A new transaction has no previous row.
-	sameMonth := previous.ID != 0 && MonthOf(previous.OccurredOn) == MonthOf(out.OccurredOn)
-
-	if previous.ID != 0 && sameMonth && sameCategory {
-		delta -= previous.AmountCents
-	}
-
-	if delta <= 0 {
-		return nil
-	}
-
-	return s.alertBudget(ctx, out.CategoryID.V, MonthOf(out.OccurredOn), delta)
 }

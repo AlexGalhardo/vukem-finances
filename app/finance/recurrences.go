@@ -468,11 +468,7 @@ func (s *Service) generateRule(ctx context.Context, ws models.Workspace, id int6
 		return 0, err
 	}
 
-	for _, t := range created {
-		// The transactions are committed: a failed alert mail must not undo
-		// them or stop the next rule, and the next crossing alerts again.
-		_ = s.notifyBudget(ctx, t, models.Transaction{})
-	}
+	s.requestAlerts(ctx, created...)
 
 	return len(created), nil
 }

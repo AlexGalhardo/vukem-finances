@@ -503,8 +503,7 @@ func shortDescription(s string) string { return strings.TrimSpace(clip(s, maxDes
 // parse are counted and reported, not fatal; rows already imported are
 // skipped unless the import allows duplicates; a statement that cannot be
 // read at all, or that would break the plan's monthly limit, marks the
-// import failed. Budget alerts are checked once per category and month at
-// the end.
+// import failed. Alerts are evaluated once at the end.
 func (s *Service) RunImport(ctx context.Context, id int64) error {
 	imp, err := workspaces.Scoped[models.Import](ctx, s.DB).Find(ctx, id)
 	if err != nil {
@@ -549,7 +548,9 @@ func (s *Service) RunImport(ctx context.Context, id int64) error {
 		return s.failImport(ctx, id, err)
 	}
 
-	return s.alertImported(ctx, made)
+	s.requestAlerts(ctx, made...)
+
+	return nil
 }
 
 // failImport records why an import failed. The reason is shown on the page,
@@ -575,29 +576,6 @@ func (s *Service) failImport(ctx context.Context, id int64, cause error) error {
 	}
 
 	return cause
-}
-
-func (s *Service) alertImported(ctx context.Context, made []models.Transaction) error {
-	type key struct {
-		cat   int64
-		month string
-	}
-
-	added := map[key]int64{}
-
-	for i := range made {
-		if t := &made[i]; t.Kind == models.KindExpense && t.CategoryID.Valid {
-			added[key{t.CategoryID.V, MonthOf(t.OccurredOn)}] += t.AmountCents
-		}
-	}
-
-	for k, delta := range added {
-		if err := s.alertBudget(ctx, k.cat, k.month, delta); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (s *Service) importRows(

@@ -216,13 +216,6 @@ func (s *Service) spendingOf(ctx context.Context, month string) (monthSpending, 
 	return out, nil
 }
 
-// categorySpent is what a category (with its subcategories) spent in month.
-func (s *Service) categorySpent(ctx context.Context, categoryID int64, month string) (int64, error) {
-	sp, err := s.spendingOf(ctx, month)
-
-	return sp.Tree[categoryID], err
-}
-
 // previousMonth is the "YYYY-MM" before a valid month.
 func previousMonth(month string) string {
 	t, _ := time.Parse("2006-01", month)
