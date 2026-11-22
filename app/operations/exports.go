@@ -42,6 +42,10 @@ type ExportTransactionsIn struct {
 // ExportWorkspaceIn is the input of export.workspace: none.
 type ExportWorkspaceIn struct{}
 
+// mcpFile is why a download has no MCP tool: a tool answers with JSON, and a file
+// of unbounded size has no place in the context of a model.
+var mcpFile = map[Surface]string{SurfaceMCP: "it streams a file, and a tool answers with JSON that fits a model context; the reads (transactions.list, reports.*) cover it"} //nolint:gochecknoglobals // a constant table
+
 type exportOps struct {
 	Transactions *Op[ExportTransactionsIn, Download]
 	Workspace    *Op[ExportWorkspaceIn, Download]
@@ -52,6 +56,7 @@ func (c *Catalog) defineExports() {
 		Transactions: Define(c.Registry, Operation[ExportTransactionsIn, Download]{
 			Name: "export.transactions", Summary: "Download the transactions that match the filters as a CSV file",
 			Scope: ScopeExportRead, Kind: KindRead,
+			OptOut: mcpFile,
 			Run: func(ctx context.Context, _ Actor, in ExportTransactionsIn) (Download, error) {
 				return c.exportTransactions(ctx, in)
 			},
@@ -61,6 +66,7 @@ func (c *Catalog) defineExports() {
 		Workspace: Define(c.Registry, Operation[ExportWorkspaceIn, Download]{
 			Name: "export.workspace", Summary: "Download the whole workspace as one JSON document (owner and admins)",
 			Scope: ScopeExportRead, Ability: workspaces.AbilityManageData, Kind: KindRead,
+			OptOut: mcpFile,
 			Run: func(ctx context.Context, _ Actor, _ ExportWorkspaceIn) (Download, error) {
 				return c.exportWorkspace(ctx)
 			},

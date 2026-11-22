@@ -1659,7 +1659,8 @@
         },
         {
           "surface": "mcp",
-          "offered": true
+          "offered": false,
+          "reason": "it streams a file, and a tool answers with JSON that fits a model context; the reads (transactions.list, reports.*) cover it"
         }
       ],
       "input": [
@@ -1743,7 +1744,8 @@
         },
         {
           "surface": "mcp",
-          "offered": true
+          "offered": false,
+          "reason": "it streams a file, and a tool answers with JSON that fits a model context; the reads (transactions.list, reports.*) cover it"
         }
       ],
       "input": [],
