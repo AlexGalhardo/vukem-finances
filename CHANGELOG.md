@@ -66,6 +66,7 @@ git cliff --config .config/cliff.toml --offline --unreleased --tag vX.Y.Z --stri
 
 ### Fixed
 
+- **workspace:** Install the mail suppression check once per mailer, so concurrent jobs no longer race on it
 - **cli:** Refuse a download to a terminal and write --out atomically ([`0b5bddf`](https://github.com/AlexGalhardo/vukem-finances/commit/0b5bddf5e77ec2130e857f86a0416a2b921ccacf))
 - **cli:** Harden CSV and table output against terminal and spreadsheet injection ([`1580083`](https://github.com/AlexGalhardo/vukem-finances/commit/15800839984fa7ad9f8f9018105ca9da703a5d9e))
 - **cli:** Guard every ;- and tab-separated segment of a CSV cell ([`283f7ee`](https://github.com/AlexGalhardo/vukem-finances/commit/283f7eeea19dafa324e3ea672b42074bf5b2a38b))

@@ -18,6 +18,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"weak"
 
 	"github.com/AlexGalhardo/vukem"
 	"github.com/AlexGalhardo/vukem/authz"
@@ -73,9 +74,7 @@ func New(app *vukem.App) (*Service, error) {
 		return nil, err
 	}
 
-	mailer.SetSuppression(func(ctx context.Context, addr string) (bool, error) {
-		return orm.QueryOf[models.EmailSuppression](db).Where("address", addr).Exists(ctx)
-	})
+	honourSuppressions(mailer, db)
 
 	edition, err := config.LoadEdition(app.Source)
 	if err != nil {
@@ -86,6 +85,21 @@ func New(app *vukem.App) (*Service, error) {
 		DB: db, Mailer: mailer, Log: app.Log, Gate: newGate(), Edition: edition,
 		URL: strings.TrimSuffix(app.Config.URL, "/"), InviteTTL: 7 * 24 * time.Hour, now: app.Now,
 	}, nil
+}
+
+var suppressionInstalled sync.Map // weak.Pointer[mail.Mailer] -> *sync.Once
+
+// honourSuppressions installs the check once per mailer. Jobs build a Service
+// on every run, concurrently, and Mailer.SetSuppression is not safe to call
+// while the mailer is in use. The key is weak so a finished app can be collected.
+func honourSuppressions(mailer *mail.Mailer, db *database.DB) {
+	once, _ := suppressionInstalled.LoadOrStore(weak.Make(mailer), &sync.Once{})
+
+	once.(*sync.Once).Do(func() {
+		mailer.SetSuppression(func(ctx context.Context, addr string) (bool, error) {
+			return orm.QueryOf[models.EmailSuppression](db).Where("address", addr).Exists(ctx)
+		})
+	})
 }
 
 // Notify queues mailable. An address on the suppression list (it bounced or
