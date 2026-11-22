@@ -1,0 +1,28 @@
+name: "vukem-finances"
+arch: ${GOARCH}
+platform: "linux"
+version: ${VERSION}
+section: "misc"
+priority: "extra"
+maintainer: "vukem-finances <noreply@vukem.dev>"
+description: "Personal finances, on your computer."
+vendor: "Alex Galhardo"
+homepage: "https://github.com/AlexGalhardo/vukem-finances"
+license: "MIT"
+release: "1"
+
+contents:
+  - src: "./bin/vukem-finances"
+    dst: "/usr/bin/vukem-finances"
+  - src: "./build/appicon.png"
+    dst: "/usr/share/icons/hicolor/1024x1024/apps/vukem-finances.png"
+  - src: "./build/linux/vukem-finances.desktop"
+    dst: "/usr/share/applications/vukem-finances.desktop"
+
+# GTK4 and WebKitGTK 6.0 (Ubuntu 24.04+, Debian 13+): the stack Wails v3.1 uses.
+depends:
+  - libgtk-4-1
+  - libwebkitgtk-6.0-4
+
+scripts:
+  postinstall: "./build/linux/nfpm/scripts/postinstall.sh"

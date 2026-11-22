@@ -11,6 +11,10 @@
 /desktop/desktop
 /desktop/desktop.exe
 /desktop/bin/
+/desktop/*.syso
+/desktop/build/windows/nsis/*.exe
+/desktop/build/linux/vukem-finances.desktop
+/desktop/build/linux/appimage/
 
 # Local data
 storage/*
