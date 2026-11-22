@@ -40,7 +40,7 @@ func Commands(c *CLI) []vukem.Command {
 		out = append(out, &resourceCommand{cli: c, resource: r})
 	}
 
-	return append(out, &authCommand{cli: c})
+	return append(out, &authCommand{cli: c}, &completionCommand{cli: c})
 }
 
 type resourceCommand struct {
@@ -89,4 +89,20 @@ func (a *authCommand) RawArgs()            {}
 
 func (a *authCommand) Run(ctx context.Context, _ *vukem.App, args []string) error {
 	return exitError(a.cli.Run(ctx, "auth", args))
+}
+
+type completionCommand struct{ cli *CLI }
+
+func (c *completionCommand) Name() string { return "completion" }
+
+func (c *completionCommand) Description() string {
+	return "Print the shell completion script: `completion bash|zsh|fish|powershell [program]`"
+}
+
+func (c *completionCommand) Flags(*flag.FlagSet) {}
+func (c *completionCommand) NoBoot() bool        { return true }
+func (c *completionCommand) RawArgs()            {}
+
+func (c *completionCommand) Run(ctx context.Context, _ *vukem.App, args []string) error {
+	return exitError(c.cli.Run(ctx, "completion", args))
 }

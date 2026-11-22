@@ -116,6 +116,10 @@ func (c *CLI) Run(ctx context.Context, resource string, args []string) error {
 		return c.Auth(ctx, args)
 	}
 
+	if resource == "completion" {
+		return c.completion(args)
+	}
+
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
 		c.printVerbs(resource)
 
