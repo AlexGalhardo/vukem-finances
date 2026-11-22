@@ -38,7 +38,7 @@ func (h *Handlers) Notifications(c *web.Ctx) error {
 		return err
 	}
 
-	return pages.Notifications.Render(c, pages.NotificationsProps{Items: list, Preferences: prefs})
+	return pages.Notifications.Render(c, pages.NotificationsProps{Items: list, Preferences: prefs, TelegramEnabled: h.Alerts.Telegram != nil})
 }
 
 // ReadNotification marks one notification of the person as read.
