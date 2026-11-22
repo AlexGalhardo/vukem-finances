@@ -10,7 +10,28 @@ import (
 	"github.com/AlexGalhardo/vukem/orm"
 
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
+
+// redactedInvite replaces the address of an invitation in the audit log of the
+// workspace that sent it; the row stays, so the log still shows that an
+// invitation was made.
+const redactedInvite = "[removed]"
+
+const inviteAuditRedaction = "UPDATE audit_events SET subject = '" + redactedInvite + "' WHERE action = '" + workspaces.AuditInviteCreated +
+	"' AND lower(subject) IN (lower(?), lower(?), lower(?), lower(?))"
+
+// inviteAuditArgs are the four subjects an invitation of address can have, one per role.
+func inviteAuditArgs(address string) []any {
+	roles := []string{models.RoleOwner, models.RoleAdmin, models.RoleMember, models.RoleViewer}
+	args := make([]any, len(roles))
+
+	for i, role := range roles {
+		args[i] = address + " as " + role
+	}
+
+	return args
+}
 
 // PurgeAccount erases one account whose grace period ended. In the workspaces
 // that remain it removes what is private to the person (assistant conversations,
@@ -99,6 +120,8 @@ func (s *Service) PurgeAccount(ctx context.Context, id int64) error {
 			{"DELETE FROM invites WHERE lower(email) = lower(?)", []any{u.Email}},
 			{"DELETE FROM password_resets WHERE lower(email) = lower(?)", []any{u.Email}},
 			{"DELETE FROM email_suppressions WHERE lower(address) = lower(?)", []any{u.Email}},
+			// The invitation of another workspace names the address in its audit row ("<address> as <role>").
+			{inviteAuditRedaction, inviteAuditArgs(u.Email)},
 			// Their place in the workspaces and how they sign in.
 			{"DELETE FROM memberships WHERE user_id = ?", []any{id}},
 			{"DELETE FROM remember_tokens WHERE user_id = ?", []any{id}},
