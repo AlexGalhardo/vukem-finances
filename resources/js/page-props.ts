@@ -789,6 +789,7 @@ export type SettingsTelegramProps = {
 };
 
 export type SetupProps = {
+  codeRequired: boolean;
   currency: string;
 };
 

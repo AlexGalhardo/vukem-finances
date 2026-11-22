@@ -18,6 +18,9 @@ var (
 // edition.
 type SetupProps struct {
 	Currency string `json:"currency"`
+	// CodeRequired is false in the desktop app, where the gate stands in for
+	// the setup code.
+	CodeRequired bool `json:"codeRequired"`
 }
 
 // ResetPasswordProps are the props of Auth/ResetPassword.
