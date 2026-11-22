@@ -8,6 +8,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -134,7 +135,7 @@ func TestOutputCells(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		want := "a,b,c,d,e,f,g,h,i,j\n'=1+1,'+1,'@x,'-1+2,-10.50,-10.5,'\tx,plain,'-1.,'-abc\n"
+		want := "a,b,c,d,e,f,g,h,i,j\n'=1+1,'+1,'@x,'-1+2,-10.50,-10.5,\"\tx\",plain,'-1.,'-abc\n"
 		if tm.out.String() != want {
 			t.Fatalf("got:\n%q\nwant:\n%q", tm.out.String(), want)
 		}
@@ -243,4 +244,133 @@ func TestOutputFiles(t *testing.T) {
 			t.Fatalf("temp files left: %v", left)
 		}
 	})
+}
+
+func decodeNum(t *testing.T, raw string) any {
+	t.Helper()
+
+	var v any
+
+	d := json.NewDecoder(strings.NewReader(raw))
+	d.UseNumber()
+
+	if err := d.Decode(&v); err != nil {
+		t.Fatal(err)
+	}
+
+	return v
+}
+
+func TestOutputCSVGuards(t *testing.T) {
+	t.Parallel()
+
+	t.Run("the guard looks past whitespace, control and format characters", func(t *testing.T) {
+		t.Parallel()
+
+		tm := &term{}
+		c := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
+
+		v := decodeNum(t, `[{"a":" =1","b":"\n=1","c":"​+1","d":"＝1","e":"＋1","f":"－1","g":"＠1","h":"‮@x","i":"ok =1","j":"-10.50"}]`)
+		if err := c.WriteForTest(v, "csv"); err != nil {
+			t.Fatal(err)
+		}
+
+		rows, err := csv.NewReader(strings.NewReader(tm.out.String())).ReadAll()
+		if err != nil || len(rows) != 2 {
+			t.Fatalf("%v: %q", err, tm.out.String())
+		}
+
+		for i, name := range rows[0] {
+			got := rows[1][i]
+			quoted := strings.HasPrefix(got, "'")
+
+			if want := name != "i" && name != "j"; quoted != want {
+				t.Errorf("%s = %q, quoted %v, want %v", name, got, quoted, want)
+			}
+		}
+	})
+
+	t.Run("a numeric cell and a plain negative stay numbers", func(t *testing.T) {
+		t.Parallel()
+
+		tm := &term{}
+		c := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
+
+		if err := c.WriteForTest(decodeNum(t, `[{"n":-10.50,"s":"-10.50","c":-1050}]`), "csv"); err != nil {
+			t.Fatal(err)
+		}
+
+		if want := "c,n,s\n-1050,-10.50,-10.50\n"; tm.out.String() != want {
+			t.Fatalf("got %q, want %q", tm.out.String(), want)
+		}
+	})
+
+	t.Run("on a terminal keys and values lose escape sequences and bidi marks", func(t *testing.T) {
+		t.Parallel()
+
+		tm := &term{}
+		c := &cli.CLI{Env: cli.Env{Stdout: &tm.out, StdoutTTY: true}}
+
+		evil := `\u001b[2J\u001b]0;pwned\u0007‮txt\u001b[31m`
+		if err := c.WriteForTest(decodeNum(t, `[{"k`+evil+`":"v`+evil+`"}]`), "csv"); err != nil {
+			t.Fatal(err)
+		}
+
+		for _, bad := range []string{"\x1b", "\x07", "‮"} {
+			if strings.Contains(tm.out.String(), bad) {
+				t.Fatalf("terminal csv has %q: %q", bad, tm.out.String())
+			}
+		}
+	})
+
+	t.Run("redirected csv keeps its bytes", func(t *testing.T) {
+		t.Parallel()
+
+		tm := &term{}
+		c := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
+
+		if err := c.WriteForTest(decodeNum(t, `[{"k":"a‮b\u001bc"}]`), "csv"); err != nil {
+			t.Fatal(err)
+		}
+
+		if want := "k\na‮b\x1bc\n"; tm.out.String() != want {
+			t.Fatalf("got %q, want %q", tm.out.String(), want)
+		}
+	})
+}
+
+func TestOutputBoundsColumns(t *testing.T) {
+	t.Parallel()
+
+	wide := func(n int) any {
+		row := map[string]any{}
+		for i := range n {
+			row["c"+strconv.Itoa(i)] = "x"
+		}
+
+		return []any{row}
+	}
+
+	for _, format := range []string{"table", "csv"} {
+		tm := &term{}
+		c := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
+
+		if err := c.WriteForTest(wide(256), format); err != nil {
+			t.Fatalf("%s: 256 columns failed: %v", format, err)
+		}
+
+		tm.out.Reset()
+
+		err := c.WriteForTest(wide(257), format)
+		if cli.ExitOf(err) != cli.ExitFailure || err == nil || !strings.Contains(err.Error(), "too many columns") || tm.out.Len() != 0 {
+			t.Fatalf("%s: err %v, wrote %d bytes", format, err, tm.out.Len())
+		}
+	}
+
+	tm := &term{}
+	c := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
+
+	if err := c.WriteForTest(wide(300), "json"); err != nil {
+		t.Fatalf("json has no column limit: %v", err)
+	}
 }
