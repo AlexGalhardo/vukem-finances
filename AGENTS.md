@@ -60,7 +60,7 @@ bun run lint:md
 bun run build
 ```
 
-Install the JavaScript dependencies with `bun install --frozen-lockfile`. The mobile app is separate: `cd mobile && bun install --frozen-lockfile && bun run typecheck && bun run test` (Node 22.13 or newer for `node:sqlite`; CI pins 24.21.0); never add a `mobile/src/app` folder (expo-router would read it as the routes root). Run every command above before a hand-off.
+Install the JavaScript dependencies with `bun install --frozen-lockfile`. The mobile app is separate: `cd mobile && bun install --frozen-lockfile && bun run typecheck && bun run test` (Node 22.13 or newer for `node:sqlite`; CI pins 24.21.0); never add a `mobile/src/app` folder (expo-router would read it as the routes root). `bash scripts/mobile-sync-e2e.sh` runs the mobile sync client against the real server (Go, Node 22.13 or newer and Bun needed); `bunx jest` skips `mobile/__tests__/integration/` on purpose. Run every command above before a hand-off.
 
 ## The desktop app
 

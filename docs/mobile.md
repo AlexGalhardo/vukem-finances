@@ -1,6 +1,6 @@
 # The mobile app
 
-`mobile/` is the React Native app of vukem-finances (Expo, TypeScript). It works with no account and no server: everything lives in a SQLite database on the phone, follows the same rules as the server, and is shaped so that the two-way sync (a later epic) needs no rewrite. In this version the app makes no network request at all.
+`mobile/` is the React Native app of vukem-finances (Expo, TypeScript). It works with no account and no server: everything lives in a SQLite database on the phone, follows the same rules as the server, and syncs both ways with a personal server or the SaaS when the person connects it. Sync is optional: until the person pairs the phone, and again after they disconnect, the app makes no network request at all.
 
 ## Setup
 
@@ -46,6 +46,7 @@ Routes are in `mobile/app` (expo-router). Do not create `mobile/src/app`: expo-r
 | `mobile/src/i18n/` | The catalogs: `en` is the source, `pt-BR` and `es` must hold the same keys and placeholders |
 | `mobile/src/theme/tokens.ts` | The palette and sizes, generated from `resources/css/tokens.css` |
 | `mobile/src/backup/`, `mobile/src/lock/` | The local backup and the app lock |
+| `mobile/src/sync/` | The sync client: transport (the only file that uses `fetch`), outbox, pull apply, push results, integrity pass, resync, merge choice, connect, engine and controller |
 | `mobile/__tests__/` | The tests: Jest with the `jest-expo` preset and Testing Library, querying by role and label |
 
 Regenerate the tokens after changing the CSS with `bun run scripts/export-tokens.ts` at the root; a test and a CI step fail when the generated file is stale.
@@ -69,6 +70,42 @@ Other tables: `outbox` (the queued mutations), `meta` (settings and the schema v
 Every write goes through a repository, which in one SQLite transaction changes the row, bumps `version`, marks it `dirty` and appends the mutation to the outbox with only the changed fields (`upsert`, `delete` or `restore`, with `base_seq`). With no server the queue just keeps the history. It is soft-capped at 5000 entries: past that the app asks before dropping the oldest, and Settings can turn the queue off after a confirmation.
 
 Generated recurrence occurrences use the natural key `(recurrence_uid, occurrence_on)`, so a deleted occurrence is never made again. Dates are ISO strings, and the workspace time zone decides what today is.
+
+## Sync
+
+The client of `docs/specs/sync-protocol.md`. It is in `mobile/src/sync/` and depends only on a `Database`, a `Transport`, a `Clock` and a `Random`, so every behavior is tested without a device or a network. `transport.ts` is the only place that uses `fetch`, and a test says so.
+
+### Pairing
+
+On the web, open Devices and press Add device: the page shows an 8 character code (valid once, for 10 minutes) and the server address. On the phone open More, Sync, Connect, type the address, the code and a name for the phone. The server answers with a token for that workspace (only the `sync` scope, 365 days, listed on the Tokens page as "Phone" and the device name) and registers the device. The token is kept only in the secure store of the phone (`expo-secure-store`); it is never in SQLite, never in a backup and never in a log or an error message. The code is cleared from the screen after use. Revoking the device or the token on the web stops the phone at once; it keeps its data and offers Pair again or Disconnect.
+
+### Server address rules
+
+`https` always. `http` only for `localhost`, private network addresses (10.x, 172.16 to 31.x, 192.168.x, 169.254.x, `fc00::/7`, `fe80::/10`) and `.local` names, after a confirmation screen that says the traffic is not encrypted. `http` to a public host is refused. For a server on your own network, prefer the Caddy HTTPS setup of the deployment docs.
+
+### What a run does
+
+Push (up to 200 queued changes in creation order, each with a fixed `op_id`, so a retry after a lost response never writes twice), pull from the saved cursor page by page (each page and its cursor in one SQLite transaction), then an integrity pass. It runs on "Sync now", when the app comes to the foreground, 3 seconds after a local write and every 5 minutes while the app is open. A failure backs off 5 s, 15 s, 60 s, then 5 minutes, with jitter; there is no network-state package, so "offline" means a request failed. A `410 resync_required` downloads a snapshot into staging tables and replaces every row that has no pending change.
+
+### Conflicts and problems
+
+The rules are those of `docs/specs/sync-data-model.md`: a pending local edit survives a pull of the same row (the server wins only on fields that have no pending change), a delete wins over a concurrent edit (the edit is dropped and recorded), the same field changed on both sides goes to the later arrival and the loser is recorded. Sync, Review conflicts shows each lost value with both sides and lets the person apply the replaced value again as a normal edit, or dismiss it. A mutation the server refuses for good (a validation error, `forbidden`, and so on) is removed from the queue and listed under Review problems with Try again and Discard; a discard of a row the server never had removes it, and for any other row the next run downloads a fresh snapshot. A reference that still names nothing after a sync is listed in the data check and never deleted by the app. When the plan quota refuses a create, only that entity pauses and the status screen shows the server's message.
+
+### First connection
+
+A phone with no data connects without a prompt. A phone with data asks: Merge (recommended: keep both sides; an account, category or tag with the same name and kind as a server row takes the server's uid, every reference follows, and the screen says how many were merged), Replace this phone's data with the server's (after a confirmation that says local data will be deleted, with an export offered first) or Cancel. Disconnect keeps the data and, at the person's choice, the waiting changes.
+
+### Limits
+
+- Sync runs only while the app is open: there is no background sync.
+- One workspace per phone.
+- Goals, notifications and AI data are not in the app and are not synced.
+- No end-to-end encryption; no QR scanning of the pairing code.
+- A push is rate limited by the server (30 a minute per device); a pull 60 a minute.
+
+### Tests
+
+`bunx jest` runs the unit tests, the shared scenarios of `testdata/sync/` through two client engines over a reference model of the server, and a 50 seed convergence run on that model. `bash scripts/mobile-sync-e2e.sh` runs the same scenarios an owner of a Pro workspace can run, a lost-response retry and 50 seeded convergence runs against the real Go server over HTTP (it needs Go, Node 22.13 or newer, Bun and `cd mobile && bun install --frozen-lockfile`). The Free plan and viewer scenarios run in the Go suite (`tests/sync_scenarios_test.go`).
 
 ## The app lock and its limits
 
@@ -96,8 +133,16 @@ Run on a device or emulator before a release. None of this is covered by the uni
 - [ ] System font size at 200 percent (Android) and the largest Dynamic Type size (iOS): no text is cut off on any screen.
 - [ ] Reduce motion on: nothing moves.
 - [ ] The app opens after the phone restarts and after a few hours in the background, with the data intact.
+- [ ] Pairing: a code from the web Devices page connects the phone over https; a wrong or reused code shows an error; the token appears on the web Tokens page and the phone shows the workspace name.
+- [ ] Plain http to a LAN address shows the not-encrypted confirmation; http to a public host is refused.
+- [ ] Airplane mode: edit on the phone and on the web, turn the network back on, press Sync now: both show the same data and nothing is lost or doubled.
+- [ ] Kill the app in the middle of a sync (push, then pull): reopen it and sync again, with no duplicate and no loss.
+- [ ] Two phones on one workspace: edit the same transaction on both while offline and sync both; the conflict list shows the lost value and Apply the replaced value again works.
+- [ ] Revoke the device on the web: the phone shows Sign-in needed, keeps its data and offers Pair again and Disconnect.
+- [ ] First connection of a phone that has data: Merge reports the merged count; Replace shows the warning and offers the export first.
+- [ ] The status line is read by TalkBack and VoiceOver when it changes ("Synced", "Offline, 3 changes waiting", "Sign-in needed").
 - [ ] A device where Hermes lacks `Intl` data for the chosen time zone or currency still shows dates and amounts.
 
 ## Not in this version
 
-Sync with a server, goals, notifications, AI, the Telegram bot and billing in the app, store publication and signing, push notifications, widgets, tablet layouts and disk encryption of the database.
+Background sync, goals, notifications, AI, the Telegram bot and billing in the app, store publication and signing, push notifications, widgets, tablet layouts and disk encryption of the database.
