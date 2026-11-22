@@ -229,6 +229,10 @@ const en = {
   syncOffline: "Offline, {count} changes waiting",
   syncOfflineNone: "Offline",
   syncAuthFailed: "Sign-in needed",
+  syncWorkspaceDeleted: "Workspace deleted",
+  syncWorkspaceDeletedExplain:
+    "The owner deleted this workspace on the server, so it will not sync again. Nothing was erased on this phone yet. Erase it now, or export what you need first (Settings).",
+  syncEraseWorkspace: "Erase this workspace from the phone",
   syncErrorUnsupported: "This server speaks a newer sync protocol. Update the app.",
   syncErrorServer: "The server had a problem. Trying again later.",
   syncErrorClient: "Something went wrong on this phone. Trying again later.",

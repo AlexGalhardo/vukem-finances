@@ -21,6 +21,8 @@ export function statusLine(ui: Ui, view: EngineSnapshot): string {
       return view.pending > 0 ? ui.t("syncOffline", { count: view.pending }) : ui.t("syncOfflineNone");
     case "auth_failed":
       return ui.t("syncAuthFailed");
+    case "workspace_deleted":
+      return ui.t("syncWorkspaceDeleted");
     case "needs_merge_choice":
       return ui.t("syncNeedsChoice");
     default: {
@@ -100,6 +102,11 @@ export function SyncStatusScreen(props: {
       ))}
 
       {view.status === "auth_failed" ? <Text style={{ color: ui.colors.text }}>{ui.t("syncAuthExplain")}</Text> : null}
+      {view.status === "workspace_deleted" ? (
+        <Text accessibilityRole="alert" style={{ color: ui.colors.text }}>
+          {ui.t("syncWorkspaceDeletedExplain")}
+        </Text>
+      ) : null}
 
       {connected && view.connection !== null ? (
         <>
@@ -132,7 +139,19 @@ export function SyncStatusScreen(props: {
 
       {view.status === "needs_merge_choice" ? <Button label={ui.t("syncChoose")} onPress={props.onChoose} /> : null}
       {view.status === "auth_failed" ? <Button label={ui.t("syncPairAgain")} onPress={props.onConnect} /> : null}
-      {connected && view.status !== "auth_failed" && view.status !== "needs_merge_choice" ? (
+      {view.status === "workspace_deleted" ? (
+        <Button
+          label={ui.t("syncEraseWorkspace")}
+          variant="destructive"
+          onPress={() => {
+            void sync.eraseDeletedWorkspace();
+          }}
+        />
+      ) : null}
+      {connected &&
+      view.status !== "auth_failed" &&
+      view.status !== "workspace_deleted" &&
+      view.status !== "needs_merge_choice" ? (
         <Button
           label={ui.t("syncNow")}
           disabled={view.status === "syncing"}

@@ -217,6 +217,10 @@ const ptBR = {
   syncOffline: "Sem conexão, {count} alterações esperando",
   syncOfflineNone: "Sem conexão",
   syncAuthFailed: "É preciso entrar de novo",
+  syncWorkspaceDeleted: "Espaço de trabalho excluído",
+  syncWorkspaceDeletedExplain:
+    "O dono excluiu este espaço de trabalho no servidor, então ele não vai mais sincronizar. Nada foi apagado neste celular ainda. Apague agora, ou exporte antes o que precisar (Ajustes).",
+  syncEraseWorkspace: "Apagar este espaço de trabalho do celular",
   syncErrorUnsupported: "Este servidor usa um protocolo de sincronização mais novo. Atualize o app.",
   syncErrorServer: "O servidor teve um problema. Vamos tentar de novo mais tarde.",
   syncErrorClient: "Algo deu errado neste celular. Vamos tentar de novo mais tarde.",

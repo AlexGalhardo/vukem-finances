@@ -219,6 +219,10 @@ const es = {
   syncOffline: "Sin conexión, {count} cambios esperando",
   syncOfflineNone: "Sin conexión",
   syncAuthFailed: "Hay que volver a entrar",
+  syncWorkspaceDeleted: "Espacio de trabajo eliminado",
+  syncWorkspaceDeletedExplain:
+    "El propietario eliminó este espacio de trabajo en el servidor, por lo que no se volverá a sincronizar. Aún no se borró nada en este teléfono. Bórralo ahora, o exporta antes lo que necesites (Ajustes).",
+  syncEraseWorkspace: "Borrar este espacio de trabajo del teléfono",
   syncErrorUnsupported: "Este servidor usa un protocolo de sincronización más nuevo. Actualiza la app.",
   syncErrorServer: "El servidor tuvo un problema. Se intentará de nuevo más tarde.",
   syncErrorClient: "Algo salió mal en este teléfono. Se intentará de nuevo más tarde.",
