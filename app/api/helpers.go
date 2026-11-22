@@ -30,7 +30,7 @@ var (
 // register adds the typed handler of the operation named name to g, behind the
 // scope check of its row in the operations table (and, for a write, the
 // Idempotency-Key replay: after the scope check, so a replay never skips it).
-func register[In, Out any](g *router.Group, idem router.Middleware, name string, fn func(*web.Ctx, In) (Out, error)) {
+func register[In, Out any](a *API, g *router.Group, idem router.Middleware, name string, fn func(*web.Ctx, In) (Out, error)) {
 	op, ok := OperationNamed(name)
 	if !ok {
 		panic("api: operation " + name + " is not in the operations table")
@@ -40,7 +40,7 @@ func register[In, Out any](g *router.Group, idem router.Middleware, name string,
 		Name: op.Name, Summary: op.Summary, Tags: []string{op.Tag}, Security: []string{"bearer"}, Status: op.Status,
 	}, fn)
 
-	mws := []router.Middleware{Require(op)}
+	mws := []router.Middleware{a.Require(op)}
 	if op.MaxBody > 0 {
 		mws = append(mws, limitBody(op.MaxBody))
 	}

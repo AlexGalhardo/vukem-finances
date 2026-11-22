@@ -242,10 +242,10 @@ func (a *API) syncPush(c *web.Ctx, in SyncPushIn) (SyncPushOut, error) {
 }
 
 func (a *API) syncRoutes(g *router.Group, idem router.Middleware) {
-	register(g, idem, "sync.info", a.syncInfo)
-	register(g, idem, "sync.devices.create", a.syncDevicesCreate)
-	register(g, idem, "sync.devices.list", a.syncDevicesList)
-	register(g, idem, "sync.pull", a.syncPull)
-	register(g, idem, "sync.snapshot", a.syncSnapshot)
-	register(g, idem, "sync.push", a.syncPush)
+	register(a, g, idem, "sync.info", a.syncInfo)
+	register(a, g, idem, "sync.devices.create", a.syncDevicesCreate)
+	register(a, g, idem, "sync.devices.list", a.syncDevicesList)
+	register(a, g, idem, "sync.pull", a.syncPull)
+	register(a, g, idem, "sync.snapshot", a.syncSnapshot)
+	register(a, g, idem, "sync.push", a.syncPush)
 }

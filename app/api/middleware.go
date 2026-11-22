@@ -16,6 +16,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/operations"
 	syncproto "github.com/AlexGalhardo/vukem-finances/app/sync"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
@@ -85,6 +86,8 @@ type API struct {
 	WS     *workspaces.Service
 	Fin    *finance.Service
 	Sync   *syncproto.Service
+	// Ops is the registry every operation of the API goes through.
+	Ops *operations.Catalog
 	// PullLimiter and PushLimiter hold a device to the sync rate limits.
 	PullLimiter, PushLimiter ratelimit.Limiter
 	Log                      *slog.Logger
@@ -213,8 +216,10 @@ func TokenKey(r *http.Request) string {
 
 // Require is the second half of the chain, per operation: the token must hold
 // the scope of op, and the role of its person must hold the ability the scope
-// needs. A scope is a ceiling, never a grant.
-func Require(op Operation) func(http.Handler) http.Handler {
+// needs. A scope is a ceiling, never a grant. An operation of the registry is
+// held to the same gate Invoke applies (Registry.Authorize), here early, so a
+// refused call is refused before its body is read.
+func (a *API) Require(op Operation) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			if op.Scope == "" {
@@ -225,6 +230,17 @@ func Require(op Operation) func(http.Handler) http.Handler {
 			p, ok := PrincipalFrom(r.Context())
 			if !ok {
 				fail(w, r, http.StatusUnauthorized, CodeUnauthorized, "A valid token is required.")
+				return
+			}
+
+			if meta, registered := a.Ops.Named(op.Name); registered {
+				if err := a.Ops.Authorize(meta, actorOf(p)); err != nil {
+					web.Fail(w, r, restError(err))
+					return
+				}
+
+				next.ServeHTTP(w, r)
+
 				return
 			}
 

@@ -17,6 +17,8 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/api"
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
+	"github.com/AlexGalhardo/vukem-finances/app/operations"
+	"github.com/AlexGalhardo/vukem-finances/app/reports"
 	syncproto "github.com/AlexGalhardo/vukem-finances/app/sync"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 	"github.com/AlexGalhardo/vukem-finances/config"
@@ -52,6 +54,10 @@ func API(r *router.Router, app *vukem.App) error {
 	}
 
 	a := &api.API{Users: acc.Users, Tokens: acc.Tokens, WS: ws, Fin: fin, Now: app.Now, Log: app.Log}
+	a.Ops = operations.NewCatalog(
+		operations.Config{Edition: ws.Edition, Store: store.Store(), Log: app.Log, Now: app.Now},
+		operations.Services{WS: ws, Fin: fin, Rep: reports.New(fin)},
+	)
 	a.Sync = &syncproto.Service{DB: ws.DB, WS: ws, Fin: fin, Log: app.Log, Now: app.Now}
 	a.PullLimiter = limiters("sync.pull", syncproto.PullsPerMinute, config.APIWindow)
 	a.PushLimiter = limiters("sync.push", syncproto.PushesPerMinute, config.APIWindow)

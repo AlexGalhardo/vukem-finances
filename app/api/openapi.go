@@ -1,6 +1,7 @@
 package api
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -19,7 +20,7 @@ const description = "The public API of vukem-finances: read and write the data o
 // BuildDocument builds the OpenAPI document of the API from the routes of the
 // app (router.Routes()). Paths are relative to BasePath, which is the server.
 func BuildDocument(routes []router.RouteInfo) (*openapi.Document, error) {
-	return openapi.Build(routes, openapi.Info{
+	doc, err := openapi.Build(routes, openapi.Info{
 		Title:           "vukem-finances API",
 		Version:         Version,
 		Description:     description,
@@ -29,6 +30,31 @@ func BuildDocument(routes []router.RouteInfo) (*openapi.Document, error) {
 		TypedOnly:       true,
 		License:         &openapi.License{Name: "MIT", Identifier: "MIT"},
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	return keepSchemaNames(doc)
+}
+
+// keepSchemaNames gives the list envelopes the component names they had when
+// the wire types lived in this package: the builder names a generic type with
+// its package path, the types moved to app/operations, and a client generated
+// from the document must not see its type names change (epic 30, task 9).
+func keepSchemaNames(doc *openapi.Document) (*openapi.Document, error) {
+	raw, err := json.Marshal(doc)
+	if err != nil {
+		return nil, err
+	}
+
+	raw = bytes.ReplaceAll(raw, []byte("vukem-finances_app_operations."), []byte("vukem-finances_app_api."))
+
+	var out openapi.Document
+	if err := json.Unmarshal(raw, &out); err != nil {
+		return nil, err
+	}
+
+	return &out, nil
 }
 
 // RenderDocument writes doc as indented JSON, with the scope of every

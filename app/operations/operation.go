@@ -219,34 +219,22 @@ type CallOption func(*callOptions)
 
 type callOptions struct {
 	key     string
-	ifMatch int64
-	hasIf   bool
+	ifMatch string
 }
 
 // WithIdempotencyKey names the call: an operation declared Idempotent runs once
 // per key and replays its answer after.
 func WithIdempotencyKey(key string) CallOption { return func(o *callOptions) { o.key = key } }
 
-// WithIfMatch states the version of the row the caller saw; Run reads it with
-// IfMatch.
-func WithIfMatch(version int64) CallOption {
-	return func(o *callOptions) { o.ifMatch, o.hasIf = version, true }
-}
+// WithIfMatch states the version of the row the caller saw, as text (the
+// If-Match header, a CLI flag). A write that finds another version is a
+// version_conflict; text that is not a whole number is a validation error.
+func WithIfMatch(version string) CallOption { return func(o *callOptions) { o.ifMatch = version } }
 
 // call is what Run can read and set about the invocation in progress.
 type call struct {
 	existing bool
-	ifMatch  int64
-	hasIf    bool
-}
-
-// IfMatch is the version the caller named with WithIfMatch.
-func IfMatch(ctx context.Context) (int64, bool) {
-	if c, ok := ctx.Value(callKey{}).(*call); ok && c.hasIf {
-		return c.ifMatch, true
-	}
-
-	return 0, false
+	ifMatch  string
 }
 
 type callKey struct{}
@@ -289,7 +277,7 @@ func invoke[In, Out any](ctx context.Context, op *Op[In, Out], actor Actor, in I
 		}
 	}
 
-	st := &call{ifMatch: o.ifMatch, hasIf: o.hasIf}
+	st := &call{ifMatch: o.ifMatch}
 	ctx = context.WithValue(ctx, callKey{}, st)
 	ctx = workspaces.WithTenant(ctx, actor.workspace)
 	ctx = workspaces.WithRole(ctx, actor.role)
