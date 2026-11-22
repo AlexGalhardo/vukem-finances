@@ -30,6 +30,36 @@ func fakeToken(id, secret string) string {
 	return "vf_" + strings.Repeat(id, 26) + "." + strings.Repeat(secret, 26)
 }
 
+func TestRemoteEnvTokenNeverGoesToTheStoredServer(t *testing.T) {
+	t.Parallel()
+
+	hits := make(chan string, 1)
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hits <- r.Header.Get("Authorization")
+
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	t.Cleanup(srv.Close)
+
+	store := &cli.FileStore{Path: filepath.Join(t.TempDir(), "credentials.json")}
+	if err := store.Save(cli.Credentials{Server: srv.URL, Token: fakeToken("C", "D")}); err != nil {
+		t.Fatal(err)
+	}
+
+	c, tm := newCLI(t, map[string]string{cli.EnvToken: fakeToken("A", "B")}, nil)
+	c.Env.Store = store
+
+	if code := run(t, c, tm, "accounts", "list"); code != cli.ExitUsage {
+		t.Fatalf("exit %d, want %d: %s", code, cli.ExitUsage, tm.err.String())
+	}
+
+	select {
+	case <-hits:
+		t.Fatal("the token of the environment reached the server of the stored login")
+	default:
+	}
+}
+
 func TestRemotePathParams(t *testing.T) {
 	t.Parallel()
 

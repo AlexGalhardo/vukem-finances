@@ -88,7 +88,9 @@ func (c *CLI) target(flagServer string) (server, token string, err error) {
 		return server, token, nil
 	}
 
-	if server == "" {
+	// A token from the environment never goes to the server of a stored login:
+	// whoever sets it must also say where it goes.
+	if server == "" && token == "" {
 		server = saved.Server
 	}
 
