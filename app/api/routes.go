@@ -60,14 +60,14 @@ func (a *API) Routes(g *router.Group, idem router.Middleware) {
 	route(a, g, a.Ops.Tags.Update)
 	route(a, g, a.Ops.Tags.Delete)
 
-	register(a, g, idem, "transactions.list", a.transactionsList)
-	register(a, g, idem, "transactions.show", a.transactionsShow)
-	register(a, g, idem, "transactions.create", a.transactionsCreate)
-	register(a, g, idem, "transactions.update", a.transactionsUpdate)
-	register(a, g, idem, "transactions.delete", a.transactionsDelete)
+	routeWith(a, g, a.Ops.Transactions.List, pageLinks)
+	route(a, g, a.Ops.Transactions.Show)
+	route(a, g, a.Ops.Transactions.Create)
+	route(a, g, a.Ops.Transactions.Update)
+	route(a, g, a.Ops.Transactions.Delete)
 
-	register(a, g, idem, "transfers.create", a.transfersCreate)
-	register(a, g, idem, "transfers.delete", a.transfersDelete)
+	route(a, g, a.Ops.Transactions.Transfer)
+	route(a, g, a.Ops.Transactions.Untransfer)
 
 	register(a, g, idem, "budgets.list", a.budgetsList)
 	register(a, g, idem, "budgets.set", a.budgetsSet)

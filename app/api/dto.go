@@ -6,7 +6,6 @@ import (
 	vukemapi "github.com/AlexGalhardo/vukem/api"
 	"github.com/AlexGalhardo/vukem/orm"
 
-	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/operations"
 )
 
@@ -57,70 +56,15 @@ type CategoryOut = operations.CategoryOut
 type TagOut = operations.TagOut
 
 // TagRefOut is a tag on a transaction.
-type TagRefOut struct {
-	UID   string `json:"uid"   example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	Name  string `json:"name"  example:"work"`
-	Color string `json:"color" example:"blue"`
-}
+type TagRefOut = operations.TagRefOut
 
 // TransactionOut is a transaction. A transfer leg carries the transfer_uid
 // both legs share.
-type TransactionOut struct {
-	UID         string      `json:"uid"          example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	Version     int64       `json:"version"      example:"1"`
-	AccountUID  string      `json:"account_uid"  example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	CategoryUID *string     `json:"category_uid"`
-	Kind        string      `json:"kind"         example:"expense"`
-	AmountCents int64       `json:"amount_cents" example:"1250"`
-	Currency    string      `json:"currency"     example:"USD"`
-	Description string      `json:"description"  example:"Lunch"`
-	Date        string      `json:"date"         example:"2026-11-21"`
-	Tags        []TagRefOut `json:"tags"`
-	TransferUID *string     `json:"transfer_uid"`
-	CreatedAt   string      `json:"created_at"   example:"2026-11-21T12:00:00Z"`
-	UpdatedAt   string      `json:"updated_at"   example:"2026-11-21T12:00:00Z"`
-}
-
-// lookups are the uids of the accounts and categories rows point at.
-type lookups struct {
-	accounts   map[int64]string
-	categories map[int64]string
-	currency   string
-}
-
-func (l lookups) transaction(r finance.TxRow) TransactionOut {
-	t := r.Transaction
-	out := TransactionOut{
-		UID: t.UID, Version: t.Version, AccountUID: l.accounts[t.AccountID], Kind: t.Kind, AmountCents: t.AmountCents,
-		Currency: l.currency, Description: t.Description, Date: t.OccurredOn, Tags: make([]TagRefOut, 0, len(r.Tags)),
-		CreatedAt: stamp(t.CreatedAt), UpdatedAt: stamp(t.UpdatedAt),
-	}
-
-	if t.CategoryID.Valid {
-		if uid, ok := l.categories[t.CategoryID.V]; ok {
-			out.CategoryUID = &uid
-		}
-	}
-
-	if t.TransferUID.Valid {
-		uid := t.TransferUID.V
-		out.TransferUID = &uid
-	}
-
-	for _, tg := range r.Tags {
-		out.Tags = append(out.Tags, TagRefOut{UID: tg.UID, Name: tg.Name, Color: tg.Color})
-	}
-
-	return out
-}
+type TransactionOut = operations.TransactionOut
 
 // TransferOut is a transfer: the expense leg on the source account and the
 // income leg on the destination.
-type TransferOut struct {
-	UID  string         `json:"uid" example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
-	From TransactionOut `json:"from"`
-	To   TransactionOut `json:"to"`
-}
+type TransferOut = operations.TransferOut
 
 // BudgetOut is a budget with what the month spent against it.
 type BudgetOut struct {
