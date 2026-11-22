@@ -6,6 +6,7 @@ import { cn } from "../../lib/utils";
 import { Slot } from "radix-ui";
 
 import { useIsMobile } from "../../hooks/use-mobile";
+import { useFinanceI18n } from "../../lib/i18n";
 import { Button } from "./button";
 import { Input } from "./input";
 import { Separator } from "./separator";
@@ -244,15 +245,15 @@ function SidebarTrigger({ className, onClick, ...props }: React.ComponentProps<t
 
 function SidebarRail({ className, ...props }: React.ComponentProps<"button">) {
   const { toggleSidebar } = useSidebar();
+  const { t } = useFinanceI18n();
 
   return (
     <button
       data-sidebar="rail"
       data-slot="sidebar-rail"
-      aria-label="Toggle Sidebar"
+      aria-label={t("toggleSidebar")}
       tabIndex={-1}
       onClick={toggleSidebar}
-      title="Toggle Sidebar"
       className={cn(
         "absolute inset-y-0 z-20 hidden w-4 transition-[left,right,width] ease-linear group-data-[side=left]:-right-4 group-data-[side=right]:left-0 after:absolute after:inset-y-0 after:start-1/2 after:w-[2px] hover:after:bg-sidebar-border sm:flex ltr:-translate-x-1/2 rtl:-translate-x-1/2",
         "in-data-[side=left]:cursor-w-resize in-data-[side=right]:cursor-e-resize",

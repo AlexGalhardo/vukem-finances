@@ -69,7 +69,6 @@ const dict = {
   billingLimitsReached: "Limits reached?",
   billingManageMembers: "Manage members",
   revenueTitle: "Revenue",
-  revenueAdminPanel: "Admin panel",
   revenueMrr: "MRR (active subscriptions)",
   revenuePixMrr: "PIX per month (BRL)",
   revenuePixActive: "Active PIX plans",
