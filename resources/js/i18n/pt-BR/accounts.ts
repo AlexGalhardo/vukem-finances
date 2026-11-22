@@ -1,6 +1,8 @@
 import type en from "../en/accounts";
 
 const dict = {
+  accountsPlanLimit: "O plano {plan} permite {count} contas.",
+  accountsUpgrade: "Faça upgrade para ter mais",
   accountsDescription: "Cada lugar onde seu dinheiro está, com o saldo real.",
   accountsTable: "Contas e seus saldos",
   netWorth: "Patrimônio",
