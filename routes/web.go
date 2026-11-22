@@ -104,6 +104,13 @@ func shareProps(app *vukem.App, edition config.Edition) func(http.Handler) http.
 			inertia.Share(r.Context(), "edition", edition.String())
 			inertia.Share(r.Context(), "locale", sharedLocale(r))
 			inertia.Share(r.Context(), "googleEnabled", accounts.GoogleEnabled(app))
+
+			// A personal install is the owner's own machine. In saas the version is for
+			// signed-in people only (see shareAuth), so a scanner cannot read it.
+			if edition.Personal() {
+				inertia.Share(r.Context(), "release", config.DisplayVersion())
+			}
+
 			next.ServeHTTP(w, r)
 		})
 	}

@@ -20,6 +20,9 @@ type Shared struct {
 	Workspace     *SharedWorkspace `json:"workspace"` // set on the pages inside a workspace
 	Locale        string           `json:"locale"`
 	GoogleEnabled bool             `json:"googleEnabled"`
+	// Release is the version shown in the corner of the screens. It is empty for
+	// a signed-out visitor of the saas edition.
+	Release string `json:"release,omitempty"`
 	// Notifications is the unread count and the latest few notifications of
 	// the signed-in person, for the bell of the header.
 	Notifications *SharedNotifications `json:"notifications"`

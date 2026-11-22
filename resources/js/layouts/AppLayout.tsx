@@ -2,6 +2,7 @@ import { Link, usePage } from "@inertiajs/react";
 import type { ReactNode } from "react";
 import Mark from "../components/Mark";
 import Preferences from "../components/Preferences";
+import ReleaseBadge from "../components/ReleaseBadge";
 import ThemeToggle from "../components/ThemeToggle";
 import { Alert, AlertDescription } from "../components/ui/alert";
 import { Button } from "../components/ui/button";
@@ -11,8 +12,18 @@ import type { SharedProps } from "../page-props";
 import AuthLayout from "./AuthLayout";
 import Shell from "./Shell";
 
-/** Chooses the frame: the panel's own layout, the signed-in Shell, or the public header. */
+/** Every screen, whatever its frame, shows the running release. */
 export default function AppLayout({ children }: { children: ReactNode }) {
+  return (
+    <>
+      <Frame>{children}</Frame>
+      <ReleaseBadge />
+    </>
+  );
+}
+
+/** Chooses the frame: the panel's own layout, the signed-in Shell, or the public header. */
+function Frame({ children }: { children: ReactNode }) {
   const page = usePage<SharedProps>();
   const { auth, workspace } = page.props;
   const { t } = useFinanceI18n();

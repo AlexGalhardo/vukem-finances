@@ -50,7 +50,7 @@ func Auth(r *router.Router, app *vukem.App) error {
 	signupIP := ratelimit.Middleware(limiters("register", 10, 10*time.Minute), ratelimit.ByIP)
 	signupEmail := ratelimit.Middleware(limiters("register.email", 5, time.Hour), account.RegisterThrottleKey)
 
-	r.Use(shareAuth(acc))
+	r.Use(shareAuth(acc, edition))
 
 	r.Get("/login", h.ShowLogin).Name("login").Use(guest)
 	r.Post("/login", h.Login).Use(guest, loginByIP, throttle, perAccount)
@@ -82,7 +82,7 @@ func Auth(r *router.Router, app *vukem.App) error {
 
 // shareAuth shares the signed-in user (or null) with every page as
 // auth.user; it is loaded only when a page is rendered.
-func shareAuth(acc *accounts.Accounts) func(http.Handler) http.Handler {
+func shareAuth(acc *accounts.Accounts, edition config.Edition) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			c := web.NewCtx(w, r, web.ServicesFrom(r.Context()))
@@ -95,6 +95,16 @@ func shareAuth(acc *accounts.Accounts) func(http.Handler) http.Handler {
 
 				return map[string]any{"user": u}, nil
 			})
+
+			if !edition.Personal() {
+				inertia.Share(r.Context(), "release", func(context.Context) (any, error) {
+					if _, err := acc.Web.User(c); err != nil {
+						return "", nil //nolint:nilerr // signed out: no version
+					}
+
+					return config.DisplayVersion(), nil
+				})
+			}
 
 			next.ServeHTTP(w, r)
 		})
