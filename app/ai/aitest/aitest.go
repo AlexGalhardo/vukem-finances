@@ -10,8 +10,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/AlexGalhardo/vukem"
 	"github.com/AlexGalhardo/vukem/database"
 	"github.com/AlexGalhardo/vukem/orm"
+	"github.com/AlexGalhardo/vukem/queue"
 	"github.com/AlexGalhardo/vukem/vukemtest"
 
 	"github.com/AlexGalhardo/vukem-finances/app/ai"
@@ -45,7 +47,11 @@ type Rig struct {
 func NewApp(t *testing.T) *vukemtest.App {
 	t.Helper()
 
-	return vukemtest.New(t, bootstrap.New, vukemtest.Options{Env: map[string]string{"APP_EDITION": "saas"}})
+	// A recording queue: a job a write enqueues is not run behind the test's back.
+	return vukemtest.New(t, bootstrap.New, vukemtest.Options{
+		Env:        map[string]string{"APP_EDITION": "saas"},
+		AppOptions: []vukem.Option{vukem.WithQueueDriver(queue.NewFake())},
+	})
 }
 
 // New makes a user with a workspace in app (a new app when nil), saves the key
@@ -101,6 +107,15 @@ func New(t *testing.T, app *vukemtest.App, email string) *Rig {
 	}
 
 	provider := &fake.Provider{}
+
+	// Whatever else builds the shared client in this app must not reach a real provider either.
+	shared, err := ai.Shared(app.App)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	shared.Client.Factory = provider.Factory()
+
 	settings := ai.NewSettingsStore(db, nil)
 	log := &strings.Builder{}
 
