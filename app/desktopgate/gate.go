@@ -124,7 +124,9 @@ func (w *headerWriter) seal() {
 	w.done = true
 
 	h := w.Header()
-	h.Set("Referrer-Policy", "no-referrer")
+	// Not no-referrer: a form that fails validation returns to its page through the
+	// Referer, and without it the error is lost. No other site ever receives it.
+	h.Set("Referrer-Policy", "same-origin")
 	// A second policy narrows the first: both must allow what a page does.
 	h.Add("Content-Security-Policy", "frame-ancestors 'none'")
 }

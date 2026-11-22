@@ -168,6 +168,57 @@ func TestSecurity_GateTokenSpentOnce(t *testing.T) {
 	}
 }
 
+// The first-run form looked dead in the desktop app: without a Referer a failed
+// validation went to / and on to /setup, and that extra stop lost the error.
+func TestDesktopFormErrorReturnsToItsPage(t *testing.T) {
+	t.Parallel()
+
+	srv, entry, client, _ := gatedServer(t)
+
+	if got := status(t, client, get(t, entry)); got != http.StatusSeeOther {
+		t.Fatalf("exchange = %d, want 303", got)
+	}
+
+	form := url.Values{
+		"name": {"Alexandra"}, "email": {"owner@example.com"}, "currency": {"BRL"},
+		"password": {"short"}, "password_confirmation": {"short"},
+	}
+
+	req, err := http.NewRequestWithContext(t.Context(), http.MethodPost, srv.URL+"/setup", strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("X-Inertia", "true")
+	req.Header.Set("Origin", srv.URL)
+	req.Header.Set("Referer", srv.URL+"/setup")
+
+	res, err := client.Do(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_ = res.Body.Close()
+
+	if got := res.Header.Get("Location"); got != "/setup" && got != srv.URL+"/setup" {
+		t.Fatalf("a failed form went to %q, want its own page", got)
+	}
+
+	page, err := client.Do(get(t, srv.URL+"/setup"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	body, _ := io.ReadAll(page.Body)
+	_ = page.Body.Close()
+
+	unescaped := strings.NewReplacer("&#34;", `"`, "&quot;", `"`).Replace(string(body))
+	if !strings.Contains(unescaped, `"errors":{"password`) {
+		t.Errorf("the page does not show the password error: %s", unescaped)
+	}
+}
+
 func TestSecurity_GateCookieSatisfiesSetupSecret(t *testing.T) {
 	t.Parallel()
 
@@ -244,8 +295,8 @@ func TestSecurity_GateHeadersSurviveTheApp(t *testing.T) {
 	_ = res.Body.Close()
 
 	// The app sets strict-origin-when-cross-origin itself; the gate wins.
-	if got := res.Header.Get("Referrer-Policy"); got != "no-referrer" {
-		t.Errorf("Referrer-Policy = %q, want no-referrer", got)
+	if got := res.Header.Get("Referrer-Policy"); got != "same-origin" {
+		t.Errorf("Referrer-Policy = %q, want same-origin", got)
 	}
 
 	if csp := strings.Join(res.Header.Values("Content-Security-Policy"), "; "); !strings.Contains(csp, "frame-ancestors 'none'") {

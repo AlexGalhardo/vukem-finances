@@ -206,8 +206,8 @@ func TestShellInjectsTheScriptIntoHTMLPages(t *testing.T) {
 		t.Errorf("Content-Length = %q, body is %d bytes", res.Header.Get("Content-Length"), len(body))
 	}
 
-	if res.Header.Get("Referrer-Policy") != "no-referrer" {
-		t.Errorf("Referrer-Policy = %q, want no-referrer", res.Header.Get("Referrer-Policy"))
+	if res.Header.Get("Referrer-Policy") != "same-origin" {
+		t.Errorf("Referrer-Policy = %q, want same-origin", res.Header.Get("Referrer-Policy"))
 	}
 
 	if _, js := get("/desktop/shell.js", "*/*"); !strings.Contains(js, "__VF_DESKTOP__") {
