@@ -1,44 +1,48 @@
 package tests
 
 import (
+	"encoding/json"
+	"os"
 	"testing"
 
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 )
 
+// TestParseAmount reads testdata/amount-vectors.json, the file the mobile
+// parser (mobile/src/domain/money.ts) is tested against too.
 func TestParseAmount(t *testing.T) {
 	t.Parallel()
 
-	for _, tc := range []struct {
-		in   string
-		want int64
-		ok   bool
-	}{
-		{"12.34", 1234, true},
-		{"12,34", 1234, true},
-		{"12", 1200, true},
-		{"0.5", 50, true},
-		{".5", 50, true},
-		{"1,234.56", 123456, true},
-		{"1.234,56", 123456, true},
-		{"1,234,567", 123456700, true},
-		{"-5", -500, true},
-		{"-$5.25", -525, true},
-		{"(5.00)", -500, true},
-		{" R$ 10,00 ", 1000, true},
-		{"1.005", 0, false},
-		{"", 0, false},
-		{"abc", 0, false},
-		{"99999999999999999999", 0, false},
-		{"90071992547409.91", 9007199254740991, true},
-		{"90071992547409.92", 0, false},
-		{"-90071992547409.91", -9007199254740991, true},
-		{"-90071992547409.92", 0, false},
-		{"90071992547410", 0, false},
-	} {
-		got, err := finance.ParseAmount(tc.in)
-		if (err == nil) != tc.ok || (tc.ok && got != tc.want) {
-			t.Errorf("ParseAmount(%q) = %d, %v; want %d, ok=%v", tc.in, got, err, tc.want, tc.ok)
+	raw, err := os.ReadFile("../testdata/amount-vectors.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var vectors []struct {
+		In    string `json:"in"`
+		Cents *int64 `json:"cents"`
+	}
+
+	if err := json.Unmarshal(raw, &vectors); err != nil {
+		t.Fatal(err)
+	}
+
+	if len(vectors) < 60 {
+		t.Fatalf("only %d amount vectors, want at least 60", len(vectors))
+	}
+
+	for _, tc := range vectors {
+		got, err := finance.ParseAmount(tc.In)
+		if tc.Cents == nil {
+			if err == nil {
+				t.Errorf("ParseAmount(%q) = %d, want an error", tc.In, got)
+			}
+
+			continue
+		}
+
+		if err != nil || got != *tc.Cents {
+			t.Errorf("ParseAmount(%q) = %d, %v; want %d", tc.In, got, err, *tc.Cents)
 		}
 	}
 }
