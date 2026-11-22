@@ -190,6 +190,17 @@ export type Dashboard = {
   months: MonthPoint[];
 };
 
+export type DeviceView = {
+  createdAt: string;
+  id: string;
+  lastPullSeq: number;
+  lastSeenAt: string;
+  name: string;
+  platform: string;
+  revokedAt: string;
+  status: string;
+};
+
 export type FeatureUse = {
   calls: number;
   feature: string;
@@ -714,6 +725,10 @@ export type DashboardProps = {
   upcoming: UpcomingItem[];
 };
 
+export type DevicesProps = {
+  devices: DeviceView[];
+};
+
 export type GoalsProps = {
   contributions: GoalContribution[];
   goals: GoalStatus[];
@@ -839,6 +854,7 @@ export interface PageProps {
   Cards: CardsProps;
   Categories: CategoriesProps;
   Dashboard: DashboardProps;
+  Devices: DevicesProps;
   Goals: GoalsProps;
   Home: HomeProps;
   Import: ImportProps;
