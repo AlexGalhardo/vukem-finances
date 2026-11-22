@@ -18,7 +18,7 @@ export function ScreenHeader(props: {
       onPress={onPress}
       style={{ minHeight: TOUCH_MIN, minWidth: TOUCH_MIN, justifyContent: "center", paddingHorizontal: ui.spacing[2] }}
     >
-      <Text style={{ color: ui.colors.brand, fontSize: ui.fontSize.base }}>{label}</Text>
+      <Text style={{ color: ui.colors.brandText, fontSize: ui.fontSize.base }}>{label}</Text>
     </Pressable>
   );
 
