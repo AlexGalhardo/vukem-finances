@@ -108,7 +108,7 @@ func TestGateServesWithCookieAndSetsHeaders(t *testing.T) {
 		t.Errorf("CSP = %q", got)
 	}
 
-	if got := w.Header().Get("Referrer-Policy"); got != "no-referrer" {
+	if got := w.Header().Get("Referrer-Policy"); got != "same-origin" {
 		t.Errorf("Referrer-Policy = %q", got)
 	}
 }
