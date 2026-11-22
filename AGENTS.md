@@ -44,7 +44,8 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `.agents/rules/` | the rules of the team: read them before editing |
 | `site/`, `docs/site.md`, `docs/landing-brief.md`, `docs/legal/` | the static Astro site (landing page in three languages, privacy notice, the documentation at `/docs/`): its own `package.json` and `bun.lock`, not a workspace of the root and not in the Docker image (see "The static site") |
 | `.github/` | CI workflows and `scopes.txt`, the list of commit scopes |
-| `scripts/` | the release train script and the Docker smoke tests (`docker-persist-test.sh`, `docker-clientip-test.sh`; they need Docker and are not part of `go test`) |
+| `docs/security.md`, `SECURITY.md`, `docs/qa/` | the threat model, the reporting policy and the quality campaign records (see "Security and fuzzing") |
+| `scripts/` | the release train script, `qa/fuzz-targets` and the Docker smoke tests (`docker-persist-test.sh`, `docker-clientip-test.sh`; they need Docker and are not part of `go test`) |
 | `Dockerfile`, `compose.yaml`, `compose.prod.yaml`, `deploy/` | the image, the local stack, the VPS stack with Caddy and the [deployment guide](deploy/README.md) |
 
 ## Commands
@@ -209,6 +210,13 @@ Read `docs/offline.md` first (D-027). The personal edition (desktop and local Do
 - A new outbound call (a provider, a webhook, a fetch of a remote document) must be off until configured, must fail with a plain message when there is no network, and gets a row in `docs/offline.md`. Screens that need the internet say so in en, pt-BR and es.
 - Mail in personal is `offline.BestEffort`: a connectivity failure never fails or changes the answer of a flow (dropped and logged on the inline queue, retried on a real one); other mail errors propagate. saas is untouched.
 - The guard is `tests/offline_test.go` (Go: `http.DefaultTransport` and `net.DefaultResolver`) and `e2e/offline.spec.ts` (browser). Extend the journey when a feature gets a new page or job. Both are blind to a bare dial to an IP literal; the container check with `--network none` in `docs/offline.md` covers it.
+
+## Security and fuzzing
+
+Read `docs/security.md` (the threat model: assets, boundaries, one STRIDE table per surface with the control and the test) and `SECURITY.md` (how to report). A new surface, asset or boundary updates the tables in the same change. `docs/qa/rounds.md` records every problem the quality campaign finds (`QA-NNN`), fixed with a test first.
+
+- The attack suites are `tests/security_*_test.go`, every case named `TestSecurity_<Area>_<Case>` (`go test ./tests/... -run TestSecurity_`; `-race` is part of the gate). A new route that changes state needs nothing extra for CSRF (`TestSecurity_Web_CSRF` walks the router); a new MCP or OAuth rule needs a case in `tests/security_mcp_test.go`.
+- Fuzz targets are `Fuzz*` functions in `tests/fuzz_*_test.go`, all in the one package `tests` because `go test -fuzz` refuses several packages. Seeds are `f.Add` calls and `tests/testdata/fuzz/<Target>/`; a crash input is committed there as a regression seed. `go run ./scripts/qa/fuzz-targets -packages` lists `<target> <package>`; `.github/workflows/fuzz.yml` runs each for 30 seconds on a pull request that touches a parser and for 10 minutes nightly. The targets that go through the app (`FuzzSyncPush`, `FuzzMCPJSONRPC`, `FuzzOAuthAuthorize`, `FuzzOAuthToken`) build their app once with the `testing.F` (`oauthtest` takes a `testing.TB`) and use a new client address per input (`nextIP`) so rate limits never decide the answer.
 
 ## Docker and deployment
 
