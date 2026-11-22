@@ -242,7 +242,8 @@ func TestSecurity_Web_Production(t *testing.T) {
 func TestSecurity_Web_Sessions(t *testing.T) {
 	t.Parallel()
 
-	app := authTestApp(t)
+	// The harness pins SESSION_DRIVER=cookie; an empty value is unset, so this app runs on the default of the application.
+	app := authTestApp(t, vukemtest.Options{Env: map[string]string{"SESSION_DRIVER": ""}})
 	register(t, app, app.Client(t).Inertia(""), "bob@example.com")
 
 	cookieOf := func(res *vukemtest.Response) string {
@@ -296,6 +297,56 @@ func TestSecurity_Web_Sessions(t *testing.T) {
 		c.Get("/dashboard").AssertOK()
 		c.PostJSON("/logout", nil).AssertRedirect("/")
 		c.Get("/dashboard").AssertRedirect("/login")
+	})
+
+	// QA-001: the session is a server-side row, so ending it ends every copy of its cookie.
+	t.Run("a copied cookie stops working after logout and another device stays signed in", func(t *testing.T) {
+		login := func() string {
+			res := app.Client(t).Inertia("").WithIP(nextIP()).PostJSON("/login", map[string]any{"email": "bob@example.com", "password": testPassword})
+			if res.Status() != 303 {
+				t.Fatalf("login answered %d", res.Status())
+			}
+
+			return cookieOf(res)
+		}
+
+		phone, laptop := login(), login()
+		if phone == "" || laptop == "" || phone == laptop {
+			t.Fatalf("two sign-ins gave sessions %q and %q", phone, laptop)
+		}
+
+		withCookie(phone).Get("/dashboard").AssertOK()
+		withCookie(phone).WithHeader("Sec-Fetch-Site", "same-origin").PostJSON("/logout", nil).AssertRedirect("/")
+
+		withCookie(phone).Get("/dashboard").AssertRedirect("/login")
+		withCookie(laptop).Get("/dashboard").AssertOK()
+	})
+
+	t.Run("a cookie of the old encrypted format is no session and no error", func(t *testing.T) {
+		old := strings.Repeat("Zm9vYmFy", 40)
+		withCookie(old).Get("/dashboard").AssertRedirect("/login")
+		withCookie(old).Get("/login").AssertOK()
+	})
+
+	t.Run("a session id never reaches the logs or the table in the clear", func(t *testing.T) {
+		id := cookieOf(app.Client(t).Inertia("").PostJSON("/login", map[string]any{"email": "bob@example.com", "password": testPassword}))
+		if id == "" {
+			t.Fatal("no session")
+		}
+
+		withCookie(id).Get("/dashboard").AssertOK()
+
+		if strings.Contains(app.Logs(), id) {
+			t.Fatal("a session id is in the logs")
+		}
+
+		if rowCountWhere(t, app, "sessions", "id = '"+id+"'") != 0 {
+			t.Fatal("the table holds the cookie value as the id")
+		}
+
+		if rowCount(t, app, "sessions") == 0 {
+			t.Fatal("no session row: the sessions are not server side")
+		}
 	})
 
 	t.Run("the cookie is not accepted by the API", func(t *testing.T) {

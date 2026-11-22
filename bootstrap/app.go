@@ -27,6 +27,11 @@ func New(opts ...vukem.Option) (*vukem.App, error) {
 
 	base := []vukem.Option{
 		vukem.WithName("vukem-finances"),
+		// Sessions are rows of the app database, not encrypted cookies: logging out ends that
+		// session for every copy of its cookie, and "sign out of the other devices" has rows
+		// to delete (QA-001). The framework creates the table and prunes it hourly. An
+		// explicit SESSION_DRIVER still wins; no network is involved in either edition.
+		vukem.WithEnvDefaults(map[string]string{"SESSION_DRIVER": "database"}),
 		vukem.WithProviders(append([]vukem.Provider{gate.Provider()}, Providers()...)...),
 		vukem.WithViewFuncs(gate.ViewFuncs()),
 		vukem.WithMigrations(migrations.All()),

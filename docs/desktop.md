@@ -60,7 +60,7 @@ shell: its configuration is fixed (`APP_ENV=production`, `APP_EDITION=personal`,
 `app.key` is created on the first run from 32 random bytes (mode `0600`; on
 Windows an access list with only your user). It is never regenerated: if the
 file exists but is empty or damaged, the app refuses to start instead of
-replacing it. **Without the key, encrypted fields (AI provider keys, sessions)
+replacing it. **Without the key, encrypted fields (AI provider keys)
 cannot be read.** Back it up together with the database.
 
 ## Backups
