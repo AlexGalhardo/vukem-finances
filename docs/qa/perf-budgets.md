@@ -30,24 +30,24 @@ The first targets come from the plan of epic 24: p95 under 300 ms for lists and 
 
 ## Measurements
 
-Last run, one developer machine shared with other work, 20 clients, `go run ./scripts/qa/loadtest -check` (exit 1, budgets not met):
+Last run after the covering indexes of QA-503 (migration `20261126120000`), on a developer machine shared with other work, so absolute numbers move by tens of percent between runs. The web rate limit counts per user: the big workspace has one member per client and each client signs in as its own member, so no 429 counts as a failure on `dashboard` (no product limit is changed). `database is locked`: none, in any client response or the server log.
 
-| Scenario | p50 (ms) | p95 (ms) | Budget (ms) | Result |
-| --- | --- | --- | --- | --- |
-| `dashboard` | 4440 | 7493 | 300 | over; 72 of 300 requests answered 429 (the per-user web rate limit) |
-| `transactions_list` | 2427 | 4557 | 300 | over |
-| `transactions_filtered` | 1114 | 1555 | 300 | over |
-| `reports` | 1264 | 2578 | 300 | over |
-| `export_csv_50k` | 1567 | 1602 | 1000 | over |
-| `api_list_small` | 35 | 61 | 300 | ok |
-| `sync_pull` | 72 | 110 | 300 | ok |
-| `sync_push` | 1058 | 2571 | 300 | over |
-| `mcp_tools_list` | 2 | 5 | 300 | ok |
-| `mcp_transactions_list` | 1984 | 3235 | 300 | over |
-| `mixed_load` | 974 | 3598 | 300 | over |
+| Scenario | 20 clients p50 (ms) | 20 clients p95 (ms) | 1 client p50 (ms) | 1 client p95 (ms) | Budget (ms) | 20 clients |
+| --- | --- | --- | --- | --- | --- | --- |
+| `dashboard` | 1271 | 1626 | 376 | 448 | 300 | over |
+| `transactions_list` | 299 | 679 | 23 | 39 | 300 | over |
+| `transactions_filtered` | 1664 | 2954 | 60 | 108 | 300 | over |
+| `reports` | 1080 | 2437 | 213 | 359 | 300 | over |
+| `export_csv_50k` | 1727 | 1749 | 1453 | 1478 | 1000 | over |
+| `api_list_small` | 13 | 28 | 5 | 7 | 300 | ok |
+| `sync_pull` | 64 | 89 | 23 | 28 | 300 | ok |
+| `sync_push` | 1025 | 3869 | 52 | 145 | 300 | over |
+| `mcp_tools_list` | 3 | 9 | 1 | 1 | 300 | ok |
+| `mcp_transactions_list` | 147 | 225 | 23 | 30 | 300 | ok |
+| `mixed_load` | 182 | 1264 | 20 | 292 | 300 | over |
 
-No `database is locked` error appeared in any client response or in the server log.
+With one client the single-device limit (30 pushes a minute per device) makes `mixed_load` answer a few 429s after `sync_push` used the same device; with 20 clients each device stays under it.
 
-The same run with one client (`-clients 1 -requests 30`), which shows the cost of a request with no queueing: dashboard 473 ms p50, list page 253 ms, reports 166 ms (p95 639), export 1196 ms, sync push 40 ms (866 ms before QA-500), sync pull 11 ms.
+Before QA-500 and QA-503 (one machine, same load): dashboard 739 ms p50 for one client, list page 296 ms, push 866 ms. The first 20-client run missed every budget by 5 to 25 times.
 
-The misses are recorded as QA-503 in `rounds.md`.
+What is left, by the profile: with one client the dashboard (448 ms p95), the reports (359 ms) and the export (1478 ms) still miss; with 20 clients every request that scans the workspace queues on the CPU of the machine. Each of those reads aggregates all rows of a period at request time (a covering index scan of 100000 entries costs about 100 ms by itself), and the reports group by amount to keep exact sums without `SUM` overflow, so a group per row. See QA-503.

@@ -92,10 +92,18 @@ The entries of task 10 (load, budgets and drills) are numbered from QA-500.
 
 ## QA-503: lists, the dashboard and the export miss their budgets at 100000 rows
 
-- **Surface:** dashboard, transaction list, reports, CSV export, MCP `transactions_list`.
+- **Surface:** dashboard, transaction list, reports, CSV export, sync push under load.
 - **Steps:** `go run ./scripts/qa/loadtest -check`.
 - **Expected:** the budgets of `perf-budgets.md`.
-- **Actual:** see the table in `perf-budgets.md`: one client alone already measures about 470 ms for the dashboard, 250 ms for a list page, 170 to 640 ms for the reports and 1.2 s for the 50000 row export, and 20 clients multiply that by the queueing of a single SQLite writer and the CPU of the machine.
-- **Evidence:** the load test output.
+- **Actual (profile, `EXPLAIN QUERY PLAN` and timings per statement, 100000 rows):**
+  - the dashboard ran 420 ms: the balance `SUM` by account and kind took 180 ms and the count by account 71 ms, both going back to the table for every row; about 100 ms more was hydrating the 25000 rows of six months through the ORM;
+  - the list ran `COUNT(*)` of the workspace for the total: 34 ms, a table lookup per row;
+  - the net worth series (default report) took 294 ms, and the 12 month report ran it twice (1268 ms in all): `GROUP BY occurred_on, account_id, kind, amount_cents` with a temp b-tree and a table lookup per row.
+- **Fix applied:** migration `20261126120000_add_transaction_cover_indexes` adds two covering indexes. The same profile then shows the dashboard at 221 ms, a list page at 18 ms, the default report at 315 ms and the 12 month report at 868 ms. `TestTransactionCoverIndexesAnswerTheHotQueries` checks the plans and the rollback.
+- **Evidence:** the table in `perf-budgets.md`. After the fix, with one client: dashboard 448 ms p95 (budget 300), reports 359 ms, export 1478 ms (budget 1000); with 20 clients all of those and the filtered list and the push (p95 3869 ms, CPU queueing on a shared machine) are still over.
 - **Severity:** Medium.
-- **Status:** open. Budgets are not loosened. Suspected causes, not yet confirmed: `TransactionPage` runs a full `COUNT(*)` of the workspace for every page, and the dashboard and the reports aggregate over all rows of the period on each request. Options are a covering index on `(workspace_id, deleted_at, occurred_on)` (a migration), a cached total, or a summary table; each changes the data model, so it goes to the orchestrator.
+- **Status:** open, with the evidence that an index cannot reach the budget: what is left is the cost of aggregating 100000 rows per request. Options for the orchestrator, each a change of design:
+  - a per-workspace monthly summary table kept by the change-log triggers (balances, month points, category totals), read by the dashboard and the reports;
+  - SQL `SUM` per group with an overflow guard instead of grouping by amount (smaller result, still a scan);
+  - a cached dashboard and total with invalidation on the change log;
+  - raise the budgets for the single-writer SQLite case, which the plan forbids without the author.
