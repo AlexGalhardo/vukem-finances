@@ -98,7 +98,8 @@ switch ($Step) {
 			return
 		}
 		if (-not $ReportDir) { $ReportDir = $tmp }
-		New-Item -ItemType Directory -Force -Path $ReportDir | Out-Null
+		# appcert refuses a relative report path.
+		$ReportDir = (New-Item -ItemType Directory -Force -Path $ReportDir).FullName
 		$report = Join-Path $ReportDir 'appcert-report.xml'
 		& $appcert reset
 		& $appcert test -appxpackagepath $Package -reportoutputpath $report
