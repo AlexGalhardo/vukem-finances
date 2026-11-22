@@ -18,7 +18,7 @@ func TestPersonalExportNeedsThePassword(t *testing.T) {
 	ana.Client.PostForm("/account/export", passwordForm("wrong")).AssertStatus(303).AssertSessionHasErrors("password")
 	ana.Client.Get("/account/export.json").AssertRedirect("/account/privacy")
 
-	ana.Client.PostForm("/account/export", passwordForm(knownPassword)).AssertRedirect("/account/export.json")
+	ana.Client.PostForm("/account/export", passwordForm(knownPassword)).AssertRedirect("/account/privacy?export=ready")
 
 	res := ana.Client.Get("/account/export.json").AssertOK().
 		AssertHeaderContains("Content-Disposition", "attachment").AssertHeader("Cache-Control", "no-store")
