@@ -13,4 +13,7 @@ import (
 func financePrivacy(g *router.Group, ph *ledger.PrivacyHandlers, confirm func(http.Handler) http.Handler) {
 	g.Post("/account/export", ph.ConfirmExport).Name("account.export.confirm").Use(confirm)
 	g.Get("/account/export.json", ph.Export).Name("account.export")
+
+	g.Post("/workspace/deletion", ph.DeleteWorkspace).Name("workspace.deletion.store").Use(confirm)
+	g.Post("/workspace/deletion/cancel", ph.CancelWorkspaceDeletion).Name("workspace.deletion.cancel")
 }
