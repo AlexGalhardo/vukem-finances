@@ -4,6 +4,8 @@ import (
 	"context"
 	"crypto/rand"
 	"time"
+
+	"github.com/AlexGalhardo/vukem-finances/app/telegram/lang"
 )
 
 const (
@@ -14,9 +16,9 @@ const (
 	retryAfterError = 3 * time.Second
 	// retryAfterHeld waits while another instance polls.
 	retryAfterHeld = 10 * time.Second
-	// maxUpdateAttempts is how many times one update is tried before the
-	// poller moves past it.
-	maxUpdateAttempts = 3
+	// maxUpdateAttempts is how many times one update is tried, retryAfterError
+	// apart, before the poller moves past it.
+	maxUpdateAttempts = 20
 )
 
 // NewOwner makes the name a polling worker takes the lease with.
@@ -48,6 +50,7 @@ func (b *Bot) PollOnce(ctx context.Context) (handled int, leased bool, err error
 			}
 
 			b.Log.Error("telegram: update skipped after repeated failures", "update_id", u.UpdateID, "err", err.Error())
+			b.tellSkipped(ctx, u)
 		}
 
 		handled++
@@ -67,8 +70,9 @@ func (b *Bot) PollOnce(ctx context.Context) (handled int, leased bool, err error
 
 // giveUp counts a failure of update id and reports when it is time to move
 // past it: updates are read in order, so one that always fails would stop the
-// bot for every chat. During a database outage the offset cannot be saved
-// either, so nothing is skipped until the database is back.
+// bot for every chat. The attempts span about a minute, so a short database
+// hiccup never drops an action, and during an outage the lease and the offset
+// fail too, so nothing is skipped until the database is back.
 func (b *Bot) giveUp(id int64) bool {
 	if b.failedUpdate != id {
 		b.failedUpdate, b.failures = id, 0
@@ -77,6 +81,18 @@ func (b *Bot) giveUp(id int64) bool {
 	b.failures++
 
 	return b.failures >= maxUpdateAttempts
+}
+
+// tellSkipped tells the person the action did not apply, so a command such as
+// an unlink is not believed done.
+func (b *Bot) tellSkipped(ctx context.Context, u Update) {
+	switch {
+	case u.Message != nil && u.Message.Chat.Type == "private" && u.Message.From != nil:
+		b.send(ctx, u.Message.Chat.ID, lang.T(guessLanguage(u.Message.From.LanguageCode), lang.Failed), nil)
+	case u.CallbackQuery != nil && u.CallbackQuery.Message != nil && u.CallbackQuery.Message.Chat.Type == "private":
+		q := u.CallbackQuery
+		b.send(ctx, q.Message.Chat.ID, lang.T(guessLanguage(q.From.LanguageCode), lang.Failed), nil)
+	}
 }
 
 // Run is the polling worker, a vukem Runner: it loops until ctx is done and

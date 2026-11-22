@@ -73,11 +73,18 @@ func TestPollerSkipsAnUpdateThatKeepsFailing(t *testing.T) {
 	f.Enqueue(fakes.CallbackUpdate(base, 9401, data))
 	f.Enqueue(fakes.TextUpdate(base+1, 9401, "/help"))
 
-	for range 3 {
+	// A short failure is retried, with nothing skipped and nothing said yet.
+	for range 19 {
 		_, _, _ = bot.PollOnce(t.Context())
 	}
 
-	if got := len(f.Sent(9401)); got != 1 {
-		t.Fatalf("%d replies after the failing update, want the /help behind it answered", got)
+	if got := len(f.Sent(9401)); got != 0 {
+		t.Fatalf("%d replies while the update was still being retried", got)
+	}
+
+	_, _, _ = bot.PollOnce(t.Context())
+
+	if got := len(f.Sent(9401)); got != 2 {
+		t.Fatalf("%d replies, want the failure notice and the /help behind it", got)
 	}
 }
