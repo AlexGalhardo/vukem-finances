@@ -54,10 +54,3 @@ func limitBody(limit int64) router.Middleware {
 		})
 	}
 }
-
-// lookups are the uids of the accounts and categories rows point at.
-type lookups struct {
-	accounts   map[int64]string
-	categories map[int64]string
-	currency   string
-}
