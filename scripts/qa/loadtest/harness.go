@@ -135,9 +135,15 @@ func (h *harness) runAll(ctx context.Context) ([]result, error) {
 		return nil, err
 	}
 
-	web, err := h.webLogin(ctx)
-	if err != nil {
-		return nil, err
+	// One signed-in session per client: the web rate limit counts per user, and
+	// the load test does not change it (the product is measured as it ships).
+	web := make([]*webClient, h.cfg.clients)
+
+	for c := range web {
+		var err error
+		if web[c], err = h.webLogin(ctx, c); err != nil {
+			return nil, err
+		}
 	}
 
 	n, cl := h.cfg.requests, h.cfg.clients
@@ -150,8 +156,8 @@ func (h *harness) runAll(ctx context.Context) ([]result, error) {
 
 	var out []result
 
-	out = append(out, h.measure("dashboard", n, cl, func(_, _ int) error {
-		return web.get(ctx, "/dashboard")
+	out = append(out, h.measure("dashboard", n, cl, func(c, _ int) error {
+		return web[c].get(ctx, "/dashboard")
 	}))
 
 	out = append(out, h.measure("transactions_list", n, cl, func(c, i int) error {
@@ -285,13 +291,13 @@ func (h *harness) push(ctx context.Context, w qakit.Workspace, c, count int) err
 
 // mixed is every kind of work at once: reads, a report, a pull, a push and a
 // create, with no error and no lock allowed.
-func (h *harness) mixed(ctx context.Context, web *webClient) result {
+func (h *harness) mixed(ctx context.Context, web []*webClient) result {
 	big := h.big()
 
 	return h.measure("mixed_load", h.cfg.requests, h.cfg.clients, func(c, i int) error {
 		switch i % 6 {
 		case 0:
-			return web.get(ctx, "/dashboard")
+			return web[c].get(ctx, "/dashboard")
 		case 1:
 			_, err := h.call(ctx, big, c, "GET", "/api/v1/transactions?page=2", nil, nil)
 			return err

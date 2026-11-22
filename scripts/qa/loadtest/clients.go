@@ -23,14 +23,22 @@ type webClient struct {
 	http *http.Client
 }
 
-func (h *harness) webLogin(ctx context.Context) (*webClient, error) {
+// webLogin signs in as one user of the big workspace: the owner for -1, or
+// member c. The per-user web rate limit (120 reads a minute) then applies to
+// each client alone, which is how 20 people would meet it.
+func (h *harness) webLogin(ctx context.Context, member int) (*webClient, error) {
 	jar, err := cookiejar.New(nil)
 	if err != nil {
 		return nil, err
 	}
 
 	c := &http.Client{Jar: jar, Timeout: 2 * time.Minute, Transport: h.http.Transport}
-	form := url.Values{"email": {h.big().Email}, "password": {qakit.SeedPass}}
+	email := h.big().Email
+	if member >= 0 {
+		email = h.big().Members[member]
+	}
+
+	form := url.Values{"email": {email}, "password": {qakit.SeedPass}}
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, h.base+"/login", strings.NewReader(form.Encode()))
 	if err != nil {

@@ -33,6 +33,9 @@ type Workspace struct {
 	Accounts []string
 	Cats     []string
 	Rows     int
+	// Members are extra users of the workspace (the first one only), so a load
+	// test can sign in once per client: the web rate limits count per user.
+	Members []string
 }
 
 // ULID is a 26 character Crockford id with a time part, as the clients make.
@@ -123,6 +126,26 @@ func seedWorkspace(ctx context.Context, db *database.DB, tokens *auth.Tokens, n,
 	if _, err = tx.ExecContext(ctx, "INSERT INTO memberships (workspace_id, user_id, role, created_at, updated_at) VALUES (?, ?, 'owner', ?, ?)",
 		ws.ID, ws.UserID, now, now); err != nil {
 		return ws, err
+	}
+
+	if n == 0 {
+		for c := range clients {
+			email := fmt.Sprintf("member%d@example.test", c)
+
+			uid, err := insertID(ctx, tx,
+				"INSERT INTO users (name, email, password, email_verified_at, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)",
+				fmt.Sprintf("Member %d", c), email, hashed, now, now, now)
+			if err != nil {
+				return ws, err
+			}
+
+			if _, err = tx.ExecContext(ctx, "INSERT INTO memberships (workspace_id, user_id, role, created_at, updated_at) VALUES (?, ?, 'member', ?, ?)",
+				ws.ID, uid, now, now); err != nil {
+				return ws, err
+			}
+
+			ws.Members = append(ws.Members, email)
+		}
 	}
 
 	accountIDs := make([]int64, 0, 3)
