@@ -26,5 +26,8 @@ func All() []schema.Migration {
 		m20261122110000CreateCreditCards(),
 		m20261122120000AddTokenResource(),
 		m20261122130000CreateRecurrences(),
+		m20261122140000AddBudgetRolloverAndOverall(),
+		m20261122140100CreateGoals(),
+		m20261122140200CreateNotifications(),
 	}
 }

@@ -2,6 +2,7 @@ package finance
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net/http"
 	"strings"
@@ -230,7 +231,7 @@ func (s *Service) SetBudget(ctx context.Context, categoryID int64, limit string)
 		return err
 	}
 
-	err = orm.Create(ctx, s.DB, &models.Budget{CategoryID: categoryID, LimitCents: cents})
+	err = orm.Create(ctx, s.DB, &models.Budget{CategoryID: sql.Null[int64]{V: categoryID, Valid: true}, LimitCents: cents})
 	if s.DB.UniqueViolation(err) {
 		// A concurrent writer created the budget first: this one is an edit.
 		_, err = workspaces.Scoped[models.Budget](ctx, s.DB).Where("category_id", categoryID).
@@ -267,13 +268,17 @@ func (s *Service) Budgets(ctx context.Context, month string) ([]BudgetStatus, er
 	out := make([]BudgetStatus, 0, len(budgets))
 
 	for _, b := range budgets {
-		spent, err := s.spent(ctx, b.CategoryID, month)
+		if !b.CategoryID.Valid {
+			continue
+		}
+
+		spent, err := s.spent(ctx, b.CategoryID.V, month)
 		if err != nil {
 			return nil, err
 		}
 
 		out = append(out, BudgetStatus{
-			ID: b.ID, CategoryID: b.CategoryID, Category: names[b.CategoryID], LimitCents: b.LimitCents,
+			ID: b.ID, CategoryID: b.CategoryID.V, Category: names[b.CategoryID.V], LimitCents: b.LimitCents,
 			SpentCents: spent, Percent: int(spent * 100 / b.LimitCents),
 		})
 	}

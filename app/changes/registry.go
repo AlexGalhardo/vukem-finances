@@ -92,7 +92,7 @@ func init() {
 	})
 	Register(Entity{
 		Name: "budget", Table: "budgets",
-		Fields: []string{"category_id", "limit_cents"},
+		Fields: []string{"category_id", "limit_cents", "rollover"},
 		Refs:   []Ref{{"category_id", "category"}},
 	})
 	Register(Entity{
@@ -107,5 +107,14 @@ func init() {
 			"start_date", "end_date", "max_count", "generated_through", "active",
 		},
 		Refs: []Ref{{"account_id", "account"}, {"category_id", "category"}},
+	})
+	Register(Entity{
+		Name: "goal", Table: "goals",
+		Fields: []string{"name", "target_cents", "target_date", "archived_at"},
+	})
+	Register(Entity{
+		Name: "goal_contribution", Table: "goal_contributions",
+		Fields: []string{"goal_id", "amount_cents", "on_date", "note"},
+		Refs:   []Ref{{"goal_id", "goal"}},
 	})
 }

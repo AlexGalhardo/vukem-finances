@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"database/sql"
 	"errors"
 	"testing"
 
@@ -78,7 +79,7 @@ func TestAmountCap(t *testing.T) {
 		for name, m := range map[string]any{
 			"account":     &models.Account{Name: "x", Kind: "cash", OpeningCents: models.MaxCents + 1},
 			"transaction": &models.Transaction{AccountID: acc, Kind: models.KindIncome, AmountCents: models.MaxCents + 1, OccurredOn: today()},
-			"budget":      &models.Budget{CategoryID: groceries, LimitCents: models.MaxCents + 1},
+			"budget":      &models.Budget{CategoryID: sql.Null[int64]{V: groceries, Valid: true}, LimitCents: models.MaxCents + 1},
 		} {
 			var err error
 

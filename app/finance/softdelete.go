@@ -323,8 +323,10 @@ func (s *Service) RestoreBudget(ctx context.Context, id int64) (models.Budget, e
 			return err
 		}
 
-		if err := requireLive[models.Category](ctx, tx, b.CategoryID); err != nil {
-			return err
+		if b.CategoryID.Valid {
+			if err := requireLive[models.Category](ctx, tx, b.CategoryID.V); err != nil {
+				return err
+			}
 		}
 
 		_, err = workspaces.Scoped[models.Budget](ctx, tx).OnlyTrashed().Where("id", id).
