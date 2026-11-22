@@ -1,12 +1,17 @@
-import { Slot } from "expo-router";
-import { SafeAreaProvider } from "react-native-safe-area-context";
+import { Stack } from "expo-router";
+import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
 import { Bootstrap } from "../src/app/Bootstrap";
+
+function Screens(): React.JSX.Element {
+	const insets = useSafeAreaInsets();
+	return <Stack screenOptions={{ headerShown: false, contentStyle: { paddingTop: insets.top } }} />;
+}
 
 export default function RootLayout(): React.JSX.Element {
 	return (
 		<SafeAreaProvider>
 			<Bootstrap>
-				<Slot />
+				<Screens />
 			</Bootstrap>
 		</SafeAreaProvider>
 	);

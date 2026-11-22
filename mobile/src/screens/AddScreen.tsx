@@ -10,14 +10,15 @@ import { Toast } from "../components/Toast";
 import { useUi } from "../components/ui";
 import { recentCategories } from "../db/queries";
 import { addDays, isIsoDate } from "../domain/dates";
-import { parseAmount } from "../domain/money";
+import { formatDecimalCents, parseAmount } from "../domain/money";
 import { statementRefIn } from "../domain/statements";
 
-type Kind = "expense" | "income" | "transfer";
+export type Kind = "expense" | "income" | "transfer";
 
 interface Props {
 	/** Edit this transaction instead of making a new one. */
 	editUid?: string;
+	initialKind?: Kind;
 	onDone?: () => void;
 }
 
@@ -26,24 +27,26 @@ interface Props {
  * recent categories of that kind as chips, the date and a note. The transfer
  * variant asks for two accounts instead of a category.
  */
-export function AddScreen({ editUid, onDone }: Props): ReactNode {
+export function AddScreen({ editUid, initialKind = "expense", onDone }: Props): ReactNode {
 	const app = useApp();
 	const ui = useUi();
-	const [kind, setKind] = useState<Kind>("expense");
+	const [kind, setKind] = useState<Kind>(initialKind);
 	const [amount, setAmount] = useState("");
 	const [accountUid, setAccountUid] = useState("");
 	const [toAccountUid, setToAccountUid] = useState("");
 	const [categoryUid, setCategoryUid] = useState<string | null>(null);
 	const [date, setDate] = useState(app.today());
 	const [note, setNote] = useState("");
+	const [tagUids, setTagUids] = useState<string[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [saved, setSaved] = useState<string | null>(null);
 
 	const data = useLoad(
 		async (a: App) => {
 			const accounts = (await a.repo.list("account")).filter((x) => x.archived_at === null);
+			const tags = await a.repo.list("tag");
 			const categories = await recentCategories(a.db, kind === "income" ? "income" : "expense", 12);
-			return { accounts, categories };
+			return { accounts, categories, tags };
 		},
 		[kind],
 	);
@@ -58,11 +61,12 @@ export function AddScreen({ editUid, onDone }: Props): ReactNode {
 				return;
 			}
 			setKind(row.kind === "income" ? "income" : "expense");
-			setAmount(`${Math.floor(row.amount_cents / 100)}.${String(row.amount_cents % 100).padStart(2, "0")}`);
+			setAmount(formatDecimalCents(row.amount_cents));
 			setAccountUid(row.account_uid);
 			setCategoryUid(row.category_uid);
 			setDate(row.occurred_on);
 			setNote(row.description);
+			setTagUids(row.tag_uids);
 		});
 	}, [app.repo, editUid]);
 
@@ -105,6 +109,7 @@ export function AddScreen({ editUid, onDone }: Props): ReactNode {
 					category_uid: categoryUid,
 					occurred_on: date,
 					description: note.trim(),
+					tag_uids: tagUids,
 					statement_ref: await statementRefIn(app.db, account, date),
 				});
 				setSaved(ui.t("saved"));
@@ -117,7 +122,7 @@ export function AddScreen({ editUid, onDone }: Props): ReactNode {
 					description: note.trim(),
 					occurred_on: date,
 					transfer_uid: null,
-					tag_uids: [],
+					tag_uids: tagUids,
 					statement_ref: await statementRefIn(app.db, account, date),
 					recurrence_uid: null,
 					occurrence_on: null,
@@ -136,6 +141,7 @@ export function AddScreen({ editUid, onDone }: Props): ReactNode {
 		if (editUid === undefined) {
 			setAmount("");
 			setNote("");
+			setTagUids([]);
 		}
 		onDone?.();
 	}
@@ -203,6 +209,23 @@ export function AddScreen({ editUid, onDone }: Props): ReactNode {
 					</View>
 				</>
 			)}
+
+			{kind !== "transfer" && (data?.tags.length ?? 0) > 0 ? (
+				<>
+					<Text style={{ color: ui.colors.textMuted, fontSize: ui.fontSize.sm }}>{ui.t("tags")}</Text>
+					<View style={{ flexDirection: "row", flexWrap: "wrap", gap: ui.spacing[2] }}>
+						{(data?.tags ?? []).map((t) => (
+							<Chip
+								key={t.uid}
+								role="checkbox"
+								label={t.name}
+								selected={tagUids.includes(t.uid)}
+								onPress={() => setTagUids((cur) => (cur.includes(t.uid) ? cur.filter((x) => x !== t.uid) : [...cur, t.uid]))}
+							/>
+						))}
+					</View>
+				</>
+			) : null}
 
 			<TextField label={ui.t("date")} value={date} onChangeText={setDate} keyboardType="numbers-and-punctuation" />
 			<View style={{ flexDirection: "row", gap: ui.spacing[2] }}>
