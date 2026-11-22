@@ -1,6 +1,6 @@
 <div align="center">
 
-<h1><a href="https://github.com/AlexGalhardo/vukem-finances">Vukem Finances</a></h1>
+<h1>Vukem Finances</h1>
 
 <a href="https://github.com/AlexGalhardo/vukem-finances/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/AlexGalhardo/vukem-finances/ci.yml?branch=main&logo=github&label=CI" alt="CI"></a>
 <a href="https://github.com/AlexGalhardo/vukem-finances/actions/workflows/image.yml"><img src="https://img.shields.io/github/actions/workflow/status/AlexGalhardo/vukem-finances/image.yml?logo=docker&logoColor=white&label=image" alt="Image"></a>
