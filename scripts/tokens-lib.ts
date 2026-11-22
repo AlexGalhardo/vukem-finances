@@ -36,7 +36,7 @@ function ms(value: string): number {
 }
 
 function object(entries: [string, string | number][], indent: string): string {
-  const lines = entries.map(([k, v]) => `${indent}\t${/^\d/.test(k) ? `"${k}"` : k}: ${typeof v === "number" ? v : `"${v}"`},`);
+  const lines = entries.map(([k, v]) => `${indent}  ${/^\d/.test(k) ? `"${k}"` : k}: ${typeof v === "number" ? v : `"${v}"`},`);
   return `{\n${lines.join("\n")}\n${indent}}`;
 }
 
@@ -65,8 +65,8 @@ export function buildTokens(css: string): string {
     "// `bun run scripts/export-tokens.ts` after changing the CSS tokens.",
     "",
     `export const colors = {`,
-    `\tlight: ${object(colorsOf(light), "\t")},`,
-    `\tdark: ${object(colorsOf(dark), "\t")},`,
+    `  light: ${object(colorsOf(light), "  ")},`,
+    `  dark: ${object(colorsOf(dark), "  ")},`,
     "} as const;",
     "",
     "/** Density-independent pixels: the rem values of the CSS tokens at 16 px. */",

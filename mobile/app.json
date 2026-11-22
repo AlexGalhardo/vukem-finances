@@ -1,21 +1,29 @@
 {
-	"expo": {
-		"name": "Vukem Finances",
-		"slug": "vukem-finances",
-		"version": "0.1.0",
-		"scheme": "vukemfinances",
-		"orientation": "portrait",
-		"icon": "./assets/icon.png",
-		"userInterfaceStyle": "automatic",
-		"plugins": ["expo-router", "expo-sqlite", "expo-secure-store", "expo-localization", "expo-sharing"],
-		"ios": { "supportsTablet": false },
-		"android": {
-			"adaptiveIcon": {
-				"backgroundColor": "#E6F4FE",
-				"foregroundImage": "./assets/android-icon-foreground.png",
-				"backgroundImage": "./assets/android-icon-background.png",
-				"monochromeImage": "./assets/android-icon-monochrome.png"
-			}
-		}
-	}
+  "expo": {
+    "name": "Vukem Finances",
+    "slug": "vukem-finances",
+    "version": "0.1.0",
+    "scheme": "vukemfinances",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-secure-store",
+      "expo-localization",
+      "expo-sharing"
+    ],
+    "ios": {
+      "supportsTablet": false
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#E6F4FE",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      }
+    }
+  }
 }
