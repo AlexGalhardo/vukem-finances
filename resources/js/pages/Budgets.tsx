@@ -1,3 +1,7 @@
+import { HelpHint } from "../help/HelpHint";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { Checkbox } from "../components/ui/checkbox";
+import { Progress } from "../components/ui/progress";
 import { Head, Link, useForm, usePage } from "@inertiajs/react";
 import { AlertTriangle, CheckCircle2, OctagonAlert } from "lucide-react";
 import type { FormEvent } from "react";
@@ -22,9 +26,9 @@ function statusOf(percent: number): {
   key: "budgetsStatusOk" | "budgetsStatusNear" | "budgetsStatusOver";
   tone: string;
 } {
-  if (percent >= 100) return { key: "budgetsStatusOver", tone: "text-red-700 dark:text-red-400" };
-  if (percent >= 80) return { key: "budgetsStatusNear", tone: "text-amber-700 dark:text-amber-400" };
-  return { key: "budgetsStatusOk", tone: "text-emerald-700 dark:text-emerald-400" };
+  if (percent >= 100) return { key: "budgetsStatusOver", tone: "text-expense" };
+  if (percent >= 80) return { key: "budgetsStatusNear", tone: "text-warning" };
+  return { key: "budgetsStatusOk", tone: "text-brand-text" };
 }
 
 export default function Budgets({ budgets, categories, month, enabled }: Page<"Budgets">) {
@@ -44,30 +48,38 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
       <PageHeader
         title={`${t("budgets")} · ${monthLabel(month)}`}
         actions={
-          <nav aria-label={t("budgets")} className="flex gap-2 text-sm">
-            <Link href={`/budgets?month=${shiftMonth(month, -1)}`} className="underline">
+          <nav aria-label={t("budgets")} className="flex gap-2 text-body" data-tour="budgets-month">
+            <Link
+              href={`/budgets?month=${shiftMonth(month, -1)}`}
+              className="text-brand-text underline underline-offset-4"
+            >
               {t("budgetsPreviousMonth")}
             </Link>
-            <Link href={`/budgets?month=${shiftMonth(month, 1)}`} className="underline">
+            <Link
+              href={`/budgets?month=${shiftMonth(month, 1)}`}
+              className="text-brand-text underline underline-offset-4"
+            >
               {t("budgetsNextMonth")}
             </Link>
           </nav>
         }
       />
       {!enabled && (
-        <p className="rounded-md bg-amber-50 px-4 py-3 text-amber-900 dark:bg-amber-950 dark:text-amber-100">
-          {t("budgetsProOnly")}{" "}
-          <Link href="/billing" className="font-medium underline">
-            {t("budgetsProTrial")}
-          </Link>
-          .
-        </p>
+        <Alert variant="warning">
+          <AlertDescription>
+            {t("budgetsProOnly")}{" "}
+            <Link href="/billing" className="font-medium underline underline-offset-4">
+              {t("budgetsProTrial")}
+            </Link>
+            .
+          </AlertDescription>
+        </Alert>
       )}
       <Card>
         {budgets.length === 0 ? (
           <p className="text-muted-foreground">{t("budgetsEmpty")}</p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-border" data-tour="budgets-progress">
             {budgets.map((b) => {
               const name = b.overall ? t("budgetsOverall") : b.category;
               const status = statusOf(b.percent);
@@ -75,7 +87,10 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
               return (
                 <li key={b.id} className="flex flex-col gap-2 py-3">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-medium">{name}</span>
+                    <span className="flex items-center gap-1 font-medium">
+                      {name}
+                      {b.overall && <HelpHint id="hintBudgetOverall" />}
+                    </span>
                     <ConfirmDelete
                       href={`/budgets/${b.id}`}
                       name={name}
@@ -86,18 +101,13 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
                       }
                     />
                   </div>
-                  <div
-                    role="progressbar"
+                  <Progress
+                    value={b.percent}
+                    max={100}
                     aria-label={fill(t("budgetsProgress"), { name })}
-                    aria-valuemin={0}
-                    aria-valuemax={100}
-                    aria-valuenow={Math.min(b.percent, 100)}
                     aria-valuetext={`${b.percent}%`}
-                    className="h-2 w-full overflow-hidden rounded-full bg-muted"
-                  >
-                    <div className="h-full bg-primary" style={{ width: `${Math.min(b.percent, 100)}%` }} />
-                  </div>
-                  <p className="flex flex-wrap items-center gap-x-3 text-sm">
+                  />
+                  <p className="flex flex-wrap items-center gap-x-3 text-body">
                     <span className={`inline-flex items-center gap-1 font-medium ${status.tone}`}>
                       <Icon aria-hidden="true" className="size-4" />
                       {b.percent}% · {t(status.key)}
@@ -114,7 +124,7 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
                       </span>
                     )}
                   </p>
-                  {b.overall && <p className="text-xs text-muted-foreground">{t("budgetsOverallHelp")}</p>}
+                  {b.overall && <p className="text-caption text-muted-foreground">{t("budgetsOverallHelp")}</p>}
                 </li>
               );
             })}
@@ -122,7 +132,7 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
         )}
       </Card>
       <Card title={t("setBudget")}>
-        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-3">
+        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-3" data-tour="budgets-form">
           <Select
             label={t("category")}
             value={form.data.categoryId}
@@ -151,16 +161,17 @@ export default function Budgets({ budgets, categories, month, enabled }: Page<"B
             </button>
           </div>
           <div className="sm:col-span-3">
-            <label className="flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
+            <div className="flex items-center gap-2 text-body">
+              <Checkbox
+                id="budget-rollover"
                 checked={form.data.rollover}
-                onChange={(e) => form.setData("rollover", e.target.checked)}
+                onCheckedChange={(checked) => form.setData("rollover", checked === true)}
                 aria-describedby="rollover-help"
               />
-              {t("budgetsRollover")}
-            </label>
-            <p id="rollover-help" className="mt-1 text-xs text-muted-foreground">
+              <label htmlFor="budget-rollover">{t("budgetsRollover")}</label>
+              <HelpHint id="hintBudgetCarry" />
+            </div>
+            <p id="rollover-help" className="mt-1 text-caption text-muted-foreground">
               {t("budgetsRolloverHelp")}
             </p>
           </div>

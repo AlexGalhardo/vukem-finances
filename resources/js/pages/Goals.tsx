@@ -1,3 +1,5 @@
+import { HelpHint } from "../help/HelpHint";
+import { Progress } from "../components/ui/progress";
 import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { CheckCircle2 } from "lucide-react";
 import { type FormEvent, useState } from "react";
@@ -114,16 +116,13 @@ export default function Goals({ goals, contributions, today }: Page<"Goals">) {
                         />
                       </div>
                     </div>
-                    <div
-                      role="progressbar"
-                      aria-label={fill(t("goalProgress"), { name: g.name })}
-                      aria-valuemin={0}
-                      aria-valuemax={100}
-                      aria-valuenow={Math.min(g.percent, 100)}
-                      aria-valuetext={`${g.percent}%`}
-                      className="h-2 w-full overflow-hidden rounded-full bg-muted"
-                    >
-                      <div className="h-full bg-primary" style={{ width: `${Math.min(g.percent, 100)}%` }} />
+                    <div data-tour={g.id === goals[0]?.id ? "goals-progress" : undefined}>
+                      <Progress
+                        value={g.percent}
+                        max={100}
+                        aria-label={fill(t("goalProgress"), { name: g.name })}
+                        aria-valuetext={`${g.percent}%`}
+                      />
                     </div>
                     <p className="flex flex-wrap items-center gap-x-3 text-sm">
                       <span className="font-medium">{g.percent}%</span>
@@ -134,7 +133,7 @@ export default function Goals({ goals, contributions, today }: Page<"Goals">) {
                         })}
                       </span>
                       {g.reached ? (
-                        <span className="inline-flex items-center gap-1 font-medium text-emerald-700 dark:text-emerald-400">
+                        <span className="inline-flex items-center gap-1 font-medium text-brand-text">
                           <CheckCircle2 aria-hidden="true" className="size-4" />
                           {t("goalReached")}
                         </span>
@@ -149,9 +148,7 @@ export default function Goals({ goals, contributions, today }: Page<"Goals">) {
                         {date(g.targetDate)}
                       </p>
                     )}
-                    {g.overdue && (
-                      <p className="text-sm font-medium text-red-700 dark:text-red-400">{t("goalOverdue")}</p>
-                    )}
+                    {g.overdue && <p className="text-sm font-medium text-expense">{t("goalOverdue")}</p>}
                     {g.projectedDate && (
                       <p className="text-sm text-muted-foreground">
                         {fill(t("goalProjected"), { date: date(g.projectedDate) })}
@@ -162,6 +159,7 @@ export default function Goals({ goals, contributions, today }: Page<"Goals">) {
                         <button
                           type="button"
                           className={secondary}
+                          data-tour={g.id === goals[0]?.id ? "goals-contribution" : undefined}
                           aria-expanded={adding === g.id}
                           onClick={() => setAdding(adding === g.id ? null : g.id)}
                         >
@@ -171,7 +169,10 @@ export default function Goals({ goals, contributions, today }: Page<"Goals">) {
                     )}
                     {adding === g.id && <ContributionForm goal={g} today={today} />}
                     <div>
-                      <h3 className="text-sm font-medium">{t("goalContributions")}</h3>
+                      <h3 className="flex items-center gap-1 text-label">
+                        {t("goalContributions")}
+                        <HelpHint id="hintGoalContribution" />
+                      </h3>
                       {parts.length === 0 ? (
                         <p className="text-sm text-muted-foreground">{t("goalNoContributions")}</p>
                       ) : (
@@ -204,7 +205,7 @@ export default function Goals({ goals, contributions, today }: Page<"Goals">) {
         </ul>
       )}
       <Card title={t("goalNew")}>
-        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-4">
+        <form onSubmit={submit} className="grid gap-3 sm:grid-cols-4" data-tour="goals-new">
           <Field
             label={t("goalName")}
             required
