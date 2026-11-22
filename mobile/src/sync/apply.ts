@@ -2,8 +2,8 @@ import { type Database, getOne, type SqlValue } from "../db/database";
 import { ENTITIES, type EntityName } from "../db/entities";
 import { encode, type RawRow } from "../db/repository";
 import { pendingFor } from "./outbox";
-import { setCursor } from "./state";
-import type { PullChange, PullPage } from "./types";
+import { getCursor, setCursor } from "./state";
+import type { PullChange, PullPage, Transport } from "./types";
 
 export interface ApplyStats {
   upserts: number;
@@ -307,7 +307,35 @@ export async function applyPage(db: Database, page: PullPage, now: string): Prom
     for (const change of page.changes) {
       await applyChange(db, change, now, stats);
     }
-    await setCursor(db, page.next_cursor);
+    // The cursor never moves back: the integrity pass re-reads older pages without undoing the saved cursor.
+    if (page.next_cursor > (await getCursor(db))) {
+      await setCursor(db, page.next_cursor);
+    }
   });
   return stats;
+}
+
+export const PULL_LIMIT = 500;
+
+/** Pulls page after page from `from` until the server says there is no more, applying each in its own transaction. */
+export async function pullUntilDone(
+  db: Database,
+  transport: Transport,
+  now: () => string,
+  from: number,
+  limit = PULL_LIMIT,
+): Promise<ApplyStats> {
+  const total: ApplyStats = { upserts: 0, deletes: 0, conflicts: 0 };
+  let cursor = from;
+  for (;;) {
+    const page = await transport.pull(cursor, limit);
+    const stats = await applyPage(db, page, now());
+    total.upserts += stats.upserts;
+    total.deletes += stats.deletes;
+    total.conflicts += stats.conflicts;
+    if (!page.has_more || page.next_cursor <= cursor) {
+      return total;
+    }
+    cursor = page.next_cursor;
+  }
 }
