@@ -4,7 +4,7 @@ import vukem "github.com/AlexGalhardo/vukem"
 
 // Commands lists the application commands; vukem make:command appends here.
 func Commands() []vukem.Command {
-	return []vukem.Command{aboutCommand(), resetPasswordCommand(), telegramSetWebhookCommand(), telegramInfoCommand(), aiEvalCommand()}
+	return []vukem.Command{aboutCommand(), resetPasswordCommand(), telegramSetWebhookCommand(), telegramInfoCommand(), aiEvalCommand(), mcpServeCommand()}
 }
 
 // EarlyCommands run before the app is built, so they need no APP_KEY and open
