@@ -123,7 +123,7 @@ describe("Settings", () => {
     await renderApp(<SettingsScreen services={services} />, { env });
     expect(await screen.findByText("Version 0.1.0")).toBeTruthy();
     expect(screen.getByText("Open source license: MIT")).toBeTruthy();
-    expect(screen.getByText(/Syncing with a server arrives in a later version/)).toBeTruthy();
+    expect(screen.getByText(/Connect to your own server or to the cloud under Sync/)).toBeTruthy();
   });
 });
 
