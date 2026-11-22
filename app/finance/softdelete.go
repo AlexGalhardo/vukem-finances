@@ -69,50 +69,56 @@ func (s *Service) DeleteAccount(ctx context.Context, id int64) error {
 			return err
 		}
 
-		if err := softDelete[models.Account](ctx, tx, id, at); err != nil {
-			return err
-		}
-
-		uids, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("account_id", id).
-			WhereNotNull("transfer_uid").Pluck[string](ctx, "transfer_uid")
-		if err != nil {
-			return err
-		}
-
-		if _, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("account_id", id).
-			Update(ctx, orm.Set{"deleted_at": at}); err != nil {
-			return err
-		}
-
-		// The card of the account goes with it; a card that paid from this
-		// account (live or trashed) falls back to no default account.
-		if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).Where("account_id", id).
-			Update(ctx, orm.Set{"deleted_at": at}); err != nil {
-			return err
-		}
-
-		// Its rules would only fail on a deleted account: they go with it.
-		if _, err := workspaces.Scoped[models.Recurrence](ctx, tx).Where("account_id", id).
-			Update(ctx, orm.Set{"deleted_at": at}); err != nil {
-			return err
-		}
-
-		if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).WithTrashed().Where("payment_account_id", id).
-			Update(ctx, orm.Set{"payment_account_id": nil}); err != nil {
-			return err
-		}
-
-		if len(uids) > 0 {
-			if _, err := workspaces.Scoped[models.Transaction](ctx, tx).WhereIn("transfer_uid", anys(uids)...).
-				Update(ctx, orm.Set{"deleted_at": at}); err != nil {
-				return err
-			}
-		}
-
-		_, err = workspaces.Scoped[models.Import](ctx, tx).Where("account_id", id).Delete(ctx)
-
-		return err
+		return deleteAccountIn(ctx, tx, id, at)
 	})
+}
+
+// deleteAccountIn is DeleteAccount inside a transaction that holds the
+// workspace lock (the sync push applies a batch in one).
+func deleteAccountIn(ctx context.Context, tx *database.Tx, id int64, at time.Time) error {
+	if err := softDelete[models.Account](ctx, tx, id, at); err != nil {
+		return err
+	}
+
+	uids, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("account_id", id).
+		WhereNotNull("transfer_uid").Pluck[string](ctx, "transfer_uid")
+	if err != nil {
+		return err
+	}
+
+	if _, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("account_id", id).
+		Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+		return err
+	}
+
+	// The card of the account goes with it; a card that paid from this
+	// account (live or trashed) falls back to no default account.
+	if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).Where("account_id", id).
+		Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+		return err
+	}
+
+	// Its rules would only fail on a deleted account: they go with it.
+	if _, err := workspaces.Scoped[models.Recurrence](ctx, tx).Where("account_id", id).
+		Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+		return err
+	}
+
+	if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).WithTrashed().Where("payment_account_id", id).
+		Update(ctx, orm.Set{"payment_account_id": nil}); err != nil {
+		return err
+	}
+
+	if len(uids) > 0 {
+		if _, err := workspaces.Scoped[models.Transaction](ctx, tx).WhereIn("transfer_uid", anys(uids)...).
+			Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+			return err
+		}
+	}
+
+	_, err = workspaces.Scoped[models.Import](ctx, tx).Where("account_id", id).Delete(ctx)
+
+	return err
 }
 
 // DeleteCategory deletes a category with its budget; the transactions that
@@ -120,25 +126,28 @@ func (s *Service) DeleteAccount(ctx context.Context, id int64) error {
 func (s *Service) DeleteCategory(ctx context.Context, id int64) error {
 	at := s.now().UTC()
 
-	return s.DB.Tx(ctx, func(tx *database.Tx) error {
-		if err := softDelete[models.Category](ctx, tx, id, at); err != nil {
-			return err
-		}
+	return s.DB.Tx(ctx, func(tx *database.Tx) error { return deleteCategoryIn(ctx, tx, id, at) })
+}
 
-		if _, err := workspaces.Scoped[models.Budget](ctx, tx).Where("category_id", id).
-			Update(ctx, orm.Set{"deleted_at": at}); err != nil {
-			return err
-		}
-
-		if err := moveRules(ctx, tx, id, nil); err != nil {
-			return err
-		}
-
-		_, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("category_id", id).
-			Update(ctx, orm.Set{"category_id": nil})
-
+// deleteCategoryIn is DeleteCategory inside a transaction.
+func deleteCategoryIn(ctx context.Context, tx *database.Tx, id int64, at time.Time) error {
+	if err := softDelete[models.Category](ctx, tx, id, at); err != nil {
 		return err
-	})
+	}
+
+	if _, err := workspaces.Scoped[models.Budget](ctx, tx).Where("category_id", id).
+		Update(ctx, orm.Set{"deleted_at": at}); err != nil {
+		return err
+	}
+
+	if err := moveRules(ctx, tx, id, nil); err != nil {
+		return err
+	}
+
+	_, err := workspaces.Scoped[models.Transaction](ctx, tx).Where("category_id", id).
+		Update(ctx, orm.Set{"category_id": nil})
+
+	return err
 }
 
 // DeleteTransaction deletes a transaction of the workspace. A leg of a
@@ -156,17 +165,23 @@ func (s *Service) DeleteTransaction(ctx context.Context, id int64) error {
 			return err
 		}
 
-		leg, err := isTransferLeg(ctx, tx, id)
-		if err != nil {
-			return err
-		}
-
-		if leg {
-			return deleteTransferOf(ctx, tx, id, at)
-		}
-
-		return softDelete[models.Transaction](ctx, tx, id, at)
+		return deleteTransactionIn(ctx, tx, id, at)
 	})
+}
+
+// deleteTransactionIn is DeleteTransaction inside a transaction that holds
+// the workspace lock.
+func deleteTransactionIn(ctx context.Context, tx *database.Tx, id int64, at time.Time) error {
+	leg, err := isTransferLeg(ctx, tx, id)
+	if err != nil {
+		return err
+	}
+
+	if leg {
+		return deleteTransferOf(ctx, tx, id, at)
+	}
+
+	return softDelete[models.Transaction](ctx, tx, id, at)
 }
 
 // DeleteBudget deletes the budget of a category.
@@ -187,45 +202,8 @@ func (s *Service) RestoreAccount(ctx context.Context, id int64) (models.Account,
 			return err
 		}
 
-		a, err := trashed[models.Account](ctx, tx, s.now(), id)
-		if err != nil {
-			return err
-		}
+		return restoreAccountIn(ctx, tx, s.now(), id)
 
-		// Read before the legs of this account come back: the transfers whose
-		// other leg lives on another account have to come back with them.
-		uids, err := workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("account_id", id).
-			Where("deleted_at", a.DeletedAt.V).WhereNotNull("transfer_uid").Pluck[string](ctx, "transfer_uid")
-		if err != nil {
-			return err
-		}
-
-		if err := checkPairedAccounts(ctx, tx, id, a.DeletedAt.V, uids); err != nil {
-			return err
-		}
-
-		if _, err := workspaces.Scoped[models.Account](ctx, tx).OnlyTrashed().Where("id", id).
-			Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
-			return err
-		}
-
-		_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("account_id", id).
-			Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil})
-		if err != nil {
-			return err
-		}
-
-		if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).OnlyTrashed().Where("account_id", id).
-			Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
-			return err
-		}
-
-		if _, err := workspaces.Scoped[models.Recurrence](ctx, tx).OnlyTrashed().Where("account_id", id).
-			Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
-			return err
-		}
-
-		return restorePairedLegs(ctx, tx, a.DeletedAt.V, uids)
 	})
 	if err != nil {
 		return models.Account{}, err
@@ -238,24 +216,8 @@ func (s *Service) RestoreAccount(ctx context.Context, id int64) (models.Account,
 // live category with the same name refuses it (a conflict).
 func (s *Service) RestoreCategory(ctx context.Context, id int64) (models.Category, error) {
 	err := s.DB.Tx(ctx, func(tx *database.Tx) error {
-		c, err := trashed[models.Category](ctx, tx, s.now(), id)
-		if err != nil {
-			return err
-		}
+		return restoreCategoryIn(ctx, tx, s.now(), id)
 
-		if _, err := workspaces.Scoped[models.Category](ctx, tx).OnlyTrashed().Where("id", id).
-			Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
-			if s.DB.UniqueViolation(err) {
-				return errName
-			}
-
-			return err
-		}
-
-		_, err = workspaces.Scoped[models.Budget](ctx, tx).OnlyTrashed().Where("category_id", id).
-			Where("deleted_at", c.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil})
-
-		return err
 	})
 	if err != nil {
 		return models.Category{}, err
@@ -277,36 +239,8 @@ func (s *Service) RestoreTransaction(ctx context.Context, id int64) (models.Tran
 			return err
 		}
 
-		t, err := trashed[models.Transaction](ctx, tx, s.now(), id)
-		if err != nil {
-			return err
-		}
+		return restoreTransactionIn(ctx, tx, s.now(), id)
 
-		if err := requireLive[models.Account](ctx, tx, t.AccountID); err != nil {
-			return err
-		}
-
-		if t.TransferUID.Valid {
-			return restoreTransfer(ctx, tx, t)
-		}
-
-		set := orm.Set{"deleted_at": nil}
-
-		// Its category may have been deleted while it was in the trash.
-		if t.CategoryID.Valid {
-			live, err := workspaces.Scoped[models.Category](ctx, tx).Where("id", t.CategoryID.V).Exists(ctx)
-			if err != nil {
-				return err
-			}
-
-			if !live {
-				set["category_id"] = nil
-			}
-		}
-
-		_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("id", id).Update(ctx, set)
-
-		return err
 	})
 	if err != nil {
 		return models.Transaction{}, err
@@ -318,24 +252,8 @@ func (s *Service) RestoreTransaction(ctx context.Context, id int64) (models.Tran
 // RestoreBudget brings back a budget whose category is alive.
 func (s *Service) RestoreBudget(ctx context.Context, id int64) (models.Budget, error) {
 	err := s.DB.Tx(ctx, func(tx *database.Tx) error {
-		b, err := trashed[models.Budget](ctx, tx, s.now(), id)
-		if err != nil {
-			return err
-		}
+		return restoreBudgetIn(ctx, tx, s.now(), id)
 
-		if b.CategoryID.Valid {
-			if err := requireLive[models.Category](ctx, tx, b.CategoryID.V); err != nil {
-				return err
-			}
-		}
-
-		_, err = workspaces.Scoped[models.Budget](ctx, tx).OnlyTrashed().Where("id", id).
-			Update(ctx, orm.Set{"deleted_at": nil})
-		if s.DB.UniqueViolation(err) {
-			return errName
-		}
-
-		return err
 	})
 	if err != nil {
 		return models.Budget{}, err
@@ -413,6 +331,127 @@ func restorePairedLegs(ctx context.Context, tx *database.Tx, at time.Time, uids 
 	_, err := workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().
 		WhereIn("transfer_uid", anys(uids)...).Where("deleted_at", at).
 		Update(ctx, orm.Set{"deleted_at": nil})
+
+	return err
+}
+
+// restoreAccountIn is RestoreAccount inside a transaction that holds the workspace lock.
+func restoreAccountIn(ctx context.Context, tx *database.Tx, now time.Time, id int64) error {
+	a, err := trashed[models.Account](ctx, tx, now, id)
+	if err != nil {
+		return err
+	}
+
+	// Read before the legs of this account come back: the transfers whose
+	// other leg lives on another account have to come back with them.
+	uids, err := workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("account_id", id).
+		Where("deleted_at", a.DeletedAt.V).WhereNotNull("transfer_uid").Pluck[string](ctx, "transfer_uid")
+	if err != nil {
+		return err
+	}
+
+	if err := checkPairedAccounts(ctx, tx, id, a.DeletedAt.V, uids); err != nil {
+		return err
+	}
+
+	if _, err := workspaces.Scoped[models.Account](ctx, tx).OnlyTrashed().Where("id", id).
+		Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
+		return err
+	}
+
+	_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("account_id", id).
+		Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil})
+	if err != nil {
+		return err
+	}
+
+	if _, err := workspaces.Scoped[models.CreditCard](ctx, tx).OnlyTrashed().Where("account_id", id).
+		Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
+		return err
+	}
+
+	if _, err := workspaces.Scoped[models.Recurrence](ctx, tx).OnlyTrashed().Where("account_id", id).
+		Where("deleted_at", a.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
+		return err
+	}
+
+	return restorePairedLegs(ctx, tx, a.DeletedAt.V, uids)
+}
+
+// restoreCategoryIn is RestoreCategory inside a transaction.
+func restoreCategoryIn(ctx context.Context, tx *database.Tx, now time.Time, id int64) error {
+	c, err := trashed[models.Category](ctx, tx, now, id)
+	if err != nil {
+		return err
+	}
+
+	if _, err := workspaces.Scoped[models.Category](ctx, tx).OnlyTrashed().Where("id", id).
+		Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
+		if tx.UniqueViolation(err) {
+			return errName
+		}
+
+		return err
+	}
+
+	_, err = workspaces.Scoped[models.Budget](ctx, tx).OnlyTrashed().Where("category_id", id).
+		Where("deleted_at", c.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil})
+
+	return err
+}
+
+// restoreTransactionIn is RestoreTransaction inside a transaction that holds the workspace lock.
+func restoreTransactionIn(ctx context.Context, tx *database.Tx, now time.Time, id int64) error {
+	t, err := trashed[models.Transaction](ctx, tx, now, id)
+	if err != nil {
+		return err
+	}
+
+	if err := requireLive[models.Account](ctx, tx, t.AccountID); err != nil {
+		return err
+	}
+
+	if t.TransferUID.Valid {
+		return restoreTransfer(ctx, tx, t)
+	}
+
+	set := orm.Set{"deleted_at": nil}
+
+	// Its category may have been deleted while it was in the trash.
+	if t.CategoryID.Valid {
+		live, err := workspaces.Scoped[models.Category](ctx, tx).Where("id", t.CategoryID.V).Exists(ctx)
+		if err != nil {
+			return err
+		}
+
+		if !live {
+			set["category_id"] = nil
+		}
+	}
+
+	_, err = workspaces.Scoped[models.Transaction](ctx, tx).OnlyTrashed().Where("id", id).Update(ctx, set)
+
+	return err
+}
+
+// restoreBudgetIn is RestoreBudget inside a transaction.
+func restoreBudgetIn(ctx context.Context, tx *database.Tx, now time.Time, id int64) error {
+	b, err := trashed[models.Budget](ctx, tx, now, id)
+	if err != nil {
+		return err
+	}
+
+	if b.CategoryID.Valid {
+		if err := requireLive[models.Category](ctx, tx, b.CategoryID.V); err != nil {
+			return err
+		}
+	}
+
+	_, err = workspaces.Scoped[models.Budget](ctx, tx).OnlyTrashed().Where("id", id).
+		Update(ctx, orm.Set{"deleted_at": nil})
+	if tx.UniqueViolation(err) {
+		return errName
+	}
 
 	return err
 }

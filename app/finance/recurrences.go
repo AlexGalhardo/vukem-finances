@@ -303,35 +303,8 @@ func (s *Service) RestoreRecurrence(ctx context.Context, id int64) (models.Recur
 			return err
 		}
 
-		r, err := trashed[models.Recurrence](ctx, tx, s.now(), id)
-		if err != nil {
-			return err
-		}
+		return s.restoreRecurrenceIn(ctx, tx, ws, id)
 
-		if err := requireLive[models.Account](ctx, tx, r.AccountID); err != nil {
-			return err
-		}
-
-		set := orm.Set{"deleted_at": nil}
-
-		if r.CategoryID.Valid {
-			live, err := workspaces.Scoped[models.Category](ctx, tx).Where("id", r.CategoryID.V).Exists(ctx)
-			if err != nil {
-				return err
-			}
-
-			if !live {
-				set["category_id"] = nil
-			}
-		}
-
-		if yesterday := dayBefore(s.nowIn(ws).Format(isoDate)); !r.GeneratedThrough.Valid || r.GeneratedThrough.V < yesterday {
-			set["generated_through"] = yesterday
-		}
-
-		_, err = workspaces.Scoped[models.Recurrence](ctx, tx).OnlyTrashed().Where("id", id).Update(ctx, set)
-
-		return err
 	})
 	if err != nil {
 		return models.Recurrence{}, err
@@ -503,4 +476,39 @@ func (s *Service) makeOccurrence(ctx context.Context, tx *database.Tx, workspace
 	}
 
 	return out, nil
+}
+
+// restoreRecurrenceIn is RestoreRecurrence inside a transaction that holds the workspace lock.
+func (s *Service) restoreRecurrenceIn(ctx context.Context, tx *database.Tx, ws models.Workspace, id int64) error {
+	now := s.now()
+
+	r, err := trashed[models.Recurrence](ctx, tx, now, id)
+	if err != nil {
+		return err
+	}
+
+	if err := requireLive[models.Account](ctx, tx, r.AccountID); err != nil {
+		return err
+	}
+
+	set := orm.Set{"deleted_at": nil}
+
+	if r.CategoryID.Valid {
+		live, err := workspaces.Scoped[models.Category](ctx, tx).Where("id", r.CategoryID.V).Exists(ctx)
+		if err != nil {
+			return err
+		}
+
+		if !live {
+			set["category_id"] = nil
+		}
+	}
+
+	if yesterday := dayBefore(s.nowIn(ws).Format(isoDate)); !r.GeneratedThrough.Valid || r.GeneratedThrough.V < yesterday {
+		set["generated_through"] = yesterday
+	}
+
+	_, err = workspaces.Scoped[models.Recurrence](ctx, tx).OnlyTrashed().Where("id", id).Update(ctx, set)
+
+	return err
 }
