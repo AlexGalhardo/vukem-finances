@@ -32,7 +32,7 @@ const tombstoneRetention = 400 * 24 * time.Hour
 // Retained on purpose (no workspace_id, never touched by a workspace purge):
 // privacy_audit, payment_records (until retain_until), purged_tokens.
 var purgedTables = []string{
-	"transaction_tags", "transactions", "goal_contributions", "goals", "recurrences", "credit_cards", "budgets",
+	"transaction_tags", "transactions", "transaction_month_totals", "goal_contributions", "goals", "recurrences", "credit_cards", "budgets",
 	"description_rules", "suggestions", "tags", "categories", "accounts", "imports",
 	"assistant_messages", "assistant_conversations", "notification_preferences", "notifications",
 	"sync_conflicts", "sync_ops", "sync_devices", "sync_state", "pairing_codes",
