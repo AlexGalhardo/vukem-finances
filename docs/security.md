@@ -229,6 +229,8 @@ Open and closed problems of the campaign are in `docs/qa/rounds.md`; problems th
   file and its backups as secret. (QA-001 moved sessions from encrypted cookies to these rows.)
 - **Financial data is not encrypted at rest** (D-005: SQL must sum and filter it). Protect the host, the volume and the backups.
 - **Backups are retained until rotated**: `db:backup` files hold a full copy and live outside the controls of the app.
+- **The personal edition shows its version on every screen, signed in or not**, so the owner can tell which build is under test.
+  A personal Docker install exposed to the internet shows that version to visitors. The saas edition shows it only after sign-in.
 - **Desktop builds are unsigned.**
 - **The real-device checks** (screen readers, the mobile device store) are outside what the automated suite proves.
 

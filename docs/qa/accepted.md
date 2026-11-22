@@ -12,8 +12,12 @@ Each row needs the author's approval before the campaign relies on it.
 | `mobile/` | `glob` through `jest` | moderate | GHSA-3g3m-2fjr-6pw4 | Test runner only; it is not in the app bundle. |
 | `mobile/` | `minimatch` through `expo`, `jest` | moderate | GHSA-g3hv-75wg-m249 | Build and test tooling over the project's own file names; not in the app bundle. |
 
-`site/` does not exist in this repository yet (epics 22 and 23). The CI job audits it as soon as `site/package.json` exists; add its findings here when it does.
-
 ## Go
 
 `go tool govulncheck ./...` reports no vulnerability on the day of writing.
+
+## Performance
+
+| Finding | Accepted for | Why | Plan |
+| --- | --- | --- | --- |
+| QA-503: with 100000 transactions in one workspace the dashboard, reports and export miss their budgets (`perf-budgets.md`) | v0.6.0, by the author on 2026-11-22 | A rare volume for personal finances; the fix changes how balances and reports are computed | A per-workspace monthly summary table in v0.7.0 |
