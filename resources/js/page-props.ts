@@ -343,6 +343,20 @@ export type NullString = {
   Valid: boolean;
 };
 
+export type Pending = {
+  amountCents: number;
+  appliedAt: string;
+  categoryName: string;
+  categoryUid: string;
+  confidence: number;
+  date: string;
+  description: string;
+  id: number;
+  kind: string;
+  source: string;
+  transactionUid: string;
+};
+
 export type Period = {
   from: string;
   preset: string;
@@ -415,6 +429,7 @@ export type Recurrence = {
 };
 
 export type Settings = {
+  autoApplySuggestions: boolean;
   enabled: boolean;
   enabledAt: string;
   features: Record<string, boolean>;
@@ -804,6 +819,15 @@ export type SharedProps = {
   workspace?: SharedWorkspace | null;
 };
 
+export type SuggestionsProps = {
+  aiOn: boolean;
+  applied: Pending[];
+  autoApply: boolean;
+  canRecord: boolean;
+  currency: string;
+  pending: Pending[];
+};
+
 export type TokensProps = {
   created?: CreatedToken | null;
   expiryDays: number[];
@@ -866,6 +890,7 @@ export interface PageProps {
   Reports: ReportsProps;
   "Settings/Telegram": SettingsTelegramProps;
   Setup: SetupProps;
+  Suggestions: SuggestionsProps;
   Tokens: TokensProps;
   Transactions: TransactionsProps;
   Workspace: WorkspaceProps;

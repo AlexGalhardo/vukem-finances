@@ -35,6 +35,7 @@ func financeAI(g *router.Group, app *vukem.App, h *ledger.Handlers) error {
 	g.Post("/suggestions/{suggestion}/accept", fh.AcceptSuggestion).Name("suggestions.accept")
 	g.Post("/suggestions/{suggestion}/reject", fh.RejectSuggestion).Name("suggestions.reject")
 	g.Post("/suggestions/{suggestion}/undo", fh.UndoSuggestion).Name("suggestions.undo")
+	g.Get("/transactions/draft/status", fh.DraftStatus).Name("transactions.draft.status")
 	g.Post("/transactions/draft", fh.DraftEntry).Name("transactions.draft")
 	g.Get("/assistant/conversations", fh.AssistantStatus).Name("assistant.index")
 	g.Post("/assistant/ask", fh.AssistantAsk).Name("assistant.ask")

@@ -1,6 +1,7 @@
 import { Link, router, usePage } from "@inertiajs/react";
 import { ArrowUpRight, Keyboard, LogOut, Plus, Search, Settings, ShieldCheck } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
+import AssistantHost from "../components/assistant/AssistantHost";
 import CommandPalette from "../components/CommandPalette";
 import { Shortcut } from "../components/Kbd";
 import NotificationBell from "../components/NotificationBell";
@@ -104,6 +105,7 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
       </a>
       <SidebarProvider>
         <QuickAdd>
+          <AssistantHost />
           <ShellKeyboard
             items={items}
             onOpenPalette={() => {

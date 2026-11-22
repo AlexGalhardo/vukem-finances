@@ -43,6 +43,7 @@ export default function AI({ settings, credential, usage, providers, canManage, 
     enabled: settings.enabled,
     categorize: settings.features.categorize === true,
     assistant: settings.features.assistant === true,
+    autoApply: settings.autoApplySuggestions,
     limit: String(settings.monthlyCallLimit),
   });
 
@@ -198,6 +199,11 @@ export default function AI({ settings, credential, usage, providers, canManage, 
                 label={t("aiFeatureAssistant")}
                 checked={switches.data.assistant}
                 onChange={(e) => switches.setData("assistant", e.target.checked)}
+              />
+              <Check
+                label={t("aiAutoApply")}
+                checked={switches.data.autoApply}
+                onChange={(e) => switches.setData("autoApply", e.target.checked)}
               />
               <div className="max-w-xs">
                 <Field
