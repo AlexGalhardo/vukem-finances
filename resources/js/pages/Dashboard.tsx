@@ -106,7 +106,7 @@ export default function Dashboard({ dashboard, upcoming }: Page<"Dashboard">) {
               {budgets.map((b) => (
                 <li key={b.id} className="flex flex-col gap-2">
                   <div className="flex justify-between gap-4 text-sm">
-                    <span>{b.category}</span>
+                    <span>{b.overall ? t("budgetsOverall") : b.category}</span>
                     <span className="text-muted-foreground">
                       {money(b.spentCents, currency)} {t("of")} {money(b.limitCents, currency)}
                     </span>
@@ -115,7 +115,7 @@ export default function Dashboard({ dashboard, upcoming }: Page<"Dashboard">) {
                     className="h-2 w-full accent-primary"
                     max={100}
                     value={Math.min(b.percent, 100)}
-                    aria-label={b.category}
+                    aria-label={b.overall ? t("budgetsOverall") : b.category}
                   />
                 </li>
               ))}

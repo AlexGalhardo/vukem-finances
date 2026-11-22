@@ -1,5 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { renderToString } from "react-dom/server";
+import { BellButton } from "./BellButton";
 import DataTable, { ariaSortFor, type DataTableColumn } from "./DataTable";
 import { formatMoneyParts, MoneyText } from "./MoneyText";
 
@@ -82,5 +83,19 @@ describe("DataTable", () => {
     expect(loading).toContain('aria-busy="true"');
     expect(loading).toContain('role="status"');
     expect(loading).not.toContain("Nothing here");
+  });
+});
+
+describe("NotificationBell", () => {
+  test("the button name carries the unread count and the badge is hidden from assistive tech", () => {
+    const html = renderToString(<BellButton unread={3} label="Notifications, 3 unread" />);
+    expect(html).toContain('aria-label="Notifications, 3 unread"');
+    expect(html).toContain('aria-hidden="true"');
+    expect(html).toContain(">3<");
+  });
+
+  test("no badge when nothing is unread", () => {
+    const html = renderToString(<BellButton unread={0} label="Notifications, none unread" />);
+    expect(html).not.toContain("rounded-full");
   });
 });
