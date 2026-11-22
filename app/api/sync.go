@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
@@ -267,18 +268,8 @@ func (a *API) syncPair(c *web.Ctx, in SyncPairIn) (syncproto.PairResult, error) 
 		}
 	}
 
-	failed, _ := a.PairFailLimiter.(ratelimit.Peeker)
-	if failed != nil {
-		res, err := failed.Peek(ctx, "pair-failed")
-		if err != nil {
-			return syncproto.PairResult{}, errs.New(http.StatusServiceUnavailable, "Try again in a moment.").WithExtension("code", CodeUnavailable)
-		}
-
-		if !res.Allowed {
-			c.Writer().Header().Set("Retry-After", strconv.Itoa(int(res.RetryAfter.Seconds())+1))
-
-			return syncproto.PairResult{}, errs.New(http.StatusTooManyRequests, "Too many requests.").WithExtension("code", CodeRateLimited)
-		}
+	if err := pairFailureGate(ctx, a.PairFailLimiter, c.Writer().Header()); err != nil {
+		return syncproto.PairResult{}, err
 	}
 
 	out, err := a.Sync.Pair(ctx, in.Code, in.DeviceName, in.Platform)
@@ -293,6 +284,35 @@ func (a *API) syncPair(c *web.Ctx, in SyncPairIn) (syncproto.PairResult, error) 
 	c.Writer().Header().Set("Cache-Control", "no-store")
 
 	return out, nil
+}
+
+// pairFailureGate holds pairing to the server-wide cap on failed attempts. The cap needs a limiter that
+// can look without spending (a Peeker). One that cannot would leave the cap off without a word, so the
+// gate fails closed with 503 instead. A nil limiter means the cap is not configured at all.
+func pairFailureGate(ctx context.Context, l ratelimit.Limiter, header http.Header) error {
+	if l == nil {
+		return nil
+	}
+
+	unavailable := errs.New(http.StatusServiceUnavailable, "Try again in a moment.").WithExtension("code", CodeUnavailable)
+
+	peeker, ok := l.(ratelimit.Peeker)
+	if !ok {
+		return unavailable
+	}
+
+	res, err := peeker.Peek(ctx, "pair-failed")
+	if err != nil {
+		return unavailable
+	}
+
+	if !res.Allowed {
+		header.Set("Retry-After", strconv.Itoa(int(res.RetryAfter.Seconds())+1))
+
+		return errs.New(http.StatusTooManyRequests, "Too many requests.").WithExtension("code", CodeRateLimited)
+	}
+
+	return nil
 }
 
 // PairRoutes registers sync.pair outside the authenticated group.
