@@ -188,17 +188,22 @@ export class Repository {
 		return (await this.mustGet(entity, uid)) as Row<E>;
 	}
 
-	async remove(entity: EntityName, uid: string): Promise<void> {
+	/** `at` lets a cascade stamp every row it deletes with one instant, so a restore can find them together. */
+	async remove(entity: EntityName, uid: string, at?: string): Promise<void> {
 		const current = await this.mustGet(entity, uid);
-		await this.mark(entity, uid, current.server_seq ?? 0, "delete");
+		await this.mark(entity, uid, current.server_seq ?? 0, "delete", at);
 	}
 
-	async restore(entity: EntityName, uid: string): Promise<void> {
+	async restore(entity: EntityName, uid: string, at?: string): Promise<void> {
 		const current = await this.mustGet(entity, uid, true);
 		if (current.deleted_at === null) {
 			return;
 		}
-		await this.mark(entity, uid, current.server_seq ?? 0, "restore");
+		await this.mark(entity, uid, current.server_seq ?? 0, "restore", at);
+	}
+
+	nowStamp(): string {
+		return this.now();
 	}
 
 	async outbox(): Promise<OutboxEntry[]> {
@@ -243,10 +248,16 @@ export class Repository {
 		return over;
 	}
 
-	private async mark(entity: EntityName, uid: string, baseSeq: number, op: "delete" | "restore"): Promise<void> {
+	private async mark(
+		entity: EntityName,
+		uid: string,
+		baseSeq: number,
+		op: "delete" | "restore",
+		at?: string,
+	): Promise<void> {
 		const table = ENTITIES[entity].table;
 		await this.db.transaction(async () => {
-			const stamp = this.now();
+			const stamp = at ?? this.now();
 			await this.db.run(
 				`UPDATE ${table} SET deleted_at = ?, version = version + 1, dirty = 1, updated_local_at = ? WHERE uid = ?`,
 				[op === "delete" ? stamp : null, stamp, uid],
