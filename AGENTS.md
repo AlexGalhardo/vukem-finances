@@ -25,7 +25,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | --- | --- |
 | `app/` | Go application code: `accounts/`, `admin/`, `alerts/` (notifications: evaluation, channels, preferences), `billing/`, `changes/` (sync: entity registry, change-log triggers and reader, compaction, merge), `controllers/`, `finance/` (money, transactions, dashboard, import), `jobs/`, `listeners/`, `mail/`, `models/`, `pages/`, `requests/`, `sync/` (the sync protocol server), `workspaces/` |
 | `app/reports/`, `app/export/` | the reports (period, cash flow, breakdowns, net worth series, comparison) and the CSV and JSON exporters (see "Reports and exports") |
-| `app/ai/` | the AI layer (bring your own key): providers, the encrypted key vault, `Redact`, the call pipeline with limits (see "The AI layer") |
+| `app/ai/` | the AI layer (bring your own key): providers, the encrypted key vault, `Redact`/`Sanitize`, the call pipeline with limits, and the features `categorize/`, `entry/`, `assistant/` (see "The AI layer") |
 | `app/telegram/` | the Telegram bot: Bot API client, updates, polling and webhook, linking, commands, rate limits, alert channel, texts in `lang/` (see "The Telegram bot") |
 | `app/api/` | the public JSON API: scoped tokens, the middleware chain, the operations table and the handlers (see "The public API") |
 | `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `api.go`, `admin.go`, ...) registered by `registry.go` |
@@ -101,6 +101,7 @@ Read `docs/ai.md` first. AI is bring your own key (D-007): off by default, enabl
 - A custom base URL (`openai_compatible`) goes through `ai.CheckBaseURL` and the safe client. `AI_ALLOW_PRIVATE_HOSTS` works in the personal edition only.
 - Tests use `app/ai/fake` or an `httptest` server; no test calls a real provider or needs a real key. The tables `ai_credentials`, `workspace_ai_settings` and `ai_usage` stay out of sync, export and API scopes (`TestAIExcludedFromExportAndAPI`); extend that test when those routes exist.
 - To add a provider, see "Add a provider" in `docs/ai.md`.
+- The features (epic 16), read "Features" in `docs/ai.md`: category suggestions (`app/ai/categorize`), the sentence to draft (`app/ai/entry`) and the assistant (`app/ai/assistant`). Untrusted text (descriptions, questions, names) is data in a JSON field, never in the system instruction, and always goes through `ai.Sanitize` (normalize, then redact, then clip: never redact first). Model output is accepted only as the JSON of a schema, for ids and uids the server sent, and never writes: a suggestion is a row to review, the amount of a draft is read by `finance.ParseAmount`, the assistant's figures are the server's own report results. Account and tag names go to the model as opaque labels only. Memory first: `description_rules` (`finance.NormalizeDescription`, learned from manual categorizations and accepted suggestions) answers without AI. Share the AI client with `ai.Shared(app)` (the per-minute window lives in it); tests use `app/ai/aitest` (fake provider, recording queue). `ai:eval` is manual and never runs in CI.
 
 ## The Telegram bot
 
