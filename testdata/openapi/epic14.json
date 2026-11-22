@@ -1,0 +1,3473 @@
+{
+  "components": {
+    "responses": {
+      "Problem": {
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "description": "Error (RFC 9457 problem details)"
+      },
+      "ValidationError": {
+        "content": {
+          "application/problem+json": {
+            "schema": {
+              "$ref": "#/components/schemas/Problem"
+            }
+          }
+        },
+        "description": "Validation failed; errors maps each field to its messages and issues lists each problem with its code, key and params"
+      }
+    },
+    "schemas": {
+      "AccountOut": {
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "archived_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "balance_cents": {
+            "examples": [
+              123450
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "created_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "currency": {
+            "examples": [
+              "USD"
+            ],
+            "type": "string"
+          },
+          "kind": {
+            "examples": [
+              "checking"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "Checking"
+            ],
+            "type": "string"
+          },
+          "opening_cents": {
+            "examples": [
+              100000
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "position": {
+            "examples": [
+              1
+            ],
+            "type": "integer"
+          },
+          "uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "updated_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "examples": [
+              1
+            ],
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uid",
+          "version",
+          "name",
+          "kind",
+          "opening_cents",
+          "balance_cents",
+          "currency",
+          "archived",
+          "position",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "BudgetOut": {
+        "properties": {
+          "category_name": {
+            "examples": [
+              "Groceries"
+            ],
+            "type": "string"
+          },
+          "category_uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "currency": {
+            "examples": [
+              "USD"
+            ],
+            "type": "string"
+          },
+          "limit_cents": {
+            "examples": [
+              50000
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "month": {
+            "examples": [
+              "2026-11"
+            ],
+            "type": "string"
+          },
+          "percent": {
+            "examples": [
+              24
+            ],
+            "type": "integer"
+          },
+          "spent_cents": {
+            "examples": [
+              12000
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "examples": [
+              1
+            ],
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uid",
+          "version",
+          "category_uid",
+          "category_name",
+          "month",
+          "limit_cents",
+          "spent_cents",
+          "percent",
+          "currency"
+        ],
+        "type": "object"
+      },
+      "CategoryOut": {
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "color": {
+            "examples": [
+              "green"
+            ],
+            "type": "string"
+          },
+          "created_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "icon": {
+            "examples": [
+              "cart"
+            ],
+            "type": "string"
+          },
+          "kind": {
+            "examples": [
+              "expense"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "Groceries"
+            ],
+            "type": "string"
+          },
+          "parent_uid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "updated_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "examples": [
+              1
+            ],
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uid",
+          "version",
+          "name",
+          "kind",
+          "color",
+          "icon",
+          "archived",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "ConflictOut": {
+        "properties": {
+          "applied_value": {},
+          "field": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "lost_by_device": {
+            "type": "string"
+          },
+          "lost_value": {}
+        },
+        "required": [
+          "field",
+          "kind",
+          "lost_value",
+          "applied_value"
+        ],
+        "type": "object"
+      },
+      "EffectOut": {
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity",
+          "uid",
+          "op",
+          "seq"
+        ],
+        "type": "object"
+      },
+      "EntityInfo": {
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FieldSpec"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "refs": {
+            "items": {
+              "$ref": "#/components/schemas/RefInfo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "fields",
+          "refs"
+        ],
+        "type": "object"
+      },
+      "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.AccountOut": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/AccountOut"
+            },
+            "type": "array"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Links"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.BudgetOut": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/BudgetOut"
+            },
+            "type": "array"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Links"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.CategoryOut": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/CategoryOut"
+            },
+            "type": "array"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Links"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.SyncDeviceOut": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SyncDeviceOut"
+            },
+            "type": "array"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Links"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.TagOut": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TagOut"
+            },
+            "type": "array"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Links"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.TransactionOut": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/TransactionOut"
+            },
+            "type": "array"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Links"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
+      "ErrorOut": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "FieldSpec": {
+        "properties": {
+          "blank": {
+            "type": "boolean"
+          },
+          "enum": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "max": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "min": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nullable": {
+            "type": "boolean"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "type": {
+            "type": "string"
+          },
+          "writable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "writable",
+          "nullable",
+          "required"
+        ],
+        "type": "object"
+      },
+      "Info": {
+        "properties": {
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/EntityInfo"
+            },
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsInfo"
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "server_time": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/WorkspaceInfo"
+          }
+        },
+        "required": [
+          "protocol",
+          "server_time",
+          "workspace",
+          "entities",
+          "limits"
+        ],
+        "type": "object"
+      },
+      "Issue": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "on": {
+            "type": "string"
+          },
+          "params": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "LimitsInfo": {
+        "properties": {
+          "max_body_bytes": {
+            "type": "integer"
+          },
+          "max_mutations": {
+            "type": "integer"
+          },
+          "mutations_per_hour": {
+            "type": "integer"
+          },
+          "op_retention_seconds": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "pull_default_limit": {
+            "type": "integer"
+          },
+          "pull_max_limit": {
+            "type": "integer"
+          },
+          "pulls_per_minute": {
+            "type": "integer"
+          },
+          "pushes_per_minute": {
+            "type": "integer"
+          },
+          "snapshot_max_rows": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_mutations",
+          "max_body_bytes",
+          "pull_default_limit",
+          "pull_max_limit",
+          "snapshot_max_rows",
+          "pulls_per_minute",
+          "pushes_per_minute",
+          "mutations_per_hour",
+          "op_retention_seconds"
+        ],
+        "type": "object"
+      },
+      "Links": {
+        "properties": {
+          "next": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "prev": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "self": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "self"
+        ],
+        "type": "object"
+      },
+      "MeOut": {
+        "properties": {
+          "expires_at": {
+            "examples": [
+              "2027-02-19T12:00:00Z"
+            ],
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "examples": [
+              "member"
+            ],
+            "type": "string"
+          },
+          "scopes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "token_name": {
+            "examples": [
+              "ci"
+            ],
+            "type": "string"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/WorkspaceOut"
+          }
+        },
+        "required": [
+          "token_name",
+          "scopes",
+          "role",
+          "workspace"
+        ],
+        "type": "object"
+      },
+      "Meta": {
+        "properties": {
+          "last_page": {
+            "type": "integer"
+          },
+          "next_cursor": {
+            "type": "string"
+          },
+          "page": {
+            "type": "integer"
+          },
+          "per_page": {
+            "type": "integer"
+          },
+          "total": {
+            "format": "int64",
+            "type": [
+              "integer",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "per_page"
+        ],
+        "type": "object"
+      },
+      "MutationIn": {
+        "properties": {
+          "base_seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "fields": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "op": {
+            "type": "string"
+          },
+          "op_id": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "Problem": {
+        "properties": {
+          "detail": {
+            "type": "string"
+          },
+          "errors": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object"
+          },
+          "instance": {
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "$ref": "#/components/schemas/Issue"
+            },
+            "type": "array"
+          },
+          "request_id": {
+            "type": "string"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status"
+        ],
+        "type": "object"
+      },
+      "PullItem": {
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "row": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "entity",
+          "uid",
+          "op",
+          "version",
+          "row"
+        ],
+        "type": "object"
+      },
+      "PullResult": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/PullItem"
+            },
+            "type": "array"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "server_time": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "changes",
+          "next_cursor",
+          "has_more",
+          "server_time"
+        ],
+        "type": "object"
+      },
+      "Range": {
+        "properties": {
+          "max": {
+            "type": "integer"
+          },
+          "min": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min",
+          "max"
+        ],
+        "type": "object"
+      },
+      "RefInfo": {
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "entity"
+        ],
+        "type": "object"
+      },
+      "Result": {
+        "properties": {
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/ConflictOut"
+            },
+            "type": "array"
+          },
+          "effects": {
+            "items": {
+              "$ref": "#/components/schemas/EffectOut"
+            },
+            "type": "array"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op_id": {
+            "type": "string"
+          },
+          "replaced_by_uid": {
+            "type": "string"
+          },
+          "row": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "op_id",
+          "status",
+          "entity",
+          "uid",
+          "row",
+          "version",
+          "seq",
+          "conflicts",
+          "effects"
+        ],
+        "type": "object"
+      },
+      "SnapshotPage": {
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_after": {
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "snapshot_cursor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshot_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "snapshot_cursor",
+          "entity",
+          "rows",
+          "next_after",
+          "has_more"
+        ],
+        "type": "object"
+      },
+      "SummaryAccountOut": {
+        "properties": {
+          "archived": {
+            "type": "boolean"
+          },
+          "balance_cents": {
+            "examples": [
+              123450
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "Checking"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "name",
+          "balance_cents",
+          "archived"
+        ],
+        "type": "object"
+      },
+      "SummaryOut": {
+        "properties": {
+          "accounts": {
+            "items": {
+              "$ref": "#/components/schemas/SummaryAccountOut"
+            },
+            "type": "array"
+          },
+          "currency": {
+            "examples": [
+              "USD"
+            ],
+            "type": "string"
+          },
+          "expense_cents": {
+            "examples": [
+              320000
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "income_cents": {
+            "examples": [
+              500000
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "month": {
+            "examples": [
+              "2026-11"
+            ],
+            "type": "string"
+          },
+          "net_cents": {
+            "examples": [
+              180000
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "net_worth_cents": {
+            "examples": [
+              1234500
+            ],
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "month",
+          "currency",
+          "income_cents",
+          "expense_cents",
+          "net_cents",
+          "net_worth_cents",
+          "accounts"
+        ],
+        "type": "object"
+      },
+      "SyncDeviceOut": {
+        "properties": {
+          "created_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "device_id": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "last_pull_seq": {
+            "examples": [
+              1042
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "last_seen_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "examples": [
+              "Ana's phone"
+            ],
+            "type": "string"
+          },
+          "platform": {
+            "examples": [
+              "ios"
+            ],
+            "type": "string"
+          },
+          "revoked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "device_id",
+          "name",
+          "platform",
+          "created_at",
+          "last_pull_seq"
+        ],
+        "type": "object"
+      },
+      "SyncPushOut": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Result"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "type": "object"
+      },
+      "TagOut": {
+        "properties": {
+          "color": {
+            "examples": [
+              "blue"
+            ],
+            "type": "string"
+          },
+          "created_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "work"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "updated_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "examples": [
+              1
+            ],
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uid",
+          "version",
+          "name",
+          "color",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "TagRefOut": {
+        "properties": {
+          "color": {
+            "examples": [
+              "blue"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "examples": [
+              "work"
+            ],
+            "type": "string"
+          },
+          "uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "name",
+          "color"
+        ],
+        "type": "object"
+      },
+      "TransactionOut": {
+        "properties": {
+          "account_uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "amount_cents": {
+            "examples": [
+              1250
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "category_uid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "created_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "currency": {
+            "examples": [
+              "USD"
+            ],
+            "type": "string"
+          },
+          "date": {
+            "examples": [
+              "2026-11-21"
+            ],
+            "type": "string"
+          },
+          "description": {
+            "examples": [
+              "Lunch"
+            ],
+            "type": "string"
+          },
+          "kind": {
+            "examples": [
+              "expense"
+            ],
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "$ref": "#/components/schemas/TagRefOut"
+            },
+            "type": "array"
+          },
+          "transfer_uid": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "updated_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "version": {
+            "examples": [
+              1
+            ],
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "uid",
+          "version",
+          "account_uid",
+          "kind",
+          "amount_cents",
+          "currency",
+          "description",
+          "date",
+          "tags",
+          "created_at",
+          "updated_at"
+        ],
+        "type": "object"
+      },
+      "TransferOut": {
+        "properties": {
+          "from": {
+            "$ref": "#/components/schemas/TransactionOut"
+          },
+          "to": {
+            "$ref": "#/components/schemas/TransactionOut"
+          },
+          "uid": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "from",
+          "to"
+        ],
+        "type": "object"
+      },
+      "WorkspaceInfo": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "currency",
+          "timezone"
+        ],
+        "type": "object"
+      },
+      "WorkspaceOut": {
+        "properties": {
+          "currency": {
+            "examples": [
+              "USD"
+            ],
+            "type": "string"
+          },
+          "id": {
+            "examples": [
+              7
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "examples": [
+              "Home"
+            ],
+            "type": "string"
+          },
+          "timezone": {
+            "examples": [
+              "America/Sao_Paulo"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "currency",
+          "timezone"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "description": "The public API of vukem-finances: read and write the data of one workspace with a bearer token that holds only the scopes it needs. Every operation names its scope in `x-required-scope`; a scope is a ceiling, never a grant: the role of the person who made the token limits it at every request. Money is an integer `*_cents` in the workspace currency. See docs/api.md for conventions, errors, idempotency, rate limits and versioning.",
+    "license": {
+      "identifier": "MIT",
+      "name": "MIT"
+    },
+    "title": "vukem-finances API",
+    "version": "1.0.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/accounts": {
+      "get": {
+        "operationId": "accounts.list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_github.com_AlexGalhardo_vukem-finances_app_api.AccountOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the accounts with their balances",
+        "tags": [
+          "Accounts"
+        ],
+        "x-required-scope": "accounts:read"
+      },
+      "post": {
+        "operationId": "accounts.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "kind": {
+                    "description": "checking, savings, cash, investment or wallet",
+                    "examples": [
+                      "checking"
+                    ],
+                    "maxLength": 20,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "name": {
+                    "examples": [
+                      "Checking"
+                    ],
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "opening_cents": {
+                    "description": "Opening balance in cents",
+                    "examples": [
+                      100000
+                    ],
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "uid": {
+                    "description": "Optional uid chosen by the client (a ULID); repeating the call returns the row already made",
+                    "maxLength": 26,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name",
+                  "kind"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create an account",
+        "tags": [
+          "Accounts"
+        ],
+        "x-required-scope": "accounts:write"
+      }
+    },
+    "/accounts/{uid}": {
+      "get": {
+        "operationId": "accounts.show",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read an account",
+        "tags": [
+          "Accounts"
+        ],
+        "x-required-scope": "accounts:read"
+      },
+      "patch": {
+        "operationId": "accounts.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "kind": {
+                    "maxLength": 20,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "name": {
+                    "maxLength": 80,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "opening_cents": {
+                    "format": "int64",
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change the name, kind and opening balance of an account",
+        "tags": [
+          "Accounts"
+        ],
+        "x-required-scope": "accounts:write"
+      }
+    },
+    "/accounts/{uid}/archive": {
+      "post": {
+        "operationId": "accounts.archive",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {},
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AccountOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive an account",
+        "tags": [
+          "Accounts"
+        ],
+        "x-required-scope": "accounts:write"
+      }
+    },
+    "/budgets": {
+      "get": {
+        "operationId": "budgets.list",
+        "parameters": [
+          {
+            "description": "YYYY-MM; this month in the workspace timezone when left out",
+            "example": "2026-11",
+            "in": "query",
+            "name": "month",
+            "schema": {
+              "maxLength": 7,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_github.com_AlexGalhardo_vukem-finances_app_api.BudgetOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the budgets with what the month spent",
+        "tags": [
+          "Budgets"
+        ],
+        "x-required-scope": "budgets:read"
+      },
+      "post": {
+        "operationId": "budgets.set",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "category_uid": {
+                    "description": "An expense category",
+                    "maxLength": 26,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "limit_cents": {
+                    "description": "The monthly limit, a positive whole number of cents",
+                    "examples": [
+                      50000
+                    ],
+                    "format": "int64",
+                    "type": "integer"
+                  }
+                },
+                "required": [
+                  "category_uid"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BudgetOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Set the monthly limit of an expense category",
+        "tags": [
+          "Budgets"
+        ],
+        "x-required-scope": "budgets:write"
+      }
+    },
+    "/budgets/{uid}": {
+      "delete": {
+        "operationId": "budgets.delete",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Remove a budget",
+        "tags": [
+          "Budgets"
+        ],
+        "x-required-scope": "budgets:write"
+      }
+    },
+    "/categories": {
+      "get": {
+        "operationId": "categories.list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_github.com_AlexGalhardo_vukem-finances_app_api.CategoryOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the categories",
+        "tags": [
+          "Categories"
+        ],
+        "x-required-scope": "categories:read"
+      },
+      "post": {
+        "operationId": "categories.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "color": {
+                    "description": "A color name: slate, blue, teal, green, olive, amber, orange, red, pink or violet",
+                    "examples": [
+                      "green"
+                    ],
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "icon": {
+                    "description": "An icon name such as cart, home or wallet",
+                    "examples": [
+                      "cart"
+                    ],
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "kind": {
+                    "description": "income or expense; a subcategory takes the kind of its parent",
+                    "examples": [
+                      "expense"
+                    ],
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "name": {
+                    "examples": [
+                      "Groceries"
+                    ],
+                    "maxLength": 60,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "parent_uid": {
+                    "description": "The parent category; a category nests one level",
+                    "maxLength": 26,
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "Optional uid chosen by the client (a ULID); repeating the call returns the row already made",
+                    "maxLength": 26,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a category",
+        "tags": [
+          "Categories"
+        ],
+        "x-required-scope": "categories:write"
+      }
+    },
+    "/categories/{uid}": {
+      "get": {
+        "operationId": "categories.show",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a category",
+        "tags": [
+          "Categories"
+        ],
+        "x-required-scope": "categories:read"
+      },
+      "patch": {
+        "operationId": "categories.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "color": {
+                    "maxLength": 20,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "icon": {
+                    "maxLength": 20,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "name": {
+                    "maxLength": 60,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "parent_uid": {
+                    "maxLength": 26,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a category",
+        "tags": [
+          "Categories"
+        ],
+        "x-required-scope": "categories:write"
+      }
+    },
+    "/categories/{uid}/archive": {
+      "post": {
+        "operationId": "categories.archive",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {},
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CategoryOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Archive a category",
+        "tags": [
+          "Categories"
+        ],
+        "x-required-scope": "categories:write"
+      }
+    },
+    "/me": {
+      "get": {
+        "operationId": "me.show",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The token, its scopes and the workspace it works in",
+        "tags": [
+          "Token"
+        ]
+      }
+    },
+    "/summary": {
+      "get": {
+        "operationId": "summary.show",
+        "parameters": [
+          {
+            "description": "YYYY-MM; this month in the workspace timezone when left out",
+            "example": "2026-11",
+            "in": "query",
+            "name": "month",
+            "schema": {
+              "maxLength": 7,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SummaryOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Income, expense, net, account balances and net worth of a month",
+        "tags": [
+          "Summary"
+        ],
+        "x-required-scope": "summary:read"
+      }
+    },
+    "/sync/devices": {
+      "get": {
+        "operationId": "sync.devices.list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_github.com_AlexGalhardo_vukem-finances_app_api.SyncDeviceOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the devices the caller registered in this workspace",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      },
+      "post": {
+        "operationId": "sync.devices.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "description": "What the person calls the device",
+                    "examples": [
+                      "Ana's phone"
+                    ],
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "platform": {
+                    "description": "ios, android, web or other",
+                    "examples": [
+                      "ios"
+                    ],
+                    "maxLength": 20,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncDeviceOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a device for the calling token",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/sync/info": {
+      "get": {
+        "operationId": "sync.info",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Info"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The sync protocol versions, the entities and fields this server knows, and its limits",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/sync/pull": {
+      "get": {
+        "operationId": "sync.pull",
+        "parameters": [
+          {
+            "description": "The next_cursor of the previous page; 0 for the first pull",
+            "example": 0,
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Changes per page: 500 by default, at most 1000",
+            "example": 500,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PullResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the changes after a cursor, parents first",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/sync/push": {
+      "post": {
+        "operationId": "sync.push",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "device_id": {
+                    "description": "The device; X-Device-Id is what counts and this must match when set",
+                    "maxLength": 26,
+                    "type": "string"
+                  },
+                  "mutations": {
+                    "description": "At most 200 mutations",
+                    "items": {
+                      "$ref": "#/components/schemas/MutationIn"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPushOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send the mutations a device made offline",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/sync/snapshot": {
+      "get": {
+        "operationId": "sync.snapshot",
+        "parameters": [
+          {
+            "description": "The entity to download, one of GET /sync/info",
+            "example": "account",
+            "in": "query",
+            "name": "entity",
+            "required": true,
+            "schema": {
+              "maxLength": 40,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last uid of the previous page",
+            "in": "query",
+            "name": "after",
+            "schema": {
+              "maxLength": 26,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Rows per page: 500 by default, at most 1000",
+            "example": 500,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The snapshot_id of the first page, sent back on every later one",
+            "in": "query",
+            "name": "snapshot_id",
+            "schema": {
+              "maxLength": 60,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the live rows of one entity to rebuild a device",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/tags": {
+      "get": {
+        "operationId": "tags.list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_github.com_AlexGalhardo_vukem-finances_app_api.TagOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the tags",
+        "tags": [
+          "Tags"
+        ],
+        "x-required-scope": "tags:read"
+      },
+      "post": {
+        "operationId": "tags.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "color": {
+                    "examples": [
+                      "blue"
+                    ],
+                    "maxLength": 20,
+                    "type": "string"
+                  },
+                  "name": {
+                    "examples": [
+                      "work"
+                    ],
+                    "maxLength": 120,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "uid": {
+                    "description": "Optional uid chosen by the client (a ULID); repeating the call returns the row already made",
+                    "maxLength": 26,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Create a tag",
+        "tags": [
+          "Tags"
+        ],
+        "x-required-scope": "tags:write"
+      }
+    },
+    "/tags/{uid}": {
+      "delete": {
+        "operationId": "tags.delete",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a tag and take it off its transactions",
+        "tags": [
+          "Tags"
+        ],
+        "x-required-scope": "tags:write"
+      },
+      "patch": {
+        "operationId": "tags.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "color": {
+                    "maxLength": 20,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "name": {
+                    "maxLength": 120,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TagOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Rename or recolor a tag",
+        "tags": [
+          "Tags"
+        ],
+        "x-required-scope": "tags:write"
+      }
+    },
+    "/transactions": {
+      "get": {
+        "operationId": "transactions.list",
+        "parameters": [
+          {
+            "description": "First date, YYYY-MM-DD",
+            "example": "2026-11-01",
+            "in": "query",
+            "name": "from",
+            "schema": {
+              "maxLength": 10,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Last date, YYYY-MM-DD",
+            "example": "2026-11-30",
+            "in": "query",
+            "name": "to",
+            "schema": {
+              "maxLength": 10,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only this account (uid)",
+            "in": "query",
+            "name": "account",
+            "schema": {
+              "maxLength": 26,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only this category and its subcategories (uid)",
+            "in": "query",
+            "name": "category",
+            "schema": {
+              "maxLength": 26,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only transactions with this tag (uid)",
+            "in": "query",
+            "name": "tag",
+            "schema": {
+              "maxLength": 26,
+              "type": "string"
+            }
+          },
+          {
+            "description": "income or expense",
+            "in": "query",
+            "name": "kind",
+            "schema": {
+              "maxLength": 20,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Text of the description, case-insensitive",
+            "in": "query",
+            "name": "q",
+            "schema": {
+              "maxLength": 200,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Smallest absolute amount, in cents",
+            "in": "query",
+            "name": "min_cents",
+            "schema": {
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Largest absolute amount, in cents",
+            "in": "query",
+            "name": "max_cents",
+            "schema": {
+              "format": "int64",
+              "type": [
+                "integer",
+                "null"
+              ]
+            }
+          },
+          {
+            "description": "Page number, from 1; a page holds 50 rows",
+            "example": 1,
+            "in": "query",
+            "name": "page",
+            "schema": {
+              "minimum": 0,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_github.com_AlexGalhardo_vukem-finances_app_api.TransactionOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List transactions, newest first, with filters",
+        "tags": [
+          "Transactions"
+        ],
+        "x-required-scope": "transactions:read"
+      },
+      "post": {
+        "operationId": "transactions.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "account_uid": {
+                    "maxLength": 26,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "amount_cents": {
+                    "description": "A positive whole number of cents; the kind gives the sign",
+                    "examples": [
+                      1250
+                    ],
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "category_uid": {
+                    "description": "A category of the same kind; leave out for none",
+                    "maxLength": 26,
+                    "type": "string"
+                  },
+                  "date": {
+                    "examples": [
+                      "2026-11-21"
+                    ],
+                    "maxLength": 10,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "description": {
+                    "examples": [
+                      "Lunch"
+                    ],
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "kind": {
+                    "description": "income or expense",
+                    "examples": [
+                      "expense"
+                    ],
+                    "maxLength": 20,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "tags": {
+                    "description": "Tag names, created when new; at most 10 per transaction",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 40,
+                    "type": "array"
+                  },
+                  "uid": {
+                    "description": "Optional uid chosen by the client (a ULID); repeating the call returns the row already made",
+                    "maxLength": 26,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "account_uid",
+                  "kind",
+                  "date"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Record a transaction",
+        "tags": [
+          "Transactions"
+        ],
+        "x-required-scope": "transactions:write"
+      }
+    },
+    "/transactions/{uid}": {
+      "delete": {
+        "operationId": "transactions.delete",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a transaction",
+        "tags": [
+          "Transactions"
+        ],
+        "x-required-scope": "transactions:write"
+      },
+      "get": {
+        "operationId": "transactions.show",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read a transaction",
+        "tags": [
+          "Transactions"
+        ],
+        "x-required-scope": "transactions:read"
+      },
+      "patch": {
+        "operationId": "transactions.update",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "account_uid": {
+                    "maxLength": 26,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "amount_cents": {
+                    "format": "int64",
+                    "type": [
+                      "integer",
+                      "null"
+                    ]
+                  },
+                  "category_uid": {
+                    "maxLength": 26,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "date": {
+                    "maxLength": 10,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "description": {
+                    "maxLength": 200,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "kind": {
+                    "maxLength": 20,
+                    "type": [
+                      "string",
+                      "null"
+                    ]
+                  },
+                  "tags": {
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 40,
+                    "type": [
+                      "array",
+                      "null"
+                    ]
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransactionOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Change a transaction",
+        "tags": [
+          "Transactions"
+        ],
+        "x-required-scope": "transactions:write"
+      }
+    },
+    "/transfers": {
+      "post": {
+        "operationId": "transfers.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "amount_cents": {
+                    "description": "A positive whole number of cents",
+                    "examples": [
+                      50000
+                    ],
+                    "format": "int64",
+                    "type": "integer"
+                  },
+                  "date": {
+                    "examples": [
+                      "2026-11-21"
+                    ],
+                    "maxLength": 10,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "description": {
+                    "examples": [
+                      "Move to savings"
+                    ],
+                    "maxLength": 200,
+                    "type": "string"
+                  },
+                  "from_account_uid": {
+                    "maxLength": 26,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "to_account_uid": {
+                    "maxLength": 26,
+                    "minLength": 1,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "from_account_uid",
+                  "to_account_uid",
+                  "date"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TransferOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Move money between two accounts",
+        "tags": [
+          "Transfers"
+        ],
+        "x-required-scope": "transfers:write"
+      }
+    },
+    "/transfers/{uid}": {
+      "delete": {
+        "operationId": "transfers.delete",
+        "parameters": [
+          {
+            "description": "The uid of the row",
+            "example": "01JD5Z8K3M4N5P6Q7R8S9T0V1W",
+            "in": "path",
+            "name": "uid",
+            "required": true,
+            "schema": {
+              "maxLength": 26,
+              "minLength": 1,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Delete a transfer and both of its legs",
+        "tags": [
+          "Transfers"
+        ],
+        "x-required-scope": "transfers:write"
+      }
+    }
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ]
+}
