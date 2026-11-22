@@ -1,12 +1,15 @@
-import { Head } from "@inertiajs/react";
+import { Head, router } from "@inertiajs/react";
+import { useState } from "react";
 import ConfirmDelete from "../components/ConfirmDelete";
 import PageHeader from "../components/PageHeader";
 import { Card, danger } from "../components/ui";
+import { Button } from "../components/ui/button";
 import { useFinanceI18n } from "../lib/i18n";
 import type { Page } from "../page-props";
 
-export default function Devices({ devices }: Page<"Devices">) {
+export default function Devices({ devices, pairing }: Page<"Devices">) {
   const { t, date } = useFinanceI18n();
+  const [dismissed, setDismissed] = useState(false);
 
   const statusLabel = { live: t("devicesStatusLive"), revoked: t("devicesStatusRevoked") };
 
@@ -14,6 +17,41 @@ export default function Devices({ devices }: Page<"Devices">) {
     <>
       <Head title={t("devices")} />
       <PageHeader title={t("devices")} description={t("devicesIntro")} />
+
+      {pairing && !dismissed && (
+        <Card title={t("devicesPairTitle")}>
+          <p className="mb-2">{t("devicesPairBody")}</p>
+          <p>
+            {t("devicesPairServer")}: <code data-testid="pairing-server">{pairing.server}</code>
+          </p>
+          <p className="mb-2">
+            {t("devicesPairCode")}: <code data-testid="pairing-code">{pairing.code}</code>
+          </p>
+          <p className="mb-3 text-sm">
+            {t("devicesPairExpires")} {date(pairing.expiresAt)}
+          </p>
+          <div className="flex gap-2">
+            <Button type="button" variant="outline" onClick={() => navigator.clipboard?.writeText(pairing.code)}>
+              {t("devicesPairCopy")}
+            </Button>
+            <Button type="button" onClick={() => setDismissed(true)}>
+              {t("devicesPairDismiss")}
+            </Button>
+          </div>
+        </Card>
+      )}
+
+      <div className="mb-4">
+        <Button
+          type="button"
+          onClick={() => {
+            setDismissed(false);
+            router.post("/devices/pairing", {}, { preserveScroll: true });
+          }}
+        >
+          {t("devicesAdd")}
+        </Button>
+      </div>
 
       <Card title={t("devicesListTitle")}>
         {devices.length === 0 ? (

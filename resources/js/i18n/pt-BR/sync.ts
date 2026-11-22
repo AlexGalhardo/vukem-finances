@@ -17,5 +17,14 @@ const dict = {
   devicesRevoke: "Revogar",
   devicesRevokeNote:
     "Revogar um dispositivo interrompe a sincronização na hora. O dispositivo mantém os dados locais até você limpá-los nele. Revogar um token de API também revoga os dispositivos dele.",
+  devicesAdd: "Adicionar dispositivo",
+  devicesPairTitle: "Parear um celular",
+  devicesPairBody:
+    "No app, abra Conectar e digite o endereço do servidor e este código. O código vale uma vez e expira em 10 minutos.",
+  devicesPairServer: "Endereço do servidor",
+  devicesPairCode: "Código de pareamento",
+  devicesPairExpires: "Expira em",
+  devicesPairCopy: "Copiar código",
+  devicesPairDismiss: "Concluir",
 } satisfies Record<keyof typeof en, string>;
 export default dict;

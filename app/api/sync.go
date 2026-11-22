@@ -27,6 +27,13 @@ type SyncDeviceIn struct {
 	Platform string `json:"platform" validate:"max=20"          doc:"ios, android, web or other" example:"ios"`
 }
 
+// SyncPairIn is the body of sync.pair.
+type SyncPairIn struct {
+	Code       string `json:"code"        validate:"required,max=40" doc:"The pairing code the Devices page shows" example:"7K2M-9QXA"`
+	DeviceName string `json:"device_name" validate:"required,max=80" doc:"What the person calls the device" example:"Ana's phone"`
+	Platform   string `json:"platform"    validate:"max=20"          doc:"ios, android, web or other" example:"android"`
+}
+
 // SyncDeviceOut is a device that syncs the workspace.
 type SyncDeviceOut struct {
 	DeviceID    string  `json:"device_id"     example:"01JD5Z8K3M4N5P6Q7R8S9T0V1W"`
@@ -239,6 +246,58 @@ func (a *API) syncPush(c *web.Ctx, in SyncPushIn) (SyncPushOut, error) {
 	a.syncLog(c, "push", dev, started, "mutations", len(in.Mutations), "rejected", rejected)
 
 	return SyncPushOut{Results: results}, nil
+}
+
+// syncPair is the one operation that takes no token: the code is the credential.
+// Every attempt of an address counts, and so does every failed attempt of the
+// whole server, so a code cannot be guessed. The code and the token are never logged.
+func (a *API) syncPair(c *web.Ctx, in SyncPairIn) (syncproto.PairResult, error) {
+	ctx := c.Context()
+
+	if a.PairLimiter != nil {
+		res, err := a.PairLimiter.Allow(ctx, "pair:"+ratelimit.ByIP(c.Request()))
+		if err != nil {
+			return syncproto.PairResult{}, errs.New(http.StatusServiceUnavailable, "Try again in a moment.").WithExtension("code", CodeUnavailable)
+		}
+
+		if !res.Allowed {
+			c.Writer().Header().Set("Retry-After", strconv.Itoa(int(res.RetryAfter.Seconds())+1))
+
+			return syncproto.PairResult{}, errs.New(http.StatusTooManyRequests, "Too many requests.").WithExtension("code", CodeRateLimited)
+		}
+	}
+
+	failed, _ := a.PairFailLimiter.(ratelimit.Peeker)
+	if failed != nil {
+		res, err := failed.Peek(ctx, "pair-failed")
+		if err != nil {
+			return syncproto.PairResult{}, errs.New(http.StatusServiceUnavailable, "Try again in a moment.").WithExtension("code", CodeUnavailable)
+		}
+
+		if !res.Allowed {
+			c.Writer().Header().Set("Retry-After", strconv.Itoa(int(res.RetryAfter.Seconds())+1))
+
+			return syncproto.PairResult{}, errs.New(http.StatusTooManyRequests, "Too many requests.").WithExtension("code", CodeRateLimited)
+		}
+	}
+
+	out, err := a.Sync.Pair(ctx, in.Code, in.DeviceName, in.Platform)
+	if err != nil {
+		if a.PairFailLimiter != nil && syncproto.IsInvalidPairing(err) {
+			_, _ = a.PairFailLimiter.Allow(ctx, "pair-failed")
+		}
+
+		return syncproto.PairResult{}, err
+	}
+
+	c.Writer().Header().Set("Cache-Control", "no-store")
+
+	return out, nil
+}
+
+// PairRoutes registers sync.pair outside the authenticated group.
+func (a *API) PairRoutes(g *router.Group) {
+	register(a, g, nil, "sync.pair", a.syncPair)
 }
 
 func (a *API) syncRoutes(g *router.Group, idem router.Middleware) {

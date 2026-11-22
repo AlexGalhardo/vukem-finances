@@ -17,7 +17,17 @@ type DeviceView struct {
 	Status      string `json:"status"`
 }
 
-// DevicesProps are the props of Devices.
+// CreatedPairing is the one time answer of "Add device": the code to type on
+// the phone and the address to type it with.
+type CreatedPairing struct {
+	Code      string `json:"code"`
+	Server    string `json:"server"`
+	ExpiresAt string `json:"expiresAt"`
+}
+
+// DevicesProps are the props of Devices. Pairing is set only on the response
+// that makes a code, and never again.
 type DevicesProps struct {
-	Devices []DeviceView `json:"devices"`
+	Devices []DeviceView    `json:"devices"`
+	Pairing *CreatedPairing `json:"pairing"`
 }

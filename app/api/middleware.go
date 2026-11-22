@@ -90,7 +90,9 @@ type API struct {
 	Exports func(http.Handler) http.Handler
 	// PullLimiter and PushLimiter hold a device to the sync rate limits.
 	PullLimiter, PushLimiter ratelimit.Limiter
-	Log                      *slog.Logger
+	// PairLimiter holds an address to the pair attempts; PairFailLimiter counts the failed ones of the whole server.
+	PairLimiter, PairFailLimiter ratelimit.Limiter
+	Log                          *slog.Logger
 }
 
 func fail(w http.ResponseWriter, r *http.Request, status int, code, message string) {

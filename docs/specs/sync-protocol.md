@@ -53,6 +53,24 @@ Errors are `application/problem+json` with a stable `code` (see [Errors](#errors
 
 A person revokes a device on the web page Devices (it keeps its local data until the person clears it on the device). Revoking an API token revokes the devices it registered. A revoked device gets `403 device_revoked` on every call.
 
+## Pairing
+
+A phone gets its token with a short code instead of a typed token. On the web, the person opens the Devices page and presses "Add device": the server stores the hash of an 8 character code (alphabet `23456789ABCDEFGHJKLMNPQRSTUVWXYZ`, about 40 bits, shown as `XXXX-XXXX`) for the person and the workspace, valid for 10 minutes and for one use. A person holds at most 5 live codes. The page shows the code and the server address once.
+
+`POST /api/v1/sync/pair` takes no token and no `X-Device-Id`; the code is the credential. It needs `X-Sync-Protocol: 1`.
+
+```json
+{ "code": "7K2M-9QXA", "device_name": "Ana's phone", "platform": "android" }
+```
+
+The code is case-insensitive and a space or a dash is ignored. The server consumes the code with one conditional update (`used_at` still null, not expired), so of any number of concurrent attempts exactly one pairs. It then issues a token with only the scope `sync`, bound to the workspace of the code, living 365 days and named "Phone" followed by the device name, registers the device for that token and answers `201`:
+
+```json
+{ "token": "...", "device_id": "...", "workspace": { "uid": "1", "name": "Ana household", "currency": "USD", "timezone": "UTC" }, "server_time": "2026-11-24T12:00:00Z" }
+```
+
+The token has the role ceiling of the person who made the code: the role is read at every request. The token shows on the person's token list and is revoked there or with the device. A code that is unknown, used, expired or whose person left the workspace gets the same `422 invalid_pairing_code`. The limits are 5 attempts a minute per address (`429 rate_limited`) and 200 failed attempts an hour for the whole server. The code and the token are never logged, and `Cache-Control: no-store` is set.
+
 ## Pull
 
 `GET /pull?cursor=<seq>&limit=<n>` (the cursor starts at `0`; `limit` defaults to 500 and is at most 1000) answers:

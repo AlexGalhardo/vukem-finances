@@ -18,8 +18,13 @@ func register[In, Out any](a *API, g *router.Group, idem router.Middleware, name
 		panic("api: operation " + name + " is not in the operations table")
 	}
 
+	security := []string{"bearer"}
+	if op.Public {
+		security = nil
+	}
+
 	rt := vukemapi.Register(g, op.Method+" "+op.Path, vukemapi.Op{
-		Name: op.Name, Summary: op.Summary, Tags: []string{op.Tag}, Security: []string{"bearer"}, Status: op.Status,
+		Name: op.Name, Summary: op.Summary, Tags: []string{op.Tag}, Security: security, Status: op.Status,
 	}, fn)
 
 	mws := []router.Middleware{a.Require(op)}
@@ -27,7 +32,7 @@ func register[In, Out any](a *API, g *router.Group, idem router.Middleware, name
 		mws = append(mws, limitBody(op.MaxBody))
 	}
 
-	if !op.Read() && idem != nil {
+	if !op.Read() && !op.Public && idem != nil {
 		mws = append(mws, idem)
 	}
 

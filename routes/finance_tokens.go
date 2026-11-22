@@ -24,5 +24,6 @@ func financeTokens(g *router.Group, app *vukem.App, acc *accounts.Accounts, h *l
 	dh := &ledger.DeviceHandlers{Sync: &syncproto.Service{DB: h.WS.DB, Now: app.Now}}
 
 	g.Get("/devices", dh.Show).Name("devices.index")
+	g.Post("/devices/pairing", dh.Pair).Name("devices.pair")
 	g.Delete("/devices/{device}", dh.Destroy).Name("devices.destroy")
 }
