@@ -17,8 +17,6 @@ import (
 	"math"
 	"strconv"
 	"strings"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/AlexGalhardo/vukem-finances/app/ai"
 )
@@ -99,25 +97,6 @@ type answer struct {
 	Confidence  *float64 `json:"confidence"`
 }
 
-// clean makes a description fit to send: control characters out, redacted,
-// clipped. It runs for every free-text field of a request.
-func clean(s string) string {
-	s = strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) {
-			return ' '
-		}
-
-		return r
-	}, s)
-
-	s = strings.Join(strings.Fields(ai.Redact(s)), " ")
-	if utf8.RuneCountInString(s) > descriptionMax {
-		s = string([]rune(s)[:descriptionMax])
-	}
-
-	return s
-}
-
 // Batch asks the model for the category of up to BatchSize items of one kind.
 // It returns only the answers that survive validation: an id that was not
 // sent, a duplicate, a null, a uid that was not listed or is of another kind,
@@ -164,13 +143,13 @@ func buildMessage(items []Item, cats []Category) (string, error) {
 
 	for _, c := range cats {
 		doc.Categories = append(doc.Categories, wireCategory{
-			UID: c.UID, Name: clean(c.Name), Kind: c.Kind, Parent: clean(c.Parent),
+			UID: c.UID, Name: ai.Sanitize(c.Name, descriptionMax), Kind: c.Kind, Parent: ai.Sanitize(c.Parent, descriptionMax),
 		})
 	}
 
 	for _, it := range items {
 		doc.Transactions = append(doc.Transactions, wireItem{
-			ID: it.ID, Description: clean(it.Description), Kind: it.Kind, AmountCents: it.AmountCents,
+			ID: it.ID, Description: ai.Sanitize(it.Description, descriptionMax), Kind: it.Kind, AmountCents: it.AmountCents,
 		})
 	}
 

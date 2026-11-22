@@ -2,9 +2,6 @@ package assistant
 
 import (
 	"context"
-	"strings"
-	"unicode"
-	"unicode/utf8"
 
 	"github.com/AlexGalhardo/vukem/orm"
 
@@ -81,7 +78,7 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 				label = "Uncategorized"
 			}
 
-			t.Rows = append(t.Rows, Figure{Label: clean(label), Cents: r.Cents})
+			t.Rows = append(t.Rows, Figure{Label: ai.Sanitize(label, labelMax), Cents: r.Cents})
 		}
 
 		t.Rows = append(t.Rows, Figure{Label: "Total", Cents: rep.TotalCents})
@@ -110,8 +107,8 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 
 		for _, r := range rep.Rows {
 			t.Rows = append(t.Rows,
-				Figure{Label: clean(r.Name) + " income", Cents: r.IncomeCents},
-				Figure{Label: clean(r.Name) + " expense", Cents: r.ExpenseCents})
+				Figure{Label: ai.Sanitize(r.Name, labelMax) + " income", Cents: r.IncomeCents},
+				Figure{Label: ai.Sanitize(r.Name, labelMax) + " expense", Cents: r.ExpenseCents})
 		}
 	case ReportByTag:
 		rep, err := s.Rep.ByTag(ctx, p)
@@ -121,8 +118,8 @@ func (s *Service) run(ctx context.Context, q Resolved) (Table, error) {
 
 		for _, r := range rep.Rows {
 			t.Rows = append(t.Rows,
-				Figure{Label: clean(r.Name) + " income", Cents: r.IncomeCents},
-				Figure{Label: clean(r.Name) + " expense", Cents: r.ExpenseCents})
+				Figure{Label: ai.Sanitize(r.Name, labelMax) + " income", Cents: r.IncomeCents},
+				Figure{Label: ai.Sanitize(r.Name, labelMax) + " expense", Cents: r.ExpenseCents})
 		}
 	case ReportNetWorth:
 		rep, err := s.Rep.NetWorthSeries(ctx, p)
@@ -187,27 +184,8 @@ func (s *Service) transactions(ctx context.Context, q Resolved, t Table) (Table,
 			cents = -cents
 		}
 
-		t.Rows = append(t.Rows, Figure{Label: r.OccurredOn + " " + clean(r.Description), Cents: cents})
+		t.Rows = append(t.Rows, Figure{Label: r.OccurredOn + " " + ai.Sanitize(r.Description, labelMax), Cents: cents})
 	}
 
 	return t, nil
-}
-
-// clean makes text fit to send to the model: control characters out, redacted,
-// clipped. It is applied to every name and description of a result.
-func clean(s string) string {
-	s = strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) {
-			return ' '
-		}
-
-		return r
-	}, s)
-
-	s = strings.Join(strings.Fields(ai.Redact(s)), " ")
-	if utf8.RuneCountInString(s) > labelMax {
-		s = string([]rune(s)[:labelMax])
-	}
-
-	return s
 }

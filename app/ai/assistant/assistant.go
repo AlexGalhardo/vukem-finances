@@ -223,11 +223,11 @@ func (s *Service) planStep(ctx context.Context, workspace int64, question, today
 
 	list := make([]cat, 0, len(cats))
 	for _, c := range cats[:min(len(cats), maxCats)] {
-		list = append(list, cat{UID: c.UID, Name: clean(c.Name), Kind: c.Kind})
+		list = append(list, cat{UID: c.UID, Name: ai.Sanitize(c.Name, labelMax), Kind: c.Kind})
 	}
 
 	body, err := json.Marshal(map[string]any{
-		"question": cleanText(question, QuestionMax), "today": today, "currency": currency,
+		"question": ai.Sanitize(question, QuestionMax), "today": today, "currency": currency,
 		"reports": reportHelp, "categories": list,
 	})
 	if err != nil {
@@ -256,7 +256,7 @@ func (s *Service) answerStep(
 	}
 
 	body, err := json.Marshal(map[string]any{
-		"question": cleanText(question, QuestionMax), "today": today, "currency": currency, "results": results,
+		"question": ai.Sanitize(question, QuestionMax), "today": today, "currency": currency, "results": results,
 	})
 	if err != nil {
 		return "", nil, err
@@ -320,23 +320,6 @@ func answerText(s string) string {
 	s = strings.TrimSpace(s)
 	if utf8.RuneCountInString(s) > AnswerMax {
 		s = string([]rune(s)[:AnswerMax])
-	}
-
-	return s
-}
-
-// cleanText makes the question fit to send: redacted, control characters out, clipped.
-func cleanText(s string, limit int) string {
-	s = strings.Join(strings.Fields(ai.Redact(strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) {
-			return ' '
-		}
-
-		return r
-	}, s))), " ")
-
-	if utf8.RuneCountInString(s) > limit {
-		s = string([]rune(s)[:limit])
 	}
 
 	return s
