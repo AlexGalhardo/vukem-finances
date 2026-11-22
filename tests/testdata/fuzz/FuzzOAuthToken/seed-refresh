@@ -1,0 +1,9 @@
+go test fuzz v1
+string("refresh_token")
+string("")
+string("")
+string("test-client")
+string("")
+string("https://finances.example.test/mcp")
+string("not-a-token")
+string("accounts:write")

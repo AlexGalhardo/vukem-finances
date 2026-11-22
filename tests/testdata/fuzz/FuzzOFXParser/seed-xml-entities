@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("<?xml version=\"1.0\"?><OFX><STMTTRN><DTPOSTED>20260301120000[-3:BRT]</DTPOSTED><TRNAMT>1.234,56</TRNAMT><FITID>a&amp;b</FITID><MEMO>&#x41;&#66;&lt;&#0;&#xD800;&#x110000;</MEMO></STMTTRN></OFX>")

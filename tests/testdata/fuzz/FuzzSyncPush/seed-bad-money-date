@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("[{\"op_id\":\"01JD5Z8K3M4N5P6Q7R8S9T0V1W\",\"entity\":\"transaction\",\"uid\":\"01JD5Z8K3M4N5P6Q7R8S9T0V1Y\",\"op\":\"upsert\",\"base_seq\":0,\"fields\":{\"account_uid\":\"01JD5Z8K3M4N5P6Q7R8S9T0V1X\",\"kind\":\"expense\",\"amount_cents\":9007199254740993,\"occurred_on\":\"2026-02-30\",\"description\":\"x\"}}]")

@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("<!DOCTYPE x [<!ENTITY a \"aaaa\"><!ENTITY b \"&a;&a;&a;&a;\"><!ENTITY c \"&b;&b;&b;&b;\">]><OFX><STMTTRN><MEMO>&c;</MEMO></STMTTRN></OFX>")

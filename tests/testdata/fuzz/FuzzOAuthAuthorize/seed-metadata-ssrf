@@ -1,0 +1,9 @@
+go test fuzz v1
+string("https://127.0.0.1/c.json")
+string("https://client.example.test/callback")
+string("code")
+string("S256")
+string("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM")
+string("")
+string("https://finances.example.test/mcp")
+string("s")

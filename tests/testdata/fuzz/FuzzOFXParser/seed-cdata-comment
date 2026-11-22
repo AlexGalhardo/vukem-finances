@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("<OFX><!-- c --><STMTTRN><DTPOSTED>99999999<TRNAMT>1e999<NAME><![CDATA[x]]></STMTTRN></OFX>")

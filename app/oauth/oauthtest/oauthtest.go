@@ -54,7 +54,7 @@ type Tokens struct {
 }
 
 // New builds the saas app with remote MCP on. env adds or overrides settings.
-func New(t *testing.T, env map[string]string) *Stack {
+func New(t testing.TB, env map[string]string) *Stack {
 	t.Helper()
 
 	e := map[string]string{
@@ -76,7 +76,7 @@ func New(t *testing.T, env map[string]string) *Stack {
 }
 
 // SignUp makes a verified user with a workspace of their own.
-func (s *Stack) SignUp(t *testing.T, name, email string) Person {
+func (s *Stack) SignUp(t testing.TB, name, email string) Person {
 	t.Helper()
 
 	db, err := s.App.DB()
@@ -100,7 +100,7 @@ func (s *Stack) SignUp(t *testing.T, name, email string) Person {
 }
 
 // AddMember puts a person in another's workspace with a role.
-func (s *Stack) AddMember(t *testing.T, workspaceID int64, p Person, role string) {
+func (s *Stack) AddMember(t testing.TB, workspaceID int64, p Person, role string) {
 	t.Helper()
 
 	db, err := s.App.DB()
@@ -116,7 +116,7 @@ func (s *Stack) AddMember(t *testing.T, workspaceID int64, p Person, role string
 }
 
 // Browser is a signed-in browser of p, working in workspace id.
-func (s *Stack) Browser(t *testing.T, p Person, workspaceID int64) *vukemtest.Client {
+func (s *Stack) Browser(t testing.TB, p Person, workspaceID int64) *vukemtest.Client {
 	t.Helper()
 
 	return s.App.Client(t).WithHeader("Sec-Fetch-Site", "same-origin").ActingAs("web", p.User).
@@ -142,7 +142,7 @@ func AuthorizeQuery(challenge string, scopes ...string) url.Values {
 
 // Consent asks for consent as p working in workspace id and returns the form
 // the screen shows: the action and the hidden fields.
-func (s *Stack) Consent(t *testing.T, p Person, workspaceID int64, q url.Values) (action string, form url.Values) {
+func (s *Stack) Consent(t testing.TB, p Person, workspaceID int64, q url.Values) (action string, form url.Values) {
 	t.Helper()
 
 	res := s.Browser(t, p, workspaceID).Inertia("").Get("/authorize?" + q.Encode()).AssertOK()
@@ -168,7 +168,7 @@ func (s *Stack) Consent(t *testing.T, p Person, workspaceID int64, q url.Values)
 
 // Approve runs the consent as p and returns the code the client is sent back
 // with.
-func (s *Stack) Approve(t *testing.T, p Person, workspaceID int64, q url.Values) (code string) {
+func (s *Stack) Approve(t testing.TB, p Person, workspaceID int64, q url.Values) (code string) {
 	t.Helper()
 
 	action, form := s.Consent(t, p, workspaceID, q)
@@ -189,14 +189,14 @@ func (s *Stack) Approve(t *testing.T, p Person, workspaceID int64, q url.Values)
 }
 
 // Token posts a request to the token endpoint as the client.
-func (s *Stack) Token(t *testing.T, form url.Values) *vukemtest.Response {
+func (s *Stack) Token(t testing.TB, form url.Values) *vukemtest.Response {
 	t.Helper()
 
 	return s.App.Client(t).PostForm("/token", form)
 }
 
 // Authorize runs the whole flow and returns the tokens.
-func (s *Stack) Authorize(t *testing.T, p Person, workspaceID int64, scopes ...string) Tokens {
+func (s *Stack) Authorize(t testing.TB, p Person, workspaceID int64, scopes ...string) Tokens {
 	t.Helper()
 
 	verifier, challenge := Verifier()
@@ -216,7 +216,7 @@ func (s *Stack) Authorize(t *testing.T, p Person, workspaceID int64, scopes ...s
 }
 
 // Call posts one JSON-RPC request to /mcp with the access token.
-func (s *Stack) Call(t *testing.T, access, method string, params map[string]any) *vukemtest.Response {
+func (s *Stack) Call(t testing.TB, access, method string, params map[string]any) *vukemtest.Response {
 	t.Helper()
 
 	c := s.App.Client(t).WithHeader("Accept", "application/json").

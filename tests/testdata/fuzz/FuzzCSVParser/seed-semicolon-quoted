@@ -1,0 +1,8 @@
+go test fuzz v1
+[]byte("Date;Description;Amount\n01/03/2026;\"a;b\";\"1.234,56\"\n")
+string("Date")
+string("Description")
+string("Amount")
+string("")
+string("02/01/2006")
+bool(false)

@@ -1,0 +1,11 @@
+go test fuzz v1
+bool(true)
+bool(false)
+bool(false)
+bool(true)
+bool(false)
+int64(1)
+string("{\"generated_through\":\"2026-01-01\"}")
+string("{\"generated_through\":\"2999-01-01\"}")
+string("2026-11-22")
+uint8(2)

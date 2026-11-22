@@ -1,0 +1,3 @@
+go test fuzz v1
+string("\u0661\u0662\u0663")
+int64(0)
