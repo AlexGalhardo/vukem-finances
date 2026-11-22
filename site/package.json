@@ -6,7 +6,8 @@
   "type": "module",
   "scripts": {
     "dev": "bun --bun astro dev",
-    "build": "bun --bun astro build && bun scripts/sitemap.ts && bun scripts/twins.ts",
+    "build": "bun --bun astro build && bun scripts/sitemap.ts && bun scripts/twins.ts && bun scripts/search.ts",
+    "build:search": "bun scripts/search.ts",
     "preview": "bun --bun astro preview",
     "typecheck": "bun --bun tsc --noEmit",
     "check:claims": "bun scripts/check-claims.ts && bun scripts/check-doc-claims.ts",
@@ -29,6 +30,7 @@
     "github-slugger": "2.0.0",
     "gray-matter": "4.0.3",
     "lucide-react": "1.72.0",
+    "pagefind": "1.6.0",
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "rehype-slug": "6.0.0",

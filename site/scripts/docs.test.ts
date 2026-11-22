@@ -228,6 +228,7 @@ describe("the built documentation", () => {
       ["bun", "--bun", "astro", "build"],
       ["bun", "scripts/sitemap.ts"],
       ["bun", "scripts/twins.ts"],
+      ["bun", "scripts/search.ts"],
     ]) {
       const proc = Bun.spawn(cmd, { cwd: root, env, stdout: "pipe", stderr: "pipe" });
       if ((await proc.exited) !== 0)
@@ -238,7 +239,11 @@ describe("the built documentation", () => {
   const options = { origin, termsApproved: false };
   const planted = (slug: string, change: (html: string) => string): string => {
     const dir = fs.mkdtempSync(path.join(tmp, "planted-"));
-    fs.cpSync(out, dir, { recursive: true });
+    fs.cpSync(out, dir, {
+      recursive: true,
+      // The checks only look for the Pagefind library; its many index fragments would slow every copy.
+      filter: (source) => !/[/\\]pagefind[/\\](fragment|index)([/\\]|$)/.test(source),
+    });
     fs.writeFileSync(docs(dir, slug), change(fs.readFileSync(docs(dir, slug), "utf8")));
     return checkBuilt(dir, options).join("\n");
   };
@@ -285,10 +290,14 @@ describe("the built documentation", () => {
     expect(html).toMatch(/<div class="table-scroll" tabindex="0" role="region" aria-label="Table: /);
   });
 
-  test("the pages use no script, form or other origin, and work without JavaScript", () => {
+  test("the pages use no form or other origin and work without JavaScript; the search is the only script", () => {
     for (const slug of ["run/docker", "integrate/cli", "operate/environment"]) {
       const html = fs.readFileSync(docs(out, slug), "utf8");
-      expect(html).not.toMatch(/<script|<form/i);
+      expect(html).not.toMatch(/<form/i);
+      // The one script only shows the search box (it is hidden in the HTML); the content needs no JavaScript.
+      expect(html.match(/<script[\s>]/gi)).toHaveLength(1);
+      expect(html).toMatch(/<script type="module">/);
+      expect(html).toMatch(/data-docs-search[^>]*\shidden/);
     }
   });
 
