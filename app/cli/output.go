@@ -13,6 +13,7 @@ import (
 	"strings"
 	"text/tabwriter"
 	"unicode"
+	"unicode/utf8"
 
 	"github.com/AlexGalhardo/vukem-finances/app/finance"
 )
@@ -252,13 +253,12 @@ func quoteCSV(s string) string {
 
 // csvSafe neutralizes formula injection: a spreadsheet runs a cell whose first
 // meaningful character is = + - @ (or its full-width form), after skipping
-// whitespace, control and format characters and a quote. A reader using ; or a
-// tab can misread the quoting of a comma-separated line and start a cell in the
-// middle of this one, so every segment after ; tab CR or LF is guarded with its
-// own apostrophe. A comma is a boundary only in a cell with a line break, where
-// a reader that splits lines first loses the quotes; otherwise the reader that
-// splits on it honors them. A text value is exempt only when the whole of it is
-// a plain negative decimal ("-10.50"); a real number is written bare by writeCSV.
+// whitespace, control and format characters and a quote. A reader with another
+// delimiter, or one that splits lines first, ignores the quoting and can start
+// a cell in the middle of this one, so every segment after a separator or line
+// break is guarded with its own apostrophe. A text value is exempt only when
+// the whole of it is a plain negative decimal ("-10.50"); a real number is
+// written bare by writeCSV.
 func csvSafe(s string) string {
 	if s == "" || plainNegative(s) {
 		return s
@@ -269,12 +269,11 @@ func csvSafe(s string) string {
 	b.Grow(len(s) + 1)
 
 	atStart, segment, copied := true, 0, 0
-	multiline := strings.ContainsAny(s, "\r\n")
 
 	for i, r := range s {
 		switch {
-		case r == ';' || r == '\t' || r == '\r' || r == '\n' || (multiline && r == ','):
-			atStart, segment = true, i+1
+		case csvBoundary(r):
+			atStart, segment = true, i+utf8.RuneLen(r)
 		case !atStart:
 		case r == '"' || unicode.IsSpace(r) || unicode.IsControl(r) || unicode.Is(unicode.Cf, r):
 		default:
@@ -293,6 +292,16 @@ func csvSafe(s string) string {
 	b.WriteString(s[copied:])
 
 	return b.String()
+}
+
+// csvBoundary is a character some reader may take as the end of a cell or line.
+func csvBoundary(r rune) bool {
+	switch r {
+	case ',', ';', '\t', '\n', '\r', '\v', '\f', 0x1C, 0x1D, 0x1E, 0x85, 0x2028, 0x2029:
+		return true
+	}
+
+	return false
 }
 
 // plainNegative matches -123 and -123.45 and nothing else.

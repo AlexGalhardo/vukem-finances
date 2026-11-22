@@ -42,7 +42,10 @@ func TestOutputCSVDelimiterGuard(t *testing.T) {
 		"-10.50":     "-10.50",
 		"a-b;c+d":    "a-b;c+d",
 		"a,b":        "a,b",
-		"a,-b":       "a,-b",
+		"a,-b":       "a,'-b",
+		"a =1":       "a '=1",
+		"a\u0085@b":  "a\u0085'@b",
+		"a\v+b":      "a\v'+b",
 		"say \"hi\"": "say \"hi\"",
 	}
 
