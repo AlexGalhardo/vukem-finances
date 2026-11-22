@@ -30,4 +30,24 @@ The first targets come from the plan of epic 24: p95 under 300 ms for lists and 
 
 ## Measurements
 
-See the last run in the hand-off of the task; the script prints the same table.
+Last run, one developer machine shared with other work, 20 clients, `go run ./scripts/qa/loadtest -check` (exit 1, budgets not met):
+
+| Scenario | p50 (ms) | p95 (ms) | Budget (ms) | Result |
+| --- | --- | --- | --- | --- |
+| `dashboard` | 4440 | 7493 | 300 | over; 72 of 300 requests answered 429 (the per-user web rate limit) |
+| `transactions_list` | 2427 | 4557 | 300 | over |
+| `transactions_filtered` | 1114 | 1555 | 300 | over |
+| `reports` | 1264 | 2578 | 300 | over |
+| `export_csv_50k` | 1567 | 1602 | 1000 | over |
+| `api_list_small` | 35 | 61 | 300 | ok |
+| `sync_pull` | 72 | 110 | 300 | ok |
+| `sync_push` | 1058 | 2571 | 300 | over |
+| `mcp_tools_list` | 2 | 5 | 300 | ok |
+| `mcp_transactions_list` | 1984 | 3235 | 300 | over |
+| `mixed_load` | 974 | 3598 | 300 | over |
+
+No `database is locked` error appeared in any client response or in the server log.
+
+The same run with one client (`-clients 1 -requests 30`), which shows the cost of a request with no queueing: dashboard 473 ms p50, list page 253 ms, reports 166 ms (p95 639), export 1196 ms, sync push 40 ms (866 ms before QA-500), sync pull 11 ms.
+
+The misses are recorded as QA-503 in `rounds.md`.

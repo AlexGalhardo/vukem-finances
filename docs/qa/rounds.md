@@ -57,3 +57,45 @@ carries a test written first, in its own commit, with `Refs: epic 24 task N` and
 - **Evidence:** crash `ca1206377a9ce3d8` (now a regression seed) and `TestRecurrenceEndDateInYearOne`.
 - **Severity:** Low (a date no person enters; the TypeScript engine in `resources/js/lib/recurrence.ts` was not checked).
 - **Status:** fixed with an explicit `hasEnd` flag.
+
+The entries of task 10 (load, budgets and drills) are numbered from QA-500.
+
+## QA-500: a sync push scans every row of the workspace once per transaction
+
+- **Surface:** `POST /api/v1/sync/push`.
+- **Steps:** seed one workspace of 100000 transactions, push a batch of 20 new transactions (`go run ./scripts/qa/loadtest`, scenario `sync_push`).
+- **Expected:** a push of 20 mutations well inside the 300 ms budget.
+- **Actual:** 866 ms median for one client, 26 s p95 under 20 clients. The monthly quota count used `substr(occurred_on, 1, 7) = ?`, which SQLite cannot answer from the index, so it read every row of the workspace for every pushed transaction.
+- **Evidence:** `TestMonthQuotaCountUsesTheDateIndex` (query plan). After the fix one client measures 40 ms median for the same push.
+- **Severity:** Medium.
+- **Status:** fixed (`fix(sync): count the month quota by a date range so the index answers it`).
+
+## QA-501: a crash while an import is queued loses the job for good
+
+- **Surface:** web import (`POST /import/{import}`), the import queue.
+- **Steps:** `go run ./scripts/qa/drills kill-import`: upload a 20000 row CSV, confirm it, kill the server while the confirm request runs, start it again.
+- **Expected:** after the restart the import finishes once (all rows, none doubled), or the person can confirm it again.
+- **Actual:** the rows are never half written (the import is one transaction), but the import stays `queued` forever: the queue is in process memory (there is no `queue_jobs` table), nothing re-dispatches a `queued` import at boot, and `ConfirmImport` only accepts an `uploaded` one, so it cannot be confirmed again either.
+- **Evidence:** the drill fails with `the import is still "queued" 45 s after the restart with 0 rows`.
+- **Severity:** Medium.
+- **Status:** open. The fix is a choice: re-dispatch the imports still `queued` at boot (a start-up hook), accept a second confirmation for a `queued` import older than a few minutes, or move the queue to the database queue the framework offers (`QUEUE_CONNECTION=database`). It touches how background work is made durable, so it goes to the orchestrator.
+
+## QA-502: the full migration rollback failed
+
+- **Surface:** `migrate:rollback` of the whole history.
+- **Steps:** migrate a fresh database up, roll every migration back.
+- **Expected:** every `Down` runs.
+- **Actual:** the `Down` of the credit cards migration failed (`error in trigger transactions_changes_update after drop column: no such column: OLD.statement_ref`); behind it the Downs of the transfers, tags and sync columns migrations failed too (a trigger still named the dropped column; a `Rebuild` that did not say which columns and index to lose).
+- **Evidence:** `TestFullRollbackFromFreshDatabase`.
+- **Severity:** Medium.
+- **Status:** fixed (`fix(db): make a full migrate:rollback run from a fresh database`). The migrations are frozen, so the registry wraps their `Down` (`database/migrations/rollback_fixes.go`).
+
+## QA-503: lists, the dashboard and the export miss their budgets at 100000 rows
+
+- **Surface:** dashboard, transaction list, reports, CSV export, MCP `transactions_list`.
+- **Steps:** `go run ./scripts/qa/loadtest -check`.
+- **Expected:** the budgets of `perf-budgets.md`.
+- **Actual:** see the table in `perf-budgets.md`: one client alone already measures about 470 ms for the dashboard, 250 ms for a list page, 170 to 640 ms for the reports and 1.2 s for the 50000 row export, and 20 clients multiply that by the queueing of a single SQLite writer and the CPU of the machine.
+- **Evidence:** the load test output.
+- **Severity:** Medium.
+- **Status:** open. Budgets are not loosened. Suspected causes, not yet confirmed: `TransactionPage` runs a full `COUNT(*)` of the workspace for every page, and the dashboard and the reports aggregate over all rows of the period on each request. Options are a covering index on `(workspace_id, deleted_at, occurred_on)` (a migration), a cached total, or a summary table; each changes the data model, so it goes to the orchestrator.
