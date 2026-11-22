@@ -338,42 +338,48 @@ func (s *Service) setGoalArchived(ctx context.Context, id int64, at any) (models
 func (s *Service) DeleteGoal(ctx context.Context, id int64) error {
 	at := s.now().UTC()
 
-	return s.DB.Tx(ctx, func(tx *database.Tx) error {
-		if err := softDelete[models.Goal](ctx, tx, id, at); err != nil {
-			return err
-		}
+	return s.DB.Tx(ctx, func(tx *database.Tx) error { return deleteGoalIn(ctx, tx, id, at) })
+}
 
-		_, err := workspaces.Scoped[models.GoalContribution](ctx, tx).Where("goal_id", id).
-			Update(ctx, orm.Set{"deleted_at": at})
-
+// deleteGoalIn is DeleteGoal inside a transaction.
+func deleteGoalIn(ctx context.Context, tx *database.Tx, id int64, at time.Time) error {
+	if err := softDelete[models.Goal](ctx, tx, id, at); err != nil {
 		return err
-	})
+	}
+
+	_, err := workspaces.Scoped[models.GoalContribution](ctx, tx).Where("goal_id", id).
+		Update(ctx, orm.Set{"deleted_at": at})
+
+	return err
 }
 
 // RestoreGoal brings back a goal deleted less than RestoreWindow ago with the
 // contributions that were deleted with it (not the ones deleted earlier).
 func (s *Service) RestoreGoal(ctx context.Context, id int64) (models.Goal, error) {
-	err := s.DB.Tx(ctx, func(tx *database.Tx) error {
-		g, err := trashed[models.Goal](ctx, tx, s.now(), id)
-		if err != nil {
-			return err
-		}
-
-		if _, err := workspaces.Scoped[models.Goal](ctx, tx).OnlyTrashed().Where("id", id).
-			Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
-			return err
-		}
-
-		_, err = workspaces.Scoped[models.GoalContribution](ctx, tx).OnlyTrashed().Where("goal_id", id).
-			Where("deleted_at", g.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil})
-
-		return err
-	})
+	err := s.DB.Tx(ctx, func(tx *database.Tx) error { return restoreGoalIn(ctx, tx, s.now(), id) })
 	if err != nil {
 		return models.Goal{}, err
 	}
 
 	return reload[models.Goal](ctx, s.DB, id)
+}
+
+// restoreGoalIn is RestoreGoal inside a transaction.
+func restoreGoalIn(ctx context.Context, tx *database.Tx, now time.Time, id int64) error {
+	g, err := trashed[models.Goal](ctx, tx, now, id)
+	if err != nil {
+		return err
+	}
+
+	if _, err := workspaces.Scoped[models.Goal](ctx, tx).OnlyTrashed().Where("id", id).
+		Update(ctx, orm.Set{"deleted_at": nil}); err != nil {
+		return err
+	}
+
+	_, err = workspaces.Scoped[models.GoalContribution](ctx, tx).OnlyTrashed().Where("goal_id", id).
+		Where("deleted_at", g.DeletedAt.V).Update(ctx, orm.Set{"deleted_at": nil})
+
+	return err
 }
 
 // AddContribution puts an amount towards a goal. The goal must be open

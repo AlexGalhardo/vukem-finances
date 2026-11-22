@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"slices"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -192,28 +193,33 @@ func (s *Service) DeleteTag(ctx context.Context, id int64) error {
 			return err
 		}
 
-		if err := softDelete[models.Tag](ctx, tx, id, at); err != nil {
-			return err
-		}
-
-		txIDs, err := workspaces.Scoped[models.TransactionTag](ctx, tx).Where("tag_id", id).
-			Pluck[int64](ctx, "transaction_id")
-		if err != nil {
-			return err
-		}
-
-		if _, err := workspaces.Scoped[models.TransactionTag](ctx, tx).Where("tag_id", id).Delete(ctx); err != nil {
-			return err
-		}
-
-		for _, txID := range txIDs {
-			if err := syncTagUIDs(ctx, tx, txID); err != nil {
-				return err
-			}
-		}
-
-		return nil
+		return deleteTagIn(ctx, tx, id, at)
 	})
+}
+
+// deleteTagIn is DeleteTag inside a transaction that holds the workspace lock.
+func deleteTagIn(ctx context.Context, tx *database.Tx, id int64, at time.Time) error {
+	if err := softDelete[models.Tag](ctx, tx, id, at); err != nil {
+		return err
+	}
+
+	txIDs, err := workspaces.Scoped[models.TransactionTag](ctx, tx).Where("tag_id", id).
+		Pluck[int64](ctx, "transaction_id")
+	if err != nil {
+		return err
+	}
+
+	if _, err := workspaces.Scoped[models.TransactionTag](ctx, tx).Where("tag_id", id).Delete(ctx); err != nil {
+		return err
+	}
+
+	for _, txID := range txIDs {
+		if err := syncTagUIDs(ctx, tx, txID); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 // tagIDsOf lists the tags attached to a transaction.
