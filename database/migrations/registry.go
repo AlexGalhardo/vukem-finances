@@ -31,5 +31,6 @@ func All() []schema.Migration {
 		m20261122140200CreateNotifications(),
 		m20261123100000AddReportIndexes(),
 		m20261123100000CreateTelegramTables(),
+		m20261123180000CreateSyncDevicesAndOps(),
 	}
 }
