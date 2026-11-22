@@ -285,6 +285,21 @@ describe("the checks fail on planted problems", () => {
   });
 });
 
+describe("pictures", () => {
+  test("each screenshot has a WebP and a PNG of at most 150 KB, and the share image is 1200 by 630", () => {
+    const dir = path.join(root, "public", "landing");
+    const files = fs.readdirSync(dir);
+    expect(files.length).toBeGreaterThan(0);
+    for (const file of files) expect(fs.statSync(path.join(dir, file)).size, file).toBeLessThanOrEqual(153600);
+    for (const name of ["dashboard", "transactions", "reports"]) {
+      expect(files).toContain(`${name}.webp`);
+      expect(files).toContain(`${name}.png`);
+    }
+    const og = fs.readFileSync(path.join(root, "public", "og.png"));
+    expect([og.readUInt32BE(16), og.readUInt32BE(20)]).toEqual([1200, 630]);
+  });
+});
+
 describe("markdown", () => {
   test("escapes markup and renders the supported syntax", () => {
     const { html, title } = renderMarkdown(

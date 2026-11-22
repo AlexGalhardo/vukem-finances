@@ -12,6 +12,7 @@
     "check:claims": "bun scripts/check-claims.ts",
     "check:built": "bun scripts/check-built.ts",
     "screenshots": "bun scripts/screenshots.ts",
+    "og": "bun scripts/og-image.ts",
     "test:site": "bun test scripts"
   },
   "dependencies": {
