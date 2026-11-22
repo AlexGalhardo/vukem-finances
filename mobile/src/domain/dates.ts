@@ -40,7 +40,10 @@ function utcDay(date: string): number {
 	if (m === null) {
 		throw new RangeError(`not an ISO date: ${date}`);
 	}
-	return Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])) / MS_PER_DAY;
+	// setUTCFullYear, not Date.UTC: the latter reads years 0 to 99 as 1900 to 1999.
+	const d = new Date(0);
+	d.setUTCFullYear(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+	return d.getTime() / MS_PER_DAY;
 }
 
 /** Moves an ISO date by n days. */
