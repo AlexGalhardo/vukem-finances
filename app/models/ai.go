@@ -39,6 +39,9 @@ type WorkspaceAISettings struct {
 	MonthlyCallLimit int          `json:"monthly_call_limit"`
 	EnabledBy        int64        `json:"enabled_by"`
 	EnabledAt        orm.NullTime `json:"enabled_at"`
+	// AutoApplySuggestions applies category suggestions of at least 90 % confidence
+	// without a review; off by default.
+	AutoApplySuggestions bool `json:"auto_apply_suggestions"`
 }
 
 // Table maps WorkspaceAISettings to workspace_ai_settings.
