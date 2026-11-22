@@ -1,0 +1,9 @@
+go test fuzz v1
+string("test-client")
+string("https://client.example.test/callback")
+string("token")
+string("plain")
+string("E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM")
+string("*")
+string("https://other.example/mcp")
+string("\r\nX: y")

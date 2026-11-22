@@ -1,0 +1,11 @@
+go test fuzz v1
+bool(true)
+bool(false)
+bool(false)
+bool(false)
+bool(false)
+int64(-1)
+string("{\"amount_cents\":1}")
+string("{\"amount_cents\":1.0,\"x\":null}")
+string("bad")
+uint8(255)

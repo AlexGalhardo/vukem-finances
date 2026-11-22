@@ -1,0 +1,8 @@
+go test fuzz v1
+[]byte("\xef\xbb\xbfDate,Description,Amount\r\n2026-13-45,x,1\r\n")
+string("Date")
+string("Description")
+string("Amount")
+string("")
+string("")
+bool(false)

@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("[{\"op_id\":\"01JD5Z8K3M4N5P6Q7R8S9T0V1W\",\"entity\":\"nothing\",\"uid\":\"x\",\"op\":\"explode\",\"base_seq\":-1,\"fields\":{\"__proto__\":1}}]")

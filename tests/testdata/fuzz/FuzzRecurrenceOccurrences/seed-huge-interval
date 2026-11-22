@@ -1,0 +1,9 @@
+go test fuzz v1
+string("monthly")
+int(1000000)
+string("2026-01-31")
+string("")
+int(0)
+string("2026-01-01")
+string("2026-12-31")
+int(0)

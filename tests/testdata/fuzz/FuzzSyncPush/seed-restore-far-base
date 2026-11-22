@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("[{\"op_id\":\"01JD5Z8K3M4N5P6Q7R8S9T0V1W\",\"entity\":\"budget\",\"uid\":\"01JD5Z8K3M4N5P6Q7R8S9T0V1Z\",\"op\":\"restore\",\"base_seq\":4611686018427387904,\"fields\":null}]")

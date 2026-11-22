@@ -1,0 +1,2 @@
+go test fuzz v1
+string("STARBUCKS #1234 SP 12/11")

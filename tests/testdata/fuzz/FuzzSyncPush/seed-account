@@ -1,0 +1,2 @@
+go test fuzz v1
+[]byte("[{\"op_id\":\"01JD5Z8K3M4N5P6Q7R8S9T0V1W\",\"entity\":\"account\",\"uid\":\"01JD5Z8K3M4N5P6Q7R8S9T0V1X\",\"op\":\"upsert\",\"base_seq\":0,\"fields\":{\"name\":\"Wallet\",\"kind\":\"cash\"}}]")

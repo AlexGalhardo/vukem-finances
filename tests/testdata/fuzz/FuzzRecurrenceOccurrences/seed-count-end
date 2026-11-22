@@ -1,0 +1,9 @@
+go test fuzz v1
+string("weekly")
+int(2)
+string("2026-02-28")
+string("2026-06-01")
+int(5)
+string("2026-01-01")
+string("2027-01-01")
+int(3)

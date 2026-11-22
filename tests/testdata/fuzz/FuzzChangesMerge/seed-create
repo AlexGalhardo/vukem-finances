@@ -1,0 +1,11 @@
+go test fuzz v1
+bool(false)
+bool(false)
+bool(true)
+bool(false)
+bool(false)
+int64(0)
+string("{}")
+string("{\"name\":\"new\"}")
+string("")
+uint8(0)
