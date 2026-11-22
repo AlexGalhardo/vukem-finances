@@ -90,7 +90,8 @@ func readCSV(content string) ([]string, [][]string, error) {
 func (p CSVParser) Parse(content []byte) ([]StatementRow, error) {
 	m := p.Mapping
 
-	headers, rows, err := readCSV(string(content))
+	// A bank file is often Windows-1252 and may start with a BOM: read it as text, never keep invalid UTF-8.
+	headers, rows, err := readCSV(decodeOFXText(content))
 	if err != nil {
 		return nil, err
 	}
