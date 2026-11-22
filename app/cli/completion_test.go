@@ -13,7 +13,7 @@ import (
 func TestCompletion(t *testing.T) {
 	t.Parallel()
 
-	c, tm := newCLI(t, nil, nil)
+	c, _ := newCLI(t, nil, nil)
 
 	for _, shell := range cli.Shells {
 		t.Run(shell, func(t *testing.T) {
@@ -56,6 +56,8 @@ func TestCompletion(t *testing.T) {
 	t.Run("a program name is used", func(t *testing.T) {
 		t.Parallel()
 
+		c, tm := newCLI(t, nil, nil)
+
 		if code := run(t, c, tm, "completion", "bash", "vf"); code != 0 || !strings.Contains(tm.out.String(), "complete -F _vf_complete vf") {
 			t.Fatalf("exit %d: %s", code, tm.out.String())
 		}
@@ -63,6 +65,8 @@ func TestCompletion(t *testing.T) {
 
 	t.Run("bad input is a usage error", func(t *testing.T) {
 		t.Parallel()
+
+		c, tm := newCLI(t, nil, nil)
 
 		for _, args := range [][]string{{"completion"}, {"completion", "tcsh"}, {"completion", "bash", "x; rm -rf ~"}, {"completion", "bash", "a", "b"}} {
 			if code := run(t, c, tm, args...); code != cli.ExitUsage {
