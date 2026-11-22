@@ -1,25 +1,16 @@
 import { Moon, Sun } from "lucide-react";
-import { type ReactElement, useEffect, useState } from "react";
+import { type ReactElement, useSyncExternalStore } from "react";
 import { useFinanceI18n } from "../lib/i18n";
+import { isDark, setTheme, subscribeTheme } from "../lib/theme";
 import { Button } from "./ui/button";
 
 /** Shows both themes side by side, the current one pressed. */
 export default function ThemeToggle(): ReactElement {
   const { t } = useFinanceI18n();
-  const [dark, setDark] = useState(false);
-
-  useEffect(() => {
-    setDark(document.documentElement.classList.contains("dark"));
-  }, []);
+  const dark = useSyncExternalStore(subscribeTheme, isDark, () => false);
 
   function choose(next: boolean): void {
-    setDark(next);
-    document.documentElement.classList.toggle("dark", next);
-    try {
-      localStorage.setItem("theme", next ? "dark" : "light");
-    } catch {
-      /* Storage may be disabled. */
-    }
+    setTheme(next ? "dark" : "light");
   }
 
   return (

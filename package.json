@@ -17,6 +17,8 @@
     "build:emails": "email export --dir resources/js/emails --outDir resources/emails"
   },
   "dependencies": {
+    "@fontsource-variable/geist": "5.3.0",
+    "@fontsource-variable/geist-mono": "5.3.0",
     "@inertiajs/react": "3.11.0",
     "class-variance-authority": "0.7.1",
     "clsx": "2.1.1",
