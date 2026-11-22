@@ -21,6 +21,7 @@ var (
 	errWrongName      = errs.New(http.StatusUnprocessableEntity, "Type the name of the workspace exactly to confirm.")
 	errAlreadyPending = errs.New(http.StatusConflict, "This workspace is already scheduled for deletion.")
 	errNotPending     = errs.New(http.StatusConflict, "This workspace is not scheduled for deletion.")
+	errGraceEnded     = errs.New(http.StatusConflict, "The grace period has ended: this deletion can no longer be cancelled.")
 	errPersonalErase  = errs.New(http.StatusConflict,
 		"The personal edition has one workspace: use \"Erase all local data\" to remove it.")
 )
@@ -99,6 +100,12 @@ func (s *Service) CancelWorkspaceDeletion(ctx context.Context, actor models.User
 
 		if !ws.PendingDeletion() {
 			return errNotPending
+		}
+
+		// Once due, the purge may already have removed rows: bringing the workspace
+		// back now would hand the person half of their data.
+		if ws.PurgeAt.Valid && !ws.PurgeAt.V.After(s.now()) {
+			return errGraceEnded
 		}
 
 		if _, err := orm.QueryOf[models.Workspace](tx).Where("id", id).Update(ctx, orm.Set{

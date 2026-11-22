@@ -154,6 +154,11 @@ func (s *Service) CancelAccountDeletion(ctx context.Context, u models.User) erro
 			return errAccountNotQueue
 		}
 
+		// Its workspaces share this date, and the purge may have started on them.
+		if fresh.PurgeAt.Valid && !fresh.PurgeAt.V.After(s.now()) {
+			return errGraceEnded
+		}
+
 		// The workspaces of this request carry the very timestamp of the account.
 		ws, err := orm.QueryOf[models.Workspace](tx).Where("state", models.StatePendingDeletion).
 			Where("deletion_requested_by", u.ID).Where("deletion_requested_at", fresh.DeletionRequestedAt.V).Get(ctx)

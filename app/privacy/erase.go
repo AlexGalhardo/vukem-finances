@@ -106,13 +106,27 @@ func (s *Service) ScheduleErase(word string) error {
 		return errWrongErase
 	}
 
-	time.AfterFunc(s.EraseDelay, func() {
-		if err := EraseLocalData(s.DB, s.DatabaseURL); err != nil {
-			s.Log.Error("privacy: erasing the local data failed", "err", err)
-			return
-		}
+	// A double submit must not close the database under the first erase.
+	if !s.erasing.CompareAndSwap(false, true) {
+		return nil
+	}
 
-		s.Log.Info("local data erased")
+	time.AfterFunc(s.EraseDelay, func() {
+		err := EraseLocalData(s.DB, s.DatabaseURL)
+
+		switch {
+		case errors.Is(err, ErrNoDatabaseFile):
+			s.erasing.Store(false)
+			s.Log.Error("privacy: erasing the local data failed", "err", err)
+
+			return
+		case err != nil:
+			// The database is closed by now, so the process cannot serve anything:
+			// end it, and the next start shows the data that is still there.
+			s.Log.Error("privacy: erasing the local data failed", "err", err)
+		default:
+			s.Log.Info("local data erased")
+		}
 
 		if s.Restart != nil {
 			s.Restart()
