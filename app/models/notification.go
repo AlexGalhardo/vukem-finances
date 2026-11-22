@@ -27,6 +27,10 @@ type Notification struct {
 	Email     bool         `json:"email"`
 	EmailedAt orm.NullTime `json:"emailed_at"`
 	ReadAt    orm.NullTime `json:"read_at"`
+	// Telegram says a chat message was wanted, and TelegrammedAt is the claim
+	// of the run that sends it (the same pattern as the mail).
+	Telegram      bool         `json:"telegram"`
+	TelegrammedAt orm.NullTime `json:"telegrammed_at"`
 }
 
 // NotificationPreference is the channel choice of one person for one kind.
@@ -38,6 +42,7 @@ type NotificationPreference struct {
 	Kind        string `json:"kind"`
 	InApp       bool   `json:"in_app"`
 	Email       bool   `json:"email"`
+	Telegram    bool   `json:"telegram"`
 }
 
 // SetTenant implements tenancy.Scoped.
