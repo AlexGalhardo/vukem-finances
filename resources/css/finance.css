@@ -265,6 +265,17 @@
 	}
 }
 
+/* The element a tutorial step points at: an outline, no dimming layer, so the page stays operable. */
+[data-tour-active] {
+	outline: 2px solid var(--vf-focus);
+	outline-offset: 4px;
+}
+@media (forced-colors: active) {
+	[data-tour-active] {
+		outline-color: Highlight;
+	}
+}
+
 /* Forced colors: series lose their hue, so the hatch and the legend carry the difference. */
 @media (forced-colors: active) {
 	svg [class*="fill-chart"],

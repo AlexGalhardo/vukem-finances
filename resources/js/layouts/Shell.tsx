@@ -4,6 +4,7 @@ import {
   ChevronRight,
   CircleHelp,
   CircleUser,
+  GraduationCap,
   Keyboard,
   LogOut,
   Plus,
@@ -47,12 +48,16 @@ import {
   SidebarTrigger,
 } from "../components/ui/sidebar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../components/ui/tooltip";
-import { HelpSheet } from "../help/HelpSheet";
 import { useFinanceI18n } from "../lib/i18n";
 import { isActivePath, type NavItem, navGroups, navHintActionId, navItemsFor } from "../nav";
 import type { SharedProps } from "../page-props";
 import ShellKeyboard from "../shortcuts/ShellKeyboard";
 import { useActionHint } from "../shortcuts/useActionHint";
+import PageHelp from "../tutorial/PageHelp";
+import { helpAction } from "../tutorial/state";
+import TutorialHost from "../tutorial/TutorialHost";
+import { TutorialProvider, useTutorial } from "../tutorial/useTutorial";
+import WelcomeCard from "../tutorial/WelcomeCard";
 
 const DOCS_URL = "https://finances.vukem.dev/docs/";
 
@@ -196,7 +201,7 @@ function NewTransactionButton() {
   );
 }
 
-export default function Shell({ children, notices }: { children: ReactNode; notices: ReactNode }) {
+function ShellFrame({ children, notices }: { children: ReactNode; notices: ReactNode }) {
   const page = usePage<SharedProps>();
   const { auth, workspace } = page.props;
   const { t } = useFinanceI18n();
@@ -204,6 +209,8 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
   const [helpOpen, setHelpOpen] = useState(false);
   const [pageHelpOpen, setPageHelpOpen] = useState(false);
   const announcement = useRouteFocus();
+  const tutorial = useTutorial();
+  const tutorialAction = helpAction(tutorial.state);
 
   // A dialog left open would cover the page the person just asked for.
   useEffect(
@@ -391,7 +398,13 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <DropdownMenuTrigger asChild>
-                        <Button type="button" variant="ghost" size="icon" aria-label={t("helpMenu")}>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          aria-label={t("helpMenu")}
+                          data-tour="help-button"
+                        >
                           <CircleHelp aria-hidden="true" />
                         </Button>
                       </DropdownMenuTrigger>
@@ -404,6 +417,15 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
                       {t("helpThisPage")}
                       <ActionKeys actionId="open-page-help" />
                     </DropdownMenuItem>
+                    {tutorialAction !== "none" && (
+                      <DropdownMenuItem
+                        onSelect={() => (tutorialAction === "resume" ? tutorial.resume() : tutorial.start())}
+                      >
+                        <GraduationCap aria-hidden="true" />
+                        {tutorialAction === "resume" ? t("tutorialResume") : t("tutorialStart")}
+                        <ActionKeys actionId="open-tutorial" />
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
                 <NotificationBell />
@@ -414,6 +436,7 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
             <main id="content" tabIndex={-1} className="outline-none">
               <div className="mx-auto flex w-full max-w-[1200px] flex-col gap-8 px-4 py-6 md:px-8 md:py-8">
                 {notices}
+                <WelcomeCard />
                 {children}
               </div>
             </main>
@@ -423,14 +446,23 @@ export default function Shell({ children, notices }: { children: ReactNode; noti
           </div>
           <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
           <ShortcutHelp open={helpOpen} onOpenChange={setHelpOpen} />
-          <HelpSheet
+          <PageHelp
             open={pageHelpOpen}
             onOpenChange={setPageHelpOpen}
-            title={current ? t(current.labelKey) : workspace.current.name}
-            shortcutActions={["open-palette", "open-shortcut-help", "open-page-help"]}
+            fallbackTitle={current ? t(current.labelKey) : workspace.current.name}
           />
+          <TutorialHost />
         </QuickAdd>
       </SidebarProvider>
     </TooltipProvider>
+  );
+}
+
+/** The signed-in frame, with the tutorial's state around it so the Help menu and the step card share it. */
+export default function Shell(props: { children: ReactNode; notices: ReactNode }) {
+  return (
+    <TutorialProvider>
+      <ShellFrame {...props} />
+    </TutorialProvider>
   );
 }

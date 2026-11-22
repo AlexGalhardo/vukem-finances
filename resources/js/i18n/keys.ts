@@ -19,6 +19,7 @@ import type shell from "./en/shell";
 import type syncPage from "./en/sync";
 import type telegram from "./en/telegram";
 import type tokens from "./en/tokens";
+import type tutorial from "./en/tutorial";
 import type transactions from "./en/transactions";
 
 /** Every translation key. `en` is the typed source of truth; add one `typeof` line per new domain file. */
@@ -44,4 +45,5 @@ export type Key =
   | keyof typeof syncPage
   | keyof typeof telegram
   | keyof typeof tokens
+  | keyof typeof tutorial
   | keyof typeof transactions;
