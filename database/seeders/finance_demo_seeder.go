@@ -195,7 +195,7 @@ func seedDemoCategories(ctx context.Context, tx *database.Tx, workspaceID int64)
 			continue
 		}
 
-		budget := models.Budget{WorkspaceID: workspaceID, CategoryID: category.ID, LimitCents: item.Limit}
+		budget := models.Budget{WorkspaceID: workspaceID, CategoryID: sql.Null[int64]{V: category.ID, Valid: true}, LimitCents: item.Limit}
 		if err := orm.Create(ctx, tx, &budget); err != nil {
 			return nil, err
 		}
