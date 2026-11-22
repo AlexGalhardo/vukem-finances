@@ -112,3 +112,11 @@ func (m *AuditEvent) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
 
 // BeforeCreate stamps the tenant.
 func (m *AuditEvent) BeforeCreate(ctx context.Context) error { return tenancy.Assign(ctx, m) }
+
+// SetTenant implements tenancy.Scoped.
+func (m *TransactionMonthTotal) SetTenant(id tenancy.ID) { m.WorkspaceID = tenantID(id) }
+
+// BeforeCreate stamps the tenant.
+func (m *TransactionMonthTotal) BeforeCreate(ctx context.Context) error {
+	return tenancy.Assign(ctx, m)
+}

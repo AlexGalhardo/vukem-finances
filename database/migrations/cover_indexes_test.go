@@ -57,7 +57,7 @@ func TestTransactionCoverIndexesAnswerTheHotQueries(t *testing.T) {
 		}
 	}
 
-	if _, err := m.Rollback(t.Context(), 1); err != nil {
+	if _, err := m.Rollback(t.Context(), 2); err != nil {
 		t.Fatalf("rollback: %v", err)
 	}
 
