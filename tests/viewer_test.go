@@ -23,7 +23,7 @@ var ownScope = []string{"workspaces.store", "workspaces.switch", "workspace.leav
 	"notifications.read", "notifications.read_all", "notifications.preferences", "devices.destroy", "devices.pair",
 	// The personal export and the account deletion are about the person, not the workspace: any member, a viewer too,
 	// confirms their own password first (tests/privacy_*_test.go).
-	"account.export.confirm", "account.export"}
+	"account.export.confirm", "account.export", "account.deletion.store"}
 
 // ownerOnlyReads are GET routes that are not open to a viewer: polling a PIX
 // payment re-reads it at the provider and can activate it, so it is billing

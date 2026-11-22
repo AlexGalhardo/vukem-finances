@@ -133,6 +133,10 @@ func (r *remote) actor(ctx context.Context) (operations.Actor, error) {
 		return operations.Actor{}, err
 	}
 
+	if user.PendingDeletion() {
+		return operations.Actor{}, forbidden("this account is scheduled for deletion")
+	}
+
 	return operations.NewActor(operations.SurfaceMCP, user, sub.WorkspaceID, role, info.Scopes,
 		"oauth:"+info.ClientID+":"+info.Subject), nil
 }

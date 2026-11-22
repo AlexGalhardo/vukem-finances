@@ -2,14 +2,17 @@ package ledger
 
 import (
 	"encoding/json"
+	"strings"
 	"time"
 
 	"github.com/AlexGalhardo/vukem/auth"
 	"github.com/AlexGalhardo/vukem/errs"
+	"github.com/AlexGalhardo/vukem/inertia"
 	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/accounts"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
+	"github.com/AlexGalhardo/vukem-finances/app/pages"
 	"github.com/AlexGalhardo/vukem-finances/app/privacy"
 	"github.com/AlexGalhardo/vukem-finances/app/requests"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
@@ -156,4 +159,69 @@ func (p *PrivacyHandlers) CancelWorkspaceDeletion(c *web.Ctx) error {
 	}
 
 	return done(c, "/account/privacy", "The deletion was cancelled.")
+}
+
+// DeleteAccount schedules the deletion of the account of the signed-in person:
+// the password and their email typed again. It ends every credential, this
+// session included, so the answer goes to the login page.
+func (p *PrivacyHandlers) DeleteAccount(c *web.Ctx) error {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	in, err := web.Parse(c, requests.DeleteAccountSchema)
+	if err != nil {
+		return err
+	}
+
+	if err := p.confirmPassword(c, u, in.Password); err != nil {
+		return err
+	}
+
+	if !strings.EqualFold(strings.TrimSpace(in.Confirmation), u.Email) {
+		return errs.NewValidation().Add("confirmation", "Type your email address exactly to confirm.")
+	}
+
+	if err := p.svc.RequestAccountDeletion(c.Context(), u); err != nil {
+		return back(c, "/account/privacy", err)
+	}
+
+	if err := p.a.Web.Logout(c); err != nil {
+		return err
+	}
+
+	inertia.ClearHistory(c)
+
+	return c.Redirect("/login")
+}
+
+// ShowAccountDeletion tells a person whose account waits to be deleted when it
+// will be erased, and offers to cancel. It never cancels by itself: signing in
+// is not consent to keep the account.
+func (p *PrivacyHandlers) ShowAccountDeletion(c *web.Ctx) error {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	if !u.PendingDeletion() {
+		return c.Redirect("/dashboard")
+	}
+
+	return pages.AccountDeletion.Render(c, pages.AccountDeletionProps{Email: u.Email, PurgeDate: u.PurgeAt.V.UTC().Format("2006-01-02")})
+}
+
+// CancelAccountDeletion brings the account back.
+func (p *PrivacyHandlers) CancelAccountDeletion(c *web.Ctx) error {
+	u, err := auth.User[models.User](c, "web")
+	if err != nil {
+		return err
+	}
+
+	if err := p.svc.CancelAccountDeletion(c.Context(), u); err != nil {
+		return back(c, "/account/deletion", err)
+	}
+
+	return done(c, "/dashboard", "The deletion of your account was cancelled.")
 }
