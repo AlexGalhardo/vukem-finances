@@ -71,7 +71,12 @@ test("a chat links with the code, the alert switch works and unlink cuts the cha
   // The alert switch sticks across a reload.
   const alerts = page.getByLabel("Send my alerts of this workspace to my linked chats");
   await expect(alerts).not.toBeChecked();
+  // A reload before the answer would cancel the save.
+  const saved = page.waitForResponse(
+    (r) => r.request().method() === "PUT" && new URL(r.url()).pathname === "/settings/telegram/alerts",
+  );
   await alerts.check();
+  await saved;
   await page.reload();
   await expect(alerts).toBeChecked();
   await alerts.uncheck();
