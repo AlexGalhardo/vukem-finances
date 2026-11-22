@@ -71,6 +71,8 @@ func All() []inertia.PageInfo {
 		Tokens.Info(),
 		Telegram.Info(),
 		Devices.Info(),
+		OAuthConsent.Info(),
+		ConnectedApps.Info(),
 		AdminRevenue.Info(),
 		Login.Info(),
 		Register.Info(),
