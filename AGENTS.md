@@ -30,6 +30,7 @@ Ask the edition in one place: `workspaces.Service.Edition`, or `config.LoadEditi
 | `app/operations/` | the operation registry: every action on the finances, declared once, with `Invoke` as the only way in (see "The operation registry") |
 | `app/api/` | the public JSON API: scoped tokens, the middleware chain and the REST adapter over the registry (see "The public API") |
 | `app/cli/` | the command line over the registry: `<resource> <verb>` commands, local and remote mode, table, JSON and CSV output, completion (see "The operation registry") |
+| `app/mcp/` | the MCP server over the registry: tools, resources, prompts and completion, stdio today (see "The MCP server") |
 | `routes/` | HTTP routes (`web.go`, `auth.go`, `finance.go`, `api.go`, `admin.go`, ...) registered by `registry.go` |
 | `database/migrations/` | Go migrations, registered in `registry.go` |
 | `resources/js/` | React pages, components, layouts and React Email templates |
@@ -105,6 +106,17 @@ Read `docs/api.md` ("Adding an operation") first. `app/operations/` is where eve
 - A list that pages uses the opaque `operations.Cursor`. The lists of epic 14 keep their public contract (`?page=N`); the page links are built by the REST adapter, because a URL belongs to the surface.
 - `resources/operations.json` is the inventory, written by `go run ./cmd/app operations:inventory` (no APP_KEY, no database) and checked by `TestOperationInventoryIsFresh`. `TestSurfaceParity` iterates the registry and fails when an operation has no route on a surface it is offered on (epics 31 and 32 add their surfaces to it); `TestOperationIsolation` runs every entry of the inventory in another workspace with the first one's ids; `TestOpenAPIOperationsOfEpic14DidNotChange` holds the published operations to `testdata/openapi/epic14.json`.
 - The CLI (`app/cli/`, epic 31) builds a command from every operation offered on the CLI surface; flags come from the input type. Local mode runs through `Invoke` as the personal owner; remote mode calls REST with a token (`FINANCES_TOKEN`, `auth login`, never a flag). Table and CSV text passes through `cleanText` and the formula guard (`csvSafe`); a destructive command needs `--yes` without a terminal. `docs/reference/cli.md` is generated: `go run ./cmd/app cli:reference` (checked by `TestCLIReferenceIsFresh`); `TestSurfaceParity` fails when an operation loses its command.
+
+## The MCP server
+
+Read `docs/mcp.md` first. `app/mcp/` maps the registry to the Vukem `mcp` package (revision `2026-07-28`); it holds no protocol and no rule. `mcp:serve --stdio` is the personal edition only (it acts as `operations.LocalOwner`); any other edition exits before it serves.
+
+- A tool is an operation: `Op.AddTool` (`app/operations/mcp.go`) registers it and calls `Invoke`, so scope, role, validation and audit are the registry's. The tool name is the operation name with `_` for `.` (`transactions_create`). A new operation gets a tool by itself (`TestSurfaceParity`); one that has none says why in `OptOut[SurfaceMCP]` and `docs/reference/mcp.md` lists it.
+- Read only by default: `MCP_TOOLSETS` (`read`, `transactions`, `planning`, `all`) and `MCP_ALLOW_DESTRUCTIVE` (`config/mcp.go`). A tool outside the toolset is not registered and the actor holds no scope for it. A destructive tool also asks the person through `mcp.Confirm` and is refused when the client cannot ask; annotations are hints, never the enforcement.
+- Put a new operation in a toolset in `InToolset` (`app/mcp/server.go`) and keep `TestToolsets` inside its size budget, or raise the budget on purpose.
+- A result is the user's data: never add text from a result to an instruction, a prompt or a log. A prompt argument goes through `quoted`. A result never carries a secret (`TestSecurity_NoSecretLeaves`).
+- Stdout is for protocol messages only: log to stderr, never print in `app/mcp` or in `mcp:serve`.
+- `docs/reference/mcp.md` is generated: `go run ./cmd/app mcp:reference` (checked by `TestMCPReferenceIsFresh`).
 
 ## The AI layer
 
