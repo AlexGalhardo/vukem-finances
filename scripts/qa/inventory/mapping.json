@@ -1,0 +1,3 @@
+{
+	"webhook:POST /abacatepay/webhook/{secret}": ["TestSecurity_PixWebhook"]
+}
