@@ -12,6 +12,7 @@ import (
 	"iter"
 	"net/http"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/AlexGalhardo/vukem/errs"
 
@@ -140,22 +141,32 @@ func csvRecord(r TransactionRow) []string {
 	}
 }
 
-// textCell guards every piece of s between commas and semicolons. Excel in a
-// locale whose list separator is the other one (pt-BR reads ";") splits the
-// row there without honoring the quoting, so each piece can become a cell.
+// lineBreaks are tabs and the line ends a spreadsheet may split a row at.
+const lineBreaks = "\t\r\n\xc2\x85\xe2\x80\xa8\xe2\x80\xa9"
+
+// textCell guards every piece of s between commas, semicolons and line breaks.
+// Excel in a locale whose list separator is the other one (pt-BR reads ";")
+// splits the row there without honoring the quoting, so each piece can become
+// a cell. Breaks at the start of a piece stay in it: SpreadsheetSafe looks past
+// them, and one quote is enough.
 func textCell(s string) string {
 	var b strings.Builder
 
 	for {
-		i := strings.IndexAny(s, ",;")
+		lead := len(s) - len(strings.TrimLeft(s, lineBreaks))
+
+		i := strings.IndexAny(s[lead:], ",;"+lineBreaks)
 		if i < 0 {
 			b.WriteString(finance.SpreadsheetSafe(s))
 
 			return b.String()
 		}
 
-		b.WriteString(finance.SpreadsheetSafe(s[:i]))
-		b.WriteByte(s[i])
-		s = s[i+1:]
+		end := lead + i
+		_, size := utf8.DecodeRuneInString(s[end:])
+
+		b.WriteString(finance.SpreadsheetSafe(s[:end]))
+		b.WriteString(s[end : end+size])
+		s = s[end+size:]
 	}
 }

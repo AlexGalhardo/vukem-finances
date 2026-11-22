@@ -30,13 +30,16 @@ func TestCSVFormulaBehindSeparator(t *testing.T) {
 
 	_, err := export.WriteCSV(&out, seq(export.TransactionRow{
 		UID: "01J", Date: "2026-01-02", Account: "a, +1", Tags: []string{"ok", "=cmd"}, Kind: "expense",
-		AmountCents: -1, Description: "paid;=HYPERLINK(1)",
+		AmountCents: -1, Description: "paid;=HYPERLINK(1)\n=1+1\ny\xe2\x80\xa8@2\t-3",
 	}), export.CSVOptions{})
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	for _, want := range []string{"paid;'=HYPERLINK(1)", "ok;'=cmd", "a,' +1"} {
+	for _, want := range []string{
+		// encoding/csv writes a line end inside a quoted cell as \r\n under UseCRLF.
+		"paid;'=HYPERLINK(1)", "\r\n'=1+1\r\ny", "\xe2\x80\xa8'@2", "\t'-3", "ok;'=cmd", "a,' +1",
+	} {
 		if !strings.Contains(out.String(), want) {
 			t.Errorf("%q not in %q", want, out.String())
 		}

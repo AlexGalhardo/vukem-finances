@@ -28,7 +28,7 @@ A person can take their data out at any time: a CSV of transactions that opens i
 
 A spreadsheet evaluates a cell that starts with `=`, `+`, `-` or `@` (and some skip a leading tab or carriage return). Every text cell whose first visible character is one of those, or its full-width form, is written with a leading single quote (`'=HYPERLINK(...)`), so it opens as plain text. White space and invisible characters before it do not hide it.
 
-The same guard applies to each piece of text after a comma or semicolon (`paid;'=1+1`), because Excel in a locale with the other list separator splits the row there. The `amount` column is the one exception: it is built from an integer and its minus sign is data.
+The same guard applies to each piece of text after a comma, semicolon, tab or line break (`paid;'=1+1`), because Excel in a locale with the other list separator splits the row there. The `amount` column is the one exception: it is built from an integer and its minus sign is data.
 
 ### Importing it back
 
