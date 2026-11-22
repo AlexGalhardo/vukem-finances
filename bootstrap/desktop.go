@@ -4,7 +4,6 @@ import (
 	"context"
 	"net"
 	"net/http"
-	"strings"
 
 	vukem "github.com/AlexGalhardo/vukem"
 	"github.com/AlexGalhardo/vukem/router"
@@ -18,9 +17,10 @@ import (
 // answer 403 without the window's cookie. The caller owns ln (bind it to
 // 127.0.0.1 first, so there is no port race) and passes the result to New.
 //
-// shell, when not nil, answers the paths under /desktop/ (the native actions of
-// the window, such as saving a file); it runs behind the gate like the app.
-func DesktopOptions(gate *desktopgate.Gate, ln net.Listener, shell http.Handler) []vukem.Option {
+// wrap, when not nil, wraps the app handler inside the gate: the desktop shell
+// uses it to answer the paths under /desktop/ (native actions of the window,
+// such as saving a file) and to add its script to the pages.
+func DesktopOptions(gate *desktopgate.Gate, ln net.Listener, wrap func(http.Handler) http.Handler) []vukem.Option {
 	return []vukem.Option{
 		vukem.WithoutHTTP(),
 		vukem.WithRoutesAfterBoot(func(_ *router.Router, app *vukem.App) error {
@@ -30,8 +30,8 @@ func DesktopOptions(gate *desktopgate.Gate, ln net.Listener, shell http.Handler)
 					return err
 				}
 
-				if shell != nil {
-					h = withShell(h, shell)
+				if wrap != nil {
+					h = wrap(h)
 				}
 
 				srv := vukem.NewHTTPServer(ln.Addr().String(), gate.Wrap(h))
@@ -45,16 +45,4 @@ func DesktopOptions(gate *desktopgate.Gate, ln net.Listener, shell http.Handler)
 			return nil
 		}),
 	}
-}
-
-// withShell sends /desktop/ to shell and everything else to app.
-func withShell(app, shell http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.HasPrefix(r.URL.Path, "/desktop/") {
-			shell.ServeHTTP(w, r)
-			return
-		}
-
-		app.ServeHTTP(w, r)
-	})
 }

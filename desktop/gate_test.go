@@ -2,10 +2,12 @@ package main
 
 import (
 	"bytes"
+	"io"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -125,5 +127,54 @@ func TestSafeFileName(t *testing.T) {
 		if got := safeFileName(in); got != want {
 			t.Errorf("safeFileName(%q) = %q, want %q", in, got, want)
 		}
+	}
+}
+
+func TestShellInjectsTheScriptIntoHTMLPages(t *testing.T) {
+	s, c := shellServer(t, nil, nil)
+
+	get := func(path, accept string) (*http.Response, string) {
+		req, err := http.NewRequestWithContext(t.Context(), http.MethodGet, s.Origin()+path, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		req.Header.Set("Accept", accept)
+
+		res, err := c.Do(req)
+		if err != nil {
+			t.Fatal(err)
+		}
+
+		defer res.Body.Close()
+
+		body, _ := io.ReadAll(res.Body)
+
+		return res, string(body)
+	}
+
+	res, body := get("/setup", "text/html")
+	if !strings.Contains(body, scriptTag+"</head>") {
+		t.Errorf("the setup page has no shell script tag before </head>")
+	}
+
+	if res.Header.Get("Content-Length") != strconv.Itoa(len(body)) {
+		t.Errorf("Content-Length = %q, body is %d bytes", res.Header.Get("Content-Length"), len(body))
+	}
+
+	if res.Header.Get("Referrer-Policy") != "no-referrer" {
+		t.Errorf("Referrer-Policy = %q, want no-referrer", res.Header.Get("Referrer-Policy"))
+	}
+
+	if _, js := get("/desktop/shell.js", "*/*"); !strings.Contains(js, "__VF_DESKTOP__") {
+		t.Error("/desktop/shell.js does not serve the shell script")
+	}
+
+	if _, asset := get("/build/manifest.json", "*/*"); strings.Contains(asset, scriptTag) {
+		t.Error("a non-HTML response was rewritten")
+	}
+
+	if _, page := get("/setup", "application/json"); strings.Contains(page, scriptTag) {
+		t.Error("a response to a non-HTML request was rewritten")
 	}
 }

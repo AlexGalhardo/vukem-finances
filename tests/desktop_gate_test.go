@@ -226,3 +226,29 @@ func TestSecurity_GateCookieAloneCannotBypassSetupSecret(t *testing.T) {
 
 	c.Get("/setup").AssertOK().AssertInertia("Setup").PropEquals("codeRequired", true)
 }
+
+func TestSecurity_GateHeadersSurviveTheApp(t *testing.T) {
+	t.Parallel()
+
+	srv, entry, client, _ := gatedServer(t)
+
+	if got := status(t, client, get(t, entry)); got != http.StatusSeeOther {
+		t.Fatalf("exchange = %d, want 303", got)
+	}
+
+	res, err := client.Do(get(t, srv.URL+"/setup"))
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	_ = res.Body.Close()
+
+	// The app sets strict-origin-when-cross-origin itself; the gate wins.
+	if got := res.Header.Get("Referrer-Policy"); got != "no-referrer" {
+		t.Errorf("Referrer-Policy = %q, want no-referrer", got)
+	}
+
+	if csp := strings.Join(res.Header.Values("Content-Security-Policy"), "; "); !strings.Contains(csp, "frame-ancestors 'none'") {
+		t.Errorf("Content-Security-Policy = %q, want frame-ancestors 'none'", csp)
+	}
+}
