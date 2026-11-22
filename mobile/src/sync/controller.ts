@@ -165,7 +165,7 @@ export class SyncController {
   /** The separate, confirmed action that deletes the data on this phone. */
   async resetLocalData(): Promise<void> {
     const { db } = this.s;
-    await db.transaction(async () => {
+    await db.transaction(async (db) => {
       for (const meta of Object.values(ENTITIES)) {
         await db.run(`DELETE FROM ${meta.table}`);
       }
@@ -218,7 +218,7 @@ export class SyncController {
     );
     const p = rows[0];
     if (p === undefined) return;
-    await db.transaction(async () => {
+    await db.transaction(async (db) => {
       const row = await db.all<{ server_seq: number | null }>(
         `SELECT server_seq FROM ${ENTITIES[p.entity].table} WHERE uid = ?`,
         [p.uid],
@@ -247,7 +247,7 @@ export class SyncController {
     );
     const p = rows[0];
     if (p === undefined) return;
-    await db.transaction(async () => {
+    await db.transaction(async (db) => {
       const table = ENTITIES[p.entity].table;
       const row = await db.all<{ server_seq: number | null }>(`SELECT server_seq FROM ${table} WHERE uid = ?`, [p.uid]);
       if (p.op === "upsert" && row[0] !== undefined && row[0].server_seq === null) {

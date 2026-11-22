@@ -164,22 +164,23 @@ export async function saveBudget(db: Database, repo: Repository, input: BudgetIn
     throw new LedgerError("limit", "a budget limit must be a positive amount");
   }
 
-  return db.transaction(async () => {
+  return db.transaction(async (tx) => {
+    const bound = repo.bind(tx);
     if (input.category_uid !== null) {
-      const cat = await repo.get("category", input.category_uid);
+      const cat = await bound.get("category", input.category_uid);
       if (cat === null || cat.kind !== "expense") {
         throw new LedgerError("expense", "a budget belongs to an expense category");
       }
     }
-    const existing = (await repo.list("budget")).find((b) => b.category_uid === input.category_uid);
+    const existing = (await bound.list("budget")).find((b) => b.category_uid === input.category_uid);
     if (existing === undefined) {
-      return repo.create("budget", {
+      return bound.create("budget", {
         category_uid: input.category_uid,
         limit_cents: input.limit_cents,
         rollover: input.rollover ?? false,
       });
     }
-    return repo.update("budget", existing.uid, {
+    return bound.update("budget", existing.uid, {
       limit_cents: input.limit_cents,
       ...(input.rollover === undefined ? {} : { rollover: input.rollover }),
     });

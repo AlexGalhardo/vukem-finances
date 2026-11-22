@@ -134,7 +134,7 @@ export async function migrate(db: Database, migrations: readonly Migration[] = M
     if (m.version <= current) {
       continue;
     }
-    await db.transaction(async () => {
+    await db.transaction(async (db) => {
       for (const sql of m.statements) {
         await db.exec(sql);
       }

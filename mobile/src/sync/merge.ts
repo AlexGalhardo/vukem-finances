@@ -88,7 +88,7 @@ export async function mergeWithServer(deps: MergeDeps): Promise<MergeResult> {
   let merged = 0;
   let queued = 0;
 
-  await db.transaction(async () => {
+  await db.transaction(async (db) => {
     for (const { entity, fields } of BY_NAME) {
       const staged = (
         await db.all<{ uid: string; row: string }>("SELECT uid, row FROM sync_staging WHERE entity = ?", [entity])
@@ -142,7 +142,7 @@ export async function replaceWithServer(deps: MergeDeps, confirmed: true): Promi
   }
   const { db, transport } = deps;
   const cursor = await downloadSnapshot(db, transport);
-  await db.transaction(async () => {
+  await db.transaction(async (db) => {
     await db.run("DELETE FROM outbox");
     await db.run("DELETE FROM sync_problems");
     await db.run("DELETE FROM sync_conflicts");

@@ -100,7 +100,7 @@ export async function handleResults(
   const summary = emptySummary();
   const stats: ApplyStats = { upserts: 0, deletes: 0, conflicts: 0 };
 
-  await db.transaction(async () => {
+  await db.transaction(async (db) => {
     const incomplete = new Map<string, number>();
     for (const [i, entry] of batch.entries.entries()) {
       const result = results[i];

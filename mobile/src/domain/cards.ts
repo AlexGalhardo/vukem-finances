@@ -41,15 +41,16 @@ async function checkCard(repo: Repository, input: CardInput): Promise<void> {
 /** A card is an account of kind credit_card plus its card row, written together. */
 export async function createCard(db: Database, repo: Repository, input: CardInput): Promise<Row<"credit_card">> {
   await checkCard(repo, input);
-  return db.transaction(async () => {
-    const account = await repo.create("account", {
+  return db.transaction(async (tx) => {
+    const bound = repo.bind(tx);
+    const account = await bound.create("account", {
       name: input.name.trim(),
       kind: "credit_card",
       opening_cents: 0,
       archived_at: null,
       position: 0,
     });
-    return repo.create("credit_card", {
+    return bound.create("credit_card", {
       account_uid: account.uid,
       limit_cents: input.limit_cents,
       closing_day: input.closing_day,
@@ -108,16 +109,18 @@ export async function payStatement(
   if (!isIsoDate(input.date)) {
     throw new LedgerError("date", "the date must be a real date");
   }
-  await db.transaction(async () => {
-    const card = await repo.get("credit_card", cardUid);
+  await db.transaction(async (tx) => {
+    const bound = repo.bind(tx);
+    const boundLedger = ledger.bind(tx);
+    const card = await bound.get("credit_card", cardUid);
     if (card === null) {
       throw new LedgerError("not_found", "card not found");
     }
-    const statement = (await cardStatements(db, card, today)).find((s) => s.ref === ref);
+    const statement = (await cardStatements(tx, card, today)).find((s) => s.ref === ref);
     if (statement === undefined) {
       throw new LedgerError("statement", "that statement does not exist");
     }
-    const from = await repo.get("account", input.from_account_uid);
+    const from = await bound.get("account", input.from_account_uid);
     if (from === null) {
       throw new LedgerError("not_found", "account not found");
     }
@@ -131,13 +134,13 @@ export async function payStatement(
       }
       amount = statement.remaining_cents;
     }
-    const made = await ledger.createTransfer({
+    const made = await boundLedger.createTransfer({
       from_account_uid: input.from_account_uid,
       to_account_uid: card.account_uid,
       amount_cents: amount,
       date: input.date,
       description: `Credit card payment ${ref}`,
     });
-    await repo.update("transaction", made.destination, { statement_ref: ref });
+    await bound.update("transaction", made.destination, { statement_ref: ref });
   });
 }

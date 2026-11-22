@@ -169,8 +169,9 @@ export async function generateDue(db: Database, repo: Repository, today: string)
   const rules = (await repo.list("recurrence")).filter((r) => r.active);
 
   for (const rule of rules) {
-    await db.transaction(async () => {
-      const fresh = await repo.get("recurrence", rule.uid);
+    await db.transaction(async (tx) => {
+      const bound = repo.bind(tx);
+      const fresh = await bound.get("recurrence", rule.uid);
       if (fresh === null || !fresh.active) {
         return;
       }
@@ -178,7 +179,7 @@ export async function generateDue(db: Database, repo: Repository, today: string)
       let done: string | null = null;
 
       for (const date of occurrences(ruleOf(fresh), from, today, GENERATE_CAP)) {
-        const reason = await makeOccurrence(db, repo, fresh, date);
+        const reason = await makeOccurrence(tx, bound, fresh, date);
         if (reason !== null && reason !== "held") {
           result.failed.push({ recurrence_uid: fresh.uid, reason });
           break;
@@ -189,7 +190,7 @@ export async function generateDue(db: Database, repo: Repository, today: string)
         done = date;
       }
       if (done !== null) {
-        await repo.update("recurrence", fresh.uid, { generated_through: done });
+        await bound.update("recurrence", fresh.uid, { generated_through: done });
       }
     });
   }
@@ -310,8 +311,9 @@ export async function createInstallments(
   const dates = installmentDates(input.first_date, input.parts);
   const group = newUid();
 
-  return db.transaction(async () => {
-    const account = await repo.get("account", input.account_uid);
+  return db.transaction(async (tx) => {
+    const bound = repo.bind(tx);
+    const account = await bound.get("account", input.account_uid);
     if (account === null) {
       throw new LedgerError("not_found", "account not found");
     }
@@ -336,7 +338,7 @@ export async function createInstallments(
         installment_no: i + 1,
         installment_total: input.parts,
       };
-      out.push(await repo.create("transaction", fields));
+      out.push(await bound.create("transaction", fields));
     }
     return out;
   });

@@ -52,7 +52,7 @@ export async function saveSettings(db: Database, patch: Partial<Settings>): Prom
   if (patch.theme !== undefined) entries.push(["theme", patch.theme]);
   if (patch.onboarded !== undefined) entries.push(["onboarded", patch.onboarded ? "1" : "0"]);
   if (patch.keepSyncQueue !== undefined) entries.push(["keep_sync_queue", patch.keepSyncQueue ? "1" : "0"]);
-  await db.transaction(async () => {
+  await db.transaction(async (db) => {
     for (const [key, value] of entries) {
       await db.run(
         "INSERT INTO meta (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value",
