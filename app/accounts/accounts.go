@@ -99,6 +99,19 @@ func (a *Accounts) RevokeOtherSessions(ctx context.Context, userID int64, keep s
 	return a.revokeServerSessions(ctx, userID, keep)
 }
 
+// RevokeAllAccess ends every credential of userID at once: browser sessions
+// and remember-me tokens, API tokens (so the sync devices they paired), and
+// OAuth grants. The deletion of an account calls it; nothing the person held
+// works after it returns, and none of it comes back when the deletion is cancelled.
+func (a *Accounts) RevokeAllAccess(ctx context.Context, userID int64) error {
+	if err := a.revokeAccess(ctx, a.DB, userID); err != nil {
+		return err
+	}
+
+	// After the revocation committed: the session store may share SQLite's one writer.
+	return a.revokeServerSessions(ctx, userID, "")
+}
+
 // bumpSessionVersion ends every session of userID on the next request.
 func (a *Accounts) bumpSessionVersion(ctx context.Context, ex database.Executor, userID int64) error {
 	_, err := ex.ExecContext(ctx,

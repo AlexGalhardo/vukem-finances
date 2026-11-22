@@ -87,6 +87,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 	}
 
 	priv.Fin = fin
+	priv.Access = acc
 	admins := admin.NewAdmins(app.Source.Get("ADMIN_EMAILS"))
 	required := auth.Required(acc.Web)
 	verified := auth.Verified(acc.Web)
@@ -128,6 +129,9 @@ func Finance(r *router.Router, app *vukem.App) error {
 	exports := ratelimit.Middleware(limiters("workspace.export", config.ExportLimit, config.ExportWindow), byWorkspace)
 
 	privacyConfirm := ratelimit.Middleware(limiters("privacy.confirm", 5, time.Minute), user)
+	privacyHandlers := ledger.NewPrivacy(h, acc, priv, app.Now)
+
+	accountDeletionRoutes(r, privacyHandlers, required, privacyConfirm)
 
 	var aiErr, mcpErr error
 
@@ -135,7 +139,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 	// current one from the session and answers 404 for one the user is not in.
 	// The limits come after it: they need the signed-in user and the workspace.
 	r.Group("", func(g *router.Group) {
-		g.Use(required, verified, ws.Middleware(), ws.Require(workspaces.AbilityRead), ws.RefuseWritesWhilePending(), reads, writes,
+		g.Use(required, verified, pendingAccountGate(), ws.Middleware(), ws.Require(workspaces.AbilityRead), ws.RefuseWritesWhilePending(), reads, writes,
 			shareWorkspace(ws, acc, admins, h.Alerts))
 
 		financeDashboard(g, h)
@@ -150,7 +154,7 @@ func Finance(r *router.Router, app *vukem.App) error {
 		financeImports(g, h, imports)
 		financeReports(g, h)
 		financeWorkspace(g, h)
-		financePrivacy(g, ledger.NewPrivacy(h, acc, priv, app.Now), privacyConfirm)
+		financePrivacy(g, privacyHandlers, privacyConfirm)
 		financeExports(g, h, exports, ws.Require(workspaces.AbilityManageData))
 		financeTokens(g, app, acc, h)
 		financeTelegram(g, bot, h.Alerts)

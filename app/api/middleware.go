@@ -202,6 +202,12 @@ func (a *API) principal(r *http.Request) (Principal, int, error) {
 		return Principal{}, 0, err
 	}
 
+	// An account waiting to be deleted holds no credential: they were revoked at
+	// the request, and this stops one that slipped through.
+	if user.PendingDeletion() {
+		return Principal{}, http.StatusUnauthorized, nil
+	}
+
 	role, member, err := a.WS.MemberRole(ctx, user.ID, ws)
 	if err != nil {
 		return Principal{}, 0, err
