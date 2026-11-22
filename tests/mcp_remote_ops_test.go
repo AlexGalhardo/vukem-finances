@@ -105,26 +105,26 @@ func TestMCPRateLimit(t *testing.T) {
 		ana := s.SignUp(t, "Ana", "ana@example.com")
 		tok := s.Authorize(t, ana, ana.Workspace.ID, "accounts:read")
 
+		// The limit is a count per minute: read resources until it bites, then the
+		// tool of the same grant is limited too, in the same window.
 		limited := false
 
 		for range 130 {
-			if r := callTool(t, s, tok.Access, "accounts_list", map[string]any{}); r.refused() {
-				if !strings.Contains(r.text(), "rate_limited") {
-					t.Fatalf("a refusal that is not a rate limit: %s", r.raw)
-				}
-
+			if r := readResource(t, s, tok.Access, "finances://accounts"); strings.Contains(r.raw, "rate_limited") {
 				limited = true
 
 				break
+			} else if r.Error != nil {
+				t.Fatalf("a read failed for another reason: %s", r.raw)
 			}
 		}
 
 		if !limited {
-			t.Fatal("130 reads in a minute were all served")
+			t.Fatal("130 resource reads in a minute were all served")
 		}
 
-		if r := readResource(t, s, tok.Access, "finances://accounts"); !strings.Contains(r.raw, "rate_limited") {
-			t.Fatalf("a resource read past the limit was not limited: %s", r.raw)
+		if r := callTool(t, s, tok.Access, "accounts_list", map[string]any{}); !strings.Contains(r.text(), "rate_limited") {
+			t.Fatalf("the tool of a limited grant was served: %s", r.raw)
 		}
 
 		// Another person has their own budget (the key is the person, the workspace and the client).
