@@ -386,7 +386,7 @@ function ShellFrame({ children, notices }: { children: ReactNode; notices: React
                   onClick={() => setPaletteOpen(true)}
                 >
                   <Search aria-hidden="true" />
-                  <span className="hidden sm:inline">{t("openPalette")}</span>
+                  <span className="hidden 2xl:inline">{t("openPalette")}</span>
                 </Button>
                 <HeaderIconButton
                   label={t("openShortcutHelp")}
