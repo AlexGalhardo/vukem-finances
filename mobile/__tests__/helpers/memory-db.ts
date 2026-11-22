@@ -1,6 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
 import { type SqlValue, TransactionalDatabase } from "../../src/db/database";
-import { migrate, type Migration } from "../../src/db/migrations";
+import { type Migration, migrate } from "../../src/db/migrations";
 
 /** An in-memory SQLite behind the same Database interface the app uses on a device. */
 export class MemoryDatabase extends TransactionalDatabase {

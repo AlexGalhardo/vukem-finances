@@ -1,10 +1,10 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react-native";
+import { newUid } from "../../src/domain/ids";
 import { BudgetsScreen } from "../../src/screens/BudgetsScreen";
 import { CategoriesScreen } from "../../src/screens/CategoriesScreen";
 import { TagsScreen } from "../../src/screens/TagsScreen";
 import { renderApp } from "../helpers/app";
 import { ACCOUNT, type Env, openEnv, txFields } from "../helpers/fixtures";
-import { newUid } from "../../src/domain/ids";
 
 let env: Env;
 beforeEach(async () => {

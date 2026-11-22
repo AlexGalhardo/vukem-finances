@@ -1,4 +1,4 @@
-import { translate, type Locale } from "./index";
+import { type Locale, translate } from "./index";
 
 /** [singular, plural] of the main and the minor unit of a currency, per language. */
 type Units = { major: readonly [string, string]; minor: readonly [string, string] };

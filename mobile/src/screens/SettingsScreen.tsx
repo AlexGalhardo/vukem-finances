@@ -1,20 +1,20 @@
 import { type ReactNode, useState } from "react";
 import { Text, View } from "react-native";
-import { CURRENCIES, type ThemeSetting } from "../core/settings";
-import { type App, useApp, useLoad } from "../core/state";
 import { backupFileName, buildBackup } from "../backup/export";
 import type { Sharer } from "../backup/share";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";
+import { DeleteButton } from "../components/DeleteButton";
 import { Page } from "../components/Page";
 import { TextField } from "../components/TextField";
 import { Toast } from "../components/Toast";
-import { DeleteButton } from "../components/DeleteButton";
 import { useUi } from "../components/ui";
+import { CURRENCIES, type ThemeSetting } from "../core/settings";
+import { type App, useApp, useLoad } from "../core/state";
+import { OUTBOX_SOFT_CAP } from "../db/repository";
 import { isValidTimezone } from "../domain/time";
 import { LOCALE_NAMES, LOCALES, type MessageKey } from "../i18n";
 import type { LockPlatform, LockStore } from "../lock/lock";
-import { OUTBOX_SOFT_CAP } from "../db/repository";
 
 export interface SettingsServices {
   lockStore: LockStore;

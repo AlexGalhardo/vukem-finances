@@ -1,7 +1,5 @@
 import { type ReactNode, useState } from "react";
 import { Text, View } from "react-native";
-import { describeError } from "../core/errors";
-import { type App, useApp, useLoad } from "../core/state";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";
 import { DeleteButton } from "../components/DeleteButton";
@@ -10,6 +8,8 @@ import { ListRow } from "../components/ListRow";
 import { Page } from "../components/Page";
 import { TextField } from "../components/TextField";
 import { useUi } from "../components/ui";
+import { describeError } from "../core/errors";
+import { type App, useApp, useLoad } from "../core/state";
 import type { Row } from "../db/entities";
 
 /** Categories, income and expense, with their subcategories under them; create, edit, move, archive and delete. */

@@ -1,9 +1,9 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react-native";
+import { createInstallments } from "../../src/domain/recurrence";
 import { FirstRunScreen } from "../../src/screens/FirstRunScreen";
 import { HomeScreen } from "../../src/screens/HomeScreen";
 import { renderApp } from "../helpers/app";
 import { ACCOUNT, openEnv, txFields } from "../helpers/fixtures";
-import { createInstallments } from "../../src/domain/recurrence";
 
 describe("FirstRun", () => {
   it("makes the first account, the default categories and the settings, in the chosen language", async () => {

@@ -1,6 +1,5 @@
 import { type ReactNode, useEffect, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { type App, useApp, useLoad } from "../core/state";
 import { AmountField } from "../components/AmountField";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";
@@ -8,6 +7,7 @@ import { ScreenHeader } from "../components/ScreenHeader";
 import { TextField } from "../components/TextField";
 import { Toast } from "../components/Toast";
 import { useUi } from "../components/ui";
+import { type App, useApp, useLoad } from "../core/state";
 import { recentCategories } from "../db/queries";
 import { addDays, isIsoDate } from "../domain/dates";
 import { formatDecimalCents, parseAmount } from "../domain/money";

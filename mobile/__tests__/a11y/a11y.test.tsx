@@ -1,5 +1,5 @@
-import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import { readdirSync, readFileSync, statSync } from "node:fs";
+import { act, fireEvent, render, screen } from "@testing-library/react-native";
 import type { ReactElement } from "react";
 import { PixelRatio, Pressable, Text, View } from "react-native";
 import { Button } from "../../src/components/Button";

@@ -1,17 +1,17 @@
 import { type ReactNode, useState } from "react";
 import { ScrollView, Text, View } from "react-native";
-import { CURRENCIES } from "../core/settings";
-import { useApp } from "../core/state";
 import { AmountField } from "../components/AmountField";
 import { Button } from "../components/Button";
 import { Chip } from "../components/Chip";
 import { ScreenHeader } from "../components/ScreenHeader";
 import { TextField } from "../components/TextField";
 import { useUi } from "../components/ui";
+import { CURRENCIES } from "../core/settings";
+import { useApp } from "../core/state";
 import { DEFAULT_CATEGORIES } from "../domain/defaults";
-import { LOCALE_NAMES, LOCALES, type Locale, type MessageKey, translate } from "../i18n";
 import { parseAmount } from "../domain/money";
 import { isValidTimezone } from "../domain/time";
+import { LOCALE_NAMES, LOCALES, type Locale, type MessageKey, translate } from "../i18n";
 
 const ACCOUNT_KINDS: { value: string; label: MessageKey }[] = [
   { value: "checking", label: "accountKindChecking" },

@@ -1,8 +1,6 @@
 import { getCalendars, getLocales } from "expo-localization";
 import { type ReactNode, useEffect, useState } from "react";
 import { ActivityIndicator, useColorScheme, View } from "react-native";
-import { LockGate } from "../lock/LockGate";
-import { devicePlatform, secureLockStore } from "../lock/platform";
 import { SafeAreaView } from "react-native-safe-area-context";
 import type { TransactionalDatabase } from "../db/database";
 import { openLocalDatabase } from "../db/expo";
@@ -10,6 +8,8 @@ import { migrate } from "../db/migrations";
 import { Repository } from "../db/repository";
 import { Ledger } from "../domain/ledger";
 import { resolveLocale } from "../i18n";
+import { LockGate } from "../lock/LockGate";
+import { devicePlatform, secureLockStore } from "../lock/platform";
 import { FirstRunScreen } from "../screens/FirstRunScreen";
 import { defaultSettings, loadSettings, type Settings } from "./settings";
 import { AppProvider, useApp } from "./state";

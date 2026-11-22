@@ -2,7 +2,7 @@ import type { Database } from "../db/database";
 import type { Row } from "../db/entities";
 import type { Repository } from "../db/repository";
 import { isIsoDate } from "./dates";
-import { type Ledger, LedgerError, accountBalances } from "./ledger";
+import { accountBalances, type Ledger, LedgerError } from "./ledger";
 import { MAX_CENTS } from "./money";
 import { cardStatements } from "./statements";
 

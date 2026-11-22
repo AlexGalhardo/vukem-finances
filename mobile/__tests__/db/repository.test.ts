@@ -1,5 +1,5 @@
-import { OUTBOX_SOFT_CAP, Repository, checkIntegrity } from "../../src/db/repository";
 import type { AccountFields, TransactionFields } from "../../src/db/entities";
+import { checkIntegrity, OUTBOX_SOFT_CAP, Repository } from "../../src/db/repository";
 import { type MemoryDatabase, openMemoryDatabase } from "../helpers/memory-db";
 
 const ACCOUNT: AccountFields = {

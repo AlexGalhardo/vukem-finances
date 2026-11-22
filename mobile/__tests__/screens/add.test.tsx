@@ -1,8 +1,7 @@
 import { fireEvent, screen, waitFor } from "@testing-library/react-native";
 import { AddScreen } from "../../src/screens/AddScreen";
-import { ACCOUNT, type Env, txFields } from "../helpers/fixtures";
 import { renderApp } from "../helpers/app";
-import { openEnv } from "../helpers/fixtures";
+import { ACCOUNT, type Env, openEnv, txFields } from "../helpers/fixtures";
 
 let env: Env;
 let checking: string;
