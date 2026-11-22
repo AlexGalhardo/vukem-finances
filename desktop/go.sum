@@ -1,5 +1,7 @@
 github.com/AlexGalhardo/vukem v0.46.0 h1:kxINozJMH/d7IBvQafXyV3GSvl6Letw6/+vmNXmlaIc=
 github.com/AlexGalhardo/vukem v0.46.0/go.mod h1:l6kl1qNA/ROwsDymXx9NQfjs37bfBXnj4EZmScRW/sQ=
+github.com/AlexGalhardo/vukem v0.48.0 h1:cvZjZ+sRlGiSTGNTc5seksZhnIuCB9fckSUlJCshpVU=
+github.com/AlexGalhardo/vukem v0.48.0/go.mod h1:l6kl1qNA/ROwsDymXx9NQfjs37bfBXnj4EZmScRW/sQ=
 github.com/AlexGalhardo/vukem/contrib/stripe v0.5.3 h1:Apo1OzLrkv/5YX7Y4oVZbX6S4L+rfK4s/l4+ZO9UH8U=
 github.com/AlexGalhardo/vukem/contrib/stripe v0.5.3/go.mod h1:0ZYaSVMr4fDnHDJ09aGP1spCxTb9Cb9MRHU4FoIfYHI=
 github.com/coder/websocket v1.8.14 h1:9L0p0iKiNOibykf283eHkKUHHrpG7f65OE3BhhO7v9g=

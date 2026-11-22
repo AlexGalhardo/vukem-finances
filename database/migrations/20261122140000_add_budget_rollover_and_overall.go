@@ -60,7 +60,7 @@ func m20261122140000AddBudgetRolloverAndOverall() schema.Migration {
 				t.Timestamps()
 				syncColumns(t)
 				t.UniqueIndex("workspace_id", "category_id").Where("deleted_at IS NULL")
-			}, schema.DropTriggers())
+			}, schema.DropTriggers(), schema.DropColumns("rollover"))
 			if err != nil {
 				return err
 			}
