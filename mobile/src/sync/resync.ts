@@ -17,14 +17,8 @@ const ORDER: readonly EntityName[] = [
   "transaction",
 ];
 
-/**
- * The answer to `410 resync_required`. Every entity is downloaded into the
- * staging table first, so a failure while downloading changes nothing. Then, in
- * ONE transaction, every row that is not dirty is replaced by the snapshot,
- * dirty rows and the outbox are kept, and the cursor becomes the snapshot's.
- * The caller then runs a normal pull from that cursor.
- */
-export async function resync(db: Database, transport: Transport, now: () => string): Promise<number> {
+/** Downloads every entity into the staging table. Nothing else changes, so a failure half way costs nothing. Returns the snapshot cursor. */
+export async function downloadSnapshot(db: Database, transport: Transport): Promise<number> {
   await db.run("DELETE FROM sync_staging");
 
   let snapshotId = "";
@@ -48,11 +42,18 @@ export async function resync(db: Database, transport: Transport, now: () => stri
       after = page.next_after;
     }
   }
+  return cursor;
+}
 
+/**
+ * Writes the staged snapshot: every row that is not dirty is replaced (or, with
+ * `wipe`, every row), dirty rows and the outbox are kept, the cursor becomes the
+ * snapshot's. Call it inside a transaction of its own or let it open one.
+ */
+export async function applyStaged(db: Database, cursor: number, now: () => string, wipe = false): Promise<void> {
   await db.transaction(async () => {
     for (const entity of ORDER) {
-      const table = ENTITIES[entity].table;
-      await db.run(`DELETE FROM ${table} WHERE dirty = 0`);
+      await db.run(`DELETE FROM ${ENTITIES[entity].table}${wipe ? "" : " WHERE dirty = 0"}`);
     }
     await db.run("DELETE FROM transaction_tags WHERE transaction_uid NOT IN (SELECT uid FROM transactions)");
 
@@ -78,5 +79,17 @@ export async function resync(db: Database, transport: Transport, now: () => stri
     await db.run("DELETE FROM sync_staging");
     await setCursor(db, cursor);
   });
+}
+
+/**
+ * The answer to `410 resync_required`. Every entity is downloaded into the
+ * staging table first, so a failure while downloading changes nothing. Then, in
+ * ONE transaction, every row that is not dirty is replaced by the snapshot,
+ * dirty rows and the outbox are kept, and the cursor becomes the snapshot's.
+ * The caller then runs a normal pull from that cursor.
+ */
+export async function resync(db: Database, transport: Transport, now: () => string): Promise<number> {
+  const cursor = await downloadSnapshot(db, transport);
+  await applyStaged(db, cursor, now);
   return cursor;
 }

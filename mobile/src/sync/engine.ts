@@ -356,6 +356,12 @@ export class SyncEngine {
     await this.setStatus("disconnected");
   }
 
+  /** The person chose Merge or Replace and it finished: sync as usual from here. */
+  async afterMergeChoice(): Promise<void> {
+    await this.setStatus("idle");
+    await this.trigger("manual");
+  }
+
   /** The person pressed "Pair again": the engine waits for a new token. */
   async resumeAfterRepair(): Promise<void> {
     this.failures = 0;
