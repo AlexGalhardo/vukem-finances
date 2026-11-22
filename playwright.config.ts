@@ -31,7 +31,7 @@ export default defineConfig({
     {
       name: "chromium",
       testMatch: /.*.spec.ts/,
-      testIgnore: /billing.spec.ts/,
+      testIgnore: /(billing|privacy).spec.ts/,
       dependencies: ["setup"],
       use: { ...devices["Desktop Chrome"], ...(channel ? { channel } : {}), storageState: STORAGE_STATE },
     },
@@ -47,7 +47,7 @@ export default defineConfig({
     },
     {
       name: "saas",
-      testMatch: /billing.spec.ts/,
+      testMatch: /(billing|privacy).spec.ts/,
       dependencies: ["saas-setup"],
       use: {
         ...devices["Desktop Chrome"],

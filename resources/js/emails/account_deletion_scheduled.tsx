@@ -19,9 +19,9 @@ export default function AccountDeletionScheduled({
       href={url}
     >
       <Text>
-        Hi {name}, you asked to delete your account. Every session and access token was ended, and the account is
-        erased for good on {purgeDate}. To keep it, sign in before then and cancel the deletion. If this was not you,
-        sign in and cancel it now, then change your password.
+        Hi {name}, you asked to delete your account. Every session and access token was ended, and the account is erased
+        for good on {purgeDate}. To keep it, sign in before then and cancel the deletion. If this was not you, sign in
+        and cancel it now, then change your password.
       </Text>
     </Shell>
   );

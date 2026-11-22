@@ -161,6 +161,7 @@ func TestPersonalMakesNoOutboundConnection(t *testing.T) {
 	for _, page := range []string{
 		"/dashboard", "/accounts", "/transactions", "/categories", "/budgets", "/goals", "/reports",
 		"/recurrences", "/cards", "/import", "/notifications", "/workspace", "/ai", "/tokens", "/settings/telegram",
+		"/account/privacy",
 	} {
 		if got := c.Get(page).Status(); got >= http.StatusInternalServerError {
 			t.Errorf("GET %s = %d, want no server error", page, got)
@@ -169,6 +170,11 @@ func TestPersonalMakesNoOutboundConnection(t *testing.T) {
 
 	c.Get("/transactions/export.csv").AssertOK().AssertSee("12.50")
 	c.Get("/workspace/export.json").AssertOK()
+
+	// The personal export and the deletion of the workspace work with no network too.
+	c.PostForm("/account/export", url.Values{"password": {testPassword}}).AssertRedirect("/account/privacy?export=ready")
+	c.Get("/account/export.json").AssertOK().AssertSee("vukem-finances-personal-export")
+	c.PostForm("/workspace/deletion", url.Values{"name": {ws.Name}, "password": {testPassword}}).AssertStatus(303)
 
 	runEveryScheduledJob(t, app)
 

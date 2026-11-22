@@ -73,6 +73,8 @@ func All() []inertia.PageInfo {
 		Devices.Info(),
 		OAuthConsent.Info(),
 		ConnectedApps.Info(),
+		Privacy.Info(),
+		AccountDeletion.Info(),
 		AdminRevenue.Info(),
 		Login.Info(),
 		Register.Info(),
