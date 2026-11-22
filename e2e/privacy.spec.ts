@@ -35,10 +35,7 @@ test("the owner schedules the deletion of the workspace and cancels it", async (
   await page.goto("/account/privacy");
 
   const label = (
-    (await page
-      .getByLabel(/Type the workspace name to confirm/)
-      .locator("xpath=ancestor::label")
-      .textContent()) ?? ""
+    (await page.locator("label", { hasText: "Type the workspace name to confirm" }).textContent()) ?? ""
   ).trim();
   const name = label.slice(label.indexOf(":") + 1).trim();
   expect(name).not.toBe("");
