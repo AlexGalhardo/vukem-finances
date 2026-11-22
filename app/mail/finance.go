@@ -144,3 +144,44 @@ func (m PixReceipt) Envelope() mail.Envelope {
 
 // Content implements mail.Mailable.
 func (m PixReceipt) Content() mail.Content { return mail.React("pix_receipt", m) }
+
+// StatementDue says a card statement falls due soon. Remaining and DueOn are
+// text ("$120.00", "2027-03-20").
+type StatementDue struct {
+	To, Workspace, Card, Remaining, DueOn, URL string
+}
+
+// Envelope implements mail.Mailable.
+func (m StatementDue) Envelope() mail.Envelope {
+	return mail.Envelope{To: []string{m.To}, Subject: m.Card + " statement is due " + m.DueOn, Tags: tag("statement_due")}
+}
+
+// Content implements mail.Mailable.
+func (m StatementDue) Content() mail.Content { return mail.React("statement_due", m) }
+
+// GoalReached says a savings goal reached its target. Target is formatted.
+type GoalReached struct {
+	To, Workspace, Goal, Target, URL string
+}
+
+// Envelope implements mail.Mailable.
+func (m GoalReached) Envelope() mail.Envelope {
+	return mail.Envelope{To: []string{m.To}, Subject: "Goal reached: " + m.Goal, Tags: tag("goal_reached")}
+}
+
+// Content implements mail.Mailable.
+func (m GoalReached) Content() mail.Content { return mail.React("goal_reached", m) }
+
+// AlertNotice is a short alert with a title and one sentence: a card near its
+// limit, a recurring rule that failed.
+type AlertNotice struct {
+	To, Workspace, Title, Body, URL string
+}
+
+// Envelope implements mail.Mailable.
+func (m AlertNotice) Envelope() mail.Envelope {
+	return mail.Envelope{To: []string{m.To}, Subject: m.Title, Tags: tag("alert_notice")}
+}
+
+// Content implements mail.Mailable.
+func (m AlertNotice) Content() mail.Content { return mail.React("alert_notice", m) }
