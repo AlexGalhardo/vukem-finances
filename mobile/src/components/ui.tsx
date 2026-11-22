@@ -10,41 +10,46 @@ export type Scheme = "light" | "dark";
 export const TOUCH_MIN = 48;
 
 export interface Ui {
-	locale: Locale;
-	scheme: Scheme;
-	currency: string;
-	colors: (typeof colors)[Scheme];
-	spacing: typeof spacing;
-	fontSize: typeof fontSize;
-	radius: number;
-	t: (key: MessageKey, variables?: Variables) => string;
-	money: (cents: number) => string;
-	spoken: (cents: number) => string;
+  locale: Locale;
+  scheme: Scheme;
+  currency: string;
+  colors: (typeof colors)[Scheme];
+  spacing: typeof spacing;
+  fontSize: typeof fontSize;
+  radius: number;
+  t: (key: MessageKey, variables?: Variables) => string;
+  money: (cents: number) => string;
+  spoken: (cents: number) => string;
 }
 
 function build(locale: Locale, scheme: Scheme, currency: string): Ui {
-	return {
-		locale,
-		scheme,
-		currency,
-		colors: colors[scheme],
-		spacing,
-		fontSize,
-		radius,
-		t: (key, variables) => translate(locale, key, variables),
-		money: (cents) => formatMoney(cents, currency, locale),
-		spoken: (cents) => spokenMoney(cents, currency, locale),
-	};
+  return {
+    locale,
+    scheme,
+    currency,
+    colors: colors[scheme],
+    spacing,
+    fontSize,
+    radius,
+    t: (key, variables) => translate(locale, key, variables),
+    money: (cents) => formatMoney(cents, currency, locale),
+    spoken: (cents) => spokenMoney(cents, currency, locale),
+  };
 }
 
 const UiContext = createContext<Ui>(build("en", "light", "USD"));
 
-export function UiProvider(props: { locale: Locale; scheme: Scheme; currency: string; children: ReactNode }): ReactNode {
-	const { locale, scheme, currency, children } = props;
-	const value = useMemo(() => build(locale, scheme, currency), [locale, scheme, currency]);
-	return <UiContext.Provider value={value}>{children}</UiContext.Provider>;
+export function UiProvider(props: {
+  locale: Locale;
+  scheme: Scheme;
+  currency: string;
+  children: ReactNode;
+}): ReactNode {
+  const { locale, scheme, currency, children } = props;
+  const value = useMemo(() => build(locale, scheme, currency), [locale, scheme, currency]);
+  return <UiContext.Provider value={value}>{children}</UiContext.Provider>;
 }
 
 export function useUi(): Ui {
-	return useContext(UiContext);
+  return useContext(UiContext);
 }

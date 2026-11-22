@@ -6,24 +6,24 @@ const KEY = "vukem-finances.lock.enabled";
 
 /** The device implementation: needs hardware and a real device, so it is covered by the manual checklist. */
 export const devicePlatform: LockPlatform = {
-	async available() {
-		return (await getEnrolledLevelAsync()) !== SecurityLevel.NONE;
-	},
-	async authenticate(prompt) {
-		const result = await authenticateAsync({ promptMessage: prompt, disableDeviceFallback: false });
-		return result.success;
-	},
+  async available() {
+    return (await getEnrolledLevelAsync()) !== SecurityLevel.NONE;
+  },
+  async authenticate(prompt) {
+    const result = await authenticateAsync({ promptMessage: prompt, disableDeviceFallback: false });
+    return result.success;
+  },
 };
 
 export const secureLockStore: LockStore = {
-	async isEnabled() {
-		return (await getItemAsync(KEY)) === "1";
-	},
-	async setEnabled(enabled) {
-		if (enabled) {
-			await setItemAsync(KEY, "1");
-		} else {
-			await deleteItemAsync(KEY);
-		}
-	},
+  async isEnabled() {
+    return (await getItemAsync(KEY)) === "1";
+  },
+  async setEnabled(enabled) {
+    if (enabled) {
+      await setItemAsync(KEY, "1");
+    } else {
+      await deleteItemAsync(KEY);
+    }
+  },
 };
