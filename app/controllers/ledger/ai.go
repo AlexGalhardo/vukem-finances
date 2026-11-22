@@ -135,7 +135,7 @@ func (a *AIHandlers) Update(c *web.Ctx) error {
 	}
 
 	_, err = a.s.Settings.Update(c.Context(), u.ID, ai.UpdateInput{
-		Enabled: in.Enabled, Consent: in.Consent, MonthlyCallLimit: int(id(in.Limit)),
+		Enabled: in.Enabled, Consent: in.Consent, MonthlyCallLimit: int(id(in.Limit)), AutoApply: in.AutoApply,
 		Features: map[string]bool{ai.FeatureCategorize: in.Categorize, ai.FeatureAssistant: in.Assistant},
 	})
 	if err != nil {

@@ -40,6 +40,9 @@ type Settings struct {
 	Features         map[string]bool `json:"features"`
 	MonthlyCallLimit int             `json:"monthlyCallLimit"`
 	EnabledAt        string          `json:"enabledAt"`
+	// AutoApplySuggestions applies category suggestions of at least 90 % confidence
+	// without a review. Off by default; an applied one can be undone for 7 days.
+	AutoApplySuggestions bool `json:"autoApplySuggestions"`
 }
 
 // FeatureOn reports whether AI and the feature are both on.
@@ -70,7 +73,10 @@ func view(row models.WorkspaceAISettings) Settings {
 		}
 	}
 
-	out := Settings{Enabled: row.Enabled, Features: features, MonthlyCallLimit: row.MonthlyCallLimit}
+	out := Settings{
+		Enabled: row.Enabled, Features: features, MonthlyCallLimit: row.MonthlyCallLimit,
+		AutoApplySuggestions: row.AutoApplySuggestions,
+	}
 	if row.EnabledAt.Valid {
 		out.EnabledAt = row.EnabledAt.V.UTC().Format("2006-01-02 15:04")
 	}
@@ -100,6 +106,8 @@ type UpdateInput struct {
 	Features         map[string]bool
 	MonthlyCallLimit int
 	Consent          bool
+	// AutoApply is the opt-in to apply suggestions of at least 90 % confidence.
+	AutoApply bool
 }
 
 // Update saves the settings of the workspace of ctx and writes the audit
@@ -135,6 +143,7 @@ func (s *SettingsStore) Update(ctx context.Context, actor int64, in UpdateInput)
 		sameState := row.Enabled == in.Enabled
 
 		row.Enabled, row.Features, row.MonthlyCallLimit = in.Enabled, string(encoded), in.MonthlyCallLimit
+		row.AutoApplySuggestions = in.AutoApply
 		if turningOn {
 			row.EnabledBy = actor
 			row.EnabledAt = orm.NullTime{}
