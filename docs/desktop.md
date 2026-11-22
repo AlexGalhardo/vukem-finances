@@ -152,6 +152,11 @@ Store signs the package it publishes, so users never see the SmartScreen
 warning of the other installers. The MSIX is **not** attached to the GitHub
 release: only the Store gets it.
 
+**The MSIX steps of CI are off.** They run only when the repository variable
+`MSIX_ENABLED` is `true`, which also gates the Store job. Decide where the data
+folder lives before turning them on, because Windows can delete the data of a
+packaged app on uninstall.
+
 ### Build one locally
 
 Needs the Windows SDK (`makeappx.exe`). Pack the exe that `wails3 package`
@@ -218,8 +223,8 @@ Do the first submission by hand:
 ### Automatic submission of the next releases
 
 The `store` job of `.github/workflows/desktop.yml` runs on a published release
-that is not a pre-release, and only when the repository variable
-`MSSTORE_ENABLED` is `true`. Otherwise it is skipped. It packs the exe that the
+that is not a pre-release, and only when the repository variables `MSIX_ENABLED`
+and `MSSTORE_ENABLED` are `true`. Otherwise it is skipped. It packs the exe that the
 Windows job built (not signed), then uses the
 [Microsoft Store Developer CLI](https://learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/github-actions)
 (`msstore`, pinned in the workflow) to upload and commit the submission and to
@@ -241,7 +246,8 @@ role, then create in the repository:
 | Variable | `MSSTORE_IDENTITY_NAME` | Package/Identity/Name |
 | Variable | `MSSTORE_PUBLISHER` | Package/Identity/Publisher (`CN=...`) |
 | Variable | `MSSTORE_PUBLISHER_DISPLAY_NAME` | Package/Properties/PublisherDisplayName |
-| Variable | `MSSTORE_ENABLED` | `true` to turn the job on |
+| Variable | `MSIX_ENABLED` | `true` to turn on the MSIX steps of CI |
+| Variable | `MSSTORE_ENABLED` | `true`, with `MSIX_ENABLED`, to turn the job on |
 
 The credentials reach the job through `env`, never through the script text.
 Each release must have a higher `X.Y.Z` than the last one submitted.
