@@ -88,8 +88,9 @@ type Config struct {
 
 // Registry holds the operations. It is filled at boot and only read after.
 type Registry struct {
-	cfg   Config
-	metas []Meta
+	cfg      Config
+	metas    []Meta
+	dynamics map[string]Dynamic
 }
 
 // NewRegistry returns an empty registry.
@@ -178,6 +179,12 @@ func Define[In, Out any](r *Registry, d Operation[In, Out]) *Op[In, Out] {
 	}
 
 	r.metas = append(r.metas, m)
+
+	if r.dynamics == nil {
+		r.dynamics = map[string]Dynamic{}
+	}
+
+	r.dynamics[d.Name] = op
 
 	return op
 }
