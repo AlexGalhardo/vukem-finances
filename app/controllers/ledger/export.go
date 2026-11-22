@@ -7,6 +7,7 @@ import (
 	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/export"
+	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
 var errDelimiter = errs.New(http.StatusUnprocessableEntity, "The delimiter must be comma or semicolon.")
@@ -54,4 +55,22 @@ func (h *Handlers) ExportTransactionsCSV(c *web.Ctx) error {
 	_, err = export.WriteCSV(c.Writer(), rows, opt)
 
 	return err
+}
+
+// ExportWorkspaceJSON streams the whole workspace as one JSON document
+// (docs/export-format.md). Only the owner and the admins take it: it holds
+// the budgets, goals, rules and member names that a viewer's CSV does not.
+func (h *Handlers) ExportWorkspaceJSON(c *web.Ctx) error {
+	if err := h.can(c, workspaces.AbilityManageData); err != nil {
+		return err
+	}
+
+	ctx := c.Context()
+
+	c.SetHeader("Content-Type", "application/json; charset=utf-8")
+	c.SetHeader("Content-Disposition", `attachment; filename="vukem-finances-export-`+h.Fin.Today(ctx)+`.json"`)
+	c.SetHeader("X-Content-Type-Options", "nosniff")
+	c.SetHeader("Cache-Control", "no-store")
+
+	return export.WriteJSON(ctx, c.Writer(), h.Fin, h.Fin.Now())
 }

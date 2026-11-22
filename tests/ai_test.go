@@ -380,6 +380,15 @@ func TestAIExcludedFromExportAndAPI(t *testing.T) {
 		t.Errorf("the credential JSON carries the ciphertext: %s", b)
 	}
 
+	// The real exports (epic 12) carry neither the key nor anything of the AI tables.
+	for _, path := range []string{"/workspace/export.json", "/transactions/export.csv"} {
+		body := ana.Client.Get(path).AssertOK().Body()
+		if strings.Contains(body, cred.KeyCiphertext) || strings.Contains(body, aiMarker) ||
+			strings.Contains(strings.ToLower(body), "ai_credentials") || strings.Contains(strings.ToLower(body), "ai_usage") {
+			t.Errorf("%s carries AI data", path)
+		}
+	}
+
 	// The shared props sent with every page hold no AI data.
 	page := ana.Client.Inertia("").Get("/dashboard")
 	if strings.Contains(page.Body(), cred.KeyCiphertext) || strings.Contains(page.Body(), aiMarker) {

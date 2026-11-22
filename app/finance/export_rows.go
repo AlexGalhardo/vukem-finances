@@ -3,6 +3,7 @@ package finance
 import (
 	"context"
 	"iter"
+	"time"
 
 	"github.com/AlexGalhardo/vukem/orm"
 
@@ -11,6 +12,9 @@ import (
 
 // exportChunk is how many rows one read of EachTransaction takes.
 const exportChunk = 1000
+
+// Now is the current time of the service clock, in UTC.
+func (s *Service) Now() time.Time { return s.now().UTC() }
 
 // CountTransactions counts the transactions a filter matches (the page size
 // and the page number of the filter are ignored).
