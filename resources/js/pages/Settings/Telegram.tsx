@@ -2,8 +2,11 @@ import { Head, router, useForm, usePage } from "@inertiajs/react";
 import { type FormEvent, useEffect, useState } from "react";
 import ConfirmDelete from "../../components/ConfirmDelete";
 import PageHeader from "../../components/PageHeader";
-import { Card, danger, primary } from "../../components/ui";
+import SettingsSection from "../../components/settings/SettingsSection";
+import { Alert, AlertDescription } from "../../components/ui/alert";
 import { Button } from "../../components/ui/button";
+import { Checkbox } from "../../components/ui/checkbox";
+import { Label } from "../../components/ui/label";
 import { useFinanceI18n } from "../../lib/i18n";
 import type { Page } from "../../page-props";
 
@@ -51,107 +54,117 @@ export default function Telegram({ username, links, alertsOn, maxLinks, created 
       <Head title={t("telegram")} />
       <PageHeader title={t("telegram")} description={t("telegramIntro")} />
 
-      <Card>
-        <p className="text-sm text-muted-foreground">{t("telegramPrivacy")}</p>
-        {edition === "personal" && <p className="mt-2 text-sm text-muted-foreground">{t("telegramNeedsInternet")}</p>}
-      </Card>
+      <Alert variant="info">
+        <AlertDescription>
+          <p>{t("telegramPrivacy")}</p>
+          {edition === "personal" && <p className="mt-2">{t("telegramNeedsInternet")}</p>}
+        </AlertDescription>
+      </Alert>
 
-      {created && !dismissed && (
-        <Card title={t("telegramCreatedTitle")}>
-          <p className="mb-2">{t("telegramCreatedBody")}</p>
-          {expired ? (
-            <p role="status" data-testid="telegram-expired" className="mb-3 font-medium text-destructive">
-              {t("telegramExpired")}
-            </p>
-          ) : (
-            <>
-              <p role="timer" data-testid="telegram-countdown" className="mb-3 font-medium">
-                {t("telegramExpiresIn").replace("{time}", clock(left))}
-              </p>
-              <p className="mb-2 break-all">
-                <a
-                  data-testid="telegram-link"
-                  href={created.link}
-                  target="_blank"
-                  rel="noreferrer noopener"
-                  className="underline"
-                >
-                  {created.link}
-                </a>
-              </p>
-              <p className="mb-3 break-all text-sm">
-                {t("telegramCodeHint")} <code data-testid="telegram-code">{`/start ${created.code}`}</code>
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Button asChild>
-                  <a href={created.link} target="_blank" rel="noreferrer noopener">
-                    {t("telegramOpen")}
-                  </a>
-                </Button>
-                <Button type="button" variant="outline" onClick={() => navigator.clipboard?.writeText(created.link)}>
-                  {t("telegramCopy")}
+      <div className="flex flex-col">
+        <SettingsSection
+          title={t("telegramConnect")}
+          description={`${t("telegramConnectHint")} (@${username})`}
+          tour="telegram-connect"
+        >
+          {created && !dismissed && (
+            <div className="flex flex-col gap-3 rounded-lg border border-border p-4">
+              <h3 className="text-h3">{t("telegramCreatedTitle")}</h3>
+              <p className="text-body">{t("telegramCreatedBody")}</p>
+              {expired ? (
+                <p role="status" data-testid="telegram-expired" className="text-label text-expense">
+                  {t("telegramExpired")}
+                </p>
+              ) : (
+                <>
+                  <p role="timer" data-testid="telegram-countdown" className="text-label tabular-nums">
+                    {t("telegramExpiresIn").replace("{time}", clock(left))}
+                  </p>
+                  <p className="break-all">
+                    <a
+                      data-testid="telegram-link"
+                      href={created.link}
+                      target="_blank"
+                      rel="noreferrer noopener"
+                      className="text-brand-text underline underline-offset-4"
+                    >
+                      {created.link}
+                    </a>
+                  </p>
+                  <p className="text-body break-all">
+                    {t("telegramCodeHint")} <code data-testid="telegram-code">{`/start ${created.code}`}</code>
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button asChild variant="brand">
+                      <a href={created.link} target="_blank" rel="noreferrer noopener">
+                        {t("telegramOpen")}
+                      </a>
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => navigator.clipboard?.writeText(created.link)}
+                    >
+                      {t("telegramCopy")}
+                    </Button>
+                  </div>
+                </>
+              )}
+              <div>
+                <Button type="button" variant="outline" onClick={() => setDismissed(true)}>
+                  {t("telegramDismiss")}
                 </Button>
               </div>
-            </>
+            </div>
           )}
-          <div className="mt-3">
-            <Button type="button" variant="outline" onClick={() => setDismissed(true)}>
-              {t("telegramDismiss")}
-            </Button>
+          <form onSubmit={submit} className="flex flex-col gap-3">
+            <p className="text-body text-muted-foreground">{t("telegramLimit").replace("{max}", String(maxLinks))}</p>
+            <div>
+              <Button type="submit" loading={connect.processing} disabled={links.length >= maxLinks}>
+                {t("telegramConnect")}
+              </Button>
+            </div>
+          </form>
+        </SettingsSection>
+
+        <SettingsSection title={t("telegramLinksTitle")} tour="telegram-chats">
+          {links.length === 0 ? (
+            <p className="text-body text-muted-foreground">{t("telegramNone")}</p>
+          ) : (
+            <ul className="flex flex-col divide-y divide-border">
+              {links.map((link) => (
+                <li key={link.id} className="flex flex-wrap items-center justify-between gap-x-3 gap-y-2 py-3">
+                  <div className="min-w-0">
+                    <p className="text-label">{t("telegramChat").replace("{hint}", link.chatHint)}</p>
+                    <p className="text-caption text-muted-foreground">
+                      {t("telegramLinkedOn")} {date(link.linkedAt)} · {t("telegramLastSeen")}:{" "}
+                      {link.lastSeenAt ? date(link.lastSeenAt) : t("telegramNeverSeen")} · {link.language}
+                    </p>
+                  </div>
+                  <ConfirmDelete
+                    href={`/settings/telegram/links/${link.id}`}
+                    name={t("telegramChat").replace("{hint}", link.chatHint)}
+                    trigger={
+                      <Button type="button" variant="destructive-outline" size="sm">
+                        {t("telegramDisconnect")}
+                      </Button>
+                    }
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </SettingsSection>
+
+        <SettingsSection title={t("telegramAlertsTitle")} description={t("telegramAlertsHint")}>
+          <div className="flex items-center gap-2">
+            <Checkbox id="telegram-alerts" checked={on} onCheckedChange={(checked) => setAlerts(checked === true)} />
+            <Label htmlFor="telegram-alerts" className="font-normal">
+              {t("telegramAlertsLabel")}
+            </Label>
           </div>
-        </Card>
-      )}
-
-      <Card title={t("telegramConnect")}>
-        <form onSubmit={submit} className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">
-            {t("telegramConnectHint")} (@{username})
-          </p>
-          <p className="text-sm text-muted-foreground">{t("telegramLimit").replace("{max}", String(maxLinks))}</p>
-          <div>
-            <button type="submit" disabled={connect.processing || links.length >= maxLinks} className={primary}>
-              {t("telegramConnect")}
-            </button>
-          </div>
-        </form>
-      </Card>
-
-      <Card title={t("telegramLinksTitle")}>
-        {links.length === 0 ? (
-          <p>{t("telegramNone")}</p>
-        ) : (
-          <ul className="divide-y divide-border">
-            {links.map((link) => (
-              <li key={link.id} className="flex items-center justify-between gap-3 py-3">
-                <div>
-                  <p className="font-medium">{t("telegramChat").replace("{hint}", link.chatHint)}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {t("telegramLinkedOn")} {date(link.linkedAt)} · {t("telegramLastSeen")}:{" "}
-                    {link.lastSeenAt ? date(link.lastSeenAt) : t("telegramNeverSeen")} · {link.language}
-                  </p>
-                </div>
-                <ConfirmDelete
-                  href={`/settings/telegram/links/${link.id}`}
-                  name={t("telegramChat").replace("{hint}", link.chatHint)}
-                  trigger={
-                    <button type="button" className={danger}>
-                      {t("telegramDisconnect")}
-                    </button>
-                  }
-                />
-              </li>
-            ))}
-          </ul>
-        )}
-      </Card>
-
-      <Card title={t("telegramAlertsTitle")}>
-        <label className="flex items-center gap-2">
-          <input type="checkbox" className="size-4" checked={on} onChange={(e) => setAlerts(e.target.checked)} />
-          {t("telegramAlertsLabel")}
-        </label>
-        <p className="mt-1 text-sm text-muted-foreground">{t("telegramAlertsHint")}</p>
-      </Card>
+        </SettingsSection>
+      </div>
     </>
   );
 }

@@ -22,6 +22,7 @@ import type telegram from "./en/telegram";
 import type tokens from "./en/tokens";
 import type tutorial from "./en/tutorial";
 import type transactions from "./en/transactions";
+import type workspace from "./en/workspace";
 
 /** Every translation key. `en` is the typed source of truth; add one `typeof` line per new domain file. */
 export type Key =
@@ -48,4 +49,5 @@ export type Key =
   | keyof typeof telegram
   | keyof typeof tokens
   | keyof typeof tutorial
-  | keyof typeof transactions;
+  | keyof typeof transactions
+  | keyof typeof workspace;

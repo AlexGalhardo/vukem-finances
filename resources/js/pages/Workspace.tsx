@@ -1,15 +1,42 @@
 import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
+import { Download } from "lucide-react";
 import { type FormEvent, useState } from "react";
 import Field from "../components/Field";
 import PageHeader from "../components/PageHeader";
-import { Card, danger, primary, Select } from "../components/ui";
+import SettingsSection from "../components/settings/SettingsSection";
+import { Select } from "../components/ui";
+import { Badge } from "../components/ui/badge";
+import { Button } from "../components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../components/ui/dialog";
+import { Input } from "../components/ui/input";
+import { NativeSelect } from "../components/ui/native-select";
+import { HelpHint } from "../help/HelpHint";
+import type { Key } from "../i18n/keys";
+import { canExportJson, workspaceJsonUrl } from "../lib/exports";
+import { useFinanceI18n } from "../lib/i18n";
+import { fill } from "../lib/pix";
 import type { Page, SharedProps } from "../page-props";
 
-type InviteLink = { url: string; expiresAt: string };
+type InviteLinkProp = { url: string; expiresAt: string };
+
+const roleKeys: Record<string, Key> = {
+  owner: "wsRoleOwner",
+  admin: "wsRoleAdmin",
+  member: "wsRoleMember",
+  viewer: "wsRoleViewer",
+};
 
 // The invite link is shown once, right after the invite is created: a
 // personal installation usually sends no email, and only a hash is stored.
-function InviteLinkNotice({ link }: { link: InviteLink }) {
+function InviteLinkNotice({ link }: { link: InviteLinkProp }) {
+  const { t } = useFinanceI18n();
   const [copied, setCopied] = useState(false);
 
   const copy = async () => {
@@ -18,33 +45,34 @@ function InviteLinkNotice({ link }: { link: InviteLink }) {
   };
 
   return (
-    <Card title="Invitation link">
-      <p className="text-sm">
-        Send this link to the person you invited. It is a secret: anyone who has it can join this workspace until it
-        expires on {new Date(link.expiresAt).toLocaleString()}. It will not be shown again.
+    <SettingsSection title={t("wsLinkTitle")}>
+      <p className="text-body text-pretty">
+        {fill(t("wsLinkBody"), { date: new Date(link.expiresAt).toLocaleString() })}
       </p>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
-        <input
+      <div className="flex flex-wrap items-center gap-3">
+        <Input
           readOnly
-          aria-label="Invitation link"
+          aria-label={t("wsLinkTitle")}
           value={link.url}
-          className="min-w-0 flex-1 rounded-lg border bg-background px-3 py-2 text-sm"
+          className="min-w-0 flex-1"
           onFocus={(e) => e.currentTarget.select()}
         />
-        <button type="button" onClick={copy} className={primary}>
-          {copied ? "Copied" : "Copy"}
-        </button>
+        <Button type="button" onClick={copy}>
+          {copied ? t("wsLinkCopied") : t("wsLinkCopy")}
+        </Button>
       </div>
-    </Card>
+    </SettingsSection>
   );
 }
 
 export default function Workspace({ workspaceDetails, members, invites, limits, canManage, audit }: Page<"Workspace">) {
   const page = usePage<SharedProps>();
-  const inviteLink = page.flash?.inviteLink as InviteLink | undefined;
+  const { t } = useFinanceI18n();
+  const inviteLink = page.flash?.inviteLink as InviteLinkProp | undefined;
   const personal = page.props.workspace?.edition === "personal";
   const role = page.props.workspace?.role;
   const isOwner = role === "owner";
+  const [ownerCandidate, setOwnerCandidate] = useState<{ userId: number; name: string } | null>(null);
   const settings = useForm({
     name: workspaceDetails.name,
     currency: workspaceDetails.currency,
@@ -52,6 +80,7 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
   });
   const invite = useForm({ email: "", role: "member" });
   const create = useForm({ name: "", currency: "USD" });
+  const roleLabel = (value: string) => t(roleKeys[value] ?? "wsRoleMember");
 
   const save = (e: FormEvent) => {
     e.preventDefault();
@@ -70,182 +99,250 @@ export default function Workspace({ workspaceDetails, members, invites, limits, 
 
   return (
     <>
-      <Head title="Workspace" />
+      <Head title={t("workspace")} />
       <PageHeader title={workspaceDetails.name} />
-      <Card title="Settings">
-        <form onSubmit={save} className="grid gap-3 sm:grid-cols-4">
-          <Field
-            label="Name"
-            required
-            disabled={!canManage}
-            value={settings.data.name}
-            onChange={(e) => settings.setData("name", e.target.value)}
-            error={settings.errors.name}
-          />
-          <Field
-            label="Currency (ISO 4217)"
-            required
-            maxLength={3}
-            disabled={!canManage}
-            value={settings.data.currency}
-            onChange={(e) => settings.setData("currency", e.target.value.toUpperCase())}
-            error={settings.errors.currency}
-          />
-          <Field
-            label="Timezone (IANA, such as America/Sao_Paulo)"
-            required
-            disabled={!canManage}
-            value={settings.data.timezone}
-            onChange={(e) => settings.setData("timezone", e.target.value)}
-            error={settings.errors.timezone}
-          />
-          {canManage && (
-            <div className="self-end">
-              <button type="submit" disabled={settings.processing} className={primary}>
-                Save
-              </button>
+      <div className="flex flex-col">
+        <SettingsSection title={t("wsSettingsTitle")} description={t("wsSettingsDescription")}>
+          <form onSubmit={save} className="flex flex-col gap-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <Field
+                label={t("wsName")}
+                required
+                disabled={!canManage}
+                value={settings.data.name}
+                onChange={(e) => settings.setData("name", e.target.value)}
+                error={settings.errors.name}
+              />
+              <Field
+                label={t("wsCurrency")}
+                required
+                maxLength={3}
+                disabled={!canManage}
+                value={settings.data.currency}
+                onChange={(e) => settings.setData("currency", e.target.value.toUpperCase())}
+                error={settings.errors.currency}
+              />
+              <div className="sm:col-span-2">
+                <Field
+                  label={t("wsTimezone")}
+                  required
+                  disabled={!canManage}
+                  value={settings.data.timezone}
+                  onChange={(e) => settings.setData("timezone", e.target.value)}
+                  error={settings.errors.timezone}
+                />
+              </div>
+            </div>
+            {canManage ? (
+              <div>
+                <Button type="submit" loading={settings.processing}>
+                  {t("wsSave")}
+                </Button>
+              </div>
+            ) : (
+              <p className="text-caption text-muted-foreground">{t("wsAdminOnly")}</p>
+            )}
+          </form>
+        </SettingsSection>
+
+        <SettingsSection
+          title={t("wsMembersTitle")}
+          description={t("wsMembersDescription")}
+          tour="workspace-members"
+          help={<HelpHint id="hintWsRoles" labelKey="wsHelpRoles" tutorialStep="Workspace:0" />}
+        >
+          <ul className="flex flex-col divide-y divide-border">
+            {members.map((m) => (
+              <li key={m.userId} className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 py-3">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className="text-label">{m.name}</span>
+                  <span className="text-caption break-all text-muted-foreground">{m.email}</span>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  {canManage && m.role !== "owner" ? (
+                    <NativeSelect
+                      aria-label={fill(t("wsRoleOf"), { name: m.name })}
+                      value={m.role}
+                      onChange={(e) => router.patch(`/workspace/members/${m.userId}`, { role: e.target.value })}
+                    >
+                      <option value="admin">{t("wsRoleAdmin")}</option>
+                      <option value="member">{t("wsRoleMember")}</option>
+                      <option value="viewer">{t("wsRoleViewer")}</option>
+                    </NativeSelect>
+                  ) : (
+                    <Badge variant={m.role === "owner" ? "success" : "neutral"}>{roleLabel(m.role)}</Badge>
+                  )}
+                  {isOwner && m.role !== "owner" && (
+                    <>
+                      <Button
+                        type="button"
+                        variant="destructive-outline"
+                        size="sm"
+                        onClick={() => setOwnerCandidate({ userId: m.userId, name: m.name })}
+                      >
+                        {t("wsMakeOwner")}
+                      </Button>
+                      <HelpHint id="hintWsTransferOwnership" labelKey="wsHelpTransfer" side="left" />
+                    </>
+                  )}
+                  {canManage && m.role !== "owner" && (
+                    <Button asChild variant="destructive-outline" size="sm">
+                      <Link href={`/workspace/members/${m.userId}`} method="delete" as="button">
+                        {t("wsRemove")}
+                      </Link>
+                    </Button>
+                  )}
+                </div>
+              </li>
+            ))}
+            {invites.map((i) => (
+              <li key={i.id} className="py-3 text-body text-muted-foreground">
+                {fill(t("wsPending"), { email: i.email, role: roleLabel(i.role) })}
+              </li>
+            ))}
+          </ul>
+          {!canManage && <p className="text-caption text-muted-foreground">{t("wsMembersAdminOnly")}</p>}
+          {canManage && !isOwner && <p className="text-caption text-muted-foreground">{t("wsOwnerOnlyTransfer")}</p>}
+          {role && !isOwner && (
+            <div>
+              <Button asChild variant="destructive-outline">
+                <Link href="/workspace/leave" method="post" as="button">
+                  {t("wsLeave")}
+                </Link>
+              </Button>
             </div>
           )}
-        </form>
-      </Card>
-      <Card title="Members">
-        <ul className="divide-y divide-zinc-200 dark:divide-zinc-800">
-          {members.map((m) => (
-            <li key={m.userId} className="flex items-center justify-between py-2">
-              <span>
-                {m.name}{" "}
-                <span className="text-sm text-zinc-500">
-                  {m.email}, {m.role}
-                </span>
-              </span>
-              <span className="flex items-center gap-3">
-                {canManage && m.role !== "owner" && (
-                  <select
-                    aria-label={`Role of ${m.name}`}
-                    value={m.role}
-                    onChange={(e) => router.patch(`/workspace/members/${m.userId}`, { role: e.target.value })}
-                    className="rounded-lg border bg-background px-2 py-1 text-sm"
-                  >
-                    <option value="admin">Admin</option>
-                    <option value="member">Member</option>
-                    <option value="viewer">Viewer</option>
-                  </select>
-                )}
-                {isOwner && m.role !== "owner" && (
-                  <button
-                    type="button"
-                    className={danger}
-                    onClick={() => {
-                      if (confirm(`Make ${m.name} the owner? You become an admin.`)) {
-                        router.post("/workspace/owner", { userId: m.userId });
-                      }
-                    }}
-                  >
-                    Make owner
-                  </button>
-                )}
-                {canManage && m.role !== "owner" && (
-                  <Link href={`/workspace/members/${m.userId}`} method="delete" as="button" className={danger}>
-                    Remove
-                  </Link>
-                )}
-              </span>
-            </li>
-          ))}
-          {invites.map((i) => (
-            <li key={i.id} className="py-2 text-sm text-zinc-500">
-              {i.email} ({i.role}): invitation pending
-            </li>
-          ))}
-        </ul>
-        {role && !isOwner && (
-          <Link href="/workspace/leave" method="post" as="button" className={`${danger} mt-3`}>
-            Leave this workspace
-          </Link>
+          {!personal && limits.members >= 0 && (
+            <p className="text-body text-muted-foreground">
+              {fill(t("wsPlanLimit"), { plan: limits.plan, count: limits.members })}{" "}
+              <Link href="/billing" className="text-brand-text underline underline-offset-4">
+                {t("wsUpgrade")}
+              </Link>
+              .
+            </p>
+          )}
+        </SettingsSection>
+
+        {inviteLink && <InviteLinkNotice link={inviteLink} />}
+
+        {canManage && (
+          <SettingsSection title={t("wsInviteTitle")} description={t("wsInviteDescription")} tour="workspace-invite">
+            <form onSubmit={send} className="flex flex-col gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label={t("wsEmail")}
+                  type="email"
+                  required
+                  value={invite.data.email}
+                  onChange={(e) => invite.setData("email", e.target.value)}
+                  error={invite.errors.email}
+                />
+                <Select
+                  label={t("wsRole")}
+                  value={invite.data.role}
+                  onChange={(e) => invite.setData("role", e.target.value)}
+                  error={invite.errors.role}
+                >
+                  <option value="member">{t("wsRoleMemberOption")}</option>
+                  <option value="admin">{t("wsRoleAdminOption")}</option>
+                  <option value="viewer">{t("wsRoleViewerOption")}</option>
+                </Select>
+              </div>
+              <div>
+                <Button type="submit" loading={invite.processing}>
+                  {t("wsInviteSend")}
+                </Button>
+              </div>
+            </form>
+          </SettingsSection>
         )}
-        {!personal && limits.members >= 0 && (
-          <p className="mt-3 text-sm text-zinc-500">
-            The {limits.plan} plan allows {limits.members} member.{" "}
-            <Link href="/billing" className="text-indigo-600 hover:underline dark:text-indigo-400">
-              Upgrade
-            </Link>{" "}
-            to invite people.
-          </p>
+
+        {canManage && (
+          <SettingsSection title={t("wsActivityTitle")} description={t("wsActivityDescription")}>
+            {audit.length === 0 ? (
+              <p className="text-body text-muted-foreground">{t("wsActivityEmpty")}</p>
+            ) : (
+              <ul className="flex flex-col divide-y divide-border text-body">
+                {audit.map((e) => (
+                  <li key={e.id} className="flex flex-wrap justify-between gap-x-4 gap-y-1 py-2">
+                    <span className="min-w-0">
+                      <span className="text-label">{e.actor}</span> {e.action}{" "}
+                      <span className="text-muted-foreground">{e.subject}</span>
+                    </span>
+                    <span className="text-caption text-muted-foreground tabular-nums">{e.createdAt}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </SettingsSection>
         )}
-      </Card>
-      {inviteLink && <InviteLinkNotice link={inviteLink} />}
-      {canManage && (
-        <Card title="Invite someone">
-          <form onSubmit={send} className="grid gap-3 sm:grid-cols-3">
-            <Field
-              label="Email"
-              type="email"
-              required
-              value={invite.data.email}
-              onChange={(e) => invite.setData("email", e.target.value)}
-              error={invite.errors.email}
-            />
-            <Select
-              label="Role"
-              value={invite.data.role}
-              onChange={(e) => invite.setData("role", e.target.value)}
-              error={invite.errors.role}
+
+        {canExportJson(role) && (
+          <SettingsSection title={t("wsDataTitle")} description={t("wsDataDescription")} tour="workspace-export">
+            <div>
+              <Button asChild variant="outline">
+                <a href={workspaceJsonUrl} download>
+                  <Download aria-hidden="true" data-icon="inline-start" />
+                  {t("wsDataExport")}
+                </a>
+              </Button>
+            </div>
+          </SettingsSection>
+        )}
+
+        {!personal && (
+          <SettingsSection title={t("wsCreateTitle")} description={t("wsCreateDescription")}>
+            <form onSubmit={add} className="flex flex-col gap-4">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field
+                  label={t("wsName")}
+                  required
+                  value={create.data.name}
+                  onChange={(e) => create.setData("name", e.target.value)}
+                  error={create.errors.name}
+                />
+                <Field
+                  label={t("wsCurrency")}
+                  required
+                  maxLength={3}
+                  value={create.data.currency}
+                  onChange={(e) => create.setData("currency", e.target.value.toUpperCase())}
+                  error={create.errors.currency}
+                />
+              </div>
+              <div>
+                <Button type="submit" loading={create.processing}>
+                  {t("wsCreate")}
+                </Button>
+              </div>
+            </form>
+          </SettingsSection>
+        )}
+      </div>
+
+      <Dialog open={ownerCandidate !== null} onOpenChange={(open) => !open && setOwnerCandidate(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{fill(t("wsMakeOwnerTitle"), { name: ownerCandidate?.name ?? "" })}</DialogTitle>
+            <DialogDescription>{t("wsMakeOwnerBody")}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button type="button" variant="outline" onClick={() => setOwnerCandidate(null)}>
+              {t("wsCancel")}
+            </Button>
+            <Button
+              type="button"
+              variant="destructive"
+              onClick={() => {
+                if (ownerCandidate) router.post("/workspace/owner", { userId: ownerCandidate.userId });
+                setOwnerCandidate(null);
+              }}
             >
-              <option value="member">Member: records transactions</option>
-              <option value="admin">Admin: also manages data and people</option>
-              <option value="viewer">Viewer: sees everything, changes nothing</option>
-            </Select>
-            <div className="self-end">
-              <button type="submit" disabled={invite.processing} className={primary}>
-                Send invitation
-              </button>
-            </div>
-          </form>
-        </Card>
-      )}
-      {canManage && (
-        <Card title="Activity">
-          {audit.length === 0 ? (
-            <p className="text-sm text-zinc-500">Nothing yet.</p>
-          ) : (
-            <ul className="divide-y divide-zinc-200 text-sm dark:divide-zinc-800">
-              {audit.map((e) => (
-                <li key={e.id} className="py-2">
-                  <span className="font-medium">{e.actor}</span> {e.action}{" "}
-                  <span className="text-zinc-500">{e.subject}</span>
-                  <span className="float-right text-zinc-500">{e.createdAt}</span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </Card>
-      )}
-      {!personal && (
-        <Card title="Create another workspace">
-          <form onSubmit={add} className="grid gap-3 sm:grid-cols-3">
-            <Field
-              label="Name"
-              required
-              value={create.data.name}
-              onChange={(e) => create.setData("name", e.target.value)}
-              error={create.errors.name}
-            />
-            <Field
-              label="Currency (ISO 4217)"
-              required
-              maxLength={3}
-              value={create.data.currency}
-              onChange={(e) => create.setData("currency", e.target.value.toUpperCase())}
-              error={create.errors.currency}
-            />
-            <div className="self-end">
-              <button type="submit" disabled={create.processing} className={primary}>
-                Create
-              </button>
-            </div>
-          </form>
-        </Card>
-      )}
+              {t("wsMakeOwner")}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }

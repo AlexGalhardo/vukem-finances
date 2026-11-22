@@ -2,7 +2,10 @@ import { Head, Link, router, useForm, usePage } from "@inertiajs/react";
 import type { FormEvent } from "react";
 
 import PageHeader from "../components/PageHeader";
-import { Card, primary, secondary } from "../components/ui";
+import SettingsSection from "../components/settings/SettingsSection";
+import { Button } from "../components/ui/button";
+import { Checkbox } from "../components/ui/checkbox";
+import { HelpHint } from "../help/HelpHint";
 import type { Key } from "../i18n/keys";
 import { useFinanceI18n } from "../lib/i18n";
 import { type NotificationParams, notificationTitle } from "../lib/notifications";
@@ -45,100 +48,107 @@ export default function Notifications({ items, preferences, telegramEnabled }: P
         description={t("notificationsDescription")}
         actions={
           unread && (
-            <button type="button" className={secondary} onClick={() => router.post("/notifications/read", {})}>
+            <Button type="button" variant="outline" onClick={() => router.post("/notifications/read", {})}>
               {t("notificationsMarkAllRead")}
-            </button>
+            </Button>
           )
         }
       />
-      <Card>
+      <section aria-label={t("notificationsListTitle")} data-tour="notifications-list">
         {items.length === 0 ? (
-          <p className="text-muted-foreground">{t("notificationsEmpty")}</p>
+          <p className="rounded-lg border border-dashed border-border px-4 py-8 text-center text-muted-foreground">
+            {t("notificationsEmpty")}
+          </p>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="flex flex-col divide-y divide-border rounded-lg border border-border">
             {items.map((n) => (
-              <li key={n.id} className="flex items-start justify-between gap-3 py-3">
-                <div className="flex flex-col gap-0.5">
-                  <span className={n.read ? "text-muted-foreground" : "font-medium"}>
+              <li key={n.id} className="flex flex-wrap items-start justify-between gap-x-3 gap-y-2 px-4 py-3">
+                <div className="flex min-w-0 flex-col gap-0.5">
+                  <span className={n.read ? "text-muted-foreground" : "text-label"}>
                     {notificationTitle(n.titleKey, n.params as NotificationParams, t, formats)}
                   </span>
-                  <span className="text-xs text-muted-foreground">
+                  <span className="text-caption text-muted-foreground">
                     {n.read ? t("notificationsReadState") : t("notificationsUnread")} · {date(n.createdAt)}
                   </span>
                 </div>
                 {!n.read && (
-                  <button
+                  <Button
                     type="button"
-                    className={secondary}
+                    variant="outline"
+                    size="sm"
                     onClick={() => router.post(`/notifications/${n.id}/read`, {}, { preserveScroll: true })}
                   >
                     {t("notificationsMarkRead")}
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}
           </ul>
         )}
-      </Card>
-      <Card title={t("notificationsPreferences")}>
-        <form onSubmit={submit} className="flex flex-col gap-3">
-          <p className="text-sm text-muted-foreground">{t("notificationsPreferencesHelp")}</p>
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="text-left">
-                <th scope="col" className="py-1 font-medium">
-                  {t("notificationsKind")}
-                </th>
-                <th scope="col" className="py-1 font-medium">
-                  {t("notificationsInApp")}
-                </th>
-                <th scope="col" className="py-1 font-medium">
-                  {t("notificationsEmail")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {preferences.map((p) => (
-                <tr key={p.kind} className="border-t border-border">
-                  <th scope="row" className="py-2 text-left font-normal">
-                    {t(kindLabel[p.kind] ?? "notifications")}
+      </section>
+      <SettingsSection
+        title={t("notificationsPreferences")}
+        description={t("notificationsPreferencesHelp")}
+        tour="notifications-preferences"
+        help={<HelpHint id="hintNotifChannels" labelKey="notificationsHelpChannels" tutorialStep="Notifications:1" />}
+      >
+        <form onSubmit={submit} className="flex flex-col gap-4">
+          <div className="overflow-x-auto">
+            <table className="w-full text-body">
+              <thead>
+                <tr className="text-start text-caption text-muted-foreground">
+                  <th scope="col" className="py-2 text-start font-medium">
+                    {t("notificationsKind")}
                   </th>
-                  <td>
-                    <input
-                      type="checkbox"
-                      aria-label={`${t(kindLabel[p.kind] ?? "notifications")}: ${t("notificationsInApp")}`}
-                      checked={form.data.inApp.includes(p.kind)}
-                      onChange={(e) => toggle("inApp", p.kind, e.target.checked)}
-                    />
-                  </td>
-                  <td>
-                    <input
-                      type="checkbox"
-                      aria-label={`${t(kindLabel[p.kind] ?? "notifications")}: ${t("notificationsEmail")}`}
-                      disabled={!p.emailAllowed}
-                      checked={p.emailAllowed && form.data.email.includes(p.kind)}
-                      onChange={(e) => toggle("email", p.kind, e.target.checked)}
-                    />
-                  </td>
+                  <th scope="col" className="px-3 py-2 text-start font-medium">
+                    {t("notificationsInApp")}
+                  </th>
+                  <th scope="col" className="px-3 py-2 text-start font-medium">
+                    {t("notificationsEmail")}
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          {!emailAllowed && <p className="text-xs text-muted-foreground">{t("notificationsEmailViewer")}</p>}
+              </thead>
+              <tbody>
+                {preferences.map((p) => (
+                  <tr key={p.kind} className="border-t border-border">
+                    <th scope="row" className="py-3 pe-3 text-start font-normal">
+                      {t(kindLabel[p.kind] ?? "notifications")}
+                    </th>
+                    <td className="px-3">
+                      <Checkbox
+                        aria-label={`${t(kindLabel[p.kind] ?? "notifications")}: ${t("notificationsInApp")}`}
+                        checked={form.data.inApp.includes(p.kind)}
+                        onCheckedChange={(checked) => toggle("inApp", p.kind, checked === true)}
+                      />
+                    </td>
+                    <td className="px-3">
+                      <Checkbox
+                        aria-label={`${t(kindLabel[p.kind] ?? "notifications")}: ${t("notificationsEmail")}`}
+                        disabled={!p.emailAllowed}
+                        checked={p.emailAllowed && form.data.email.includes(p.kind)}
+                        onCheckedChange={(checked) => toggle("email", p.kind, checked === true)}
+                      />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {!emailAllowed && <p className="text-caption text-muted-foreground">{t("notificationsEmailViewer")}</p>}
           {telegramEnabled && (
-            <p className="text-sm">
-              <Link href="/settings/telegram" className="underline">
+            <p className="text-body">
+              <Link href="/settings/telegram" className="text-brand-text underline underline-offset-4">
                 {t("telegramSettings")}
               </Link>
             </p>
           )}
           <div>
-            <button type="submit" disabled={form.processing} className={primary}>
+            <Button type="submit" loading={form.processing}>
               {t("notificationsSave")}
-            </button>
+            </Button>
           </div>
         </form>
-      </Card>
+      </SettingsSection>
     </>
   );
 }

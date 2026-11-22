@@ -18,6 +18,8 @@ const dict = {
   notificationsInApp: "En la app",
   notificationsEmail: "Correo",
   notificationsEmailViewer: "Los lectores no reciben correo.",
+  notificationsHelpChannels: "Acerca de los canales",
+  notificationsListTitle: "Alertas",
   notificationsSave: "Guardar preferencias",
   alertKindBudget80: "Un presupuesto llega al 80%",
   alertKindBudget100: "Un presupuesto se agota",

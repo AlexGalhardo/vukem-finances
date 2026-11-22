@@ -1,11 +1,17 @@
 import { Head, Link, router, useForm } from "@inertiajs/react";
+import { CircleCheck, Info, TriangleAlert } from "lucide-react";
 import { useState } from "react";
 import PageHeader from "../components/PageHeader";
 import PixDialog from "../components/PixDialog";
-import { Card, Select, secondary } from "../components/ui";
+import SettingsSection from "../components/settings/SettingsSection";
+import { Select } from "../components/ui";
+import { Alert, AlertDescription } from "../components/ui/alert";
+import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
+import { HelpHint } from "../help/HelpHint";
 import { type Key, useFinanceI18n } from "../lib/i18n";
 import { fill, type PixCharge } from "../lib/pix";
+import { cn } from "../lib/utils";
 import type { Page } from "../page-props";
 
 const revokedKeys: Record<string, Key> = {
@@ -76,133 +82,159 @@ export default function Billing({
   } else if (revoked) {
     state = fill(t("billingStateRevoked"), { reason: t(revokedKeys[revoked] ?? "billingRevokedAdmin") });
   }
+  // The plan banner says its state in words and in an icon, never in its color alone.
+  const StateIcon = pro ? CircleCheck : revoked ? TriangleAlert : Info;
 
   return (
     <>
       <Head title={t("billing")} />
       <PageHeader title={t("billing")} />
       {checkout && (
-        <p
-          role="status"
-          className="rounded-md bg-indigo-50 px-4 py-3 text-indigo-900 dark:bg-indigo-950 dark:text-indigo-100"
-        >
-          {t("billingThanks")}
-        </p>
+        <Alert variant="success">
+          <AlertDescription>{t("billingThanks")}</AlertDescription>
+        </Alert>
       )}
-      {!configured && !pix && <p className="text-sm text-amber-700">{t("billingStripeMissing")}</p>}
+      {!configured && !pix && (
+        <Alert variant="warning">
+          <AlertDescription>{t("billingStripeMissing")}</AlertDescription>
+        </Alert>
+      )}
 
-      <section
-        aria-labelledby="plan-state"
-        className={`flex flex-col gap-1 rounded-xl border-l-4 px-4 py-3 ${
-          pro
-            ? "border-emerald-500 bg-emerald-50/60 dark:bg-emerald-950/40"
-            : revoked
-              ? "border-amber-500 bg-amber-50/60 dark:bg-amber-950/40"
-              : "border-border bg-muted/40"
-        }`}
-      >
-        <h2 id="plan-state" className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-          {t("billingStateTitle")}: {pro ? t("billingPro") : t("billingFree")}
-        </h2>
-        <p data-testid="plan-state">{state}</p>
-      </section>
+      <div className="flex flex-col">
+        <SettingsSection title={t("billingStateTitle")} description={t("billingPlanDescription")} tour="billing-plan">
+          <section
+            aria-labelledby="plan-state"
+            className={cn(
+              "flex flex-col gap-1 rounded-lg px-4 py-3",
+              pro ? "bg-brand-subtle" : revoked ? "bg-warning-subtle" : "bg-muted",
+            )}
+          >
+            <h3 id="plan-state" className="flex items-center gap-2 text-label">
+              <StateIcon aria-hidden="true" className="size-4 shrink-0" />
+              {t("billingStateTitle")}: {pro ? t("billingPro") : t("billingFree")}
+            </h3>
+            <p data-testid="plan-state">{state}</p>
+          </section>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="flex flex-col gap-2 rounded-lg border border-border p-4">
+              <h3 className="text-h3">{t("billingFree")}</h3>
+              <ul className="flex list-disc flex-col gap-1 ps-5 text-body">
+                <li>{t("billingFreeAccounts")}</li>
+                <li>{t("billingFreeTransactions")}</li>
+                <li>{t("billingFreeMembers")}</li>
+              </ul>
+            </div>
+            <div className="flex flex-col gap-2 rounded-lg border border-border p-4">
+              <h3 className="flex items-center gap-2 text-h3">
+                {t("billingPro")}
+                {pro && <Badge variant="success">{t("billingOnPro")}</Badge>}
+              </h3>
+              <ul className="flex list-disc flex-col gap-1 ps-5 text-body">
+                <li>{t("billingProUnlimited")}</li>
+                <li>{t("billingProImport")}</li>
+                <li>{t("billingProBudgets")}</li>
+              </ul>
+            </div>
+          </div>
+          {!canManage && <p className="text-caption text-muted-foreground">{t("billingOwnerOnlyCard")}</p>}
+        </SettingsSection>
 
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Card title={t("billingFree")}>
-          <ul className="list-disc space-y-1 pl-5 text-sm">
-            <li>{t("billingFreeAccounts")}</li>
-            <li>{t("billingFreeTransactions")}</li>
-            <li>{t("billingFreeMembers")}</li>
-          </ul>
-        </Card>
-        <Card title={t("billingPro")}>
-          <ul className="list-disc space-y-1 pl-5 text-sm">
-            <li>{t("billingProUnlimited")}</li>
-            <li>{t("billingProImport")}</li>
-            <li>{t("billingProBudgets")}</li>
-          </ul>
-          {pro && (
-            <p className="mt-3 text-sm font-medium text-emerald-700 dark:text-emerald-400">{t("billingOnPro")}</p>
-          )}
-          {!canManage && !pro && <p className="mt-3 text-sm text-muted-foreground">{t("billingOwnerOnly")}</p>}
-        </Card>
-      </div>
+        {canManage && !subscription?.valid && (
+          <SettingsSection
+            title={t("billingCardTitle")}
+            description={t("billingCardNote")}
+            tour="billing-card"
+            help={
+              trialDays > 0 ? (
+                <HelpHint id="hintBillTrial" labelKey="billingHelpTrial" tutorialStep="Billing:1" />
+              ) : undefined
+            }
+          >
+            <div>
+              <Button
+                type="button"
+                variant="brand"
+                loading={form.processing}
+                disabled={!configured}
+                onClick={() => form.post("/billing/checkout/pro")}
+              >
+                {subscription
+                  ? t("billingResubscribe")
+                  : trialDays > 0
+                    ? fill(t("billingStartTrial"), { days: trialDays })
+                    : t("billingSubscribe")}
+              </Button>
+            </div>
+            {!configured && pix && <p className="text-caption text-muted-foreground">{t("billingStripeMissing")}</p>}
+          </SettingsSection>
+        )}
 
-      {canManage && !subscription?.valid && (
-        <div className="grid gap-4 sm:grid-cols-2">
-          <Card title={t("billingCardTitle")}>
-            <p className="mb-3 text-sm text-muted-foreground">{t("billingCardNote")}</p>
-            <Button
-              type="button"
-              disabled={form.processing || !configured}
-              onClick={() => form.post("/billing/checkout/pro")}
-            >
-              {subscription
-                ? t("billingResubscribe")
-                : trialDays > 0
-                  ? fill(t("billingStartTrial"), { days: trialDays })
-                  : t("billingSubscribe")}
-            </Button>
-          </Card>
-          {pix && (
-            <Card title={t("billingPixTitle")}>
-              <p className="mb-3 text-sm text-muted-foreground">{t("billingPixNote")}</p>
-              <div className="flex flex-wrap items-end gap-3">
-                <Select
-                  label={t("billingPixPeriod")}
-                  value={months}
-                  onChange={(e) => setMonths(Number(e.target.value))}
-                >
-                  {pix.options.map((o) => (
-                    <option key={o.months} value={o.months}>
-                      {fill(t("billingPixOption"), { months: o.months })}
-                    </option>
-                  ))}
-                </Select>
-                <p className="pb-2 text-sm font-medium tabular-nums" aria-live="polite">
-                  {fill(t("billingPixTotal"), { total: money(total, pix.currency) })}
-                </p>
-              </div>
-              <Button type="button" className="mt-3" disabled={starting || pix.options.length === 0} onClick={startPix}>
+        {canManage && !subscription?.valid && pix && (
+          <SettingsSection
+            title={t("billingPixTitle")}
+            description={t("billingPixNote")}
+            tour="billing-pix"
+            help={<HelpHint id="hintBillPixPeriod" labelKey="billingHelpPixPeriod" tutorialStep="Billing:2" />}
+          >
+            <div className="flex flex-wrap items-end gap-x-4 gap-y-2">
+              <Select label={t("billingPixPeriod")} value={months} onChange={(e) => setMonths(Number(e.target.value))}>
+                {pix.options.map((o) => (
+                  <option key={o.months} value={o.months}>
+                    {fill(t("billingPixOption"), { months: o.months })}
+                  </option>
+                ))}
+              </Select>
+              <p className="pb-2 text-label tabular-nums" aria-live="polite">
+                {fill(t("billingPixTotal"), { total: money(total, pix.currency) })}
+              </p>
+            </div>
+            <div>
+              <Button type="button" loading={starting} disabled={pix.options.length === 0} onClick={startPix}>
                 {starting ? t("billingPixStarting") : t("billingPixPay")}
               </Button>
-              {startFailed && (
-                <p role="alert" className="mt-2 text-sm text-destructive">
-                  {t("billingPixError")}
-                </p>
-              )}
-            </Card>
-          )}
-        </div>
-      )}
+            </div>
+            {startFailed && (
+              <p role="alert" className="text-body text-expense">
+                {t("billingPixError")}
+              </p>
+            )}
+          </SettingsSection>
+        )}
 
-      {subscription && (
-        <Card title={t("billingStatusTitle")}>
-          <p>
-            {t("billingStatusLabel")}: <strong>{t(statusKeys[subscription.status] ?? "billingStatusCanceled")}</strong>
-            {subscription.currentPeriodEnd &&
-              `, ${fill(t("billingPeriodEnds"), { date: date(subscription.currentPeriodEnd) })}`}
-            {subscription.cancelAtPeriodEnd && ` (${t("billingCancelsAtEnd")})`}
-          </p>
-          {!subscription.valid && !subscription.revokedReason && (
-            <p className="mt-2 text-sm text-amber-700">{t("billingNotActive")}</p>
-          )}
-          {canManage && (
-            <button
-              type="button"
-              className={`${secondary} mt-3`}
-              disabled={form.processing}
-              onClick={() => form.post("/billing/portal")}
-            >
-              {t("billingOpenPortal")}
-            </button>
-          )}
-        </Card>
-      )}
+        {subscription && (
+          <SettingsSection title={t("billingStatusTitle")}>
+            <p>
+              {t("billingStatusLabel")}:{" "}
+              <strong>{t(statusKeys[subscription.status] ?? "billingStatusCanceled")}</strong>
+              {subscription.currentPeriodEnd &&
+                `, ${fill(t("billingPeriodEnds"), { date: date(subscription.currentPeriodEnd) })}`}
+              {subscription.cancelAtPeriodEnd && ` (${t("billingCancelsAtEnd")})`}
+            </p>
+            {!subscription.valid && !subscription.revokedReason && (
+              <p className="flex items-start gap-2 text-body text-warning">
+                <TriangleAlert aria-hidden="true" className="mt-0.5 size-4 shrink-0" />
+                {t("billingNotActive")}
+              </p>
+            )}
+            {canManage && (
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  loading={form.processing}
+                  onClick={() => form.post("/billing/portal")}
+                >
+                  {t("billingOpenPortal")}
+                </Button>
+              </div>
+            )}
+          </SettingsSection>
+        )}
+      </div>
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-body text-muted-foreground">
         {t("billingLimitsReached")}{" "}
-        <Link href="/workspace" className="text-indigo-600 hover:underline dark:text-indigo-400">
+        <Link href="/workspace" className="text-brand-text underline underline-offset-4">
           {t("billingManageMembers")}
         </Link>
         .
