@@ -31,7 +31,12 @@ export default function LineChart({ points, currency }: { points: Point[]; curre
               <title>{`${monthLabel(p.month)}: ${money(p.balanceCents, currency)}`}</title>
             </rect>
             {(points.length <= 12 || i % Math.ceil(points.length / 12) === 0) && (
-              <text x={x} y={height + 16} textAnchor="middle" className="fill-muted-foreground text-[11px]">
+              <text
+                x={x}
+                y={height + 16}
+                textAnchor="middle"
+                className="fill-muted-foreground text-[11px] tabular-nums"
+              >
                 {monthLabel(p.month)}
               </text>
             )}

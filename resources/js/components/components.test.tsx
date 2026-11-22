@@ -27,9 +27,24 @@ describe("MoneyText", () => {
 
   test("renders the visible text hidden from assistive tech and the label for it", () => {
     const html = renderToString(<MoneyText cents={-1250} currency="USD" tone />);
-    expect(html).toContain('aria-hidden="true">-$12.50<');
+    expect(html).toContain('aria-hidden="true">−$12.50<');
     expect(html).toContain("minus 12.50 US dollars");
     expect(html).toContain("tabular-nums");
+  });
+
+  test("a colored income carries a plus sign and an icon, so it never relies on hue", () => {
+    const html = renderToString(<MoneyText cents={1250} currency="USD" colored showIcon />);
+    expect(html).toContain("+$12.50");
+    expect(html).toContain("plus 12.50 US dollars");
+    expect(html).toContain("text-income");
+    expect(html).toContain("<svg");
+  });
+
+  test("a transfer is neutral and a zero amount has no sign", () => {
+    const transfer = renderToString(<MoneyText cents={500} currency="USD" kind="transfer" colored showIcon />);
+    expect(transfer).toContain("text-muted-foreground");
+    const zero = renderToString(<MoneyText cents={0} currency="USD" colored />);
+    expect(zero).toContain(">$0.00<");
   });
 });
 

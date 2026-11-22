@@ -1,20 +1,34 @@
-import type { InputHTMLAttributes } from "react";
+import { CircleAlert } from "lucide-react";
+import { type InputHTMLAttributes, useId } from "react";
+import { Input } from "./ui/input";
 
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
 }
 
-// Field is a labelled input with its validation error.
-export default function Field({ label, error, ...input }: Props) {
+/** A labelled input with its validation error: an icon and a message below, linked by aria-describedby. */
+export default function Field({ label, error, id, ...input }: Props) {
+  const generated = useId();
+  const fieldId = id ?? generated;
+  const errorId = `${fieldId}-error`;
   return (
-    <label className="block">
-      <span className="font-medium">{label}</span>
-      <input
+    <div className="flex flex-col gap-2">
+      <label htmlFor={fieldId} className="text-label">
+        {label}
+      </label>
+      <Input
         {...input}
-        className="mt-1 block w-full rounded-md border border-zinc-300 bg-transparent px-3 py-2 focus:border-indigo-500 focus:outline-none dark:border-zinc-700"
+        id={fieldId}
+        aria-invalid={error ? true : undefined}
+        aria-describedby={error ? errorId : input["aria-describedby"]}
       />
-      {error && <p className="mt-1 text-sm text-red-600">{error}</p>}
-    </label>
+      {error && (
+        <p id={errorId} className="flex items-start gap-1.5 text-caption text-expense">
+          <CircleAlert aria-hidden="true" className="mt-px size-3.5 shrink-0" />
+          {error}
+        </p>
+      )}
+    </div>
   );
 }

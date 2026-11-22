@@ -1,6 +1,10 @@
+import { CircleAlert, Eye, EyeOff } from "lucide-react";
 import { useId, useState } from "react";
 
+import { useFinanceI18n } from "../lib/i18n";
 import type { PasswordAdvice, PasswordCheck } from "../lib/password-policy";
+import { cn } from "../lib/utils";
+import { Input } from "./ui/input";
 
 interface Props {
   label: string;
@@ -20,7 +24,8 @@ interface Props {
   advice?: PasswordAdvice;
 }
 
-const meter = ["bg-zinc-300 dark:bg-zinc-700", "bg-red-500", "bg-amber-500", "bg-lime-500", "bg-green-600"];
+// Every step also has its text, so the meter is never the only signal.
+const meter = ["bg-muted", "bg-expense", "bg-warning", "bg-info", "bg-brand"];
 
 // PasswordField is a password input with a show/hide toggle inside the field
 // and, when `checks` are given, the server's rules checked as you type.
@@ -36,6 +41,7 @@ const meter = ["bg-zinc-300 dark:bg-zinc-700", "bg-red-500", "bg-amber-500", "bg
 // list-style: none, which drops the list role in some screen readers. Each
 // rule's state is in its text too, never in its colour alone.
 export default function PasswordField({ label, name, value, onChange, autoComplete, error, checks, advice }: Props) {
+  const { t } = useFinanceI18n();
   const [visible, setVisible] = useState(false);
   const id = useId();
   const errorId = `${id}-error`;
@@ -45,12 +51,12 @@ export default function PasswordField({ label, name, value, onChange, autoComple
   const describedBy = [error && errorId, checks && checksId, advice && adviceId].filter(Boolean).join(" ");
 
   return (
-    <div>
-      <label htmlFor={id} className="font-medium">
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="text-label">
         {label}
       </label>
-      <div className="relative mt-1">
-        <input
+      <div className="relative">
+        <Input
           id={id}
           name={name}
           type={visible ? "text" : "password"}
@@ -60,63 +66,50 @@ export default function PasswordField({ label, name, value, onChange, autoComple
           onChange={(e) => onChange(e.target.value)}
           aria-invalid={error ? true : undefined}
           aria-describedby={describedBy || undefined}
-          className="block w-full rounded-md border border-zinc-300 bg-transparent py-2 pr-11 pl-3 focus:border-indigo-500 focus:outline-none dark:border-zinc-700"
+          className="pe-11"
         />
         <button
           type="button"
           onClick={() => setVisible((shown) => !shown)}
-          aria-label={visible ? "Hide password" : "Show password"}
+          aria-label={visible ? t("hidePassword") : t("showPassword")}
           aria-pressed={visible}
           aria-controls={id}
-          className="absolute inset-y-0 right-0 flex w-11 items-center justify-center rounded-r-md text-zinc-500 hover:text-zinc-900 focus:outline-2 focus:outline-offset-2 focus:outline-indigo-500 dark:text-zinc-400 dark:hover:text-zinc-100"
+          className="absolute inset-y-0 end-0 flex w-11 items-center justify-center rounded-e-md text-muted-foreground transition-colors hover:text-foreground"
         >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 20 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            className="size-5"
-          >
-            <path d="M1.5 10S4.8 4.5 10 4.5 18.5 10 18.5 10 15.2 15.5 10 15.5 1.5 10 1.5 10Z" />
-            <circle cx="10" cy="10" r="2.75" />
-            {!visible && <path d="M3.5 3.5l13 13" />}
-          </svg>
+          {visible ? <EyeOff aria-hidden="true" className="size-4" /> : <Eye aria-hidden="true" className="size-4" />}
         </button>
       </div>
       {error && (
-        <p id={errorId} className="mt-1 text-sm text-red-600">
+        <p id={errorId} className="flex items-start gap-1.5 text-caption text-expense">
+          <CircleAlert aria-hidden="true" className="mt-px size-3.5 shrink-0" />
           {error}
         </p>
       )}
       {checks && (
         // biome-ignore lint/a11y/noRedundantRoles: Safari/VoiceOver drops list semantics from a list with list-style: none
-        <ul id={checksId} role="list" className="mt-2 space-y-1 text-sm">
+        <ul id={checksId} role="list" className="space-y-1 text-caption">
           {checks.map((check) => (
-            <li
-              key={check.id}
-              className={check.met ? "text-green-700 dark:text-green-400" : "text-zinc-600 dark:text-zinc-400"}
-            >
+            <li key={check.id} className={check.met ? "text-brand-text" : "text-muted-foreground"}>
               <span aria-hidden="true" className="mr-1.5 inline-block w-3 text-center">
                 {check.met ? "✓" : "•"}
               </span>
               {check.label}
-              <span className="sr-only">{check.met ? " (met)" : " (not met yet)"}</span>
+              <span className="sr-only"> ({check.met ? t("passwordMet") : t("passwordNotMet")})</span>
             </li>
           ))}
         </ul>
       )}
       {advice && (
-        <div id={adviceId} className="mt-2 text-sm text-zinc-600 dark:text-zinc-400">
+        <div id={adviceId} className="text-caption text-muted-foreground">
           <div aria-hidden="true" className="mb-1 flex gap-1">
             {[1, 2, 3, 4].map((step) => (
               <span
                 key={step}
-                className={`h-1 flex-1 rounded-full ${step <= advice.score ? meter[advice.score] : meter[0]}`}
+                className={cn("h-1 flex-1 rounded-full", step <= advice.score ? meter[advice.score] : meter[0])}
               />
             ))}
           </div>
-          Strength: {advice.label} (advice, not a requirement). {advice.hint}
+          {t("passwordStrength")}: {advice.label} ({t("passwordAdviceNote")}). {advice.hint}
         </div>
       )}
     </div>

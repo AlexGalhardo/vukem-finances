@@ -15,9 +15,9 @@ export default function BarChart({ points, currency }: { points: Point[]; curren
   return (
     <svg viewBox={`0 0 ${width} ${height + 44}`} role="img" aria-label={t("cashFlow")} className="w-full">
       <defs>
-        {/* Expense bars are hatched, so the two series differ by pattern and not by color alone. */}
+        {/* Expense bars are hatched, so income and expense differ by pattern and not by hue alone. */}
         <pattern id="bar-hatch" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-          <rect width="6" height="6" className="fill-chart-2" />
+          <rect width="6" height="6" className="fill-expense" />
           <line x1="0" y1="0" x2="0" y2="6" strokeWidth="2.5" className="stroke-background" />
         </pattern>
       </defs>
@@ -27,25 +27,25 @@ export default function BarChart({ points, currency }: { points: Point[]; curren
         const he = (p.expenseCents / max) * height;
         return (
           <g key={p.month}>
-            <rect x={x - bar - 1} y={height - hi} width={bar} height={hi} className="fill-chart-1">
+            <rect x={x - bar - 1} y={height - hi} width={bar} height={hi} className="fill-income">
               <title>{`${monthLabel(p.month)}: ${t("income")} ${formatMoney(p.incomeCents, currency)}`}</title>
             </rect>
             <rect x={x + 1} y={height - he} width={bar} height={he} fill="url(#bar-hatch)">
               <title>{`${monthLabel(p.month)}: ${t("expenses")} ${formatMoney(p.expenseCents, currency)}`}</title>
             </rect>
-            <text x={x} y={height + 16} textAnchor="middle" className="fill-muted-foreground text-[11px]">
+            <text x={x} y={height + 16} textAnchor="middle" className="fill-muted-foreground text-[11px] tabular-nums">
               {monthLabel(p.month)}
             </text>
           </g>
         );
       })}
       <line x1="0" x2={width} y1={height} y2={height} className="stroke-border" />
-      <rect x="0" y={height + 28} width="10" height="10" className="fill-chart-1" />
-      <text x="14" y={height + 37} className="fill-muted-foreground text-[11px]">
+      <rect x="0" y={height + 28} width="10" height="10" className="fill-income" />
+      <text x="14" y={height + 37} className="fill-muted-foreground text-[11px] tabular-nums">
         {t("income")}
       </text>
       <rect x="90" y={height + 28} width="10" height="10" fill="url(#bar-hatch)" />
-      <text x="104" y={height + 37} className="fill-muted-foreground text-[11px]">
+      <text x="104" y={height + 37} className="fill-muted-foreground text-[11px] tabular-nums">
         {t("expenses")}
       </text>
     </svg>
