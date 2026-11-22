@@ -38,5 +38,6 @@ func All() []schema.Migration {
 		m20261125100000CreateMCPOAuthTables(),
 		m20261125110000AddMCPGrantScopes(),
 		m20261126100000CreateDataLifecycle(),
+		m20261126120000AddTransactionCoverIndexes(),
 	}
 }
