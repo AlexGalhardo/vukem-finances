@@ -121,7 +121,12 @@ func run(t *testing.T, c *cli.CLI, tm *term, args ...string) int {
 	tm.out.Reset()
 	tm.err.Reset()
 
-	return cli.ExitOf(c.Run(t.Context(), args[0], args[1:]))
+	err := c.Run(t.Context(), args[0], args[1:])
+	if err != nil {
+		tm.err.WriteString(err.Error() + "\n")
+	}
+
+	return cli.ExitOf(err)
 }
 
 // unusable is a password hash no one can log in with.

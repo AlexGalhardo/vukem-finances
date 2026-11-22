@@ -8,6 +8,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"net/http"
 	"os"
 	"strings"
 
@@ -26,6 +27,10 @@ type Env struct {
 	StdoutTTY bool
 	// OpenLocal opens the local backend; nil means local mode is not built in.
 	OpenLocal func(ctx context.Context) (Backend, error)
+	// Store keeps the login of remote mode; HTTP is the client it uses (nil
+	// means NewHTTPClient).
+	Store CredentialStore
+	HTTP  *http.Client
 }
 
 // CLI runs the commands of a tree.
@@ -106,6 +111,10 @@ func (c Command) bind(fs *flag.FlagSet) *fieldFlags {
 
 // Run runs `<resource> <verb> ...`; args are what follows the resource.
 func (c *CLI) Run(ctx context.Context, resource string, args []string) error {
+	if resource == "auth" {
+		return c.Auth(ctx, args)
+	}
+
 	if len(args) == 0 || args[0] == "-h" || args[0] == "--help" || args[0] == "help" {
 		c.printVerbs(resource)
 
@@ -352,10 +361,6 @@ func (c *CLI) format(flagValue string) (string, error) {
 	}
 
 	return "", usagef("--output must be table, json or csv, not %q", flagValue)
-}
-
-func (c *CLI) backend(ctx context.Context, _ *globals) (Backend, error) {
-	return c.localBackend(ctx)
 }
 
 func (c *CLI) localBackend(ctx context.Context) (Backend, error) {
