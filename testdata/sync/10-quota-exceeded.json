@@ -1,0 +1,95 @@
+{
+	"name": "quota-exceeded",
+	"description": "On the Free plan a second live account is refused with quota_exceeded and does not block the other rows of the batch.",
+	"workspace": {
+		"plan": "free",
+		"devices": {
+			"a": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P37",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Second",
+							"kind": "cash"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P38",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Still fine",
+							"kind": "expense"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "rejected",
+						"error": {
+							"code": "quota_exceeded"
+						}
+					},
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"note": "an archived account does not weigh on the plan",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P39",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A02",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Archived",
+							"kind": "cash",
+							"archived_at": "2026-01-01T00:00:00Z"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					}
+				]
+			}
+		}
+	],
+	"final": {
+		"absent": [
+			"01JD5Z8K3M0000000000000A01"
+		],
+		"server": {
+			"category": {
+				"01JD5Z8K3M0000000000000C01": {
+					"name": "Still fine"
+				}
+			}
+		}
+	}
+}

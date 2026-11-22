@@ -1,0 +1,98 @@
+{
+	"name": "offline-category-same-name",
+	"description": "Two devices create a category with the same name offline; the second gets duplicate_name and adopts the first.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P17",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Pets",
+							"kind": "expense"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied"
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P18",
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C02",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Pets",
+							"kind": "expense"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "rejected",
+						"error": {
+							"code": "duplicate_name"
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"contains": [
+					{
+						"entity": "category",
+						"uid": "01JD5Z8K3M0000000000000C01",
+						"row": {
+							"name": "Pets"
+						}
+					}
+				],
+				"absent_uids": [
+					"01JD5Z8K3M0000000000000C02"
+				]
+			}
+		}
+	],
+	"final": {
+		"devices_equal": [
+			"a",
+			"b"
+		],
+		"absent": [
+			"01JD5Z8K3M0000000000000C02"
+		]
+	}
+}

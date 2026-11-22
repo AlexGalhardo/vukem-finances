@@ -1,0 +1,146 @@
+{
+	"name": "retry-of-a-lost-response",
+	"description": "The response to a push is lost and the client sends the same op_id again; the row changes once and the answer is the same.",
+	"workspace": {
+		"plan": "pro",
+		"devices": {
+			"a": "owner",
+			"b": "owner"
+		}
+	},
+	"steps": [
+		{
+			"device": "a",
+			"action": "push",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P19",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Once",
+							"kind": "cash"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied",
+						"version": 1,
+						"row": {
+							"name": "Once"
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"note": "same op_id: the stored result comes back",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P19",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Once",
+							"kind": "cash"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied",
+						"version": 1,
+						"row": {
+							"name": "Once"
+						}
+					}
+				]
+			}
+		},
+		{
+			"device": "a",
+			"action": "push",
+			"note": "and again, twice in one batch",
+			"input": {
+				"mutations": [
+					{
+						"op_id": "01JD5Z8K3M0000000000000P19",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Once",
+							"kind": "cash"
+						}
+					},
+					{
+						"op_id": "01JD5Z8K3M0000000000000P19",
+						"entity": "account",
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"base_seq": 0,
+						"fields": {
+							"name": "Once",
+							"kind": "cash"
+						}
+					}
+				]
+			},
+			"expect": {
+				"results": [
+					{
+						"status": "applied",
+						"version": 1
+					},
+					{
+						"status": "applied",
+						"version": 1
+					}
+				]
+			}
+		},
+		{
+			"device": "b",
+			"action": "pull",
+			"input": {
+				"from": "start"
+			},
+			"expect": {
+				"contains": [
+					{
+						"uid": "01JD5Z8K3M0000000000000A01",
+						"op": "upsert",
+						"version": 1
+					}
+				]
+			}
+		}
+	],
+	"final": {
+		"devices_equal": [
+			"a",
+			"b"
+		],
+		"server": {
+			"account": {
+				"01JD5Z8K3M0000000000000A01": {
+					"name": "Once"
+				}
+			}
+		}
+	}
+}
