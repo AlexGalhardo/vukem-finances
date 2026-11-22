@@ -69,7 +69,9 @@ async function send(url: string, method: "POST" | "DELETE", body?: unknown): Pro
  */
 export default function AssistantHost() {
   const { t, money } = useFinanceI18n();
-  const currency = usePage<SharedProps>().props.workspace?.current.currency ?? "USD";
+  const workspace = usePage<SharedProps>().props.workspace;
+  const currency = workspace?.current.currency ?? "USD";
+  const canAsk = workspace?.role !== undefined && workspace.role !== "viewer";
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<Status | null>(null);
   const [turns, setTurns] = useState<Turn[]>([]);
@@ -87,7 +89,14 @@ export default function AssistantHost() {
     setOpen(true);
   }, []);
 
-  useAction({ id: "ask-assistant", labelKey: "askAssistant", group: "actions", keys: "a s", run: show });
+  useAction({
+    id: "ask-assistant",
+    labelKey: "askAssistant",
+    group: "actions",
+    keys: "a s",
+    enabled: () => canAsk,
+    run: show,
+  });
   useAction({
     id: "review-suggestions",
     labelKey: "reviewSuggestions",

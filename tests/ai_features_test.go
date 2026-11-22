@@ -128,10 +128,13 @@ func TestAIFeaturesHTTP(t *testing.T) {
 		t.Errorf("draft = %v, transactions %d -> %d", d, before, count[models.Transaction](t, tm.app, tm.owner))
 	}
 
-	// Assistant: read only, for every role that can read.
+	// Assistant: it only reads, but each question spends the owner's AI limit,
+	// so a viewer cannot ask.
 	planThenAnswer(provider, cashFlowPlan)
 
-	for _, w := range []who{tm.viewer, tm.admin} {
+	tm.viewer.Client.PostJSON("/assistant/ask", map[string]any{"question": "how am I doing?"}).AssertForbidden()
+
+	for _, w := range []who{tm.member, tm.admin} {
 		r := jsonOf(t, w.Client.PostJSON("/assistant/ask", map[string]any{"question": "how am I doing?"}).AssertOK())
 		if r["answered"] != true || len(r["tables"].([]any)) != 1 {
 			t.Errorf("reply = %v", r)
@@ -231,7 +234,7 @@ func TestConversationsArePrivate(t *testing.T) {
 	cid := idStr(int64(r["conversationId"].(float64)))
 
 	// The owner and an admin of the workspace cannot read, extend or delete it, and do not see it listed.
-	for _, w := range []who{tm.owner, tm.admin, tm.viewer} {
+	for _, w := range []who{tm.owner, tm.admin} {
 		w.Client.Get("/assistant/conversations/" + cid).AssertNotFound()
 		w.Client.Delete("/assistant/conversations/" + cid).AssertNotFound()
 		w.Client.PostJSON("/assistant/ask", map[string]any{"question": "more", "conversationId": cid}).AssertNotFound()
@@ -242,6 +245,20 @@ func TestConversationsArePrivate(t *testing.T) {
 		}
 
 		w.Client.Delete("/assistant/conversations").AssertOK()
+	}
+
+	// A viewer reads it as empty and can neither extend nor delete it.
+	seen := tm.viewer.Client.Get("/assistant/conversations/" + cid).AssertOK()
+	if m := jsonOf(t, seen); len(m["messages"].([]any)) != 0 || strings.Contains(seen.Body(), "my secret plan") {
+		t.Errorf("a viewer read another person's conversation: %s", seen.Body())
+	}
+
+	tm.viewer.Client.Delete("/assistant/conversations/" + cid).AssertForbidden()
+	tm.viewer.Client.Delete("/assistant/conversations").AssertForbidden()
+	tm.viewer.Client.PostJSON("/assistant/ask", map[string]any{"question": "more", "conversationId": cid}).AssertForbidden()
+
+	if list := tm.viewer.Client.Get("/assistant/conversations").AssertOK(); strings.Contains(list.Body(), "my secret plan") {
+		t.Error("a viewer sees another person's conversation listed")
 	}
 
 	// None of that touched the author's conversation.

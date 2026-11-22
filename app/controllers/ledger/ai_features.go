@@ -10,6 +10,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem/auth"
 	"github.com/AlexGalhardo/vukem/errs"
+	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/web"
 
 	"github.com/AlexGalhardo/vukem-finances/app/ai"
@@ -250,8 +251,14 @@ func (a *AIFeatureHandlers) AssistantStatus(c *web.Ctx) error {
 	})
 }
 
-// AssistantAsk answers one question.
+// AssistantAsk answers one question. It needs transactions.record: every
+// question spends the monthly AI limit the owner pays for, and a viewer changes
+// nothing in the workspace, that budget included.
 func (a *AIFeatureHandlers) AssistantAsk(c *web.Ctx) error {
+	if err := a.h.can(c, workspaces.AbilityRecord); err != nil {
+		return err
+	}
+
 	in, err := web.Parse(c, requests.AssistantAskSchema)
 	if err != nil {
 		return err
@@ -270,7 +277,9 @@ func (a *AIFeatureHandlers) AssistantAsk(c *web.Ctx) error {
 	return c.JSON(http.StatusOK, reply)
 }
 
-// AssistantMessages returns the turns of one of the caller's conversations.
+// AssistantMessages returns the turns of one of the caller's conversations. A
+// viewer cannot start one, so an id that is not theirs reads as empty; someone
+// demoted to viewer still reads what they asked before.
 func (a *AIFeatureHandlers) AssistantMessages(c *web.Ctx) error {
 	cid, err := c.ParamInt("conversation")
 	if err != nil {
@@ -283,6 +292,10 @@ func (a *AIFeatureHandlers) AssistantMessages(c *web.Ctx) error {
 	}
 
 	msgs, err := a.assistant.Messages(c.Context(), uid, cid)
+	if errors.Is(err, orm.ErrNotFound) && a.h.can(c, workspaces.AbilityRecord) != nil {
+		return c.JSON(http.StatusOK, map[string]any{"messages": []assistant.MessageView{}})
+	}
+
 	if err != nil {
 		return err
 	}
@@ -292,6 +305,10 @@ func (a *AIFeatureHandlers) AssistantMessages(c *web.Ctx) error {
 
 // AssistantDelete deletes one of the caller's conversations.
 func (a *AIFeatureHandlers) AssistantDelete(c *web.Ctx) error {
+	if err := a.h.can(c, workspaces.AbilityRecord); err != nil {
+		return err
+	}
+
 	cid, err := c.ParamInt("conversation")
 	if err != nil {
 		return err
@@ -311,6 +328,10 @@ func (a *AIFeatureHandlers) AssistantDelete(c *web.Ctx) error {
 
 // AssistantDeleteAll deletes every conversation of the caller in the workspace.
 func (a *AIFeatureHandlers) AssistantDeleteAll(c *web.Ctx) error {
+	if err := a.h.can(c, workspaces.AbilityRecord); err != nil {
+		return err
+	}
+
 	uid, err := a.user(c)
 	if err != nil {
 		return err
