@@ -47,6 +47,13 @@ const (
 // FirstSummaryDate is before every date the app accepts.
 const FirstSummaryDate = "0001-01-01"
 
+// monthSpan is the first and the last real day of a valid "YYYY-MM".
+func monthSpan(month string) (from, to string) {
+	t, _ := time.Parse("2006-01", month)
+
+	return month + "-01", fmt.Sprintf("%s-%02d", month, timeutil.LastDayOfMonth(t.Year(), t.Month()))
+}
+
 // MonthTotals sums the live transactions of the workspace of ctx dated from
 // to to (ISO dates, both included), keeping apart the dimensions of by (the
 // others come back zero) and always the kind and the transfer flag. Whole

@@ -3,6 +3,7 @@ package finance
 import (
 	"context"
 	"database/sql"
+	"math/big"
 	"net/http"
 	"time"
 
@@ -37,19 +38,6 @@ func satAdd(a, b int64) int64 {
 	}
 
 	return a + b
-}
-
-// satMul multiplies an amount by a count, clamping at spentCap.
-func satMul(amount, n int64) int64 {
-	if amount <= 0 || n <= 0 {
-		return 0
-	}
-
-	if amount > spentCap/n {
-		return spentCap
-	}
-
-	return amount * n
 }
 
 // BudgetStatus is a budget with what the month has spent against it. A budget
@@ -147,13 +135,6 @@ func (s *Service) SaveBudget(ctx context.Context, in BudgetInput) error {
 	return err
 }
 
-// amountGroup is one (category, amount) group of a month's expenses.
-type amountGroup struct {
-	CategoryID sql.Null[int64] `db:"category_id"`
-	Amount     int64           `db:"amount_cents"`
-	N          int64           `db:"n"`
-}
-
 // monthSpending is what a month spent: Total counts every expense that is not
 // a transfer leg (uncategorized ones too), and Tree maps a category to its own
 // spending plus its subcategories'. Card purchases, installment parts and
@@ -164,21 +145,15 @@ type monthSpending struct {
 	Tree  map[int64]int64
 }
 
-// spendingOf reads the month in one grouped query. It groups by amount as well
-// and multiplies in Go with clamping, because SUM would stop with an overflow
-// error on a database that holds absurdly many huge amounts. Soft-deleted
-// rows are out of the query; the category tree includes deleted categories,
-// since a live transaction may still name one.
+// spendingOf reads the month from the monthly summary. The sums are exact
+// and clamped at spentCap, because a database that holds absurdly many huge
+// amounts must not stop the page. Soft-deleted rows are out of the summary;
+// the category tree includes deleted categories, since a live transaction
+// may still name one.
 func (s *Service) spendingOf(ctx context.Context, month string) (monthSpending, error) {
-	from, to := monthBounds(month)
+	from, to := monthSpan(month)
 
-	groups, err := workspaces.Scoped[models.Transaction](ctx, s.DB).
-		WhereNull("transfer_uid").Where("kind", models.KindExpense).WhereBetween("occurred_on", from, to).
-		GroupBy("category_id", "amount_cents").
-		SelectAs("category_id", "category_id").
-		SelectAs("amount_cents", "amount_cents").
-		SelectExpr(orm.Count("*"), "n").
-		Scan[amountGroup](ctx)
+	rows, err := s.MonthTotals(ctx, from, to, ByCategory)
 	if err != nil {
 		return monthSpending{}, err
 	}
@@ -198,18 +173,33 @@ func (s *Service) spendingOf(ctx context.Context, month string) (monthSpending, 
 
 	out := monthSpending{Tree: map[int64]int64{}}
 
-	for _, g := range groups {
-		cents := satMul(g.Amount, g.N)
-		out.Total = satAdd(out.Total, cents)
+	total := new(big.Int)
+	byCat := map[int64]*big.Int{}
 
-		if !g.CategoryID.Valid {
+	for _, r := range rows {
+		if r.Transfer != 0 || r.Kind != models.KindExpense {
 			continue
 		}
 
-		out.Tree[g.CategoryID.V] = satAdd(out.Tree[g.CategoryID.V], cents)
+		total.Add(total, r.Sum())
 
-		if p, ok := parent[g.CategoryID.V]; ok {
-			out.Tree[p] = satAdd(out.Tree[p], cents)
+		if r.CategoryID != 0 {
+			if byCat[r.CategoryID] == nil {
+				byCat[r.CategoryID] = new(big.Int)
+			}
+
+			byCat[r.CategoryID].Add(byCat[r.CategoryID], r.Sum())
+		}
+	}
+
+	out.Total = ClampCents(total)
+
+	for id, cents := range byCat {
+		c := ClampCents(cents)
+		out.Tree[id] = satAdd(out.Tree[id], c)
+
+		if p, ok := parent[id]; ok {
+			out.Tree[p] = satAdd(out.Tree[p], c)
 		}
 	}
 

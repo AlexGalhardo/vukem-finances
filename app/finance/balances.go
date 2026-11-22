@@ -4,11 +4,9 @@ import (
 	"context"
 	"errors"
 	"math"
-
-	"github.com/AlexGalhardo/vukem/orm"
+	"math/big"
 
 	"github.com/AlexGalhardo/vukem-finances/app/models"
-	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
 
 // errBalanceRange answers a sum that no longer fits an int64.
@@ -27,11 +25,17 @@ type AccountBalance struct {
 	Transactions int64 `json:"transactions"`
 }
 
-// movement is the signed sum of the transactions of one account and kind.
-type movement struct {
-	AccountID int64  `db:"account_id"`
-	Kind      string `db:"kind"`
-	Cents     int64  `db:"cents"`
+// int64Of narrows an exact sum, or answers errBalanceRange.
+func int64Of(v *big.Int) (int64, error) {
+	if v == nil {
+		return 0, nil
+	}
+
+	if !v.IsInt64() {
+		return 0, errBalanceRange
+	}
+
+	return v.Int64(), nil
 }
 
 func addCents(a, b int64) (int64, error) {
@@ -46,7 +50,7 @@ func addCents(a, b int64) (int64, error) {
 // included, flagged) up to asOf, an ISO date taken inclusively; empty means
 // today in the workspace timezone. Both legs of a transfer count, each on its
 // own account: a transfer moves money between balances and changes none of
-// the totals. The sums come from one grouped statement.
+// the totals. The sums come from the monthly summary, plus the rows of the month asOf falls in.
 func (s *Service) AccountBalances(ctx context.Context, asOf string) ([]AccountBalance, error) {
 	if asOf == "" {
 		asOf = s.Today(ctx)
@@ -61,46 +65,52 @@ func (s *Service) AccountBalances(ctx context.Context, asOf string) ([]AccountBa
 		return nil, err
 	}
 
-	moves, err := workspaces.Scoped[models.Transaction](ctx, s.DB).
-		Where("occurred_on", "<=", asOf).
-		GroupBy("account_id", "kind").
-		SelectAs("account_id", "account_id").
-		SelectAs("kind", "kind").
-		SelectExpr(orm.Sum("amount_cents"), "cents").
-		Scan[movement](ctx)
+	moves, err := s.MonthTotals(ctx, FirstSummaryDate, asOf, ByAccount)
 	if err != nil {
 		return nil, err
 	}
 
-	counts, err := workspaces.Scoped[models.Transaction](ctx, s.DB).GroupCount[int64](ctx, "account_id")
+	// The count is of the live rows at any date, future ones included.
+	counts, err := s.MonthTotals(ctx, FirstSummaryDate, "9999-12-31", ByAccount)
 	if err != nil {
 		return nil, err
 	}
 
-	signed := make(map[int64]int64, len(accounts))
+	signed := make(map[int64]*big.Int, len(accounts))
 
 	for _, m := range moves {
-		delta := m.Cents
-		if m.Kind != models.KindIncome {
-			delta = -delta
+		if signed[m.AccountID] == nil {
+			signed[m.AccountID] = new(big.Int)
 		}
 
-		if signed[m.AccountID], err = addCents(signed[m.AccountID], delta); err != nil {
-			return nil, err
+		if m.Kind == models.KindIncome {
+			signed[m.AccountID].Add(signed[m.AccountID], m.Sum())
+		} else {
+			signed[m.AccountID].Sub(signed[m.AccountID], m.Sum())
 		}
+	}
+
+	count := make(map[int64]int64, len(accounts))
+	for _, c := range counts {
+		count[c.AccountID] += c.N
 	}
 
 	out := make([]AccountBalance, len(accounts))
 
 	for i, a := range accounts {
-		balance, err := addCents(a.OpeningCents, signed[a.ID])
+		movementCents, err := int64Of(signed[a.ID])
+		if err != nil {
+			return nil, err
+		}
+
+		balance, err := addCents(a.OpeningCents, movementCents)
 		if err != nil {
 			return nil, err
 		}
 
 		out[i] = AccountBalance{
-			AccountID: a.ID, OpeningCents: a.OpeningCents, MovementCents: signed[a.ID],
-			BalanceCents: balance, Archived: a.ArchivedAt.Valid, Transactions: counts[a.ID],
+			AccountID: a.ID, OpeningCents: a.OpeningCents, MovementCents: movementCents,
+			BalanceCents: balance, Archived: a.ArchivedAt.Valid, Transactions: count[a.ID],
 		}
 	}
 

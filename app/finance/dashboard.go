@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math/big"
 	"slices"
 	"time"
 
@@ -84,42 +85,55 @@ func (s *Service) Dashboard(ctx context.Context, month string) (Dashboard, error
 		names[c.ID] = c.Name
 	}
 
-	byCategory := map[string]int64{}
-	from, _ := monthBounds(months[0])
-	_, to := monthBounds(month)
+	byCategory := map[string]*big.Int{}
+	from, _ := monthSpan(months[0])
+	_, to := monthSpan(month)
 
 	// Transfer legs move money between accounts: never income, expense or spending.
-	entries := workspaces.Scoped[models.Transaction](ctx, s.DB).WhereNull("transfer_uid").WhereBetween("occurred_on", from, to)
+	rows, err := s.MonthTotals(ctx, from, to, ByMonth|ByCategory)
+	if err != nil {
+		return d, err
+	}
 
-	for t, err := range entries.Each(ctx) {
-		if err != nil {
-			return d, err
-		}
+	sums := map[string]*[2]*big.Int{}
 
-		p := points[MonthOf(t.OccurredOn)]
-		if p == nil {
+	for _, r := range rows {
+		p := points[r.Month]
+		if p == nil || r.Transfer != 0 {
 			continue
 		}
 
-		if t.Kind == models.KindIncome {
-			p.IncomeCents += t.AmountCents
+		if sums[r.Month] == nil {
+			sums[r.Month] = &[2]*big.Int{new(big.Int), new(big.Int)}
+		}
+
+		if r.Kind == models.KindIncome {
+			sums[r.Month][0].Add(sums[r.Month][0], r.Sum())
 			continue
 		}
 
-		p.ExpenseCents += t.AmountCents
+		sums[r.Month][1].Add(sums[r.Month][1], r.Sum())
 
-		if MonthOf(t.OccurredOn) == month {
+		if r.Month == month {
 			name := "Uncategorized"
-			if t.CategoryID.Valid {
-				name = names[t.CategoryID.V]
+			if r.CategoryID != 0 {
+				name = names[r.CategoryID]
 			}
 
-			byCategory[name] += t.AmountCents
+			if byCategory[name] == nil {
+				byCategory[name] = new(big.Int)
+			}
+
+			byCategory[name].Add(byCategory[name], r.Sum())
 		}
 	}
 
+	for m, v := range sums {
+		points[m].IncomeCents, points[m].ExpenseCents = ClampCents(v[0]), ClampCents(v[1])
+	}
+
 	for name, cents := range byCategory {
-		d.Categories = append(d.Categories, CategorySpend{Category: name, Cents: cents})
+		d.Categories = append(d.Categories, CategorySpend{Category: name, Cents: ClampCents(cents)})
 	}
 
 	slices.SortFunc(d.Categories, func(a, b CategorySpend) int { return int(b.Cents - a.Cents) })
