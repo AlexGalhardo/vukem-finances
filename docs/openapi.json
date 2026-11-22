@@ -260,6 +260,77 @@
         ],
         "type": "object"
       },
+      "ConflictOut": {
+        "properties": {
+          "applied_value": {},
+          "field": {
+            "type": "string"
+          },
+          "kind": {
+            "type": "string"
+          },
+          "lost_by_device": {
+            "type": "string"
+          },
+          "lost_value": {}
+        },
+        "required": [
+          "field",
+          "kind",
+          "lost_value",
+          "applied_value"
+        ],
+        "type": "object"
+      },
+      "EffectOut": {
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "entity",
+          "uid",
+          "op",
+          "seq"
+        ],
+        "type": "object"
+      },
+      "EntityInfo": {
+        "properties": {
+          "fields": {
+            "items": {
+              "$ref": "#/components/schemas/FieldSpec"
+            },
+            "type": "array"
+          },
+          "name": {
+            "type": "string"
+          },
+          "refs": {
+            "items": {
+              "$ref": "#/components/schemas/RefInfo"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "name",
+          "fields",
+          "refs"
+        ],
+        "type": "object"
+      },
       "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.AccountOut": {
         "properties": {
           "data": {
@@ -362,6 +433,40 @@
         ],
         "type": "object"
       },
+      "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.SyncDeviceOut": {
+        "properties": {
+          "data": {
+            "items": {
+              "$ref": "#/components/schemas/SyncDeviceOut"
+            },
+            "type": "array"
+          },
+          "links": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Links"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "meta": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Meta"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "data"
+        ],
+        "type": "object"
+      },
       "Envelope_github.com_AlexGalhardo_vukem-finances_app_api.TagOut": {
         "properties": {
           "data": {
@@ -430,6 +535,102 @@
         ],
         "type": "object"
       },
+      "ErrorOut": {
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "FieldSpec": {
+        "properties": {
+          "blank": {
+            "type": "boolean"
+          },
+          "enum": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "max": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "min": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "nullable": {
+            "type": "boolean"
+          },
+          "ref": {
+            "type": "string"
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "type": {
+            "type": "string"
+          },
+          "writable": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "type",
+          "writable",
+          "nullable",
+          "required"
+        ],
+        "type": "object"
+      },
+      "Info": {
+        "properties": {
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/EntityInfo"
+            },
+            "type": "array"
+          },
+          "limits": {
+            "$ref": "#/components/schemas/LimitsInfo"
+          },
+          "protocol": {
+            "$ref": "#/components/schemas/Range"
+          },
+          "server_time": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "workspace": {
+            "$ref": "#/components/schemas/WorkspaceInfo"
+          }
+        },
+        "required": [
+          "protocol",
+          "server_time",
+          "workspace",
+          "entities",
+          "limits"
+        ],
+        "type": "object"
+      },
       "Issue": {
         "properties": {
           "code": {
@@ -456,6 +657,50 @@
           "path",
           "code",
           "message"
+        ],
+        "type": "object"
+      },
+      "LimitsInfo": {
+        "properties": {
+          "max_body_bytes": {
+            "type": "integer"
+          },
+          "max_mutations": {
+            "type": "integer"
+          },
+          "mutations_per_hour": {
+            "type": "integer"
+          },
+          "op_retention_seconds": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "pull_default_limit": {
+            "type": "integer"
+          },
+          "pull_max_limit": {
+            "type": "integer"
+          },
+          "pulls_per_minute": {
+            "type": "integer"
+          },
+          "pushes_per_minute": {
+            "type": "integer"
+          },
+          "snapshot_max_rows": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "max_mutations",
+          "max_body_bytes",
+          "pull_default_limit",
+          "pull_max_limit",
+          "snapshot_max_rows",
+          "pulls_per_minute",
+          "pushes_per_minute",
+          "mutations_per_hour",
+          "op_retention_seconds"
         ],
         "type": "object"
       },
@@ -550,6 +795,31 @@
         ],
         "type": "object"
       },
+      "MutationIn": {
+        "properties": {
+          "base_seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "fields": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "op": {
+            "type": "string"
+          },
+          "op_id": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
       "Problem": {
         "properties": {
           "detail": {
@@ -590,6 +860,199 @@
           "type",
           "title",
           "status"
+        ],
+        "type": "object"
+      },
+      "PullItem": {
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "op": {
+            "type": "string"
+          },
+          "row": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "seq",
+          "entity",
+          "uid",
+          "op",
+          "version",
+          "row"
+        ],
+        "type": "object"
+      },
+      "PullResult": {
+        "properties": {
+          "changes": {
+            "items": {
+              "$ref": "#/components/schemas/PullItem"
+            },
+            "type": "array"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_cursor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "server_time": {
+            "format": "date-time",
+            "type": "string"
+          }
+        },
+        "required": [
+          "changes",
+          "next_cursor",
+          "has_more",
+          "server_time"
+        ],
+        "type": "object"
+      },
+      "Range": {
+        "properties": {
+          "max": {
+            "type": "integer"
+          },
+          "min": {
+            "type": "integer"
+          }
+        },
+        "required": [
+          "min",
+          "max"
+        ],
+        "type": "object"
+      },
+      "RefInfo": {
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "field": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "field",
+          "entity"
+        ],
+        "type": "object"
+      },
+      "Result": {
+        "properties": {
+          "conflicts": {
+            "items": {
+              "$ref": "#/components/schemas/ConflictOut"
+            },
+            "type": "array"
+          },
+          "effects": {
+            "items": {
+              "$ref": "#/components/schemas/EffectOut"
+            },
+            "type": "array"
+          },
+          "entity": {
+            "type": "string"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ErrorOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "op_id": {
+            "type": "string"
+          },
+          "replaced_by_uid": {
+            "type": "string"
+          },
+          "row": {
+            "additionalProperties": {},
+            "type": "object"
+          },
+          "seq": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          },
+          "version": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "op_id",
+          "status",
+          "entity",
+          "uid",
+          "row",
+          "version",
+          "seq",
+          "conflicts",
+          "effects"
+        ],
+        "type": "object"
+      },
+      "SnapshotPage": {
+        "properties": {
+          "entity": {
+            "type": "string"
+          },
+          "has_more": {
+            "type": "boolean"
+          },
+          "next_after": {
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": {},
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "snapshot_cursor": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "snapshot_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "snapshot_id",
+          "snapshot_cursor",
+          "entity",
+          "rows",
+          "next_after",
+          "has_more"
         ],
         "type": "object"
       },
@@ -683,6 +1146,75 @@
           "net_cents",
           "net_worth_cents",
           "accounts"
+        ],
+        "type": "object"
+      },
+      "SyncDeviceOut": {
+        "properties": {
+          "created_at": {
+            "examples": [
+              "2026-11-21T12:00:00Z"
+            ],
+            "type": "string"
+          },
+          "device_id": {
+            "examples": [
+              "01JD5Z8K3M4N5P6Q7R8S9T0V1W"
+            ],
+            "type": "string"
+          },
+          "last_pull_seq": {
+            "examples": [
+              1042
+            ],
+            "format": "int64",
+            "type": "integer"
+          },
+          "last_seen_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "name": {
+            "examples": [
+              "Ana's phone"
+            ],
+            "type": "string"
+          },
+          "platform": {
+            "examples": [
+              "ios"
+            ],
+            "type": "string"
+          },
+          "revoked_at": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        },
+        "required": [
+          "device_id",
+          "name",
+          "platform",
+          "created_at",
+          "last_pull_seq"
+        ],
+        "type": "object"
+      },
+      "SyncPushOut": {
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/Result"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
         ],
         "type": "object"
       },
@@ -881,6 +1413,25 @@
           "uid",
           "from",
           "to"
+        ],
+        "type": "object"
+      },
+      "WorkspaceInfo": {
+        "properties": {
+          "currency": {
+            "type": "string"
+          },
+          "timezone": {
+            "type": "string"
+          },
+          "uid": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "uid",
+          "currency",
+          "timezone"
         ],
         "type": "object"
       },
@@ -1795,6 +2346,332 @@
           "Summary"
         ],
         "x-required-scope": "summary:read"
+      }
+    },
+    "/sync/devices": {
+      "get": {
+        "operationId": "sync.devices.list",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Envelope_github.com_AlexGalhardo_vukem-finances_app_api.SyncDeviceOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "List the devices the caller registered in this workspace",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      },
+      "post": {
+        "operationId": "sync.devices.create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "name": {
+                    "description": "What the person calls the device",
+                    "examples": [
+                      "Ana's phone"
+                    ],
+                    "maxLength": 80,
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  "platform": {
+                    "description": "ios, android, web or other",
+                    "examples": [
+                      "ios"
+                    ],
+                    "maxLength": 20,
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "name"
+                ],
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncDeviceOut"
+                }
+              }
+            },
+            "description": "Created"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Register a device for the calling token",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/sync/info": {
+      "get": {
+        "operationId": "sync.info",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Info"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "The sync protocol versions, the entities and fields this server knows, and its limits",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/sync/pull": {
+      "get": {
+        "operationId": "sync.pull",
+        "parameters": [
+          {
+            "description": "The next_cursor of the previous page; 0 for the first pull",
+            "example": 0,
+            "in": "query",
+            "name": "cursor",
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Changes per page: 500 by default, at most 1000",
+            "example": 500,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PullResult"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the changes after a cursor, parents first",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/sync/push": {
+      "post": {
+        "operationId": "sync.push",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "properties": {
+                  "device_id": {
+                    "description": "The device; X-Device-Id is what counts and this must match when set",
+                    "maxLength": 26,
+                    "type": "string"
+                  },
+                  "mutations": {
+                    "description": "At most 200 mutations",
+                    "items": {
+                      "$ref": "#/components/schemas/MutationIn"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SyncPushOut"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Send the mutations a device made offline",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
+      }
+    },
+    "/sync/snapshot": {
+      "get": {
+        "operationId": "sync.snapshot",
+        "parameters": [
+          {
+            "description": "The entity to download, one of GET /sync/info",
+            "example": "account",
+            "in": "query",
+            "name": "entity",
+            "required": true,
+            "schema": {
+              "maxLength": 40,
+              "minLength": 1,
+              "type": "string"
+            }
+          },
+          {
+            "description": "The last uid of the previous page",
+            "in": "query",
+            "name": "after",
+            "schema": {
+              "maxLength": 26,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Rows per page: 500 by default, at most 1000",
+            "example": 500,
+            "in": "query",
+            "name": "limit",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The snapshot_id of the first page, sent back on every later one",
+            "in": "query",
+            "name": "snapshot_id",
+            "schema": {
+              "maxLength": 60,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SnapshotPage"
+                }
+              }
+            },
+            "description": "OK"
+          },
+          "401": {
+            "$ref": "#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "#/components/responses/ValidationError"
+          },
+          "default": {
+            "$ref": "#/components/responses/Problem"
+          }
+        },
+        "security": [
+          {
+            "bearer": []
+          }
+        ],
+        "summary": "Read the live rows of one entity to rebuild a device",
+        "tags": [
+          "Sync"
+        ],
+        "x-required-scope": "sync"
       }
     },
     "/tags": {

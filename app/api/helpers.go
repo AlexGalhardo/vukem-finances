@@ -41,6 +41,10 @@ func register[In, Out any](g *router.Group, idem router.Middleware, name string,
 	}, fn)
 
 	mws := []router.Middleware{Require(op)}
+	if op.MaxBody > 0 {
+		mws = append(mws, limitBody(op.MaxBody))
+	}
+
 	if !op.Read() && idem != nil {
 		mws = append(mws, idem)
 	}
@@ -206,4 +210,20 @@ func existing[T any](ctx context.Context, a *API, uid string) (row T, found bool
 	}
 
 	return row, err == nil, err
+}
+
+// limitBody answers 413 for a body over max bytes, by its declared length and,
+// for one that lies or has none, while it is read.
+func limitBody(limit int64) router.Middleware {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			if r.ContentLength > limit {
+				fail(w, r, http.StatusRequestEntityTooLarge, CodeBadRequest, "The body is larger than the limit of the operation.")
+				return
+			}
+
+			r.Body = http.MaxBytesReader(w, r.Body, limit)
+			next.ServeHTTP(w, r)
+		})
+	}
 }

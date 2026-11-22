@@ -25,6 +25,10 @@ const (
 	ScopeBudgetsRead       = "budgets:read"
 	ScopeBudgetsWrite      = "budgets:write"
 	ScopeSummaryRead       = "summary:read"
+	// ScopeSync is the sync protocol (docs/specs/sync-protocol.md). It needs
+	// only the read ability: what a push may change is checked per row, against
+	// the role of the token's person.
+	ScopeSync = "sync"
 )
 
 // Scope is one scope and the role ability it needs.
@@ -46,6 +50,7 @@ var scopes = []Scope{ //nolint:gochecknoglobals // a constant table
 	{ScopeBudgetsRead, workspaces.AbilityRead},
 	{ScopeBudgetsWrite, workspaces.AbilityManageData},
 	{ScopeSummaryRead, workspaces.AbilityRead},
+	{ScopeSync, workspaces.AbilityRead},
 }
 
 // Scopes lists every scope in display order.
