@@ -13,7 +13,10 @@
     "check:built": "bun scripts/check-built.ts",
     "screenshots": "bun scripts/screenshots.ts",
     "og": "bun scripts/og-image.ts",
-    "test:site": "bun test scripts"
+    "test:site": "bun test scripts",
+    "reference": "bun scripts/generate-reference.ts",
+    "reference:check": "bun scripts/reference-check.ts",
+    "test:reference": "bun test scripts/reference.test.ts"
   },
   "dependencies": {
     "@astrojs/react": "7.1.9",

@@ -37,6 +37,7 @@ export const navigation: NavSection[] = [
       "use/recurrences-installments",
       "use/budgets-goals",
       "use/insights-exports",
+      "use/shortcuts",
       "use/ai",
       "use/telegram",
       "use/mobile-sync",
@@ -47,9 +48,18 @@ export const navigation: NavSection[] = [
     "title": "Integrate",
     "items": [
       "integrate/rest-api",
+      {
+        "dir": "integrate/rest"
+      },
       "integrate/cli",
+      {
+        "dir": "integrate/cli"
+      },
       "integrate/mcp-stdio",
       "integrate/mcp-remote",
+      {
+        "dir": "integrate/mcp"
+      },
       "integrate/sync-protocol",
       "integrate/export-format"
     ]
@@ -57,6 +67,7 @@ export const navigation: NavSection[] = [
   {
     "title": "Operate",
     "items": [
+      "operate/environment",
       "operate/security",
       "operate/roles-workspaces"
     ]
@@ -68,6 +79,15 @@ export const navigation: NavSection[] = [
       "contribute/release-train",
       "contribute/how-epics-work",
       "contribute/tests"
+    ]
+  },
+  {
+    "title": "Changelog",
+    "items": [
+      "changelog",
+      {
+        "dir": "changelog"
+      }
     ]
   }
 ];
