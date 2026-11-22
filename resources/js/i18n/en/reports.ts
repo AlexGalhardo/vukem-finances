@@ -1,4 +1,5 @@
 const dict = {
+  dashNet: "Net",
   reports: "Reports",
   rptDescription: "Where your money went, for any period.",
   rptPeriod: "Period",

@@ -10,8 +10,8 @@ import { type HelpId, helpBodyKey, helpTitleKey } from "./ids";
 export interface HelpHintProps {
   /** Key in the `help` i18n domain, resolved to `<id>Title` and `<id>Body`. */
   id: HelpId;
-  /** Accessible name, for example "About total balance". */
-  labelKey: Key;
+  /** Accessible name; defaults to "About <title>", for example "About Total balance". */
+  labelKey?: Key;
   side?: "top" | "right" | "bottom" | "left";
   /** Opens the page tutorial at this step, written `<screen id>:<step index>`. */
   tutorialStep?: string;
@@ -33,7 +33,7 @@ export function HelpHint({ id, labelKey, side = "top", tutorialStep }: HelpHintP
           type="button"
           variant="ghost"
           size="icon-xs"
-          aria-label={t(labelKey)}
+          aria-label={labelKey ? t(labelKey) : `${t("helpAbout")} ${t(helpTitleKey(id))}`}
           className="size-6 text-subtle hover:text-foreground"
           data-print="hide"
         >

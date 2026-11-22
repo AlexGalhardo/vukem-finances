@@ -191,6 +191,7 @@ function NewTransactionButton() {
       type="button"
       variant="brand"
       aria-haspopup="dialog"
+      data-tour="quick-add"
       shortcutAction="new-expense"
       onClick={() => openTransaction("expense")}
     >

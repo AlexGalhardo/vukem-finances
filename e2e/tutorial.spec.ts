@@ -97,3 +97,18 @@ test("h t starts the tutorial, and the center restarts it after a confirmation a
   await page.getByRole("button", { name: "Help", exact: true }).click();
   await expect(page.getByRole("menuitem", { name: /Start tutorial/ })).toBeVisible();
 });
+
+test("a step is anchored to its target: the target is outlined and the card sits beside it", async ({ page }) => {
+  await page.getByRole("button", { name: "Take the tour" }).click();
+  const balance = page.locator('[data-tour="dashboard-balance"]');
+  await expect(balance).toHaveAttribute("data-tour-active", "");
+  const box = await balance.boundingBox();
+  const cardBox = await card(page).boundingBox();
+  expect(box).not.toBeNull();
+  expect(cardBox).not.toBeNull();
+  // Anchored below its target, not centered on the page.
+  expect((cardBox?.y ?? 0) >= (box?.y ?? 0) + (box?.height ?? 0)).toBe(true);
+  await card(page).getByRole("button", { name: "Next", exact: true }).click();
+  await expect(balance).not.toHaveAttribute("data-tour-active", "");
+  await expect(page.locator('[data-tour="dashboard-month"]')).toHaveAttribute("data-tour-active", "");
+});
