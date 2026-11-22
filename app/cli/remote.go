@@ -330,10 +330,11 @@ func remoteExit(code string, status int) int {
 }
 
 // cleanText drops control characters, so text a server sends cannot move the
-// cursor or rewrite the screen of the terminal.
+// cursor or rewrite the screen of the terminal. Format characters (bidi
+// overrides, zero-width marks) go too: they make text read as something else.
 func cleanText(s string) string {
 	return strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) {
+		if unicode.IsControl(r) || unicode.Is(unicode.Cf, r) {
 			return ' '
 		}
 
