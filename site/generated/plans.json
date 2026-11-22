@@ -1,0 +1,4 @@
+{
+  "free": { "plan": "free", "accounts": 1, "transactionsPerMonth": 100, "members": 1, "csvImport": false, "budgets": false },
+  "pro": { "plan": "pro", "accounts": -1, "transactionsPerMonth": -1, "members": -1, "csvImport": true, "budgets": true }
+}
