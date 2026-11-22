@@ -239,6 +239,8 @@ type AISettings struct {
 	Assistant  bool   `json:"assistant"  form:"assistant"`
 	Limit      string `json:"limit"      form:"limit"`
 	Consent    bool   `json:"consent"    form:"consent"`
+	// AutoApply is the opt-in to apply suggestions of at least 90 % confidence.
+	AutoApply bool `json:"autoApply" form:"autoApply"`
 }
 
 // AISettingsSchema validates AISettings.
@@ -248,6 +250,7 @@ var AISettingsSchema = z.Struct[AISettings](z.Shape{
 	"assistant":  z.Bool().Optional(),
 	"limit":      z.String().Trim().Min(1).Max(9),
 	"consent":    z.Bool().Optional(),
+	"autoApply":  z.Bool().Optional(),
 })
 
 // AccountTransfer is the input of the transfer form: money moves from one
