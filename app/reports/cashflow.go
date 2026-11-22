@@ -3,7 +3,7 @@ package reports
 import (
 	"context"
 
-	"github.com/AlexGalhardo/vukem/orm"
+	"github.com/AlexGalhardo/vukem-finances/app/finance"
 )
 
 // MonthFlow is the income and expense of one month ("2026-11").
@@ -37,24 +37,28 @@ func (s *Service) CashFlow(ctx context.Context, p Period) (CashFlowReport, error
 		out.Months = append(out.Months, MonthFlow{Month: m})
 	}
 
-	groups, err := s.ordinary(ctx, p).
-		GroupBy("occurred_on", "kind", "amount_cents").
-		SelectAs("occurred_on", "occurred_on").
-		SelectAs("kind", "kind").
-		SelectAs("amount_cents", "amount_cents").
-		SelectExpr(orm.Count("*"), "n").
-		Scan[group](ctx)
+	rows, err := s.ordinaryTotals(ctx, p, finance.ByMonth)
 	if err != nil {
 		return out, err
 	}
 
-	for _, g := range groups {
-		if i, ok := index[g.Date[:7]]; ok {
-			out.Months[i].put(g)
+	var all bucket
+
+	per := make([]bucket, len(out.Months))
+
+	for _, r := range rows {
+		if i, ok := index[r.Month]; ok {
+			per[i].add(r)
 		}
 
-		out.Totals.put(g)
+		all.add(r)
 	}
+
+	for i := range out.Months {
+		out.Months[i].Sum = per[i].sum()
+	}
+
+	out.Totals = all.sum()
 
 	return out, nil
 }
@@ -63,19 +67,16 @@ func (s *Service) CashFlow(ctx context.Context, p Period) (CashFlowReport, error
 func (s *Service) totals(ctx context.Context, p Period) (Sum, error) {
 	var sum Sum
 
-	groups, err := s.ordinary(ctx, p).
-		GroupBy("kind", "amount_cents").
-		SelectAs("kind", "kind").
-		SelectAs("amount_cents", "amount_cents").
-		SelectExpr(orm.Count("*"), "n").
-		Scan[group](ctx)
+	rows, err := s.ordinaryTotals(ctx, p, 0)
 	if err != nil {
 		return sum, err
 	}
 
-	for _, g := range groups {
-		sum.put(g)
+	var all bucket
+
+	for _, r := range rows {
+		all.add(r)
 	}
 
-	return sum, nil
+	return all.sum(), nil
 }

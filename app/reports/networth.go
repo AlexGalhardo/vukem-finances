@@ -2,10 +2,10 @@ package reports
 
 import (
 	"context"
-	"time"
+	"slices"
+	"strings"
 
-	"github.com/AlexGalhardo/vukem/orm"
-
+	"github.com/AlexGalhardo/vukem-finances/app/finance"
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
 )
@@ -27,8 +27,8 @@ type NetWorthReport struct {
 // the last day of every month of the period: opening balances plus every
 // transaction up to that day, transfer legs included (they only move money
 // between accounts). A credit card account is a negative balance, so card
-// debt lowers the net worth. The transactions are read once, in date order,
-// and the months are cut from that single pass; the last point of a period
+// debt lowers the net worth. The sums come from the monthly summary (whole
+// months) and the rows of a month the period only touches; the last point of a period
 // that reaches into the future includes the future-dated rows of its month.
 func (s *Service) NetWorthSeries(ctx context.Context, p Period) (NetWorthReport, error) {
 	ws, err := s.WS.Current(ctx)
@@ -56,36 +56,26 @@ func (s *Service) NetWorthSeries(ctx context.Context, p Period) (NetWorthReport,
 		balance = add(balance, a.OpeningCents)
 	}
 
-	groups, err := workspaces.Scoped[models.Transaction](ctx, s.DB).
-		Where("occurred_on", "<=", p.To).
-		GroupBy("occurred_on", "account_id", "kind", "amount_cents").
-		SelectAs("occurred_on", "occurred_on").
-		SelectAs("account_id", "account_id").
-		SelectAs("kind", "kind").
-		SelectAs("amount_cents", "amount_cents").
-		SelectExpr(orm.Count("*"), "n").
-		OrderBy("occurred_on", orm.Asc).
-		Scan[group](ctx)
+	rows, err := s.Fin.MonthTotals(ctx, finance.FirstSummaryDate, p.To, finance.ByMonth|finance.ByAccount)
 	if err != nil {
 		return out, err
 	}
 
+	slices.SortFunc(rows, func(a, b models.TransactionMonthTotal) int { return strings.Compare(a.Month, b.Month) })
+
 	next := 0
 
 	for _, m := range p.Months() {
-		first, _ := time.Parse("2006-01", m)
-		cut := monthEnd(first).Format(isoDate)
-
-		for next < len(groups) && groups[next].Date <= cut {
-			g := groups[next]
+		for next < len(rows) && rows[next].Month <= m {
+			r := rows[next]
 			next++
 
-			if !counted[g.AccountID] {
+			if !counted[r.AccountID] {
 				continue
 			}
 
-			cents := mul(g.Amount, g.N)
-			if g.Kind != models.KindIncome {
+			cents := finance.ClampCents(r.Sum())
+			if r.Kind != models.KindIncome {
 				cents = -cents
 			}
 
