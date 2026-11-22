@@ -27,5 +27,20 @@ export const navigation: NavSection[] = [
       "run/upgrading",
       "run/backup-restore"
     ]
+  },
+  {
+    "title": "Use it",
+    "items": [
+      "use/accounts-transfers",
+      "use/transactions-import",
+      "use/cards",
+      "use/recurrences-installments",
+      "use/budgets-goals",
+      "use/insights-exports",
+      "use/ai",
+      "use/telegram",
+      "use/mobile-sync",
+      "use/billing"
+    ]
   }
 ];
