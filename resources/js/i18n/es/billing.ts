@@ -25,6 +25,11 @@ const dict = {
   billingProBudgets: "Presupuestos mensuales con alertas por correo",
   billingOnPro: "Este workspace está en Pro.",
   billingOwnerOnly: "Solo el propietario puede cambiar el plan.",
+  billingPlanDescription: "En qué punto está este espacio de trabajo y qué incluye cada plan.",
+  billingHelpTrial: "Acerca de la prueba",
+  billingHelpPixPeriod: "Acerca de pagar con PIX",
+  billingOwnerOnlyCard:
+    "Solo el propietario puede pagar o cambiar el plan. Pídeselo al propietario de este espacio de trabajo.",
   billingCardTitle: "Suscripción con tarjeta",
   billingCardNote: "Se renueva cada mes con Stripe. Cancela cuando quieras en el portal de facturación.",
   billingStartTrial: "Suscribirse con tarjeta: prueba de {days} días",

@@ -1,6 +1,7 @@
 import { CheckIcon, CopyIcon } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { useFinanceI18n } from "../lib/i18n";
+import { cn } from "../lib/utils";
 import { fill, isFinal, type PixCharge, POLL_SECONDS, safeQr } from "../lib/pix";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
@@ -85,18 +86,21 @@ export default function PixDialog({ charge, onClose, onPaid }: Props) {
 
         <div className="grid gap-5 sm:grid-cols-[auto_1fr] sm:items-start">
           {qr ? (
-            // A QR code needs a light ground to scan, in dark mode too.
-            <img src={qr} alt={t("billingPixQrAlt")} className="size-44 rounded-lg border bg-white p-2" />
+            // A QR code needs a white ground to scan, in dark mode too, so this is the one fixed color on the screen.
+            <img
+              src={qr}
+              alt={t("billingPixQrAlt")}
+              className="size-44 rounded-lg border border-border p-2"
+              style={{ backgroundColor: "white" }}
+            />
           ) : (
             <div className="size-44 rounded-lg border border-dashed" aria-hidden="true" />
           )}
           <div className="flex min-w-0 flex-col gap-3">
-            <p className="text-sm text-muted-foreground">{t("billingPixScan")}</p>
+            <p className="text-body text-muted-foreground">{t("billingPixScan")}</p>
             <div className="flex flex-col gap-1.5">
-              <span className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {t("billingPixCode")}
-              </span>
-              <code className="max-h-24 overflow-auto rounded-md border border-dashed bg-muted/50 p-2 text-xs break-all">
+              <span className="text-caption text-muted-foreground">{t("billingPixCode")}</span>
+              <code className="max-h-24 overflow-auto rounded-md border border-dashed border-border bg-muted p-2 text-caption break-all">
                 {charge.brCode}
               </code>
               <div className="flex items-center gap-2">
@@ -104,7 +108,7 @@ export default function PixDialog({ charge, onClose, onPaid }: Props) {
                   {copied === "ok" ? <CheckIcon aria-hidden="true" /> : <CopyIcon aria-hidden="true" />}
                   {t("billingPixCopy")}
                 </Button>
-                <span role="status" className="text-xs text-muted-foreground">
+                <span role="status" className="text-caption text-muted-foreground">
                   {copied === "ok" ? t("billingPixCopied") : copied === "failed" ? t("billingPixCopyFailed") : ""}
                 </span>
               </div>
@@ -115,7 +119,10 @@ export default function PixDialog({ charge, onClose, onPaid }: Props) {
         <div
           role="status"
           aria-live="polite"
-          className={`rounded-lg px-3 py-2 text-sm ${status === "paid" ? "bg-emerald-50 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-100" : "bg-muted"}`}
+          className={cn(
+            "rounded-lg px-3 py-2 text-body",
+            status === "paid" ? "bg-brand-subtle text-brand-text" : "bg-muted",
+          )}
         >
           {message}
           {waiting && (
