@@ -12,6 +12,7 @@ import (
 	vmcp "github.com/AlexGalhardo/vukem/mcp"
 
 	"github.com/AlexGalhardo/vukem-finances/app/operations"
+	"github.com/AlexGalhardo/vukem-finances/app/timeutil"
 )
 
 const (
@@ -205,7 +206,7 @@ func recentMonths(now time.Time, n int) []string {
 
 	first := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, time.UTC)
 	for i := range n {
-		out = append(out, first.AddDate(0, -i, 0).Format("2006-01"))
+		out = append(out, timeutil.AddMonths(first, -i).Format("2006-01"))
 	}
 
 	return out
