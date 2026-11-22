@@ -1,6 +1,7 @@
 import type en from "../en/reports";
 
 const dict = {
+  dashNet: "Resultado",
   reports: "Relatórios",
   rptDescription: "Para onde foi o seu dinheiro, em qualquer período.",
   rptPeriod: "Período",

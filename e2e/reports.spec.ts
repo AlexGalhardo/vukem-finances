@@ -10,9 +10,9 @@ test("g r opens the reports, a period change reloads them and every chart has a 
   await expect(page).toHaveURL(/\/reports$/);
   await expect(page.getByRole("heading", { level: 1, name: "Reports" })).toBeVisible();
 
-  await page.getByLabel("Period").selectOption("last_month");
+  await page.getByLabel("Period", { exact: true }).selectOption("last_month");
   await expect(page).toHaveURL(/period=last_month/);
-  await expect(page.getByLabel("Period")).toHaveValue("last_month");
+  await expect(page.getByLabel("Period", { exact: true })).toHaveValue("last_month");
 
   // The chart is hidden from assistive technology and its table is in the page, same numbers.
   const panel = page.getByRole("tabpanel");
@@ -34,7 +34,7 @@ test("g r opens the reports, a period change reloads them and every chart has a 
 
 test("a custom period is applied with its dates", async ({ page }) => {
   await page.goto("/reports");
-  await page.getByLabel("Period").selectOption("custom");
+  await page.getByLabel("Period", { exact: true }).selectOption("custom");
   await page.getByLabel("From", { exact: true }).fill("2026-01-01");
   await page.getByLabel("To", { exact: true }).fill("2026-03-31");
   await page.getByRole("button", { name: "Apply" }).click();

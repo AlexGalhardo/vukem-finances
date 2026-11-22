@@ -33,6 +33,7 @@ export default function ChartWithTable({
           aria-pressed={asTable}
           aria-controls={tableId}
           data-print="hide"
+          data-tour="reports-table-toggle"
           onClick={() => setAsTable((on) => !on)}
         >
           {asTable ? t("rptShowChart") : t("rptShowTable")}

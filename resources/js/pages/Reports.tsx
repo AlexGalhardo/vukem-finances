@@ -4,6 +4,7 @@ import BarChart from "../components/charts/BarChart";
 import ChartWithTable from "../components/charts/ChartWithTable";
 import DonutChart from "../components/charts/DonutChart";
 import LineChart from "../components/charts/LineChart";
+import { HelpHint } from "../help/HelpHint";
 import ExportMenu from "../components/ExportMenu";
 import PageHeader from "../components/PageHeader";
 import { Button } from "../components/ui/button";
@@ -151,19 +152,24 @@ export default function Reports(props: Page<"Reports">) {
         title={t("reports")}
         description={`${date(period.from)} – ${date(period.to)} · ${t("rptDescription")}`}
         actions={
-          <ExportMenu
-            csvUrl={transactionsCsvUrl(csvFilters)}
-            csvExcelUrl={transactionsCsvUrl(csvFilters, { excel: true })}
-            jsonUrl={canExportJson(role) ? workspaceJsonUrl : undefined}
-            onPrint={() => window.print()}
-          />
+          <span data-tour="reports-export">
+            <ExportMenu
+              csvUrl={transactionsCsvUrl(csvFilters)}
+              csvExcelUrl={transactionsCsvUrl(csvFilters, { excel: true })}
+              jsonUrl={canExportJson(role) ? workspaceJsonUrl : undefined}
+              onPrint={() => window.print()}
+            />
+          </span>
         }
       />
 
-      <form onSubmit={submit} className="flex flex-wrap items-end gap-3" data-print="hide">
+      <form onSubmit={submit} className="flex flex-wrap items-end gap-3" data-print="hide" data-tour="reports-period">
         <FieldGroup className="flex flex-row flex-wrap items-end gap-3">
           <Field className="w-auto">
-            <FieldLabel htmlFor="report-period">{t("rptPeriod")}</FieldLabel>
+            <div className="flex items-center gap-1">
+              <FieldLabel htmlFor="report-period">{t("rptPeriod")}</FieldLabel>
+              <HelpHint id="hintRptPeriod" />
+            </div>
             <NativeSelect
               id="report-period"
               value={preset}
@@ -196,7 +202,7 @@ export default function Reports(props: Page<"Reports">) {
       </form>
 
       <Tabs defaultValue="cashflow">
-        <TabsList data-print="hide" aria-label={t("reports")}>
+        <TabsList data-print="hide" aria-label={t("reports")} data-tour="reports-tabs">
           <TabsTrigger value="cashflow">{t("rptTabCashFlow")}</TabsTrigger>
           <TabsTrigger value="categories">{t("rptTabCategories")}</TabsTrigger>
           <TabsTrigger value="accounts">{t("rptTabAccounts")}</TabsTrigger>
@@ -286,7 +292,7 @@ export default function Reports(props: Page<"Reports">) {
                       {sumHead(t("rptTag"))}
                       <TableBody>{sumRows(tags.rows)}</TableBody>
                     </Table>
-                    <p className="text-sm text-muted-foreground">{t("rptTagNote")}</p>
+                    <p className="text-body text-muted-foreground">{t("rptTagNote")}</p>
                   </>
                 )}
               </CardContent>
@@ -336,7 +342,7 @@ export default function Reports(props: Page<"Reports">) {
           <Card>
             <CardHeader>
               <CardTitle>{t("rptTabCompare")}</CardTitle>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-body text-muted-foreground">
                 {fill(t("rptComparedWith"), { from: date(compare.previous.from), to: date(compare.previous.to) })}
               </p>
             </CardHeader>
