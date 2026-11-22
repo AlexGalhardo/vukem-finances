@@ -1,6 +1,9 @@
 import type en from "../en/import";
 
 const dict = {
+  importStepUpload: "Enviar",
+  importStepMap: "Mapear colunas",
+  importStepPreview: "Prévia",
   importTitle: "Importar um extrato bancário",
   importDescription: "Traga um extrato CSV ou OFX. Você vê o que vai acontecer antes de salvar qualquer coisa.",
   importProOnly: "Importar extratos é um recurso Pro.",
