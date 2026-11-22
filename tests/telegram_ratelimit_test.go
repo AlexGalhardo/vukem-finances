@@ -19,6 +19,8 @@ func TestSecurity_TelegramRateLimit(t *testing.T) {
 	w := signUp(t, app, "Ana", "ana@example.com")
 	other := signUp(t, app, "Bob", "bob@example.com")
 
+	awayFromMinuteEdge(t)
+
 	// The link takes 1 message (the /start).
 	linkChat(t, bot, w, 8001)
 	linkChat(t, bot, other, 8002)
@@ -70,6 +72,8 @@ func TestSecurity_TelegramStartRateLimit(t *testing.T) {
 	app, f, bot := tgApp(t)
 	w := signUp(t, app, "Ana", "ana@example.com")
 
+	awayFromMinuteEdge(t)
+
 	for range 5 {
 		say(t, bot, 8101, "/start AAAAAAAAAAAAAAAAAAAAAA")
 	}
@@ -91,6 +95,7 @@ func TestSecurity_TelegramCallbackRateLimit(t *testing.T) {
 
 	app, f, bot := tgApp(t)
 	w := signUp(t, app, "Cy", "cy@example.com")
+	awayFromMinuteEdge(t)
 	linkChat(t, bot, w, 8102)
 
 	f.Reset()
@@ -111,6 +116,7 @@ func TestRateLimitSurvivesRestart(t *testing.T) {
 
 	app, f, bot := tgApp(t)
 	w := signUp(t, app, "Ana", "ana@example.com")
+	awayFromMinuteEdge(t)
 	linkChat(t, bot, w, 8201)
 
 	f.Reset()
@@ -144,7 +150,7 @@ func TestRateLimitSurvivesRestart(t *testing.T) {
 		t.Fatal("the restart shares the limiters of the first process")
 	}
 
-	// 20 of the minute are spent (1 /start + 19): one more passes, the next is dropped.
+	// 20 of the minute are spent (1 /start + 19): the next gets the notice, then silence.
 	say(t, again, 8201, "/help")
 	say(t, again, 8201, "/help")
 

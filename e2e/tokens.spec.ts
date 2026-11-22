@@ -32,8 +32,10 @@ test("a token is shown once, works on the API with its scopes only, and stops wh
   await expect(page.getByRole("cell", { name: "e2e token" })).toBeVisible();
 
   // Revoking is immediate.
-  await page.getByRole("button", { name: "Revoke" }).click();
+  // The e2e database is shared: other specs leave their tokens in this table.
+  const row = page.getByRole("row", { name: /e2e token/ });
+  await row.getByRole("button", { name: "Revoke" }).click();
   await page.getByRole("dialog").getByRole("button", { name: "Delete" }).click();
-  await expect(page.getByRole("cell", { name: "Revoked" })).toBeVisible();
+  await expect(row.getByRole("cell", { name: "Revoked" })).toBeVisible();
   expect((await request.get("/api/v1/me", { headers: auth })).status()).toBe(401);
 });
