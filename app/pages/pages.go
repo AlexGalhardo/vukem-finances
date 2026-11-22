@@ -68,6 +68,7 @@ func All() []inertia.PageInfo {
 		Billing.Info(),
 		AI.Info(),
 		Tokens.Info(),
+		Telegram.Info(),
 		AdminRevenue.Info(),
 		Login.Info(),
 		Register.Info(),

@@ -377,3 +377,13 @@ var InstallmentSchema = z.Struct[Installment](z.Shape{
 	"description": z.String().Trim().Max(200).Optional(),
 	"tags":        z.Slice(z.String().Trim().Max(120)).Max(40).Optional(),
 })
+
+// TelegramAlerts is the input of the switch that sends alerts to Telegram.
+type TelegramAlerts struct {
+	Enabled string `json:"enabled" form:"enabled"`
+}
+
+// TelegramAlertsSchema validates TelegramAlerts: "true" or "false".
+var TelegramAlertsSchema = z.Struct[TelegramAlerts](z.Shape{
+	"enabled": z.String().Trim().Min(4).Max(5),
+})
