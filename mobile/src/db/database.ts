@@ -30,8 +30,12 @@ export async function getOne<T extends object>(
   return rows[0] ?? null;
 }
 
-/** How long the root database waits for a transaction before it says the caller is probably inside it. */
-export const DEFAULT_DEADLOCK_MS = 30_000;
+/**
+ * How long the root database waits for a transaction before it says the caller is
+ * probably inside it. Long enough for a full resync on a slow phone, which is a
+ * legitimate wait: a false alarm would fail a save the person just made.
+ */
+export const DEFAULT_DEADLOCK_MS = 120_000;
 
 export class DeadlockError extends Error {
   constructor(what: string) {
@@ -95,8 +99,12 @@ export abstract class TransactionalDatabase implements Database {
   abstract runRaw(sql: string, params?: readonly SqlValue[]): Promise<void>;
   abstract allRaw<T extends object>(sql: string, params?: readonly SqlValue[]): Promise<T[]>;
 
-  /** Waits until no transaction is open, or fails loudly instead of hanging. */
-  private async idle(what: string): Promise<void> {
+  /**
+   * Runs op once no transaction is open, or fails loudly instead of hanging. The
+   * last check and the call to op share one tick: any await between them would
+   * let the next queued transaction open and take this statement in.
+   */
+  private async whenIdle<T>(what: string, op: () => Promise<T>): Promise<T> {
     while (this.open !== null) {
       let timer: ReturnType<typeof setTimeout> | undefined;
       const timeout = new Promise<never>((_, reject) => {
@@ -108,21 +116,19 @@ export abstract class TransactionalDatabase implements Database {
         clearTimeout(timer);
       }
     }
+    return op();
   }
 
-  async exec(sql: string): Promise<void> {
-    await this.idle("exec");
-    return this.execRaw(sql);
+  exec(sql: string): Promise<void> {
+    return this.whenIdle("exec", () => this.execRaw(sql));
   }
 
-  async run(sql: string, params?: readonly SqlValue[]): Promise<void> {
-    await this.idle("run");
-    return this.runRaw(sql, params);
+  run(sql: string, params?: readonly SqlValue[]): Promise<void> {
+    return this.whenIdle("run", () => this.runRaw(sql, params));
   }
 
-  async all<T extends object>(sql: string, params?: readonly SqlValue[]): Promise<T[]> {
-    await this.idle("all");
-    return this.allRaw<T>(sql, params);
+  all<T extends object>(sql: string, params?: readonly SqlValue[]): Promise<T[]> {
+    return this.whenIdle("all", () => this.allRaw<T>(sql, params));
   }
 
   transaction<T>(fn: (tx: Database) => Promise<T>): Promise<T> {
@@ -165,11 +171,14 @@ export abstract class TransactionalDatabase implements Database {
         finish();
       }
     });
-    // The next transaction starts when this one is over, whatever its outcome. A timed out turn never started.
-    this.tail = result.then(
-      () => undefined,
-      () => undefined,
-    );
+    // The next transaction starts when this one is over, whatever its outcome. A turn that
+    // timed out never started, but the one it was waiting for may still be open: wait for both.
+    this.tail = previous
+      .then(() => result)
+      .then(
+        () => undefined,
+        () => undefined,
+      );
     return result;
   }
 }
