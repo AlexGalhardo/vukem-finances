@@ -3,6 +3,11 @@ package cli_test
 import (
 	"encoding/csv"
 	"encoding/json"
+	"errors"
+	"io"
+	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 
@@ -152,6 +157,90 @@ func TestOutputCells(t *testing.T) {
 
 		if strings.Count(out, "\n") != 2 || !strings.Contains(out, "-0.05") {
 			t.Fatalf("table = %q", out)
+		}
+	})
+}
+
+func TestOutputFiles(t *testing.T) {
+	t.Parallel()
+
+	app := newEdition(t, "personal")
+	signUp(t, app, "Ana", "ana@example.com")
+
+	c, tm := newCLI(t, nil, localOf(app))
+
+	t.Run("a download is refused on a terminal without --out", func(t *testing.T) {
+		c.Env.StdoutTTY = true
+
+		t.Cleanup(func() { c.Env.StdoutTTY = false })
+
+		if code := run(t, c, tm, "export", "transactions"); code != cli.ExitUsage || !strings.Contains(tm.err.String(), "--out") {
+			t.Fatalf("exit %d: %s", code, tm.err.String())
+		}
+
+		if tm.out.Len() != 0 {
+			t.Fatalf("bytes reached the terminal: %q", tm.out.String())
+		}
+	})
+
+	t.Run("piped output is the file itself", func(t *testing.T) {
+		if code := run(t, c, tm, "export", "transactions"); code != 0 || !strings.Contains(tm.out.String(), ",") {
+			t.Fatalf("exit %d: %s", code, tm.err.String())
+		}
+	})
+
+	t.Run("--out replaces the target through a private temp file", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "out.csv")
+
+		if err := os.WriteFile(target, []byte("old"), 0o644); err != nil {
+			t.Fatal(err)
+		}
+
+		if code := run(t, c, tm, "export", "transactions", "--out", target); code != 0 {
+			t.Fatalf("exit %d: %s", code, tm.err.String())
+		}
+
+		got, err := os.ReadFile(target)
+		if err != nil || string(got) == "old" || len(got) == 0 {
+			t.Fatalf("target = %q, %v", got, err)
+		}
+
+		if left, _ := filepath.Glob(filepath.Join(dir, ".download-*")); len(left) != 0 {
+			t.Fatalf("temp files left: %v", left)
+		}
+
+		if runtime.GOOS != "windows" {
+			if st, err := os.Stat(target); err != nil || st.Mode().Perm() != 0o600 {
+				t.Fatalf("mode %v, %v", st.Mode(), err)
+			}
+		}
+	})
+
+	t.Run("a failed download keeps the old file and leaves no temp file", func(t *testing.T) {
+		dir := t.TempDir()
+		target := filepath.Join(dir, "keep.csv")
+
+		if err := os.WriteFile(target, []byte("old"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+
+		bad := &cli.CLI{Env: cli.Env{Stdout: &tm.out}}
+
+		if err := bad.WriteFileForTest(target, func(w io.Writer) error {
+			_, _ = w.Write([]byte("partial"))
+
+			return errors.New("connection cut")
+		}); err == nil {
+			t.Fatal("no error")
+		}
+
+		if got, _ := os.ReadFile(target); string(got) != "old" {
+			t.Fatalf("target = %q, want the old file", got)
+		}
+
+		if left, _ := filepath.Glob(filepath.Join(dir, ".download-*")); len(left) != 0 {
+			t.Fatalf("temp files left: %v", left)
 		}
 	})
 }
