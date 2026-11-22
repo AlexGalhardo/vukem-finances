@@ -140,7 +140,7 @@ func TestNotificationsHTTP(t *testing.T) {
 	asAdmin.PostForm("/notifications/"+idString(ofAdmin.ID)+"/read", nil).AssertRedirect("/notifications")
 	asAdmin.PostForm("/notifications/"+idString(ofAdmin.ID)+"/read", nil).AssertRedirect("/notifications")
 	asAdmin.Inertia("").Get("/notifications").AssertInertia("Notifications").
-		PropEquals("notifications.0.read", true).PropEquals("preferences.0.emailAllowed", true)
+		PropEquals("items.0.read", true).PropEquals("preferences.0.emailAllowed", true)
 
 	// Read all only touches the caller's rows.
 	asMember.PostForm("/notifications/read", nil).AssertRedirect("/notifications")

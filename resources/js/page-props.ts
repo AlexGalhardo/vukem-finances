@@ -625,7 +625,7 @@ export type InviteRegisterProps = {
 };
 
 export type NotificationsProps = {
-  notifications: View[];
+  items: View[];
   preferences: PreferenceRow[];
 };
 

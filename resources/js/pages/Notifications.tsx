@@ -18,7 +18,7 @@ const kindLabel: Record<string, Key> = {
   recurrence_failed: "alertKindRecurrenceFailed",
 };
 
-export default function Notifications({ notifications, preferences }: Page<"Notifications">) {
+export default function Notifications({ items, preferences }: Page<"Notifications">) {
   const currency = usePage<SharedProps>().props.workspace?.current.currency ?? "USD";
   const { t, money, date } = useFinanceI18n();
   const formats = { money, date, currency };
@@ -27,7 +27,7 @@ export default function Notifications({ notifications, preferences }: Page<"Noti
     email: preferences.filter((p) => p.email).map((p) => p.kind),
   });
   const emailAllowed = preferences.every((p) => p.emailAllowed);
-  const unread = notifications.some((n) => !n.read);
+  const unread = items.some((n) => !n.read);
 
   const toggle = (field: "inApp" | "email", kind: string, on: boolean) =>
     form.setData(field, on ? [...form.data[field], kind] : form.data[field].filter((k) => k !== kind));
@@ -52,11 +52,11 @@ export default function Notifications({ notifications, preferences }: Page<"Noti
         }
       />
       <Card>
-        {notifications.length === 0 ? (
+        {items.length === 0 ? (
           <p className="text-muted-foreground">{t("notificationsEmpty")}</p>
         ) : (
           <ul className="divide-y divide-border">
-            {notifications.map((n) => (
+            {items.map((n) => (
               <li key={n.id} className="flex items-start justify-between gap-3 py-3">
                 <div className="flex flex-col gap-0.5">
                   <span className={n.read ? "text-muted-foreground" : "font-medium"}>
