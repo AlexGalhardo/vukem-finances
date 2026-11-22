@@ -138,7 +138,7 @@ links `config.Version` and writes to `desktop/bin/`:
 | OS | Files |
 | --- | --- |
 | Windows | `vukem-finances-<version>-windows-amd64-setup.exe` (NSIS, per user), `...-portable.exe` |
-| macOS | `vukem-finances-<version>-macos-<arch>.zip` |
+| macOS | `vukem-finances-<version>-macos-<arch>.dmg` (drag to Applications) and `...-macos-<arch>.zip`; `<arch>` is the arch of the runner (`macos-latest` is Apple silicon, so arm64 only) |
 | Linux | `vukem-finances_<version>_<arch>.deb`, an AppImage |
 
 `.github/workflows/desktop.yml` builds the three platforms on a published
