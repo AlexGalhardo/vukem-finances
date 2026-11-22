@@ -267,7 +267,7 @@ export class SyncEngine {
     return false;
   }
 
-  private async pushAll(): Promise<ResultSummary[]> {
+  async pushAll(): Promise<ResultSummary[]> {
     const { db, transport } = this.o;
     const out: ResultSummary[] = [];
     if (transport === null) return out;
@@ -293,7 +293,7 @@ export class SyncEngine {
     return out;
   }
 
-  private async pullAll(): Promise<void> {
+  async pullAll(): Promise<void> {
     const { db, transport } = this.o;
     if (transport === null) return;
     try {
