@@ -3,6 +3,8 @@ import { LoaderCircleIcon } from "lucide-react";
 import { Slot } from "radix-ui";
 import type * as React from "react";
 import { cn } from "../../lib/utils";
+import { type ActionHint, useActionHint } from "../../shortcuts/useActionHint";
+import { ShortcutHint } from "../Kbd";
 
 const buttonVariants = cva(
   "group/button inline-flex shrink-0 pointer-coarse:min-h-11 pointer-coarse:min-w-11 items-center justify-center gap-2 rounded-md border border-transparent text-sm font-medium whitespace-nowrap transition-colors duration-(--vf-duration-fast) select-none disabled:pointer-events-none disabled:text-disabled aria-disabled:pointer-events-none aria-disabled:text-disabled aria-invalid:border-expense [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
@@ -47,9 +49,11 @@ type ButtonProps = React.ComponentProps<"button"> &
     asChild?: boolean;
     /** Keeps the width, sets aria-busy, disables the button and shows a spinner beside the label. */
     loading?: boolean;
+    /** The id of a registered action: its shortcut shows at the end of the label and in aria-keyshortcuts. */
+    shortcutAction?: string;
   };
 
-function Button({
+function PlainButton({
   className,
   variant = "default",
   size = "default",
@@ -57,8 +61,9 @@ function Button({
   loading = false,
   disabled,
   children,
+  hint,
   ...props
-}: ButtonProps) {
+}: Omit<ButtonProps, "shortcutAction"> & { hint?: ActionHint | null }) {
   const Comp = asChild ? Slot.Root : "button";
 
   if (asChild) {
@@ -68,6 +73,7 @@ function Button({
         data-variant={variant}
         data-size={size}
         className={cn(buttonVariants({ variant, size }), className)}
+        aria-keyshortcuts={hint?.ariaKeyShortcuts}
         {...props}
       >
         {children}
@@ -83,12 +89,25 @@ function Button({
       aria-busy={loading || undefined}
       disabled={disabled || loading}
       className={cn(buttonVariants({ variant, size }), className)}
+      aria-keyshortcuts={hint?.ariaKeyShortcuts}
       {...props}
     >
       {loading ? <LoaderCircleIcon aria-hidden="true" className="motion-safe:animate-spin" /> : null}
       {children}
+      {hint && !asChild ? <ShortcutHint parts={hint.parts} /> : null}
     </Comp>
   );
+}
+
+function HintedButton({ shortcutAction, ...props }: ButtonProps & { shortcutAction: string }) {
+  const hint = useActionHint(shortcutAction);
+  return <PlainButton {...props} hint={hint} />;
+}
+
+function Button({ shortcutAction, ...props }: ButtonProps) {
+  // Only a button that names an action reads the registry, so the many plain buttons never re-render with it.
+  if (shortcutAction !== undefined) return <HintedButton shortcutAction={shortcutAction} {...props} />;
+  return <PlainButton {...props} />;
 }
 
 export { Button, buttonVariants };

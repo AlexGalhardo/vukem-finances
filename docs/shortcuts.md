@@ -11,6 +11,10 @@ One registry (`resources/js/shortcuts/registry.ts`) owns every shortcut. A featu
 - `/` is registered once, by `QuickAdd` (mounted on every signed-in page): on `/transactions` it focuses the search field, anywhere else it goes to `/transactions#search`, which focuses the field on arrival. Typed inside a field it is just a character.
 - A feature epic may add rows to the table below. It may not take a key that is already listed.
 
+## Hints on controls
+
+A button that triggers a registered action shows its shortcut: pass `shortcutAction="<action id>"` to `Button`, or read `useActionHint(id)` (`resources/js/shortcuts/useActionHint.ts`). The key text comes from the registry, never from JSX, and the hint is absent when the action is missing, disabled, or a single-key binding while "Single-key shortcuts" is off. `aria-keyshortcuts` is set for a single press and omitted for a sequence. The key caps are hidden by CSS on touch, below `sm` and in `xs` buttons. A sidebar item reads its hint from `nav.ts` `actionId` when the action is not `go-<id>` (Suggestions uses `review-suggestions`).
+
 ## Allocation
 
 | Keys | Action id | Owner |
@@ -18,6 +22,8 @@ One registry (`resources/js/shortcuts/registry.ts`) owns every shortcut. A featu
 | `mod+k` | `open-palette` | shell |
 | `?` | `open-shortcut-help` | shell |
 | `[` | `toggle-sidebar` | shell |
+| `h t` | `open-tutorial` | shell |
+| `h p` | `open-page-help` | shell |
 | `g d` | `go-dashboard` | shell |
 | `g t` | `go-transactions` | shell |
 | `g a` | `go-accounts` | shell |

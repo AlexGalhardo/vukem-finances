@@ -30,6 +30,11 @@ export interface NavItem {
   icon: LucideIcon;
   /** "g d" style binding for the matching `go-<id>` action; see docs/shortcuts.md before choosing one. */
   keys?: string;
+  /**
+   * The id of a registered action whose shortcut this item shows, when it is not `go-<id>` (Suggestions uses
+   * `review-suggestions`). Do not copy its keys into `keys`: the registry refuses a duplicate binding.
+   */
+  actionId?: string;
   /** Shown in one edition only; omit for both. Billing is `saas`. */
   edition?: NavEdition;
 }
@@ -47,7 +52,13 @@ export const navItems: readonly NavItem[] = [
   { id: "reports", labelKey: "reports", href: "/reports", icon: ChartPie, keys: "g r" },
   { id: "import", labelKey: "import", href: "/import", icon: Upload, keys: "g i" },
   { id: "workspace", labelKey: "workspace", href: "/workspace", icon: Users, keys: "g w" },
-  { id: "suggestions", labelKey: "suggestions", href: "/suggestions", icon: ListChecks },
+  {
+    id: "suggestions",
+    labelKey: "suggestions",
+    href: "/suggestions",
+    icon: ListChecks,
+    actionId: "review-suggestions",
+  },
   { id: "ai", labelKey: "ai", href: "/ai", icon: Sparkles },
   { id: "tokens", labelKey: "tokens", href: "/tokens", icon: KeyRound },
   { id: "privacy", labelKey: "privacy", href: "/account/privacy", icon: ShieldCheck },
@@ -64,6 +75,11 @@ export function navItemsFor(edition: string | undefined, items: readonly NavItem
 
 export function navActionId(item: Pick<NavItem, "id">): string {
   return `go-${item.id}`;
+}
+
+/** The action whose shortcut the item shows: its own `actionId`, else the `go-<id>` navigation action. */
+export function navHintActionId(item: Pick<NavItem, "id" | "actionId">): string {
+  return item.actionId ?? navActionId(item);
 }
 
 export function isActivePath(url: string, href: string): boolean {

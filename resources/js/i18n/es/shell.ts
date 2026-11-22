@@ -27,6 +27,9 @@ const dict = {
   openPalette: "Buscar o ejecutar un comando",
   openShortcutHelp: "Atajos de teclado",
   toggleSidebar: "Alternar barra lateral",
+  openTutorial: "Iniciar el tutorial",
+  openPageHelp: "Ayuda de esta página",
+  shortcutThen: "luego",
   close: "Cerrar",
   paletteTitle: "Paleta de comandos",
   paletteDescription:
