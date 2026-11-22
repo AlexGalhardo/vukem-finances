@@ -116,7 +116,7 @@ func TestPersonalSingleWorkspace(t *testing.T) {
 	vukemtest.AssertDatabaseCount(t, saas, "workspaces", 1)
 }
 
-func TestPersonalHomeHasNoLanding(t *testing.T) {
+func TestPersonalRootRedirects(t *testing.T) {
 	t.Parallel()
 
 	app := newPersonalApp(t)
@@ -127,9 +127,6 @@ func TestPersonalHomeHasNoLanding(t *testing.T) {
 	ana := signUp(t, app, "Ana", "ana@example.com")
 	app.Client(t).Get("/").AssertRedirect("/login")
 	ana.Client.Get("/").AssertRedirect("/dashboard")
-
-	// The landing page stays in saas.
-	newSaaSApp(t).Client(t).Inertia("").Get("/").AssertOK().AssertInertia("Home")
 }
 
 func TestEditionIsInTheSharedProps(t *testing.T) {

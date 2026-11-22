@@ -702,7 +702,7 @@ A filtered list with no result is a different state: it says so and offers **Cle
 ### 7.9 Error and landing
 
 - `Error`: AuthLayout column, status code in `caption`, a plain title, one sentence, and a link back. Never show a stack or raw error.
-- `Home` (`saas`): a landing with its own composition: hero with the product's real dashboard rendered with sample numbers, three feature rows, pricing summary and call to action. Black or white background by theme, with green as the only accent. Remove the current lime `finance-landing` styles.
+- The app has no landing page: `/` redirects (the static site in `site/` is the landing page, epic 22).
 
 ## 8. Components
 
@@ -1303,46 +1303,45 @@ Missing target (empty data, role, plan, feature off):
 
 ### 15.8 Screen inventory and content
 
-There are **36 screens** (every `inertia.Define` in `app/pages/`, each reached from `routes/`) and **81 steps**. Dialogs belong to the screen that opens them.
+There are **35 screens** (every `inertia.Define` in `app/pages/`, each reached from `routes/`) and **80 steps**. Dialogs belong to the screen that opens them.
 
 | # | Screen id | Route | Page | Audience | Mode | Steps |
 | --- | --- | --- | --- | --- | --- | --- |
-| 1 | Home | `/` | `Home` | Visitors, `saas` only (`personal` redirects) | guide | 1 |
-| 2 | Login | `/login` | `Auth/Login` | Anyone signed out | guide | 2 |
-| 3 | Register | `/register` | `Auth/Register` | Visitors, `saas` only | guide | 1 |
-| 4 | CheckEmail | `/register/check-email` | `Auth/CheckEmail` | New sign-ups | guide | 1 |
-| 5 | VerifyEmail | `/email/verify` | `Auth/VerifyEmail` | Signed in, email not verified | guide | 1 |
-| 6 | ForgotPassword | `/forgot-password` | `Auth/ForgotPassword` | Anyone signed out | guide | 1 |
-| 7 | ResetPassword | `/reset-password/{token}` | `Auth/ResetPassword` | Holder of a reset link | guide | 1 |
-| 8 | TwoFactorChallenge | `/two-factor-challenge` | `Auth/TwoFactorChallenge` | Account with two-factor on | guide | 1 |
-| 9 | Setup | `/setup` | `Setup` | First owner, `personal` only | guide | 2 |
-| 10 | InviteAccept | `/invites/{token}` | `InviteAccept` | Signed-in invitee | guide | 1 |
-| 11 | InviteRegister | `/invites/{token}/register` | `InviteRegister` | Invitee without an account | guide | 1 |
-| 12 | Error | `any failing route` | `Error` | Anyone | guide | 1 |
-| 13 | Dashboard | `/dashboard` | `Dashboard` | Every member | tour | 5 |
-| 14 | Transactions | `/transactions` | `Transactions` | Every member (writing needs a role that can record) | tour | 5 |
-| 15 | Accounts | `/accounts` | `Accounts` | Every member | tour | 4 |
-| 16 | Cards | `/cards` | `Cards` | Every member | tour | 3 |
-| 17 | CardStatement | `/cards/{card}` | `CardStatement` | Every member | tour | 3 |
-| 18 | Categories | `/categories` | `Categories` | Every member | tour | 3 |
-| 19 | Budgets | `/budgets` | `Budgets` | Every member (Pro in `saas`) | tour | 3 |
-| 20 | Goals | `/goals` | `Goals` | Every member | tour | 3 |
-| 21 | Recurrences | `/recurrences` | `Recurrences` | Every member | tour | 3 |
-| 22 | Reports | `/reports` | `Reports` | Every member | tour | 4 |
-| 23 | Import | `/import` | `Import` | Members who can record (Pro in `saas`) | tour | 3 |
-| 24 | Suggestions | `/suggestions` | `Suggestions` | Members who can record | tour | 3 |
-| 25 | AI | `/ai` | `AI` | Owner manages; others read | tour | 3 |
-| 26 | Workspace | `/workspace` | `Workspace` | Every member; owner and admin manage | tour | 3 |
-| 27 | Notifications | `/notifications` | `Notifications` | Every member | tour | 2 |
-| 28 | Telegram | `/settings/telegram` | `Settings/Telegram` | Every member, when the bot is configured | tour | 2 |
-| 29 | Tokens | `/tokens` | `Tokens` | Members allowed to create tokens | tour | 3 |
-| 30 | Devices | `/devices` | `Devices` | Every member | tour | 2 |
-| 31 | Billing | `/billing` | `Billing` | Every member; owner pays, `saas` only | tour | 3 |
-| 32 | TwoFactor | `/user/two-factor` | `Auth/TwoFactor` | Every signed-in person | tour | 2 |
-| 33 | AdminDashboard | `/admin` | `Admin/Dashboard` | Panel administrators | tour | 2 |
-| 34 | AdminResourceList | `/admin/{slug}` | `Admin/ResourceList` | Panel administrators | tour | 1 |
-| 35 | AdminResourceShow | `/admin/{slug}/{id}` | `Admin/ResourceShow` | Panel administrators | tour | 1 |
-| 36 | AdminRevenue | `/admin/revenue` | `Admin/Revenue` | Panel administrators, `saas` only | tour | 1 |
+| 1 | Login | `/login` | `Auth/Login` | Anyone signed out | guide | 2 |
+| 2 | Register | `/register` | `Auth/Register` | Visitors, `saas` only | guide | 1 |
+| 3 | CheckEmail | `/register/check-email` | `Auth/CheckEmail` | New sign-ups | guide | 1 |
+| 4 | VerifyEmail | `/email/verify` | `Auth/VerifyEmail` | Signed in, email not verified | guide | 1 |
+| 5 | ForgotPassword | `/forgot-password` | `Auth/ForgotPassword` | Anyone signed out | guide | 1 |
+| 6 | ResetPassword | `/reset-password/{token}` | `Auth/ResetPassword` | Holder of a reset link | guide | 1 |
+| 7 | TwoFactorChallenge | `/two-factor-challenge` | `Auth/TwoFactorChallenge` | Account with two-factor on | guide | 1 |
+| 8 | Setup | `/setup` | `Setup` | First owner, `personal` only | guide | 2 |
+| 9 | InviteAccept | `/invites/{token}` | `InviteAccept` | Signed-in invitee | guide | 1 |
+| 10 | InviteRegister | `/invites/{token}/register` | `InviteRegister` | Invitee without an account | guide | 1 |
+| 11 | Error | `any failing route` | `Error` | Anyone | guide | 1 |
+| 12 | Dashboard | `/dashboard` | `Dashboard` | Every member | tour | 5 |
+| 13 | Transactions | `/transactions` | `Transactions` | Every member (writing needs a role that can record) | tour | 5 |
+| 14 | Accounts | `/accounts` | `Accounts` | Every member | tour | 4 |
+| 15 | Cards | `/cards` | `Cards` | Every member | tour | 3 |
+| 16 | CardStatement | `/cards/{card}` | `CardStatement` | Every member | tour | 3 |
+| 17 | Categories | `/categories` | `Categories` | Every member | tour | 3 |
+| 18 | Budgets | `/budgets` | `Budgets` | Every member (Pro in `saas`) | tour | 3 |
+| 19 | Goals | `/goals` | `Goals` | Every member | tour | 3 |
+| 20 | Recurrences | `/recurrences` | `Recurrences` | Every member | tour | 3 |
+| 21 | Reports | `/reports` | `Reports` | Every member | tour | 4 |
+| 22 | Import | `/import` | `Import` | Members who can record (Pro in `saas`) | tour | 3 |
+| 23 | Suggestions | `/suggestions` | `Suggestions` | Members who can record | tour | 3 |
+| 24 | AI | `/ai` | `AI` | Owner manages; others read | tour | 3 |
+| 25 | Workspace | `/workspace` | `Workspace` | Every member; owner and admin manage | tour | 3 |
+| 26 | Notifications | `/notifications` | `Notifications` | Every member | tour | 2 |
+| 27 | Telegram | `/settings/telegram` | `Settings/Telegram` | Every member, when the bot is configured | tour | 2 |
+| 28 | Tokens | `/tokens` | `Tokens` | Members allowed to create tokens | tour | 3 |
+| 29 | Devices | `/devices` | `Devices` | Every member | tour | 2 |
+| 30 | Billing | `/billing` | `Billing` | Every member; owner pays, `saas` only | tour | 3 |
+| 31 | TwoFactor | `/user/two-factor` | `Auth/TwoFactor` | Every signed-in person | tour | 2 |
+| 32 | AdminDashboard | `/admin` | `Admin/Dashboard` | Panel administrators | tour | 2 |
+| 33 | AdminResourceList | `/admin/{slug}` | `Admin/ResourceList` | Panel administrators | tour | 1 |
+| 34 | AdminResourceShow | `/admin/{slug}/{id}` | `Admin/ResourceShow` | Panel administrators | tour | 1 |
+| 35 | AdminRevenue | `/admin/revenue` | `Admin/Revenue` | Panel administrators, `saas` only | tour | 1 |
 
 i18n keys are generated from the id and position: `tut<Id>Why`, `tut<Id><n>Title`, `tut<Id><n>Body`, in `resources/js/i18n/<locale>/tutorial.ts`.
 
@@ -1372,18 +1371,6 @@ Shared interface strings:
 | `tutorialDoneBody` | Reopen any screen's guide from Help, or press ? to see every shortcut. | Reabra o guia de qualquer tela pela Ajuda ou pressione ? para ver todos os atalhos. | Reabre la guía de cualquier pantalla desde Ayuda o pulsa ? para ver todos los atajos. |
 | `tutorialGuideSummary` | How this works | Como funciona | Cómo funciona |
 | `tutorialThen` | then | depois | luego |
-
-#### Home
-
-Route `/`. Objective:
-
-- **en:** Explains what the product does before anyone creates an account.
-- **pt-BR:** Explica o que o produto faz antes de alguém criar uma conta.
-- **es:** Explica qué hace el producto antes de crear una cuenta.
-
-| # | `data-tour` (highlight) | en | pt-BR | es |
-| --- | --- | --- | --- | --- |
-| 1 | `home-cta` | **Start here.** Create a free account, or sign in if you already have one. | **Comece aqui.** Crie uma conta gratuita ou entre se já tiver uma. | **Empieza aquí.** Crea una cuenta gratuita o inicia sesión si ya tienes una. |
 
 #### Login
 
@@ -1937,7 +1924,7 @@ Every task must, before it is done:
 | **T13** Automation | `pages/{Recurrences,Import,Suggestions}.tsx`, `components/recurrences/*`, `i18n/*/{recurrences,import}.ts`, `e2e/{recurrences,ai-suggestions}.spec.ts`, `e2e/import-categories.spec.ts` (import part, after T12) | Recurrences, Import, Suggestions | Import shows numbered steps; local keys of Suggestions unchanged |
 | **T14** Workspace and billing | `pages/{Workspace,Billing,Notifications}.tsx`, `pages/Settings/Telegram.tsx`, `components/PixDialog.tsx`, `i18n/*/{billing,alerts,telegram}.ts`, `e2e/{billing,alerts,telegram-settings}.spec.ts` | Workspace, Billing, Notifications, Telegram | Layout 7.7; owner-only controls explained when disabled |
 | **T15** Security and AI | `pages/{AI,Tokens,Devices}.tsx`, `pages/Auth/TwoFactor.tsx`, `components/assistant/*`, `i18n/*/{ai,tokens,sync}.ts`, `e2e/{ai-settings,assistant,tokens,devices}.spec.ts` | AI, Tokens, Devices, TwoFactor, assistant | Secrets are shown once with Copy; TwoFactor has no hardcoded English |
-| **T16** Public and admin | `pages/Home.tsx`, `pages/Admin/*`, `layouts/AdminLayout.tsx`, the `finance-landing` rules of `finance.css` | Home, Admin Dashboard, ResourceList, ResourceShow, Revenue | Admin has no `zinc-*`; landing composition is original |
+| **T16** Public and admin | `pages/Admin/*`, `layouts/AdminLayout.tsx` | Admin Dashboard, ResourceList, ResourceShow, Revenue | Admin has no `zinc-*`; landing composition is original |
 
 ### 16.5 Close
 

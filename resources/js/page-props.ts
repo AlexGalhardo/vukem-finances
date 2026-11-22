@@ -792,8 +792,6 @@ export type GoalsProps = {
   today: string;
 };
 
-export type HomeProps = Record<string, never>;
-
 export type ImportProps = {
   accounts: Account[];
   dateFormats: string[];
@@ -952,7 +950,6 @@ export interface PageProps {
   Dashboard: DashboardProps;
   Devices: DevicesProps;
   Goals: GoalsProps;
-  Home: HomeProps;
   Import: ImportProps;
   InviteAccept: InviteAcceptProps;
   InviteRegister: InviteRegisterProps;

@@ -44,22 +44,19 @@ func Web(r *router.Router, app *vukem.App) error {
 
 	r.Use(app.Inertia.Middleware, shareProps(app, edition))
 
-	// The personal edition has no landing page.
-	if edition.Personal() {
-		acc, err := accounts.New(app)
-		if err != nil {
-			return err
-		}
-
-		ws, err := workspaces.New(app)
-		if err != nil {
-			return err
-		}
-
-		r.Get("/", controllers.PersonalHome(acc, ws)).Name("home")
-	} else {
-		r.Get("/", controllers.Home).Name("home")
+	// The app has no landing page in either edition (the static site is the landing page):
+	// "/" only sends the visitor on, always to a path of this same server.
+	acc, err := accounts.New(app)
+	if err != nil {
+		return err
 	}
+
+	ws, err := workspaces.New(app)
+	if err != nil {
+		return err
+	}
+
+	r.Get("/", controllers.Root(acc, ws, edition)).Name("home")
 
 	r.Post("/locale", setLocale).Name("locale")
 

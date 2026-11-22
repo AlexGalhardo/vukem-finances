@@ -1,4 +1,4 @@
-/** The 36 screens of the product and the route each one answers (section 15.8 of docs/design-system.md). */
+/** The 35 screens of the product and the route each one answers (section 15.8 of docs/design-system.md). */
 export interface ScreenRoute {
   id: string;
   /** A path with `{name}` segments for parameters, or `*` for the error page that has no route of its own. */
@@ -6,7 +6,6 @@ export interface ScreenRoute {
 }
 
 export const screenRoutes: readonly ScreenRoute[] = [
-  { id: "Home", route: "/" },
   { id: "Login", route: "/login" },
   { id: "Register", route: "/register" },
   { id: "CheckEmail", route: "/register/check-email" },

@@ -88,6 +88,30 @@ test("the sign-in and setup screens load nothing from another origin", async ({ 
   expect(attempts, "requests to another origin").toEqual([]);
 });
 
+test("the root redirects inside the app and never to another site", async ({ browser }) => {
+  // The personal edition has no landing page: a guest goes to /login on the same origin, a signed-in person to the dashboard.
+  const guest = await browser.newContext({ baseURL: ORIGIN, storageState: { cookies: [], origins: [] } });
+  const attempts: string[] = [];
+  await guest.route("**/*", (route) => {
+    const url = route.request().url();
+    if (isLocal(url)) return route.continue();
+    attempts.push(url);
+    return route.abort("blockedbyclient");
+  });
+  const page = await guest.newPage();
+  await page.goto("/");
+  await page.getByRole("heading", { level: 1 }).first().waitFor();
+  expect(new URL(page.url()).origin).toBe(ORIGIN);
+  expect(new URL(page.url()).pathname).toBe("/login");
+  await guest.close();
+  expect(attempts, "requests to another origin").toEqual([]);
+});
+
+test("the root sends a signed-in person to the dashboard", async ({ page }) => {
+  await page.goto("/");
+  await expect(page).toHaveURL(`${ORIGIN}/dashboard`);
+});
+
 test("the guard sees a request to another origin", async ({ page, context }) => {
   const attempts: string[] = [];
   await context.route("**/*", (route) => {
