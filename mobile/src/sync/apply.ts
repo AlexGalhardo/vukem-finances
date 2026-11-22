@@ -303,7 +303,7 @@ export async function applyChange(db: Database, change: PullChange, now: string,
  */
 export async function applyPage(db: Database, page: PullPage, now: string): Promise<ApplyStats> {
   const stats: ApplyStats = { upserts: 0, deletes: 0, conflicts: 0 };
-  await db.transaction(async () => {
+  await db.transaction(async (db) => {
     for (const change of page.changes) {
       await applyChange(db, change, now, stats);
     }

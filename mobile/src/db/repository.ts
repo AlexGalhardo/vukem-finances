@@ -99,7 +99,8 @@ export class OutboxCapError extends Error {
 export class Repository {
   private readonly now: () => string;
   private readonly uid: () => string;
-  private keepOutbox = true;
+  /** Shared with every repository bound to a transaction, so the setting is one for the app. */
+  private state = { keepOutbox: true };
 
   constructor(
     private readonly db: Database,
@@ -107,6 +108,21 @@ export class Repository {
   ) {
     this.now = options.now ?? ((): string => new Date().toISOString());
     this.uid = options.uid ?? ((): string => newUid());
+  }
+
+  /**
+   * The same repository over `tx`: what code inside a transaction uses, so its
+   * reads and writes belong to that transaction and not to the root connection.
+   */
+  bind(tx: Database): Repository {
+    const bound = new Repository(tx, { now: this.now, uid: this.uid });
+    bound.state = this.state;
+    return bound;
+  }
+
+  /** Runs fn in a transaction (or in the one already open) with a repository bound to it. */
+  private inTx<T>(fn: (self: Repository, tx: Database) => Promise<T>): Promise<T> {
+    return this.db.transaction((tx) => fn(this.bind(tx), tx));
   }
 
   async get<E extends EntityName>(entity: E, uid: string, includeDeleted = false): Promise<Row<E> | null> {
@@ -133,79 +149,84 @@ export class Repository {
       checkMoney(name, values[name]);
     }
 
-    await this.db.transaction(async () => {
+    return this.inTx(async (self, tx) => {
       const stamp = this.now();
       const columns = ["uid", "version", "dirty", "updated_local_at", ...names.map(quote)];
       const params: SqlValue[] = [uid, 1, 1, stamp, ...names.map((n) => encode(meta.fields[n] ?? "text", values[n]))];
-      await this.db.run(
+      await tx.run(
         `INSERT INTO ${meta.table} (${columns.join(", ")}) VALUES (${columns.map(() => "?").join(", ")})`,
         params,
       );
-      await this.syncTags(entity, uid, values);
+      await self.syncTags(entity, uid, values);
       const sent: Record<string, unknown> = {};
       for (const name of names) {
         sent[name] = values[name] ?? null;
       }
-      await this.enqueue(entity, uid, "upsert", 0, sent, stamp);
+      await self.enqueue(entity, uid, "upsert", 0, sent, stamp);
+      return (await self.mustGet(entity, uid)) as Row<E>;
     });
-
-    return (await this.mustGet(entity, uid)) as Row<E>;
   }
 
   /** Writes only the fields whose value changed; a call that changes nothing writes nothing. */
   async update<E extends EntityName>(entity: E, uid: string, changes: Partial<EntityFields[E]>): Promise<Row<E>> {
     const meta = ENTITIES[entity];
-    const current = await this.mustGet(entity, uid);
     const wanted = changes as Record<string, unknown>;
-    const before = current as unknown as Record<string, unknown>;
-    const changed: Record<string, unknown> = {};
-
     for (const name of Object.keys(wanted)) {
       if (!(name in meta.fields)) {
         throw new Error(`${entity} has no field ${name}`);
       }
       checkMoney(name, wanted[name]);
-      if (!sameValue(before[name], wanted[name] ?? null)) {
-        changed[name] = wanted[name] ?? null;
-      }
-    }
-    const names = Object.keys(changed);
-    if (names.length === 0) {
-      return current;
     }
 
-    await this.db.transaction(async () => {
+    // The read and the write are one transaction: a sync apply cannot slip in between and make `before` stale.
+    return this.inTx(async (self, tx) => {
+      const current = await self.mustGet(entity, uid);
+      const before = current as unknown as Record<string, unknown>;
+      const changed: Record<string, unknown> = {};
+      for (const name of Object.keys(wanted)) {
+        if (!sameValue(before[name], wanted[name] ?? null)) {
+          changed[name] = wanted[name] ?? null;
+        }
+      }
+      const names = Object.keys(changed);
+      if (names.length === 0) {
+        return current;
+      }
+
       const stamp = this.now();
       const sets = names.map((n) => `${quote(n)} = ?`).join(", ");
       const params: SqlValue[] = names.map((n) => encode(meta.fields[n] ?? "text", changed[n]));
-      await this.db.run(
+      await tx.run(
         `UPDATE ${meta.table} SET ${sets}, version = version + 1, dirty = 1, updated_local_at = ? WHERE uid = ?`,
         [...params, stamp, uid],
       );
-      await this.syncTags(entity, uid, changed);
-      await this.enqueue(entity, uid, "upsert", current.server_seq ?? 0, changed, stamp);
+      await self.syncTags(entity, uid, changed);
+      await self.enqueue(entity, uid, "upsert", current.server_seq ?? 0, changed, stamp);
+      return (await self.mustGet(entity, uid)) as Row<E>;
     });
-
-    return (await this.mustGet(entity, uid)) as Row<E>;
   }
 
   /** `at` lets a cascade stamp every row it deletes with one instant, so a restore can find them together. */
   async remove(entity: EntityName, uid: string, at?: string): Promise<void> {
-    const current = await this.mustGet(entity, uid);
-    await this.mark(entity, uid, current.server_seq ?? 0, "delete", at);
+    await this.inTx(async (self) => {
+      const current = await self.mustGet(entity, uid);
+      await self.mark(entity, uid, current.server_seq ?? 0, "delete", at);
+    });
   }
 
   async restore(entity: EntityName, uid: string, at?: string): Promise<void> {
-    const current = await this.mustGet(entity, uid, true);
-    if (current.deleted_at === null) {
-      return;
-    }
-    await this.mark(entity, uid, current.server_seq ?? 0, "restore", at);
+    await this.inTx(async (self) => {
+      const current = await self.mustGet(entity, uid, true);
+      if (current.deleted_at === null) {
+        return;
+      }
+      await self.mark(entity, uid, current.server_seq ?? 0, "restore", at);
+    });
   }
 
   /** With the sync queue off, writes still change the row and mark it dirty but queue nothing. */
   setKeepOutbox(keep: boolean): void {
-    this.keepOutbox = keep;
+    this.state.keepOutbox = keep;
   }
 
   /** Discards every queued mutation; the caller asks the person first. */
@@ -251,12 +272,14 @@ export class Repository {
     if (confirmed !== true) {
       throw new OutboxCapError();
     }
-    const over = (await this.outboxCount()) - OUTBOX_SOFT_CAP;
-    if (over <= 0) {
-      return 0;
-    }
-    await this.db.run("DELETE FROM outbox WHERE id IN (SELECT id FROM outbox ORDER BY id LIMIT ?)", [over]);
-    return over;
+    return this.inTx(async (self, tx) => {
+      const over = (await self.outboxCount()) - OUTBOX_SOFT_CAP;
+      if (over <= 0) {
+        return 0;
+      }
+      await tx.run("DELETE FROM outbox WHERE id IN (SELECT id FROM outbox ORDER BY id LIMIT ?)", [over]);
+      return over;
+    });
   }
 
   private async mark(
@@ -267,13 +290,13 @@ export class Repository {
     at?: string,
   ): Promise<void> {
     const table = ENTITIES[entity].table;
-    await this.db.transaction(async () => {
+    await this.inTx(async (self, tx) => {
       const stamp = at ?? this.now();
-      await this.db.run(
+      await tx.run(
         `UPDATE ${table} SET deleted_at = ?, version = version + 1, dirty = 1, updated_local_at = ? WHERE uid = ?`,
         [op === "delete" ? stamp : null, stamp, uid],
       );
-      await this.enqueue(entity, uid, op, baseSeq, {}, stamp);
+      await self.enqueue(entity, uid, op, baseSeq, {}, stamp);
     });
   }
 
@@ -293,7 +316,7 @@ export class Repository {
     fields: Record<string, unknown>,
     stamp: string,
   ): Promise<void> {
-    if (!this.keepOutbox) {
+    if (!this.state.keepOutbox) {
       return;
     }
     await this.db.run(

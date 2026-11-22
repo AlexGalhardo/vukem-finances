@@ -47,7 +47,7 @@ export async function loadConnection(db: Database): Promise<Connection | null> {
 }
 
 export async function saveConnection(db: Database, c: Connection): Promise<void> {
-  await db.transaction(async () => {
+  await db.transaction(async (db) => {
     await setMeta(db, CONNECTION_KEYS.serverUrl, c.serverUrl);
     await setMeta(db, CONNECTION_KEYS.insecure, c.insecure ? "1" : "0");
     await setMeta(db, CONNECTION_KEYS.deviceName, c.deviceName);

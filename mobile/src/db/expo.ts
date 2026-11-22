@@ -6,15 +6,15 @@ class ExpoDatabase extends TransactionalDatabase {
     super();
   }
 
-  exec(sql: string): Promise<void> {
+  execRaw(sql: string): Promise<void> {
     return this.native.execAsync(sql);
   }
 
-  async run(sql: string, params: readonly SqlValue[] = []): Promise<void> {
+  async runRaw(sql: string, params: readonly SqlValue[] = []): Promise<void> {
     await this.native.runAsync(sql, [...params]);
   }
 
-  all<T extends object>(sql: string, params: readonly SqlValue[] = []): Promise<T[]> {
+  allRaw<T extends object>(sql: string, params: readonly SqlValue[] = []): Promise<T[]> {
     return this.native.getAllAsync<T>(sql, [...params]);
   }
 }

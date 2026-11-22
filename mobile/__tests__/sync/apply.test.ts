@@ -147,21 +147,20 @@ describe("applying a pull page", () => {
       upsert(3, "transaction", transactionRow(T1, A1, { category_uid: C1 })),
     ];
 
+    /** Kills the app at the cursor write: the transaction handle is wrapped, since that is what a transaction body uses. */
     function crashOnCursor(db: Database): Database {
-      return new Proxy(db, {
-        get(target, prop) {
-          if (prop === "run") {
-            return async (sql: string, params?: readonly SqlValue[]): Promise<void> => {
-              if (params?.[0] === "sync.cursor") {
-                throw new Error("the app was killed");
-              }
-              return target.run(sql, params);
-            };
+      const wrap = (inner: Database): Database => ({
+        exec: (sql) => inner.exec(sql),
+        all: (sql, params) => inner.all(sql, params),
+        run: async (sql: string, params?: readonly SqlValue[]): Promise<void> => {
+          if (params?.[0] === "sync.cursor") {
+            throw new Error("the app was killed");
           }
-          const value = Reflect.get(target, prop, target) as unknown;
-          return typeof value === "function" ? (value as (...a: unknown[]) => unknown).bind(target) : value;
+          return inner.run(sql, params);
         },
+        transaction: (fn) => inner.transaction((tx) => fn(wrap(tx))),
       });
+      return wrap(db);
     }
 
     it("rolls the whole page back, and the replay ends in the same state as a clean run", async () => {

@@ -6,7 +6,12 @@ import { type Migration, migrate } from "../../src/db/migrations";
 export class MemoryDatabase extends TransactionalDatabase {
   private readonly native = new DatabaseSync(":memory:");
 
-  exec(sql: string): Promise<void> {
+  /** A short deadlock limit, so code that uses the root inside a transaction fails fast instead of hanging a test. */
+  constructor(deadlockMs = 2000) {
+    super(deadlockMs);
+  }
+
+  execRaw(sql: string): Promise<void> {
     try {
       this.native.exec(sql);
       return Promise.resolve();
@@ -15,7 +20,7 @@ export class MemoryDatabase extends TransactionalDatabase {
     }
   }
 
-  run(sql: string, params: readonly SqlValue[] = []): Promise<void> {
+  runRaw(sql: string, params: readonly SqlValue[] = []): Promise<void> {
     try {
       this.native.prepare(sql).run(...params);
       return Promise.resolve();
@@ -24,7 +29,7 @@ export class MemoryDatabase extends TransactionalDatabase {
     }
   }
 
-  all<T extends object>(sql: string, params: readonly SqlValue[] = []): Promise<T[]> {
+  allRaw<T extends object>(sql: string, params: readonly SqlValue[] = []): Promise<T[]> {
     try {
       return Promise.resolve(this.native.prepare(sql).all(...params) as T[]);
     } catch (error) {

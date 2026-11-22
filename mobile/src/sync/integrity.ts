@@ -48,7 +48,7 @@ export async function findMissingRefs(db: Database): Promise<MissingRef[]> {
 }
 
 async function store(db: Database, issues: readonly MissingRef[]): Promise<void> {
-  await db.transaction(async () => {
+  await db.transaction(async (db) => {
     await db.run("DELETE FROM sync_ref_missing");
     for (const i of issues) {
       await db.run("INSERT OR REPLACE INTO sync_ref_missing (entity, uid, field, missing) VALUES (?, ?, ?, ?)", [

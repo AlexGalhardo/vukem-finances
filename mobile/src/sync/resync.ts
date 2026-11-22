@@ -29,7 +29,7 @@ export async function downloadSnapshot(db: Database, transport: Transport): Prom
       const page = await transport.snapshot({ entity, after, snapshot_id: snapshotId, limit: SNAPSHOT_LIMIT });
       snapshotId = page.snapshot_id;
       cursor = page.snapshot_cursor;
-      await db.transaction(async () => {
+      await db.transaction(async (db) => {
         for (const row of page.rows) {
           await db.run("INSERT OR REPLACE INTO sync_staging (entity, uid, row) VALUES (?, ?, ?)", [
             entity,
@@ -51,7 +51,7 @@ export async function downloadSnapshot(db: Database, transport: Transport): Prom
  * snapshot's. Call it inside a transaction of its own or let it open one.
  */
 export async function applyStaged(db: Database, cursor: number, now: () => string, wipe = false): Promise<void> {
-  await db.transaction(async () => {
+  await db.transaction(async (db) => {
     for (const entity of ORDER) {
       await db.run(`DELETE FROM ${ENTITIES[entity].table}${wipe ? "" : " WHERE dirty = 0"}`);
     }

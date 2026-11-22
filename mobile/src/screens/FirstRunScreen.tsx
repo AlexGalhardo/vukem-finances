@@ -55,8 +55,10 @@ export function FirstRunScreen(props: { onFinished?: () => void }): ReactNode {
     }
     setError(null);
 
-    await app.db.transaction(async () => {
-      await app.repo.create("account", {
+    await app.db.transaction(async (tx) => {
+      const repo = app.repo.bind(tx);
+      const ledger = app.ledger.bind(tx);
+      await repo.create("account", {
         name: name.trim(),
         kind,
         opening_cents: cents,
@@ -65,7 +67,7 @@ export function FirstRunScreen(props: { onFinished?: () => void }): ReactNode {
       });
       if (withCategories) {
         for (const c of DEFAULT_CATEGORIES) {
-          await app.ledger.createCategory({
+          await ledger.createCategory({
             name: c.names[locale],
             kind: c.kind,
             parent_uid: null,
