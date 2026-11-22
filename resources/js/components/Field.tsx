@@ -5,6 +5,8 @@ import { Input } from "./ui/input";
 interface Props extends InputHTMLAttributes<HTMLInputElement> {
   label: string;
   error?: string;
+  /** `lg` is the 44 px field of the auth screens. */
+  inputSize?: "default" | "lg";
 }
 
 /** A labelled input with its validation error: an icon and a message below, linked by aria-describedby. */

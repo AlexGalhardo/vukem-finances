@@ -1,6 +1,7 @@
 import type accounts from "./en/accounts";
 import type ai from "./en/ai";
 import type alerts from "./en/alerts";
+import type auth from "./en/auth";
 import type billing from "./en/billing";
 import type budgets from "./en/budgets";
 import type cards from "./en/cards";
@@ -27,6 +28,7 @@ export type Key =
   | keyof typeof accounts
   | keyof typeof ai
   | keyof typeof alerts
+  | keyof typeof auth
   | keyof typeof billing
   | keyof typeof budgets
   | keyof typeof cards

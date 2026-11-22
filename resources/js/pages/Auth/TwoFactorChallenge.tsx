@@ -1,11 +1,17 @@
 import { Head, useForm } from "@inertiajs/react";
-import { useState, type FormEvent } from "react";
-
+import { type FormEvent, useState } from "react";
+import { AuthErrorSummary, AuthHeading, AuthSection, authLinkClass } from "../../components/auth/AuthParts";
 import Field from "../../components/Field";
+import { Button } from "../../components/ui/button";
+import { useFocusFirstError } from "../../hooks/useFocusFirstError";
+import { useFinanceI18n } from "../../lib/i18n";
+import GuideSummary from "../../tutorial/GuideSummary";
 
 export default function TwoFactorChallenge() {
+  const { t } = useFinanceI18n();
   const [recovery, setRecovery] = useState(false);
   const form = useForm({ code: "", recovery_code: "" });
+  const formRef = useFocusFirstError(form.errors);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
@@ -14,42 +20,48 @@ export default function TwoFactorChallenge() {
 
   return (
     <>
-      <Head title="Two-factor authentication" />
-      <h1 className="mb-4 text-2xl font-semibold">Two-factor authentication</h1>
-      <p className="mb-4">
-        {recovery ? "Enter one of your recovery codes." : "Enter the code from your authenticator app."}
-      </p>
-      <form onSubmit={submit} className="space-y-4">
-        {recovery ? (
-          <Field
-            label="Recovery code"
-            autoComplete="off"
-            required
-            value={form.data.recovery_code}
-            onChange={(e) => form.setData("recovery_code", e.target.value)}
-            error={form.errors.recovery_code}
-          />
-        ) : (
-          <Field
-            label="Code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            autoFocus
-            required
-            value={form.data.code}
-            onChange={(e) => form.setData("code", e.target.value)}
-            error={form.errors.code}
-          />
-        )}
-        <button
-          type="submit"
-          disabled={form.processing}
-          className="rounded-md bg-indigo-600 px-4 py-2 font-medium text-white hover:bg-indigo-500 disabled:opacity-50"
-        >
-          Log in
-        </button>
-      </form>
-      <p className="mt-6 text-sm">
+      <Head title={t("authTwoFactorTitle")} />
+      <AuthHeading
+        title={t("authTwoFactorTitle")}
+        description={recovery ? t("authTwoFactorRecoveryPrompt") : t("authTwoFactorAppPrompt")}
+      />
+      <AuthSection>
+        <AuthErrorSummary errors={form.errors} />
+        <form ref={formRef} onSubmit={submit} className="flex flex-col gap-6">
+          {recovery ? (
+            <Field
+              label={t("authTwoFactorRecoveryCode")}
+              name="recovery_code"
+              autoComplete="off"
+              inputSize="lg"
+              autoFocus
+              required
+              value={form.data.recovery_code}
+              onChange={(e) => form.setData("recovery_code", e.target.value)}
+              error={form.errors.recovery_code}
+            />
+          ) : (
+            <div data-tour="challenge-code">
+              <Field
+                label={t("authTwoFactorCode")}
+                name="code"
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                inputSize="lg"
+                autoFocus
+                required
+                value={form.data.code}
+                onChange={(e) => form.setData("code", e.target.value)}
+                error={form.errors.code}
+              />
+            </div>
+          )}
+          <Button type="submit" variant="brand" size="lg" loading={form.processing}>
+            {t("login")}
+          </Button>
+        </form>
+      </AuthSection>
+      <p>
         <button
           type="button"
           onClick={() => {
@@ -58,11 +70,12 @@ export default function TwoFactorChallenge() {
             form.reset();
             form.clearErrors();
           }}
-          className="text-indigo-600 hover:underline dark:text-indigo-400"
+          className={`${authLinkClass} rounded-sm pointer-coarse:min-h-11`}
         >
-          {recovery ? "Use a code from your authenticator app" : "Lost your device? Use a recovery code"}
+          {recovery ? t("authTwoFactorUseApp") : t("authTwoFactorUseRecovery")}
         </button>
       </p>
+      <GuideSummary screenId="TwoFactorChallenge" />
     </>
   );
 }

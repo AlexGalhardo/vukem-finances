@@ -1,0 +1,31 @@
+const dict = {
+  authErrorSummary: "Check the highlighted fields and try again.",
+  authCheckEmailTitle: "Check your email",
+  authCheckEmailBody:
+    "If the address can be used, we sent it a link to verify it. If it already has an account, we sent a link to sign in or reset the password instead.",
+  authGoToLogin: "Go to the login page",
+  authVerifyTitle: "Verify your email",
+  authVerifyBody: "We sent a link to {email}. Open it to verify your address.",
+  authVerifyResend: "Send the link again",
+  authForgotTitle: "Forgot your password?",
+  authForgotDescription: "We will email you a link to choose a new one.",
+  authForgotSubmit: "Email me a reset link",
+  authBackToLogin: "Back to log in",
+  authResetTitle: "Choose a new password",
+  authResetDescription: "Use a password you do not use anywhere else.",
+  authNewPassword: "New password",
+  authResetSubmit: "Reset password",
+  authTwoFactorTitle: "Two-factor authentication",
+  authTwoFactorAppPrompt: "Enter the code from your authenticator app.",
+  authTwoFactorRecoveryPrompt: "Enter one of your recovery codes.",
+  authTwoFactorCode: "Code",
+  authTwoFactorRecoveryCode: "Recovery code",
+  authTwoFactorUseApp: "Use a code from your authenticator app",
+  authTwoFactorUseRecovery: "Lost your device? Use a recovery code",
+  authInviteTitle: "Join a workspace",
+  authInviteBody:
+    "Accept the invitation to start working in the shared workspace. It only works for the address it was sent to.",
+  authInviteAccept: "Accept the invitation",
+  authErrorBack: "Back to the home page",
+} as const;
+export default dict;
