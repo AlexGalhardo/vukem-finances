@@ -10,4 +10,4 @@ import (
 	"github.com/AlexGalhardo/vukem-finances/bootstrap"
 )
 
-func main() { os.Exit(vukem.Main(bootstrap.New)) }
+func main() { os.Exit(vukem.MainWith(bootstrap.New, vukem.WithCommands(bootstrap.EarlyCommands()...))) }
