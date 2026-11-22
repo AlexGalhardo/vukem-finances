@@ -17,6 +17,9 @@ const epic14Snapshot = "../testdata/openapi/epic14.json"
 // addedByEpic30 are the operation prefixes epic 30 task 6b adds.
 var addedByEpic30 = []string{"cards.", "statements.", "recurrences.", "goals.", "reports.", "export."} //nolint:gochecknoglobals // a table
 
+// addedAfterEpic30 are the exact operations later epics add to the contract.
+var addedAfterEpic30 = []string{"sync.pair"} //nolint:gochecknoglobals // a table
+
 func readDocument(t *testing.T, path string) map[string]any {
 	t.Helper()
 
@@ -124,6 +127,10 @@ func TestOpenAPIOperationsOfEpic14DidNotChange(t *testing.T) {
 		}
 
 		id, _ := op["operationId"].(string)
+		if slices.Contains(addedAfterEpic30, id) {
+			continue
+		}
+
 		added = append(added, id)
 
 		if !slices.ContainsFunc(addedByEpic30, func(p string) bool { return strings.HasPrefix(id, p) }) {
