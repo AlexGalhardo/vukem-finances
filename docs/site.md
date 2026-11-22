@@ -43,7 +43,7 @@ Run them in `site/` after `bun install --frozen-lockfile`.
 ## Where things are
 
 - Copy: `site/src/landing/copy/{en,pt-br,es}.json`. The three must have the same keys and no empty value.
-- Plans: `site/generated/plans.json` is what the editions block reads. It mirrors `Free` and `Pro` of `app/workspaces/limits.go` and a test compares them; it has no price. The export command `plans:export` of the plan is not implemented yet because it changes the Go app (see the hand-off).
+- Plans: `site/generated/plans.json` is what the editions block reads. It mirrors `Free` and `Pro` of `app/workspaces/limits.go`, has no price and is written by `go run ./cmd/app plans:export`; `plans:export -check` (run by the `go` job of `ci.yml`, and `TestPlansExportIsFresh`) fails when the file is stale.
 - Legal drafts: `docs/legal/privacy.md` and `docs/legal/terms.md` (pending review by the author).
 - Design tokens: `site/src/landing/landing.css`, the pairs of `docs/design.md` as `light-dark()`.
 
