@@ -3,6 +3,8 @@ package tests
 import (
 	"context"
 	"encoding/json"
+	"io"
+	"log/slog"
 	"maps"
 	"strings"
 	"sync/atomic"
@@ -205,4 +207,9 @@ func buttonData(t *testing.T, f *fakes.Telegram, chat int64, label string) strin
 	t.Fatalf("no button %q in the last message to chat %d", label, chat)
 
 	return ""
+}
+
+// newBufferLogger logs every level to w, for the tests that read what was logged.
+func newBufferLogger(w io.Writer) *slog.Logger {
+	return slog.New(slog.NewTextHandler(w, &slog.HandlerOptions{Level: slog.LevelDebug}))
 }
