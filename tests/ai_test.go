@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"regexp"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -347,6 +348,9 @@ func TestAIBaseURLInSaaSIsRefused(t *testing.T) {
 	}
 }
 
+// aiWord matches "ai" as a word of a path or a route name (/ai/key, ai.show), not inside another word such as "pair".
+var aiWord = regexp.MustCompile(`(^|[^a-z])ai([^a-z]|$)`)
+
 func TestAIExcludedFromExportAndAPI(t *testing.T) {
 	t.Parallel()
 
@@ -358,7 +362,7 @@ func TestAIExcludedFromExportAndAPI(t *testing.T) {
 	// Epics 05, 12 and 14 add those routes; extend this list with the paths they use.
 	for _, route := range app.Router.Routes() {
 		for _, prefix := range []string{"/api", "/export", "/sync", "/v1"} {
-			if strings.HasPrefix(route.Path, prefix) && strings.Contains(strings.ToLower(route.Path+route.Name), "ai") {
+			if strings.HasPrefix(route.Path, prefix) && aiWord.MatchString(strings.ToLower(route.Path+route.Name)) {
 				t.Errorf("route %s %s exposes the AI layer", route.Method, route.Path)
 			}
 		}
