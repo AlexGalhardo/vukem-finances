@@ -42,7 +42,7 @@ test("a category gets a parent, a color and an icon, and can be archived", async
   await expect(page.locator("main li").filter({ hasText: name }).first()).toBeVisible();
 
   await page.getByLabel("Name", { exact: true }).first().fill(child);
-  await page.getByLabel("Parent category").first().selectOption({ label: name });
+  await page.getByLabel("Parent category", { exact: true }).first().selectOption({ label: name });
   await page.getByRole("button", { name: "Add category" }).click();
   await expect(page.getByRole("list", { name: `Subcategories: ${name}` }).getByText(child)).toBeVisible();
 
