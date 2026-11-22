@@ -91,7 +91,7 @@ func TestSecurity_TelegramWebhook(t *testing.T) {
 	})
 
 	t.Run("a field Telegram adds later is ignored", func(t *testing.T) {
-		body := `{"update_id":` + itoa(nextUpdate()) + `,"future_field":{"a":1},"edited_message":{"message_id":1}}`
+		body := `{"update_id":` + itoa(int64(nextUpdate())) + `,"future_field":{"a":1},"edited_message":{"message_id":1}}`
 		hookPost(good, path, body).AssertStatus(http.StatusOK)
 	})
 
@@ -110,12 +110,6 @@ func TestSecurity_TelegramWebhook(t *testing.T) {
 			t.Fatalf("%d replies for a redelivered update, want 1", len(got))
 		}
 	})
-}
-
-func itoa(n int) string {
-	b, _ := json.Marshal(n)
-
-	return string(b)
 }
 
 // With no token the bot is off: the webhook route is 404 whatever is sent to
