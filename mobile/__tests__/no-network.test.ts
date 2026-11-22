@@ -89,7 +89,8 @@ describe("no network", () => {
       // The sync transport is the one place that may touch the network, and it is used only after the person connects.
       .filter((p) => !p.replaceAll("\\", "/").endsWith("/src/sync/transport.ts"));
     expect(sources.length).toBeGreaterThan(40);
-    const forbidden = /\bfetch\s*\(|XMLHttpRequest|\bWebSocket\b|\baxios\b|https?:\/\//u;
+    // A web address names a host; the bare scheme "https://" is only the hint of the Connect screen.
+    const forbidden = /\bfetch\s*\(|XMLHttpRequest|\bWebSocket\b|\baxios\b|https?:\/\/[^\s"\x27`)]/u;
     const offenders = sources.filter((p) => forbidden.test(readFileSync(p, "utf8")));
     expect(offenders).toEqual([]);
   });

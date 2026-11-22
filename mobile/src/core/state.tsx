@@ -18,6 +18,8 @@ export interface App {
   version: number;
   /** Call after a write so the other screens reload. */
   changed: () => void;
+  /** Reloads the screens without telling the sync engine: for changes the sync itself made. */
+  reload: () => void;
 }
 
 const AppContext = createContext<App | null>(null);
@@ -38,9 +40,11 @@ export function AppProvider(props: {
   /** The scheme the system asks for; the theme setting overrides it. */
   systemScheme?: Scheme;
   now?: () => Date;
+  /** Called after every write, for the sync engine to schedule a run. */
+  onChanged?: () => void;
   children: ReactNode;
 }): ReactNode {
-  const { db, repo, ledger, initialSettings, systemScheme = "light", now, children } = props;
+  const { db, repo, ledger, initialSettings, systemScheme = "light", now, onChanged, children } = props;
   const [settings, setSettings] = useState(initialSettings);
   const [version, setVersion] = useState(0);
 
@@ -52,13 +56,17 @@ export function AppProvider(props: {
     },
     [db, repo],
   );
-  const changed = useCallback(() => setVersion((v) => v + 1), []);
+  const changed = useCallback(() => {
+    setVersion((v) => v + 1);
+    onChanged?.();
+  }, [onChanged]);
+  const reload = useCallback(() => setVersion((v) => v + 1), []);
   const timezone = settings.timezone;
   const today = useCallback(() => todayIn(timezone, now?.()), [timezone, now]);
 
   const value = useMemo<App>(
-    () => ({ db, repo, ledger, settings, updateSettings, today, version, changed }),
-    [db, repo, ledger, settings, updateSettings, today, version, changed],
+    () => ({ db, repo, ledger, settings, updateSettings, today, version, changed, reload }),
+    [db, repo, ledger, settings, updateSettings, today, version, changed, reload],
   );
   const scheme: Scheme = settings.theme === "system" ? systemScheme : settings.theme;
 

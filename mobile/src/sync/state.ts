@@ -102,3 +102,16 @@ export async function pauseEntity(db: Database, entity: string, message: string)
 export async function resumeEntities(db: Database): Promise<void> {
   await db.run("DELETE FROM meta WHERE key LIKE 'sync.paused.%'");
 }
+
+/** A discarded problem may leave this phone different from the server: the next run downloads a snapshot. */
+export async function requestResync(db: Database): Promise<void> {
+  await setMeta(db, "sync.resync_needed", "1");
+}
+
+export async function takeResyncRequest(db: Database): Promise<boolean> {
+  const wanted = (await getMeta(db, "sync.resync_needed")) === "1";
+  if (wanted) {
+    await db.run("DELETE FROM meta WHERE key = 'sync.resync_needed'");
+  }
+  return wanted;
+}
