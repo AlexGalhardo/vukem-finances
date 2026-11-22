@@ -29,5 +29,6 @@ func All() []schema.Migration {
 		m20261122140000AddBudgetRolloverAndOverall(),
 		m20261122140100CreateGoals(),
 		m20261122140200CreateNotifications(),
+		m20261123100000AddReportIndexes(),
 	}
 }
