@@ -199,3 +199,13 @@ The entries of task 12 (accessibility audit) are numbered from QA-600. All of th
 - **Evidence:** `e2e/a11y/pages.spec.ts`, es, `/devices`.
 - **Severity:** Medium.
 - **Status:** fixed: the table container becomes a tab stop only while its content overflows (a `ResizeObserver` in `components/ui/table.tsx`).
+
+## QA-605: Enter on a focused suggestion accepts another suggestion
+
+- **Surface:** `/suggestions`, the list of pending categories.
+- **Steps:** with two or more pending suggestions, move the focus to a row that is not the active one (a screen reader or a script can) and press Enter.
+- **Expected:** the focused suggestion is accepted.
+- **Actual:** the active row was accepted, so another transaction got a category.
+- **Evidence:** `e2e/journeys/j06-ai.spec.ts`.
+- **Severity:** Medium.
+- **Status:** fixed: a row that receives the focus becomes the active row.

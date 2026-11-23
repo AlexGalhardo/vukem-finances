@@ -1,13 +1,13 @@
-import { HelpHint } from "../help/HelpHint";
-import { Alert, AlertDescription } from "../components/ui/alert";
 import { Head, router, usePage } from "@inertiajs/react";
 import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
 import { Kbd } from "../components/Kbd";
 import { MoneyText } from "../components/MoneyText";
 import PageHeader from "../components/PageHeader";
 import { Card, primary, secondary } from "../components/ui";
+import { Alert, AlertDescription } from "../components/ui/alert";
 import { Badge } from "../components/ui/badge";
 import { Input } from "../components/ui/input";
+import { HelpHint } from "../help/HelpHint";
 import { useFinanceI18n } from "../lib/i18n";
 import type { Page, Pending, SharedProps } from "../page-props";
 
@@ -162,6 +162,8 @@ export default function Suggestions({ pending, applied, aiOn, canRecord }: Page<
                     aria-selected={selected}
                     tabIndex={selected ? 0 : -1}
                     onClick={() => setActive(i)}
+                    // Enter acts on the active row, so the row that holds the focus must be that row.
+                    onFocus={() => setActive(i)}
                     onKeyDown={onKeyDown}
                     className="flex cursor-pointer flex-wrap items-center justify-between gap-3 px-4 py-3 outline-none focus-visible:ring-2 focus-visible:ring-ring aria-selected:bg-muted"
                   >
