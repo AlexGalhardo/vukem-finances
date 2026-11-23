@@ -42,7 +42,11 @@ export default function ChartWithTable({
       <div aria-hidden="true" hidden={asTable} data-report-chart>
         {chart}
       </div>
-      <div id={tableId} className={asTable ? "overflow-x-auto" : "sr-only"} data-report-table>
+      <div
+        id={tableId}
+        className={asTable ? "overflow-x-auto" : "sr-only [&_[data-slot=table-container]]:overflow-visible"}
+        data-report-table
+      >
         {table}
       </div>
     </figure>

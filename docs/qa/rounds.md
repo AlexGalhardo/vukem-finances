@@ -146,3 +146,56 @@ The entries of task 10 (load, budgets and drills) are numbered from QA-500.
   - Fixed: a per-workspace summary, `transaction_month_totals` (migration `20261127100000`), kept by insert, update and delete triggers on `transactions`, so creates, edits, soft deletes, restores, transfers, installments, imports, sync push and the purge are all counted by the database. The dashboard, the budget spending and the reports (cash flow, categories, accounts, totals, net worth) read whole months from it and only the days of a partial month from the rows. Money stays exact: the cents are summed as a high and a low part, joined in Go. `TestMonthTotalsBackfillAndTriggers` (a database with rows, the backfill, random single column writes, rollback) and `TestMonthTotalsEqualARecomputation` (random service operations in one workspace, the range reader against a direct sum, another workspace untouched) prove it equals a recomputation. The upgrade drill ran the backfill on a v0.6.0 database; a 1000000 row table backfills in about 2 s.
   - Fixed: the CSV export read whole models and continued each chunk with an `OR` of two conditions that made SQLite walk the index three times slower: it now reads plain columns and continues with a row value comparison (50000 rows: 590 ms to 185 ms in the service, 1478 ms to 754 ms p95 in the load test).
   - Still over with 20 clients: `transactions_filtered` (1541 ms p95, budget 300) and `sync_push` (1576 ms p95, budget 300). Neither is an aggregate: the filter is a `LIKE '%text%'` scan and a push is 20 writes by the single SQLite writer. Options for a later release: full text search for the filter, and a cheaper insert path for a push.
+
+The entries of task 12 (accessibility audit) are numbered from QA-600. All of them were found by axe in
+`e2e/a11y/pages.spec.ts`, which is the failing test for each: it failed on these rules before the fixes and passes after.
+
+## QA-600: the sidebar group labels fail the contrast minimum
+
+- **Surface:** the sidebar of every signed-in page (`SidebarGroupLabel`), light and dark.
+- **Steps:** open any page and run axe (`bunx playwright test e2e/a11y/pages.spec.ts`).
+- **Expected:** text contrast of at least 4.5:1 (WCAG 1.4.3).
+- **Actual:** `color-contrast` (serious) on the five group labels (Money, Planning, Insights, Data and Settings): the label used `text-sidebar-foreground/70`, which lowers the already muted sidebar text below the minimum.
+- **Evidence:** `e2e/a11y/pages.spec.ts`, rule `color-contrast`.
+- **Severity:** Medium.
+- **Status:** fixed: the label uses `text-sidebar-foreground` (the muted token, at full strength).
+
+## QA-601: the search button's accessible name does not contain its visible text
+
+- **Surface:** the top bar button that opens the command palette.
+- **Steps:** open any page and run axe.
+- **Expected:** the accessible name starts with the visible label (WCAG 2.5.3, label in name).
+- **Actual:** `label-content-name-mismatch` (serious): an `aria-label` was set while the visible content was the shortcut hint, so a person using speech control saying the visible text did not match the name.
+- **Evidence:** `e2e/a11y/pages.spec.ts`, rule `label-content-name-mismatch`.
+- **Severity:** Medium.
+- **Status:** fixed: the `aria-label` is gone and the label text is always in the button (visually hidden below the 2xl width), so the name is the visible text.
+
+## QA-602: the sidebar header and footer are outside every landmark
+
+- **Surface:** the sidebar of every signed-in page.
+- **Steps:** open any page and run axe.
+- **Expected:** all content is inside a landmark.
+- **Actual:** `region` (moderate): the workspace header block and the Documentation link are not in a landmark, because only the navigation was.
+- **Evidence:** `e2e/a11y/pages.spec.ts`, rule `region`.
+- **Severity:** Low.
+- **Status:** fixed: the sidebar is a `complementary` landmark named after the application.
+
+## QA-603: the hidden table of a chart is a scroll region that cannot take focus
+
+- **Surface:** `/reports`, the table behind each chart.
+- **Steps:** open `/reports` and run axe.
+- **Expected:** no scroll region without keyboard access (WCAG 2.1.1).
+- **Actual:** `scrollable-region-focusable` (serious): the screen-reader-only table kept `overflow-x-auto` on its container.
+- **Evidence:** `e2e/a11y/pages.spec.ts`, rule `scrollable-region-focusable`.
+- **Severity:** Low.
+- **Status:** fixed: while the table is visually hidden its container does not scroll.
+
+## QA-604: a table wider than its box cannot be scrolled with the keyboard
+
+- **Surface:** every `Table` (found on `/devices` in Spanish, where longer text made the table overflow).
+- **Steps:** switch to Spanish, open `/devices`, run axe. Without a mouse the cut-off columns cannot be reached.
+- **Expected:** a box that scrolls sideways can take focus.
+- **Actual:** `scrollable-region-focusable` (serious).
+- **Evidence:** `e2e/a11y/pages.spec.ts`, es, `/devices`.
+- **Severity:** Medium.
+- **Status:** fixed: the table container becomes a tab stop only while its content overflows (a `ResizeObserver` in `components/ui/table.tsx`).
