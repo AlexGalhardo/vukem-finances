@@ -28,16 +28,25 @@ Linux, and uncommitted work is never exported. Two runs on the same revision giv
 
 Every tracked file except:
 
-- Other clients and tooling of this repository: `mobile/`, `desktop/`, `site/`, `.github/`,
-  `.agents/`, `.claude/`, `.config/`, `.githooks/`, `development/`, `scripts/`, `docs/qa/`.
+- Other clients and tooling of this repository: `mobile/`, `desktop/`, `site/`, `clients/`, `e2e/`
+  and `playwright.config.ts`, `.github/`, `.agents/`, `.claude/`, `.config/`, `.githooks/`,
+  `development/`, `scripts/`, `docs/qa/`, and the documents about the clients and the design work
+  (`docs/desktop.md`, `docs/mobile.md`, `docs/site.md`, `docs/design.md`, `docs/design-system.md`,
+  `docs/landing-brief.md`).
 - Generated or local output: `resources/public/build/`, `storage/`, images (`.png`, `.jpg`, `.gif`,
   `.webp`, `.avif`, `.ico`, `.icns`, `.svg`).
+- `tests/doc_snapshots_test.go` and the MCP reference it checks (`docs/reference/mcp.md`): the
+  OpenAPI snapshot, the TypeScript client and the MCP reference contain the application name and
+  the module path in generated text (descriptions, schema names, token counts), so they can only
+  be fresh in this repository. A generated project regenerates them with its own name.
 - `go.mod` and `go.sum` (the Vukem CLI writes them for the chosen framework version and runs
   `go mod tidy`), `CHANGELOG.md`, `AGENTS.md` and `CLAUDE.md`.
 - `LICENSE`, which is exported as `LICENSE.vukem-finances` (the MIT notice the generated project
   keeps, as `NOTICE`, when the user does not pass `--license`).
-- Two tests that compare the app with files of this repository that are not exported
-  (`tests/plans_export_test.go`, `tests/security_authz_test.go`).
+
+Two files inside excluded folders are kept because the app's own tests read them:
+`docs/qa/inventory.md` (the authorization case count of the matrix test) and
+`site/generated/plans.json` (the plan limits).
 
 `package.json` and `bun.lock` are exported with their exact pins.
 
@@ -72,4 +81,4 @@ and replaces its embedded copy.
 literal braces, the manifest and determinism. `TestExportedTreeBuilds` exports `HEAD`, renders it
 under module `example.test/money` and name `money`, writes a `go.mod` that pins the framework
 versions of this repository's `go.mod`, then runs `go mod tidy`, `go build ./...`, `go vet ./...` and
-`go test ./...` in the result. It is skipped with `-short`.
+`go test -p 4 ./...` in the result. It is skipped with `-short`.

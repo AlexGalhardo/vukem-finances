@@ -32,17 +32,20 @@ type File struct {
 }
 
 // excludedDirs hold what only the app's own repository needs: the other
-// clients, the site, the team's tooling and rules, generated output. scripts/
-// is all QA and release tooling of this repository, none of it runtime.
+// clients, the site, the team's tooling and rules, the end-to-end browser
+// suite, generated output. scripts/ is all QA and release tooling of this
+// repository, none of it runtime.
 var excludedDirs = []string{
 	".agents/",
 	".claude/",
 	".config/",
 	".githooks/",
 	".github/",
+	"clients/",
 	"development/",
 	"desktop/",
 	"docs/qa/",
+	"e2e/",
 	"mobile/",
 	"resources/public/build/",
 	"scripts/",
@@ -51,9 +54,11 @@ var excludedDirs = []string{
 }
 
 // excludedFiles are single files: the module files (the Vukem CLI writes
-// them for the chosen framework version), the changelog and the team's
-// agent instructions. LICENSE is not lost: it is exported as
-// LICENSE.vukem-finances.
+// them for the chosen framework version), the changelog, the team's agent
+// instructions, and the documents about the clients and the site that are
+// not exported or about the repository's own design work. LICENSE is not
+// lost: it is exported as LICENSE.vukem-finances. The MCP reference is
+// checked by tests/doc_snapshots_test.go, which is not exported either.
 var excludedFiles = []string{
 	"AGENTS.md",
 	"CHANGELOG.md",
@@ -61,6 +66,15 @@ var excludedFiles = []string{
 	"LICENSE",
 	"go.mod",
 	"go.sum",
+	"playwright.config.ts",
+	"docs/desktop.md",
+	"docs/design-system.md",
+	"docs/design.md",
+	"docs/landing-brief.md",
+	"docs/mobile.md",
+	"docs/reference/mcp.md",
+	"docs/site.md",
+	"tests/doc_snapshots_test.go",
 }
 
 // keptFiles are inside an excluded directory but read by the app's own tests,
