@@ -277,3 +277,6 @@ Written by `scripts/qa/round.sh` after a round in which every check passed. Roun
 | Round | Date | Commit | Recorded | New | Fixed | Accepted | Open |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 2026-11-23 | 3fa40a3 | 22 | 22 | 21 | 1 | 0 |
+| 2 | 2026-11-23 | 8c75eed | 23 | 1 | 22 | 1 | 0 |
+| 3 | 2026-11-23 | 8c75eed | 23 | 0 | 22 | 1 | 0 |
+| 4 | 2026-11-23 | 8c75eed | 23 | 0 | 22 | 1 | 0 |
