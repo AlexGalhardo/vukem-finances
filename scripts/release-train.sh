@@ -234,10 +234,14 @@ cut_release() {
 # Creates the GitHub release vX.Y.Z on the release commit of main. The notes are rendered again
 # from main, because the rebase-merge gave every commit a new id.
 publish_release() {
-	local v=$1 notes
+	local v=$1 notes commit
+	commit=$(release_commits | sed -n 1p)
 	notes=$(mktemp)
 	render_section "$v" "$(range_since_last_release origin/main 1)" | sed '1,/^$/d' >"$notes"
-	gh release create "v$v" --target "$(release_commits | sed -n 1p)" --title "v$v" --notes-file "$notes" >/dev/null ||
+	# gh release create would make a lightweight tag: the release tags are annotated.
+	git tag -a "v$v" -m "v$v" "$commit" && git push -q origin "refs/tags/v$v" ||
+		die "the annotated tag v$v could not be created"
+	gh release create "v$v" --verify-tag --title "v$v" --notes-file "$notes" >/dev/null ||
 		echo "release-train: the GitHub release v$v was not created" >&2
 	rm -f "$notes"
 	echo "published the GitHub release v$v"
