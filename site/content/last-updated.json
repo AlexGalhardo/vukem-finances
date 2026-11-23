@@ -1,35 +1,39 @@
 {
 	"changelog": {
 		"date": "2026-11-23",
-		"hash": "99e7647ea46bcf71"
+		"hash": "c1dbffe212f7b8db"
 	},
 	"changelog/v0.1.0": {
 		"date": "2026-11-23",
-		"hash": "68b54950e6f9f08f"
+		"hash": "3d74d95fdd75b663"
 	},
 	"changelog/v0.2.0": {
 		"date": "2026-11-23",
-		"hash": "dc74378298fca8c4"
+		"hash": "23342d5f09ca7b50"
 	},
 	"changelog/v0.3.0": {
 		"date": "2026-11-23",
-		"hash": "5a121d50992f9b5b"
+		"hash": "9b3539ee3d136213"
 	},
 	"changelog/v0.4.0": {
 		"date": "2026-11-23",
-		"hash": "3bf28cde473753b6"
+		"hash": "e806c921a65e871a"
 	},
 	"changelog/v0.5.0": {
 		"date": "2026-11-23",
-		"hash": "7036ff2ce57b0289"
+		"hash": "3d21d37761589cf0"
 	},
 	"changelog/v0.6.0": {
 		"date": "2026-11-23",
-		"hash": "61b99c42fb7aaf68"
+		"hash": "8c6e9123f400edd6"
 	},
 	"changelog/v0.7.0": {
 		"date": "2026-11-23",
-		"hash": "c62656e7d84e3254"
+		"hash": "84f573de6e638275"
+	},
+	"changelog/v0.8.0": {
+		"date": "2026-11-23",
+		"hash": "ab4a3755486d1e93"
 	},
 	"contribute/architecture": {
 		"date": "2026-11-22",
