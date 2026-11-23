@@ -27,6 +27,7 @@
     "**/coverage/**",
     "**/dist/**",
     "**/out/**",
-    "**/.next/**"
+    "**/.next/**",
+    "test-results/**"
   ]
 }

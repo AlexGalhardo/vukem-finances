@@ -260,6 +260,16 @@ The entries of task 12 (accessibility audit) are numbered from QA-600. All of th
 - **Severity:** Low (test infrastructure).
 - **Status:** fixed: the test runs only by name, as its own step in CI and in `scripts/qa/round.sh`.
 
+## QA-611: the Markdown lint reads what a failed Playwright run leaves behind
+
+- **Surface:** `bun run lint:md`, `.markdownlint-cli2.jsonc`.
+- **Steps:** let a Playwright test fail, then run the Markdown lint.
+- **Expected:** the lint reads only the project's documents.
+- **Actual:** it reported 25 issues in the `error-context.md` files under `test-results/`, a folder git ignores, and failed the QA round.
+- **Evidence:** the log of the first attempt at round 2, in which every other check passed.
+- **Severity:** Low (test infrastructure).
+- **Status:** fixed: the lint ignores `test-results/`.
+
 ## Round log
 
 Written by `scripts/qa/round.sh` after a round in which every check passed. Round 1 was written by hand: it failed, and the problems it found are the entries above.
