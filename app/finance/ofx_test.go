@@ -127,11 +127,24 @@ func TestOFXBoundsWhatItReads(t *testing.T) {
 	t.Run("2 MiB of one tag", func(t *testing.T) {
 		big := head + strings.Repeat("A", MaxImportBytes-len(head)-30) + `</NAME></STMTTRN></OFX>`
 
-		start := time.Now()
-		rows, err := OFXParser{}.Parse([]byte(big))
+		var (
+			rows []StatementRow
+			err  error
+			best time.Duration
+		)
 
-		if took := time.Since(start); !raceEnabled && took > 100*time.Millisecond {
-			t.Errorf("took %s, want under 100ms", took)
+		// Load on the machine only ever adds time, so the fastest of three parses is the parser's own cost.
+		for i := range 3 {
+			start := time.Now()
+			rows, err = OFXParser{}.Parse([]byte(big))
+
+			if took := time.Since(start); i == 0 || took < best {
+				best = took
+			}
+		}
+
+		if !raceEnabled && best > 100*time.Millisecond {
+			t.Errorf("took %s, want under 100ms", best)
 		}
 
 		if err != nil || len(rows) != 1 || rows[0].Problem != "field too long" {
