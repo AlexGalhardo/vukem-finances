@@ -102,3 +102,35 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
           build-args: |
             VERSION=${{ steps.meta.outputs.version }}
+
+  # The finance example of the Vukem CLI embeds an export of this repository
+  # (docs/scaffold.md). The archive and its manifest are attached to the
+  # release so the Vukem side updates from a published, verifiable file.
+  scaffold:
+    if: github.event_name == 'release'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: go.mod
+
+      - name: Export the scaffold
+        env:
+          TAG: ${{ github.event.release.tag_name }}
+        run: |
+          go run ./scripts/export-scaffold -version "$TAG" \
+            -out "$RUNNER_TEMP/scaffold" -archive "scaffold-$TAG.tar.gz"
+          cp "$RUNNER_TEMP/scaffold/MANIFEST.sha256" "scaffold-$TAG.MANIFEST.sha256"
+          (cd "$RUNNER_TEMP/scaffold" && sha256sum --check --quiet MANIFEST.sha256)
+          ls -l "scaffold-$TAG.tar.gz" "scaffold-$TAG.MANIFEST.sha256"
+
+      - name: Upload
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.event.release.tag_name }}
+          REPO: ${{ github.repository }}
+        run: gh release upload "$TAG" "scaffold-$TAG.tar.gz" "scaffold-$TAG.MANIFEST.sha256" --repo "$REPO" --clobber
