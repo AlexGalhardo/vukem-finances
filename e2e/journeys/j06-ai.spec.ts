@@ -41,9 +41,12 @@ test("a suggestion is reviewed and applied, then the assistant answers from the 
   await expect(dialog).toBeHidden();
 
   await page.goto("/suggestions");
-  await page.getByRole("button", { name: "Categorize uncategorized" }).click();
+  const categorize = page.getByRole("button", { name: "Categorize uncategorized" });
+  await categorize.click();
   const row = page.getByRole("option", { name: new RegExp(description) });
   await expect(row).toBeVisible();
+  // The row shows up before the request ends, and the page ignores keys until then.
+  await expect(categorize).toBeEnabled();
   await row.focus();
   await page.keyboard.press("Enter");
   await expect(page.getByRole("option", { name: new RegExp(description) })).toHaveCount(0);

@@ -42,13 +42,16 @@ test("category suggestions are reviewed with the keyboard only", async ({ page }
 
   await page.goto("/suggestions");
   await expect(page.getByRole("heading", { level: 1, name: "Suggestions" })).toBeVisible();
-  await page.getByRole("button", { name: "Categorize uncategorized" }).click();
+  const categorize = page.getByRole("button", { name: "Categorize uncategorized" });
+  await categorize.click();
 
   const alpha = page.getByRole("option", { name: new RegExp(first) });
   const beta = page.getByRole("option", { name: new RegExp(second) });
   await expect(alpha).toBeVisible();
   await expect(beta).toBeVisible();
   await expect(alpha).toContainText("From AI");
+  // The rows show up before the request ends, and the page ignores keys until then.
+  await expect(categorize).toBeEnabled();
 
   // Keyboard only: focus the first row, accept it with Enter, reject the second with Backspace.
   await alpha.focus();
@@ -88,9 +91,11 @@ test("Shift+A accepts every suggestion at or above the chosen confidence", async
   await expect(dialog).toBeHidden();
 
   await page.goto("/suggestions");
-  await page.getByRole("button", { name: "Categorize uncategorized" }).click();
+  const categorize = page.getByRole("button", { name: "Categorize uncategorized" });
+  await categorize.click();
   const row = page.getByRole("option", { name: new RegExp(description) });
   await expect(row).toBeVisible();
+  await expect(categorize).toBeEnabled();
 
   await row.focus();
   await page.keyboard.press("Shift+A");
