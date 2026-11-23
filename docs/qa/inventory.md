@@ -84,7 +84,7 @@ Authorization cases: 640
 | `POST /account/export` | account.export.confirm (personal, saas) | `TestDataLifecycle_ExportHoldsEverythingTheyOwnAndNoSecret`, `TestPersonalExportNeedsThePassword`, `TestPersonalMakesNoOutboundConnection` |
 | `GET /account/export.json` | account.export (personal, saas) | `TestDataLifecycle_ExportHoldsEverythingTheyOwnAndNoSecret`, `TestPersonalExportNeedsThePassword`, `TestPersonalMakesNoOutboundConnection` |
 | `GET /account/privacy` | account.privacy (personal, saas) | `TestPersonalEraseOverTheWeb`, `TestSaasHasNoEraseRoute`, `e2e/privacy.spec.ts` |
-| `GET /accounts` | accounts.index (personal, saas) | `TestAccountsHTTP`, `TestSoftDelete`, `TestWorkspaceRoutesAreRateLimited` and 4 more |
+| `GET /accounts` | accounts.index (personal, saas) | `TestAccountsHTTP`, `TestSoftDelete`, `TestWorkspaceRoutesAreRateLimited` and 6 more |
 | `POST /accounts` | accounts.store (personal, saas) | `TestAccountsHTTP`, `TestFreePlanLimits`, `TestLimitsPersonalHasNoCaps` and 2 more |
 | `DELETE /accounts/{account}` | accounts.destroy (personal, saas) | `TestAccountsHTTP`, `TestSoftDelete`, `TestTenancyIsolatesWorkspaces` |
 | `PATCH /accounts/{account}` | accounts.update (personal, saas) | `TestAccountsHTTP` |
@@ -137,15 +137,15 @@ Authorization cases: 640
 | `GET /auth/{provider}/redirect` | social.redirect (personal, saas) | `TestFinanceGoogleOptional`, `tests/finance_auth_test.go` |
 | `GET /authorize` | oauth.authorize (saas) | `FuzzOAuthAuthorize`, `TestClientMetadataSSRF`, `TestOAuthConsent` and 6 more |
 | `POST /authorize` | oauth.authorize.decide (saas) | `TestOAuthDiscoveryAndDecision` |
-| `GET /billing` | billing.show (saas) | `TestAnonymousAndUnverifiedUsersAreSentAway`, `TestCheckoutStartsATrialForTheWorkspace`, `TestOnlyTheOwnerManagesBilling` and 5 more |
+| `GET /billing` | billing.show (saas) | `TestAnonymousAndUnverifiedUsersAreSentAway`, `TestCheckoutStartsATrialForTheWorkspace`, `TestOnlyTheOwnerManagesBilling` and 6 more |
 | `POST /billing/checkout/{plan}` | billing.checkout (saas) | `TestCheckoutStartsATrialForTheWorkspace`, `TestOnlyTheOwnerManagesBilling`, `TestOnlyTheOwnerStartsStripeCheckoutOrOpensThePortal` and 6 more |
 | `POST /billing/pix` | billing.pix.start (saas) | `TestOnlyTheOwnerStartsOrPollsAPixPayment`, `TestPixIsAbsentWithoutConfigurationAndInThePersonalEdition`, `TestPixPollActivatesAndTheBillingPageShowsIt` and 2 more |
 | `GET /billing/pix/{ref}` | billing.pix.show (saas) | `TestOnlyTheOwnerStartsOrPollsAPixPayment`, `TestPixIsAbsentWithoutConfigurationAndInThePersonalEdition`, `TestPixPaymentOfAnotherWorkspaceIsNotFound` and 2 more |
 | `POST /billing/portal` | billing.portal (saas) | `TestOnlyTheOwnerManagesBilling`, `TestOnlyTheOwnerStartsStripeCheckoutOrOpensThePortal`, `TestPersonalHasNoBilling` and 3 more |
-| `GET /budgets` | budgets.index (personal, saas) | `TestBudgetAlertsAt80And100Percent`, `TestBudgetsHTTP`, `TestTodayUsesWorkspaceTimezone` and 1 more |
+| `GET /budgets` | budgets.index (personal, saas) | `TestBudgetAlertsAt80And100Percent`, `TestBudgetsHTTP`, `TestTodayUsesWorkspaceTimezone` and 2 more |
 | `POST /budgets` | budgets.store (personal, saas) | `TestBudgetAlertsAt80And100Percent`, `TestBudgetsHTTP`, `TestCrossTenantMatrix` and 3 more |
 | `DELETE /budgets/{budget}` | budgets.destroy (personal, saas) | `TestSoftDelete` |
-| `GET /cards` | cards.index (personal, saas) | `TestCardsHTTP`, `e2e/cards.spec.ts`, `e2e/recurrences.spec.ts` and 1 more |
+| `GET /cards` | cards.index (personal, saas) | `TestCardsHTTP`, `e2e/cards.spec.ts`, `e2e/journeys/j04-cards-day31.spec.ts` and 2 more |
 | `POST /cards` | cards.store (personal, saas) | `TestCardUpdateHTTP`, `TestCardsHTTP`, `TestCrossTenantMatrix` and 1 more |
 | `DELETE /cards/{card}` | cards.destroy (personal, saas) | `TestCardsHTTP` |
 | `GET /cards/{card}` | cards.show (personal, saas) | `TestCardsHTTP` |
@@ -153,7 +153,7 @@ Authorization cases: 640
 | `POST /cards/{card}/archive` | cards.archive (personal, saas) | `TestCardsHTTP` |
 | `POST /cards/{card}/statements/{ref}/pay` | cards.pay (personal, saas) | `TestCardsHTTP` |
 | `POST /cards/{card}/unarchive` | cards.unarchive (personal, saas) | `TestCardsHTTP` |
-| `GET /categories` | categories.index (personal, saas) | `TestCategoriesHTTP`, `e2e/import-categories.spec.ts` |
+| `GET /categories` | categories.index (personal, saas) | `TestCategoriesHTTP`, `e2e/import-categories.spec.ts`, `e2e/journeys/j01-personal.spec.ts` |
 | `POST /categories` | categories.store (personal, saas) | `TestCategoriesHTTP`, `TestRolesDecideWhoMayDoWhat` |
 | `DELETE /categories/{category}` | categories.destroy (personal, saas) | `TestCategoriesHTTP` |
 | `PATCH /categories/{category}` | categories.update (personal, saas) | `TestCategoriesHTTP` |
@@ -161,7 +161,7 @@ Authorization cases: 640
 | `POST /categories/{category}/unarchive` | categories.unarchive (personal, saas) | `TestCategoriesHTTP` |
 | `GET /connected-apps` | connected-apps.index (saas) | `TestConnectedApps`, `TestPagesOfTheShell` |
 | `DELETE /connected-apps/{grant}` | connected-apps.destroy (saas) | `TestConnectedApps` |
-| `GET /dashboard` | dashboard (personal, saas) | `TestAIExcludedFromExportAndAPI`, `TestAPIAuthMatrix`, `TestAccountDeletionIsRefusedForTheOnlyOwnerOfASharedWorkspace` and 47 more |
+| `GET /dashboard` | dashboard (personal, saas) | `TestAIExcludedFromExportAndAPI`, `TestAPIAuthMatrix`, `TestAccountDeletionIsRefusedForTheOnlyOwnerOfASharedWorkspace` and 49 more |
 | `GET /devices` | devices.index (personal, saas) | `TestPagesOfTheShell`, `TestPairing`, `TestSyncDevicesPage` and 1 more |
 | `POST /devices/pairing` | devices.pair (personal, saas) | `TestPairing`, `TestPairing_Validation`, `tests/sync_pairing_test.go` |
 | `DELETE /devices/{device}` | devices.destroy (personal, saas) | `TestPairing`, `TestSyncDevicesPage` |
@@ -178,7 +178,7 @@ Authorization cases: 640
 | `POST /goals/{goal}/contributions` | goals.contributions.store (personal, saas) | `TestCrossTenantMatrix`, `TestGoalLifecycleHTTP`, `TestGoalsHTTP` |
 | `DELETE /goals/{goal}/contributions/{contribution}` | goals.contributions.destroy (personal, saas) | `TestGoalLifecycleHTTP` |
 | `POST /goals/{goal}/unarchive` | goals.unarchive (personal, saas) | `TestGoalLifecycleHTTP` |
-| `GET /import` | import.index (personal, saas) | `TestFreePlanLimits`, `TestImportReport`, `e2e/import-categories.spec.ts` |
+| `GET /import` | import.index (personal, saas) | `TestFreePlanLimits`, `TestImportReport`, `e2e/import-categories.spec.ts` and 1 more |
 | `POST /import` | import.upload (personal, saas) | `tests/finance_import_test.go`, `tests/import_dedup_test.go` |
 | `POST /import/{import}` | import.confirm (personal, saas) | `TestCSVImportDelimiterAndSigns`, `TestCSVImportMapsColumnsAndRunsAsAJob`, `TestImportReport` and 1 more |
 | `POST /import/{import}/preview` | import.preview (personal, saas) | `TestImportReport` |
@@ -197,20 +197,20 @@ Authorization cases: 640
 | `POST /notifications/read` | notifications.read_all (personal, saas) | `TestNotificationsHTTP` |
 | `POST /notifications/{notification}/read` | notifications.read (personal, saas) | `TestNotificationsHTTP` |
 | `POST /oauth/workspace` | oauth.workspace (saas) | `TestOAuthConsent` |
-| `GET /recurrences` | recurrences.index (personal, saas) | `TestRecurrencesHTTP` |
+| `GET /recurrences` | recurrences.index (personal, saas) | `TestRecurrencesHTTP`, `e2e/journeys/j05-recurring-downtime.spec.ts` |
 | `POST /recurrences` | recurrences.store (personal, saas) | `TestCrossTenantMatrix`, `TestRecurrencesHTTP` |
 | `DELETE /recurrences/{recurrence}` | recurrences.destroy (personal, saas) | `TestRecurrencesHTTP` |
 | `PATCH /recurrences/{recurrence}` | recurrences.update (personal, saas) | `TestRecurrencesHTTP` |
 | `GET /register` | register (saas) | `TestPagesOfTheShell`, `TestPersonalRegisterClosed`, `TestSecurity_InviteTokenNotInQuery` |
 | `POST /register` | middleware.BodyLimit, (saas) | `TestEmailVerificationRoutes`, `TestExpiredVerificationLinkOffersANewOne`, `TestPersonalRegisterClosed` and 14 more |
 | `GET /register/check-email` | register.check (saas) | `TestPersonalRegisterClosed`, `TestRegisterAndVerifyEmail`, `TestRegisterDoesNotRevealAccounts` |
-| `GET /reports` | reports.index (personal, saas) | `TestReportsPage`, `e2e/reports.spec.ts` |
+| `GET /reports` | reports.index (personal, saas) | `TestReportsPage`, `e2e/journeys/j01-personal.spec.ts`, `e2e/reports.spec.ts` |
 | `POST /reset-password` | password.update (personal, saas) | `TestPasswordReset` |
 | `GET /reset-password/{token}` | password.reset (personal, saas) | `TestResetPasswordPageTakesTheTokenInThePath` |
 | `POST /revoke` | oauth.revoke (saas) | `TestSecurity_MCP_Refresh` |
 | `GET /setup` | setup.show (personal) | `TestDesktopFormErrorReturnsToItsPage`, `TestPersonalDropsAnalytics`, `TestPersonalMakesNoOutboundConnection` and 5 more |
 | `POST /setup` | setup.store (personal) | `TestDesktopFormErrorReturnsToItsPage`, `TestPersonalMailNeverBlocksAFlow`, `TestPersonalMailOnARealQueueIsRetried` and 6 more |
-| `GET /suggestions` | suggestions.index (personal, saas) | `TestAIFeaturesHTTP`, `e2e/ai-suggestions.spec.ts`, `e2e/screens-a-tour.spec.ts` |
+| `GET /suggestions` | suggestions.index (personal, saas) | `TestAIFeaturesHTTP`, `e2e/ai-suggestions.spec.ts`, `e2e/journeys/j06-ai.spec.ts` and 1 more |
 | `POST /suggestions/accept-all` | suggestions.accept_all (personal, saas) | `TestAIFeaturesHTTP` |
 | `POST /suggestions/run` | suggestions.run (personal, saas) | `TestAIFeaturesHTTP`, `TestSecurity_DescriptionInjection` |
 | `POST /suggestions/{suggestion}/accept` | suggestions.accept (personal, saas) | `TestAIFeaturesHTTP` |
@@ -223,11 +223,11 @@ Authorization cases: 640
 | `GET /tokens` | tokens.index (personal, saas) | `TestPairing`, `TestSecurity_TokenShownOnce`, `TestTokenCreate` and 3 more |
 | `POST /tokens` | tokens.store (personal, saas) | `app/cli/helpers_test.go`, `tests/api_helpers_test.go`, `tests/api_tokens_test.go` |
 | `DELETE /tokens/{token}` | tokens.destroy (personal, saas) | `TestAPIAuthMatrix`, `TestSyncTokenRevoked`, `TestTokenLimits` and 1 more |
-| `GET /transactions` | transactions.index (personal, saas) | `TestAccountDeletionOverTheWeb`, `TestAnonymousAndUnverifiedUsersAreSentAway`, `TestOneAmountParser` and 18 more |
+| `GET /transactions` | transactions.index (personal, saas) | `TestAccountDeletionOverTheWeb`, `TestAnonymousAndUnverifiedUsersAreSentAway`, `TestOneAmountParser` and 23 more |
 | `POST /transactions` | transactions.store (personal, saas) | `TestGateRefusesForeignRequests`, `TestOneAmountParser`, `TestSecurity_DescriptionInjection` and 4 more |
 | `POST /transactions/draft` | transactions.draft (personal, saas) | `TestAIFeaturesHTTP`, `TestAIFeaturesOffAnswer422AndCallNothing` |
 | `GET /transactions/draft/status` | transactions.draft.status (personal, saas) | `TestDraftStatusFollowsTheRole` |
-| `GET /transactions/export.csv` | transactions.export (personal, saas) | `TestCSVCap`, `TestCSVExportDownload`, `TestCrossTenantMatrixExports` and 8 more |
+| `GET /transactions/export.csv` | transactions.export (personal, saas) | `TestCSVCap`, `TestCSVExportDownload`, `TestCrossTenantMatrixExports` and 9 more |
 | `GET /transactions/options` | transactions.options (personal, saas) | `TestQuickAddOptions` |
 | `DELETE /transactions/{transaction}` | transactions.destroy (personal, saas) | `TestSoftDelete`, `TestTenancyIsolatesWorkspaces`, `TestTransferHTTP` and 1 more |
 | `PATCH /transactions/{transaction}` | transactions.update (personal, saas) | `TestCrossTenantMatrix`, `TestEditTransactionKeepsOwnershipAndValidatesMoney`, `TestMoveTransactionCannotBypassMonthlyQuota` and 2 more |
@@ -245,11 +245,11 @@ Authorization cases: 640
 | `POST /user/two-factor/confirm` | two-factor.confirm (personal, saas) | `TestTwoFactorThrottle`, `tests/two_factor_test.go` |
 | `POST /user/two-factor/disable` | two-factor.disable (personal, saas) | `TestTwoFactorDisableNeedsPassword` |
 | `POST /user/two-factor/recovery-codes` | two-factor.recovery-codes (personal, saas) | `TestTwoFactorRecoveryCodes` |
-| `GET /workspace` | workspace.show (personal, saas) | `TestAuditEvents`, `TestAuditLogIsHiddenFromMembersAndViewers`, `TestPersonalInviteLinkShownToOwner` and 1 more |
+| `GET /workspace` | workspace.show (personal, saas) | `TestAuditEvents`, `TestAuditLogIsHiddenFromMembersAndViewers`, `TestPersonalInviteLinkShownToOwner` and 2 more |
 | `PUT /workspace` | workspace.update (personal, saas) | `TestAuditEvents`, `TestSecurity_ViewerCannotEscalate`, `TestTodayUsesWorkspaceTimezone` and 3 more |
 | `POST /workspace/deletion` | workspace.deletion.store (personal, saas) | `TestDataLifecycle_WorkspaceDeletionLeavesNoRow`, `TestPersonalMakesNoOutboundConnection`, `TestWorkspaceDeletionOverTheWeb` |
 | `POST /workspace/deletion/cancel` | workspace.deletion.cancel (personal, saas) | `TestDataLifecycle_WorkspaceDeletionLeavesNoRow`, `TestPendingDeletionRefusesWrites`, `TestWorkspaceDeletionOverTheWeb` |
-| `GET /workspace/export.json` | workspace.export (personal, saas) | `TestCrossTenantMatrixExports`, `TestExportPermissions`, `TestExportRateLimited` and 5 more |
+| `GET /workspace/export.json` | workspace.export (personal, saas) | `TestCrossTenantMatrixExports`, `TestExportPermissions`, `TestExportRateLimited` and 6 more |
 | `POST /workspace/invites` | workspace.invite (personal, saas) | `TestAuditEvents`, `TestDataLifecycle_AccountDeletionLeavesNoTraceOfThePerson`, `TestExpiredInviteIsRefused` and 11 more |
 | `POST /workspace/leave` | workspace.leave (personal, saas) | `TestAuditEvents`, `TestLastOwner` |
 | `DELETE /workspace/members/{user}` | workspace.members.destroy (personal, saas) | `TestAuditEvents`, `TestLastOwner`, `TestRolesDecideWhoMayDoWhat` and 3 more |
