@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, "release/**"]
+    branches: [main]
   pull_request:
     branches: [main]
 
@@ -25,13 +25,37 @@ jobs:
       - run: go vet ./...
       - name: The site plans file is fresh
         run: go run ./cmd/app plans:export -check
-      # The tests package passes the default 10m under -race on a hosted runner.
-      - run: go test -race -count=1 -timeout=20m ./...
       - name: Parser time limits (without the race detector)
         run: go test -count=1 -run 'TestOFX' ./app/finance/
+      - run: go tool govulncheck ./...
+
+  # ./tests alone took 13 minutes under -race on one runner, so it is split in four parts.
+  race:
+    name: race (${{ matrix.part }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        part: [rest, "1", "2", "3", "4"]
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: go.mod
+      - name: Test under the race detector
+        env:
+          PART: ${{ matrix.part }}
+        run: bash scripts/ci/race-part.sh "$PART"
+
+  scaffold:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-go@d8cbb8045d7f43706b9177cceb36c1f91a6644d5 # v7.1.0
+        with:
+          go-version-file: go.mod
       - name: The exported scaffold builds under another module
         run: go test -count=1 -timeout=15m -run 'TestExportedTreeBuilds' ./scripts/export-scaffold/
-      - run: go tool govulncheck ./...
 
   static:
     runs-on: ubuntu-latest
