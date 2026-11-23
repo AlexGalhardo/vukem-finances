@@ -1,6 +1,13 @@
 package config
 
-import "time"
+import (
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+
+	vconfig "github.com/AlexGalhardo/vukem/config"
+)
 
 // Rate limits of the workspace routes. The 429 carries Retry-After. The
 // Stripe and Resend webhooks are not limited by IP (their senders share
@@ -31,6 +38,26 @@ const (
 	PixStartLimit  = 10
 	PixStartWindow = 10 * time.Minute
 )
+
+// WorkspaceReadLimit reads WORKSPACE_READ_LIMIT from src: the reads of one user
+// per ReadWindow. Unset means ReadLimit; anything but a positive whole number is
+// an error. The end-to-end suite raises it, because one signed-in user walks
+// every page of the app far faster than a person can.
+func WorkspaceReadLimit(src vconfig.Lookuper) (int, error) {
+	v, _ := src.Lookup("WORKSPACE_READ_LIMIT")
+
+	v = strings.TrimSpace(v)
+	if v == "" {
+		return ReadLimit, nil
+	}
+
+	n, err := strconv.Atoi(v)
+	if err != nil || n < 1 {
+		return 0, fmt.Errorf("WORKSPACE_READ_LIMIT=%q is invalid: use a positive whole number", v)
+	}
+
+	return n, nil
+}
 
 // Two-factor codes: ten failed codes per account in TwoFactorAccountWindow,
 // whatever the IPs they come from, end the pending login. The per-IP limit of

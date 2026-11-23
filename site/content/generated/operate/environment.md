@@ -5,7 +5,7 @@ description: "Every setting of .env.example with its default, the edition it bel
 
 > Generated from `.env.example`. Do not edit this page: change the source and run `bun run reference` in `site/`.
 
-41 variables. Edition says where a variable matters: `personal`, `saas` or `both`. Copy `.env.example` to `.env` and set what you need; the example file holds placeholders only.
+42 variables. Edition says where a variable matters: `personal`, `saas` or `both`. Copy `.env.example` to `.env` and set what you need; the example file holds placeholders only.
 
 | Variable | Example value | Edition | What it does |
 | --- | --- | --- | --- |
@@ -50,3 +50,4 @@ description: "Every setting of .env.example with its default, the edition it bel
 | `MCP_ALLOW_DESTRUCTIVE` | `false` | both | Optional, commented out in the example. true offers the tools that remove or archive data; each call still asks you to confirm. |
 | `MCP_OAUTH_CLIENTS` | `[{"id":"my-client","name":"My client","redirect_uris":["https://client.example/callback"]}]` | saas | Optional, commented out in the example. Remote MCP (saas only) needs APP_URL to be https. Clients known ahead of time, as a JSON list of public clients; any other client is identified by a metadata document. |
 | `PAYMENT_RECORD_RETENTION_YEARS` | `5` | both | Optional, commented out in the example. Years the minimal payment record (amount, date, provider reference, a subject hash) of a deleted workspace is kept, 1 to 30 (decision D-022; the default has had no legal review). |
+| `WORKSPACE_READ_LIMIT` | `120` | both | Optional, commented out in the example. Page and data reads of one signed-in user per minute. |

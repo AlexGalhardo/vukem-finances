@@ -152,8 +152,13 @@ func Finance(r *router.Router, app *vukem.App) error {
 		return err
 	}
 
+	readLimit, err := config.WorkspaceReadLimit(app.Source)
+	if err != nil {
+		return err
+	}
+
 	user := ratelimit.ByUser("web")
-	reads := ratelimit.Middleware(limiters("workspace.read", config.ReadLimit, config.ReadWindow), onMethods(user, true))
+	reads := ratelimit.Middleware(limiters("workspace.read", readLimit, config.ReadWindow), onMethods(user, true))
 	writes := ratelimit.Middleware(limiters("workspace.write", config.WriteLimit, config.WriteWindow), onMethods(user, false))
 	imports := ratelimit.Middleware(limiters("workspace.import", config.ImportLimit, config.ImportWindow), byWorkspace)
 	invites := ratelimit.Middleware(limiters("workspace.invite", config.InviteLimit, config.InviteWindow), byWorkspace)
