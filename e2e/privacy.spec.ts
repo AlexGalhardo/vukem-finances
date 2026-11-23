@@ -12,6 +12,7 @@ test("the export is a download that holds the profile and no secret", async ({ p
   await page.locator("input[name=password]").first().fill("not my password");
   await page.getByRole("button", { name: "Export my data" }).click();
   await expect(page.getByText("The password is incorrect.")).toBeVisible();
+  await expect(page.locator("input[name=password]").first()).toHaveValue("");
 
   await page.locator("input[name=password]").first().fill(E2E_ADMIN_PASSWORD);
   const [download] = await Promise.all([
@@ -46,6 +47,10 @@ test("the owner schedules the deletion of the workspace and cancels it", async (
     .locator("input[name=password]")
     .fill(E2E_ADMIN_PASSWORD);
   await page.getByRole("button", { name: "Delete the workspace" }).click();
+  // The form clears the password when the answer arrives: typing earlier would lose it.
+  await expect(page.locator("form", { hasText: "Delete the workspace" }).locator("input[name=password]")).toHaveValue(
+    "",
+  );
   await expect(page.getByRole("heading", { name: "This workspace is scheduled for deletion" })).toHaveCount(0);
 
   await page.getByLabel(/Type the workspace name to confirm/).fill(name);
