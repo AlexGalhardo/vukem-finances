@@ -219,3 +219,51 @@ The entries of task 12 (accessibility audit) are numbered from QA-600. All of th
 - **Evidence:** the server log of the failing run, and PR #10 CI.
 - **Severity:** Low (test infrastructure).
 - **Status:** fixed: `AI_CALLS_PER_MINUTE` configures the limit, 20 by default, and only the end-to-end suite raises it.
+
+## QA-607: the OFX time limit fails when the machine is busy
+
+- **Surface:** `TestOFXBoundsWhatItReads` in `app/finance/ofx_test.go`.
+- **Steps:** run `go test ./...` on a loaded machine.
+- **Expected:** the limit of 100 ms judges the parser.
+- **Actual:** one parse took 106 ms because of the load around it, and the test failed.
+- **Evidence:** the log of round 1.
+- **Severity:** Low (test infrastructure).
+- **Status:** fixed: the limit applies to the fastest of three parses, because load only adds time.
+
+## QA-608: the static server of the site spec can hang on close
+
+- **Surface:** `e2e/site-server.mjs`, `e2e/site-network.spec.ts`.
+- **Steps:** run the site project in CI.
+- **Expected:** the server closes when the spec ends.
+- **Actual:** `server.close()` waited for a socket the browser had opened and never used, and the spec hit its 30-second timeout.
+- **Evidence:** PR #10 CI, run 45212720808.
+- **Severity:** Low (test infrastructure).
+- **Status:** fixed: closing the server also closes its open connections.
+
+## QA-609: the suggestion specs press a key while the page is still busy
+
+- **Surface:** `e2e/journeys/j06-ai.spec.ts`, `e2e/ai-suggestions.spec.ts`.
+- **Steps:** click "Categorize uncategorized" and press Enter as soon as the row appears.
+- **Expected:** the spec acts once the page accepts keys.
+- **Actual:** the row appears before the request ends, the page ignores keys until then, and the suggestion stayed pending.
+- **Evidence:** round 1 and PR #10 CI, run 45212702710.
+- **Severity:** Low (test infrastructure). Ignoring keys during a request is the intended behavior.
+- **Status:** fixed: the specs wait for the button to be enabled again.
+
+## QA-610: the exported scaffold test fails beside the other packages
+
+- **Surface:** `TestExportedTreeBuilds` in `scripts/export-scaffold/`.
+- **Steps:** run `go test ./...` on Windows.
+- **Expected:** the nested build of the exported project passes.
+- **Actual:** the nested `go test` ended with exit status 5 before reporting the `tests` package. The same test passes when it runs alone. The exact cause of the exit status was not found.
+- **Evidence:** the log of round 1.
+- **Severity:** Low (test infrastructure).
+- **Status:** fixed: the test runs only by name, as its own step in CI and in `scripts/qa/round.sh`.
+
+## Round log
+
+Written by `scripts/qa/round.sh` after a round in which every check passed. Round 1 was written by hand: it failed, and the problems it found are the entries above.
+
+| Round | Date | Commit | Recorded | New | Fixed | Accepted | Open |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 2026-11-23 | 3fa40a3 | 22 | 22 | 21 | 1 | 0 |
