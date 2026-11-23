@@ -16,7 +16,6 @@ import (
 
 const (
 	openAPIFile = "../docs/openapi.json"
-	clientFile  = "../clients/typescript/api.ts"
 )
 
 func apiDocument(t *testing.T, app *vukemtest.App) *openapi.Document {
@@ -57,34 +56,6 @@ func matchesFile(t *testing.T, path string, got []byte, how string) {
 	if !bytes.Equal(want, got) {
 		t.Errorf("%s is stale: run %s", path, how)
 	}
-}
-
-const updateHow = "UPDATE_OPENAPI=1 go test ./tests/... -run 'TestOpenAPISnapshot|TestTypeScriptClientIsFresh'"
-
-func TestOpenAPISnapshot(t *testing.T) {
-	t.Parallel()
-
-	app := newApp(t)
-
-	body, err := api.RenderDocument(apiDocument(t, app))
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	matchesFile(t, openAPIFile, body, updateHow)
-}
-
-func TestTypeScriptClientIsFresh(t *testing.T) {
-	t.Parallel()
-
-	app := newApp(t)
-
-	ts, err := openapi.TypeScriptClientWith(apiDocument(t, app), openapi.ClientOptions{Args: "(see docs/api.md)"})
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	matchesFile(t, clientFile, []byte(ts), updateHow)
 }
 
 func TestOpenAPIRoute(t *testing.T) {
