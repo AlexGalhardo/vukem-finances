@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"flag"
 	"go/format"
 	"os"
 	"os/exec"
@@ -15,8 +16,10 @@ import (
 // TestExportedTreeBuilds renders the exported tree the way the Vukem CLI
 // does, under another module path and name, and builds, vets and tests it.
 func TestExportedTreeBuilds(t *testing.T) {
-	if testing.Short() {
-		t.Skip("renders and builds a whole project")
+	// A nested go test beside every other package of the repository failed under
+	// load on Windows, so CI and the QA round run this one on its own, by name.
+	if run := flag.Lookup("test.run"); run == nil || !strings.Contains(run.Value.String(), "TestExportedTreeBuilds") {
+		t.Skip("builds a whole project: run it with -run TestExportedTreeBuilds")
 	}
 
 	repo, err := filepath.Abs(filepath.Join("..", ".."))
