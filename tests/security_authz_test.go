@@ -218,6 +218,13 @@ func TestSecurity_Authz_Matrix(t *testing.T) {
 	t.Logf("authorization cases: %d", ran.Load())
 
 	doc, err := os.ReadFile(inventoryDoc)
+	if os.IsNotExist(err) {
+		// A project generated from the scaffold has no QA tooling and no inventory; this repository must have both.
+		if _, statErr := os.Stat("../scripts/qa/inventory"); os.IsNotExist(statErr) {
+			return
+		}
+	}
+
 	if err != nil {
 		t.Fatal(err)
 	}

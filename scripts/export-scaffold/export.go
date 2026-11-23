@@ -58,7 +58,8 @@ var excludedDirs = []string{
 // instructions, and the documents about the clients and the site that are
 // not exported or about the repository's own design work. LICENSE is not
 // lost: it is exported as LICENSE.vukem-finances. The MCP reference is
-// checked by tests/doc_snapshots_test.go, which is not exported either.
+// checked by tests/doc_snapshots_test.go, which is not exported either, and
+// tests/plans_export_test.go checks a file of the site, which stays behind.
 var excludedFiles = []string{
 	"AGENTS.md",
 	"CHANGELOG.md",
@@ -75,24 +76,13 @@ var excludedFiles = []string{
 	"docs/reference/mcp.md",
 	"docs/site.md",
 	"tests/doc_snapshots_test.go",
-}
-
-// keptFiles are inside an excluded directory but read by the app's own tests,
-// which a generated project runs: the QA inventory counts the authorization
-// cases of the matrix test, and the site data holds the plan limits.
-var keptFiles = []string{
-	"docs/qa/inventory.md",
-	"site/generated/plans.json",
+	"tests/plans_export_test.go",
 }
 
 var imageExts = []string{".png", ".jpg", ".jpeg", ".gif", ".webp", ".avif", ".ico", ".icns", ".svg"}
 
 // Include reports whether a tracked path belongs to the exported tree.
 func Include(p string) bool {
-	if slices.Contains(keptFiles, p) {
-		return true
-	}
-
 	if slices.Contains(excludedFiles, p) {
 		return false
 	}

@@ -44,9 +44,8 @@ Every tracked file except:
 - `LICENSE`, which is exported as `LICENSE.vukem-finances` (the MIT notice the generated project
   keeps, as `NOTICE`, when the user does not pass `--license`).
 
-Two files inside excluded folders are kept because the app's own tests read them:
-`docs/qa/inventory.md` (the authorization case count of the matrix test) and
-`site/generated/plans.json` (the plan limits).
+The tests that compare against those folders stay behind or adapt: `tests/plans_export_test.go` is
+not exported, and the authorization matrix skips its inventory count in a project without QA tooling.
 
 `package.json` and `bun.lock` are exported with their exact pins.
 
