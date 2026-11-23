@@ -15,6 +15,8 @@ export const appEnv = {
   APP_KEY: `base64:${randomBytes(32).toString("base64")}`,
   APP_DEBUG: "true",
   APP_EDITION: process.env.E2E_EDITION ?? "personal",
+  // One signed-in user walks every page of the suite: the default would answer 429 midway.
+  WORKSPACE_READ_LIMIT: "100000",
   PORT: process.env.E2E_PORT ?? "3917",
   APP_URL: `http://localhost:${process.env.E2E_PORT ?? "3917"}`,
   DATABASE_URL: `file:${join(dir, "db.sqlite").replaceAll("\\", "/")}`,
