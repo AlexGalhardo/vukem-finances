@@ -22,3 +22,20 @@ func TestWorkspaceReadLimit(t *testing.T) {
 		}
 	}
 }
+
+func TestAICallsPerMinute(t *testing.T) {
+	t.Parallel()
+
+	for value, want := range map[string]int{"": AICallLimit, " 500 ": 500, "1": 1} {
+		got, err := AICallsPerMinute(vconfig.MapSource(map[string]string{"AI_CALLS_PER_MINUTE": value}))
+		if err != nil || got != want {
+			t.Errorf("AI_CALLS_PER_MINUTE=%q = %d, %v; want %d", value, got, err, want)
+		}
+	}
+
+	for _, value := range []string{"0", "-1", "many", "1.5"} {
+		if _, err := AICallsPerMinute(vconfig.MapSource(map[string]string{"AI_CALLS_PER_MINUTE": value})); err == nil {
+			t.Errorf("AI_CALLS_PER_MINUTE=%q was accepted", value)
+		}
+	}
+}

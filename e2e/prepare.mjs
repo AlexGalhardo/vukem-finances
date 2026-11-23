@@ -17,6 +17,8 @@ export const appEnv = {
   APP_EDITION: process.env.E2E_EDITION ?? "personal",
   // One signed-in user walks every page of the suite: the default would answer 429 midway.
   WORKSPACE_READ_LIMIT: "100000",
+  // Every AI spec shares one workspace, so together they pass the default of 20 calls a minute.
+  AI_CALLS_PER_MINUTE: "100000",
   PORT: process.env.E2E_PORT ?? "3917",
   APP_URL: `http://localhost:${process.env.E2E_PORT ?? "3917"}`,
   DATABASE_URL: `file:${join(dir, "db.sqlite").replaceAll("\\", "/")}`,
