@@ -81,4 +81,6 @@ and replaces its embedded copy.
 literal braces, the manifest and determinism. `TestExportedTreeBuilds` exports `HEAD`, renders it
 under module `example.test/money` and name `money`, writes a `go.mod` that pins the framework
 versions of this repository's `go.mod`, then runs `go mod tidy`, `go build ./...`, `go vet ./...` and
-`go test -p 4 ./...` in the result. It is skipped with `-short`.
+`go test -p 4 ./...` in the result. It runs only when named, because it builds a whole project:
+`go test -run TestExportedTreeBuilds ./scripts/export-scaffold/`. CI and `scripts/qa/round.sh` run it
+as a step of its own.

@@ -29,6 +29,8 @@ jobs:
       - run: go test -race -count=1 -timeout=20m ./...
       - name: Parser time limits (without the race detector)
         run: go test -count=1 -run 'TestOFX' ./app/finance/
+      - name: The exported scaffold builds under another module
+        run: go test -count=1 -timeout=15m -run 'TestExportedTreeBuilds' ./scripts/export-scaffold/
       - run: go tool govulncheck ./...
 
   static:
