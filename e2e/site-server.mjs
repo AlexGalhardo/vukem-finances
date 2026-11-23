@@ -42,7 +42,12 @@ export function serve(root) {
     server.listen(0, "127.0.0.1", () => {
       resolve({
         origin: `http://127.0.0.1:${server.address().port}`,
-        close: () => new Promise((done) => server.close(() => done())),
+        // close() alone waits for a socket the browser opened ahead of time and never used.
+        close: () =>
+          new Promise((done) => {
+            server.close(() => done());
+            server.closeAllConnections();
+          }),
       });
     });
   });
