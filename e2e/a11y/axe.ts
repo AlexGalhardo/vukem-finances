@@ -1,5 +1,5 @@
 import AxeBuilder from "@axe-core/playwright";
-import { expect, type Page } from "@playwright/test";
+import { expect, type Locator, type Page } from "@playwright/test";
 
 export const themes = ["light", "dark"] as const;
 export const locales = [
@@ -20,8 +20,13 @@ export async function useTheme(page: Page, theme: Theme): Promise<void> {
 export async function useLocale(page: Page, locale: Locale): Promise<void> {
   await page.goto("/login");
   await page.waitForLoadState("load");
-  await page.getByRole("combobox").first().selectOption(locale);
+  await languageSelect(page).selectOption(locale);
   await expect(page.locator("html")).toHaveAttribute("lang", locale);
+}
+
+/** The language select, whatever its label says now. In saas the workspace switcher comes first in the page. */
+function languageSelect(page: Page): Locator {
+  return page.locator('select:has(option[value="pt-BR"])').first();
 }
 
 /**
@@ -30,7 +35,7 @@ export async function useLocale(page: Page, locale: Locale): Promise<void> {
  */
 export async function restoreEnglish(page: Page): Promise<void> {
   await page.goto("/dashboard");
-  await page.getByRole("combobox").first().selectOption("en");
+  await languageSelect(page).selectOption("en");
   await expect(page.locator("html")).toHaveAttribute("lang", "en");
 }
 
