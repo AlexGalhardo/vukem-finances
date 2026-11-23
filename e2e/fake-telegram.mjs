@@ -1,7 +1,8 @@
 // A fake Telegram Bot API for the Telegram settings spec: getMe, getUpdates (a short long poll), sendMessage and the
 // calls that only need an ok. It listens on loopback only and never reaches the network; the token is a placeholder.
 // Control: POST /__control/push {"chat": 424242, "text": "/start CODE"} queues a message from that chat;
-// GET /__control/sent lists what the bot sent.
+// POST /__control/tap {"chat": 424242, "data": "..."} queues a tap on an inline button.
+// GET /__control/sent lists what the bot sent, with the inline buttons of each message.
 import { createServer } from "node:http";
 
 export const FAKE_TELEGRAM_TOKEN = "123456:e2e-placeholder-token";
@@ -38,6 +39,19 @@ export async function startFakeTelegram(port) {
       });
       return reply(res, 200, { ok: true, update_id: id });
     }
+    if (url.pathname === "/__control/tap") {
+      const id = ++seq;
+      queue.push({
+        update_id: id,
+        callback_query: {
+          id: String(id),
+          from: { id: body.chat, is_bot: false, first_name: "E2E" },
+          message: { message_id: id, date: Math.floor(Date.now() / 1000), chat: { id: body.chat, type: "private" } },
+          data: body.data,
+        },
+      });
+      return reply(res, 200, { ok: true, update_id: id });
+    }
     if (url.pathname === "/__control/sent") return reply(res, 200, sent);
 
     const prefix = `/bot${FAKE_TELEGRAM_TOKEN}/`;
@@ -57,7 +71,13 @@ export async function startFakeTelegram(port) {
         return ok(res, []);
       }
       case "sendMessage":
-        sent.push({ chat: body.chat_id, text: body.text });
+        sent.push({
+          chat: body.chat_id,
+          text: body.text,
+          buttons: (body.reply_markup?.inline_keyboard ?? [])
+            .flat()
+            .map((b) => ({ text: b.text, data: b.callback_data })),
+        });
         return ok(res, { message_id: ++seq, chat: { id: body.chat_id }, text: body.text });
       default:
         return ok(res, true);
