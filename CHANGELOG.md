@@ -16,6 +16,36 @@ git cliff --config .config/cliff.toml --offline --unreleased --tag vX.Y.Z --stri
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-11-23
+
+### Added
+
+- **site:** Add plans:export with a -check mode wired into CI ([`f3dd125`](https://github.com/AlexGalhardo/vukem-finances/commit/f3dd12521d5f23114647e5a93f65b8f2d653c1d4))
+- **landing:** Remove the Inertia landing and redirect / in both editions ([`8aeaa66`](https://github.com/AlexGalhardo/vukem-finances/commit/8aeaa66346a22e42a5c6fb4e0db9e0c9d48b5b45))
+- **site:** Add static docs search with pagefind 1.6.0 ([`fbbc2bc`](https://github.com/AlexGalhardo/vukem-finances/commit/fbbc2bcc0e873e1881a344f494eade4cea54288f))
+- **db:** Keep a monthly summary of the transactions with triggers ([`53a7a8b`](https://github.com/AlexGalhardo/vukem-finances/commit/53a7a8ba9e5109fab1d8c67e6a6e5c06cacfc61d))
+- **workspace:** Let an installation set the read limit of a user ([`9628923`](https://github.com/AlexGalhardo/vukem-finances/commit/9628923d9eb8fc00933763ac1de069d48dbd3164))
+- **scaffold:** Export the app as the Vukem finance scaffold ([`b3fd7cd`](https://github.com/AlexGalhardo/vukem-finances/commit/b3fd7cd9c6b24b84ad1c882dde901bf1676df899))
+
+### Changed
+
+- **finance:** Read balances, dashboard and budget spending from the monthly summary ([`9bbb991`](https://github.com/AlexGalhardo/vukem-finances/commit/9bbb99150defd60c0c0def5c78c4af207437c31d))
+- **reports:** Read cash flow, categories, accounts, totals and net worth from the monthly summary ([`7404b80`](https://github.com/AlexGalhardo/vukem-finances/commit/7404b8074361c28117d16a21fb09a7d7dbcf40b5))
+- **export:** Read plain columns and continue a chunk with a row value comparison ([`714260f`](https://github.com/AlexGalhardo/vukem-finances/commit/714260f0126a6fddf6c727d493a834dcb4a95a4c))
+
+### Fixed
+
+- **release:** Relink the changelog to main after the rebase-merge ([`2e9e379`](https://github.com/AlexGalhardo/vukem-finances/commit/2e9e379ac561cafb661623aa1e2680c29e696151))
+- **release:** Regenerate the site changelog in the release commit ([`ac661c0`](https://github.com/AlexGalhardo/vukem-finances/commit/ac661c00634b749788a8a4a3b99dfbbb952b1eb1))
+- **site:** Mark the Docs link of the header as current on docs pages ([`0e9f9ba`](https://github.com/AlexGalhardo/vukem-finances/commit/0e9f9ba4e0e869a85762e7b314540d8eedb09ea6))
+- **privacy:** Redact the address of an invitation when the person deletes their account ([`b6fb2a2`](https://github.com/AlexGalhardo/vukem-finances/commit/b6fb2a29de6fb47173f19f0218feb6ecaee178f4))
+- **privacy:** End the sessions of an account again before its purge ([`198034b`](https://github.com/AlexGalhardo/vukem-finances/commit/198034bc5c68e95d68ed04169c841c2a51ca0f16))
+- **ci:** Write the cron expression of the inventory as code so the Markdown lint passes ([`27c48f0`](https://github.com/AlexGalhardo/vukem-finances/commit/27c48f09b5a77306b63f41ce98f22f1e1cc47a63))
+- **ui:** Close the accessibility findings of the page audit ([`0905510`](https://github.com/AlexGalhardo/vukem-finances/commit/0905510a7d1a48c692989f79339d0c00c89666f5))
+- **ui:** Accept the suggestion that holds the focus ([`dd0ab6b`](https://github.com/AlexGalhardo/vukem-finances/commit/dd0ab6b308093c94ce89f9a8fd353ac576844ebd))
+- **ai:** Make the per-minute call limit configurable ([`efe086a`](https://github.com/AlexGalhardo/vukem-finances/commit/efe086a4d50b1819738c4cdcb1af3e5437433fc2))
+- **ci:** Keep Playwright output out of the Markdown lint ([`8c75eed`](https://github.com/AlexGalhardo/vukem-finances/commit/8c75eed22a2408e5852f0d09c7dafc16156ac1b6))
+
 ## [0.6.0] - 2026-11-22
 
 ### Added
