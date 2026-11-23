@@ -9,6 +9,7 @@ Each release has its own page. The format follows Keep a Changelog and the versi
 
 ## Releases
 
+- [0.8.0](/docs/changelog/v0.8.0/), 2026-11-23
 - [0.7.0](/docs/changelog/v0.7.0/), 2026-11-23
 - [0.6.0](/docs/changelog/v0.6.0/), 2026-11-22
 - [0.5.0](/docs/changelog/v0.5.0/), 2026-11-22
