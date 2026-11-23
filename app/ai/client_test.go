@@ -223,6 +223,25 @@ func TestCallPipeline(t *testing.T) {
 		}
 	})
 
+	t.Run("the rate limit can be configured", func(t *testing.T) {
+		t.Parallel()
+
+		r := newRig(t)
+		r.client.CallLimit = 2
+		saveTestKey(t, r.client.Vault, r.site)
+		r.enable(t, 1000)
+
+		for i := range 2 {
+			if err := r.call(); err != nil {
+				t.Fatalf("call %d: %v", i, err)
+			}
+		}
+
+		if err := r.call(); !errors.Is(err, ai.ErrTooManyCalls) {
+			t.Fatalf("call 3: %v", err)
+		}
+	})
+
 	t.Run("monthly limit, and a failed call is given back", func(t *testing.T) {
 		t.Parallel()
 

@@ -15,6 +15,7 @@ import (
 
 	"github.com/AlexGalhardo/vukem-finances/app/models"
 	"github.com/AlexGalhardo/vukem-finances/app/workspaces"
+	"github.com/AlexGalhardo/vukem-finances/config"
 )
 
 // Usage statuses. A reservation counts against the monthly limit while the
@@ -30,8 +31,8 @@ const (
 	closeTimeout = 5 * time.Second
 )
 
-// CallsPerMinute is the per-workspace rate limit.
-const CallsPerMinute = 20
+// CallsPerMinute is the default per-workspace rate limit.
+const CallsPerMinute = config.AICallLimit
 
 // Refusals of Client.Call, before any request leaves the server.
 var (
@@ -63,6 +64,8 @@ type Client struct {
 	Settings *SettingsStore
 	Factory  Factory
 	Log      *slog.Logger
+	// CallLimit is the calls of one workspace per minute; zero means CallsPerMinute.
+	CallLimit int
 
 	now  func() time.Time
 	mu   sync.Mutex
@@ -207,7 +210,7 @@ func (c *Client) run(ctx context.Context, cred models.AICredential, req Request)
 	return p.Complete(ctx, req)
 }
 
-// allow is a sliding window of CallsPerMinute per workspace, in memory: the
+// allow is a sliding window of CallLimit per workspace, in memory: the
 // app runs as one replica.
 func (c *Client) allow(workspace int64) bool {
 	c.mu.Lock()
@@ -222,7 +225,12 @@ func (c *Client) allow(workspace int64) bool {
 		}
 	}
 
-	if len(kept) >= CallsPerMinute {
+	limit := c.CallLimit
+	if limit == 0 {
+		limit = CallsPerMinute
+	}
+
+	if len(kept) >= limit {
 		c.hits[workspace] = kept
 		return false
 	}

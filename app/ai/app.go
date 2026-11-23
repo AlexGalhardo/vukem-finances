@@ -33,10 +33,17 @@ func New(app *vukem.App) (*Service, error) {
 		return nil, err
 	}
 
+	callLimit, err := config.AICallsPerMinute(app.Source)
+	if err != nil {
+		return nil, err
+	}
+
 	settings := NewSettingsStore(vault.DB, app.Now)
+	client := NewClient(vault.DB, vault, settings, NewProvider(private), app.Log, app.Now)
+	client.CallLimit = callLimit
 
 	return &Service{
-		Client:   NewClient(vault.DB, vault, settings, NewProvider(private), app.Log, app.Now),
+		Client:   client,
 		Vault:    vault,
 		Settings: settings, PrivateHosts: private,
 	}, nil

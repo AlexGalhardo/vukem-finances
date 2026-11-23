@@ -209,3 +209,13 @@ The entries of task 12 (accessibility audit) are numbered from QA-600. All of th
 - **Evidence:** `e2e/journeys/j06-ai.spec.ts`.
 - **Severity:** Medium.
 - **Status:** fixed: a row that receives the focus becomes the active row.
+
+## QA-606: the end-to-end suite passes the AI call limit of its one workspace
+
+- **Surface:** `e2e/screens-a-tour.spec.ts`, the AI rate limit (`app/ai/usage.go`).
+- **Steps:** run the whole Playwright suite. Every AI spec uses the same workspace.
+- **Expected:** the suggestions spec gets its category from the fake provider.
+- **Actual:** the call was refused with "too many AI calls this minute", the page said AI could not finish, and the spec failed in CI and in three local runs. The product behaved as designed.
+- **Evidence:** the server log of the failing run, and PR #10 CI.
+- **Severity:** Low (test infrastructure).
+- **Status:** fixed: `AI_CALLS_PER_MINUTE` configures the limit, 20 by default, and only the end-to-end suite raises it.
