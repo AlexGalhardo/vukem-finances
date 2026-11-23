@@ -256,7 +256,7 @@ function ShellFrame({ children, notices }: { children: ReactNode; notices: React
               setPageHelpOpen(true);
             }}
           />
-          <Sidebar>
+          <Sidebar role="complementary" aria-label={page.props.appName}>
             <SidebarHeader className="gap-4 p-4">
               <Link href="/dashboard" className="flex items-center gap-2 text-h2">
                 <Mark />
@@ -381,12 +381,11 @@ function ShellFrame({ children, notices }: { children: ReactNode; notices: React
                   type="button"
                   variant="outline"
                   aria-haspopup="dialog"
-                  aria-label={t("openPalette")}
                   shortcutAction="open-palette"
                   onClick={() => setPaletteOpen(true)}
                 >
                   <Search aria-hidden="true" />
-                  <span className="hidden 2xl:inline">{t("openPalette")}</span>
+                  <span className="max-2xl:sr-only">{t("openPalette")}</span>
                 </Button>
                 <HeaderIconButton
                   label={t("openShortcutHelp")}

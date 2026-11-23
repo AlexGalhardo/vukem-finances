@@ -1,9 +1,30 @@
-import type * as React from "react";
+import * as React from "react";
 import { cn } from "../../lib/utils";
 
 function Table({ className, ...props }: React.ComponentProps<"table">) {
+  const container = React.useRef<HTMLDivElement>(null);
+  const [scrolls, setScrolls] = React.useState(false);
+
+  // A box that scrolls sideways must take focus, or a keyboard user cannot reach the cut-off columns (WCAG 2.1.1).
+  // Only a table that really overflows becomes a tab stop.
+  React.useEffect(() => {
+    const el = container.current;
+    if (!el) return;
+    const check = () => setScrolls(el.scrollWidth > el.clientWidth);
+    check();
+    const observer = new ResizeObserver(check);
+    observer.observe(el);
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    return () => observer.disconnect();
+  }, []);
+
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
+    <div
+      ref={container}
+      data-slot="table-container"
+      tabIndex={scrolls ? 0 : undefined}
+      className="relative w-full overflow-x-auto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+    >
       <table data-slot="table" className={cn("w-full caption-bottom text-body", className)} {...props} />
     </div>
   );
@@ -73,4 +94,4 @@ function TableCaption({ className, ...props }: React.ComponentProps<"caption">) 
   );
 }
 
-export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };
+export { Table, TableBody, TableCaption, TableCell, TableFooter, TableHead, TableHeader, TableRow };
