@@ -20,8 +20,8 @@ git cliff --config .config/cliff.toml --offline --unreleased --tag vX.Y.Z --stri
 
 ### Fixed
 
-- **release:** Create the release tag as an annotated tag ([`5343820`](https://github.com/AlexGalhardo/vukem-finances/commit/534382073111157c4b8c06706e2d01d6d51445ba))
-- **scaffold:** Keep the QA inventory and the site data out of the export ([`02a8355`](https://github.com/AlexGalhardo/vukem-finances/commit/02a83554c934283575ea9993de7a194f18e53a90))
+- **release:** Create the release tag as an annotated tag ([`959300b`](https://github.com/AlexGalhardo/vukem-finances/commit/959300b7211dc29e31fe323c884cc8c42056bfd4))
+- **scaffold:** Keep the QA inventory and the site data out of the export ([`db85b34`](https://github.com/AlexGalhardo/vukem-finances/commit/db85b34ecedd8815b880edc12cd9bd8724cce1a2))
 
 ## [0.7.0] - 2026-11-23
 
