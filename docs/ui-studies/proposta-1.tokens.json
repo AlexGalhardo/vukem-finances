@@ -1,0 +1,282 @@
+{
+  "name": "Vukem Finances / Ledger Trace",
+  "light": {
+    "bg": "#F2F6F9",
+    "surface": "#FFFFFF",
+    "ink": "#172638",
+    "muted": "#4C5E70",
+    "border": "#CBD6E0",
+    "accent": "#194E79",
+    "onAccent": "#FFFFFF",
+    "soft": "#E4EDF6",
+    "positive": "#146247",
+    "negative": "#962D40",
+    "warning": "#784700",
+    "accentHover": "#123E65",
+    "accentPressed": "#103453",
+    "focus": "#245E95",
+    "controlBorder": "#6A7D90",
+    "selected": "#D7E7F6",
+    "positiveSoft": "#E4F3EB",
+    "negativeSoft": "#FBE9ED",
+    "warningSoft": "#FFF0D8",
+    "info": "#194E79",
+    "infoSoft": "#E4EDF6",
+    "disabledInk": "#4C5E70",
+    "disabledSurface": "#E7EDF2",
+    "overlay": "#172638",
+    "dangerOn": "#FFFFFF",
+    "chartCurrent": "#194E79",
+    "chartPrevious": "#5B6980",
+    "chartPlan": "#684B86",
+    "chartIncoming": "#146247",
+    "chartOutgoing": "#962D40",
+    "categorySlate": "#4C5E70",
+    "categoryBlue": "#194E79",
+    "categoryTeal": "#126360",
+    "categoryGreen": "#146247",
+    "categoryOlive": "#505F18",
+    "categoryAmber": "#784700",
+    "categoryOrange": "#944617",
+    "categoryRed": "#962D40",
+    "categoryPink": "#8B376F",
+    "categoryViolet": "#684B86"
+  },
+  "dark": {
+    "bg": "#101923",
+    "surface": "#172432",
+    "ink": "#F1F6FB",
+    "muted": "#B2C1D2",
+    "border": "#354759",
+    "accent": "#A7CEFA",
+    "onAccent": "#12243A",
+    "soft": "#233447",
+    "positive": "#8BDEB6",
+    "negative": "#FFADBA",
+    "warning": "#F7C279",
+    "accentHover": "#C2DEFC",
+    "accentPressed": "#8CB9EC",
+    "focus": "#B6D7FF",
+    "controlBorder": "#8299B0",
+    "selected": "#293F57",
+    "positiveSoft": "#1B382F",
+    "negativeSoft": "#402632",
+    "warningSoft": "#3E3020",
+    "info": "#A7CEFA",
+    "infoSoft": "#233447",
+    "disabledInk": "#B2C1D2",
+    "disabledSurface": "#283849",
+    "overlay": "#080E15",
+    "dangerOn": "#2B1420",
+    "chartCurrent": "#A7CEFA",
+    "chartPrevious": "#B2C1D2",
+    "chartPlan": "#D2B6F4",
+    "chartIncoming": "#8BDEB6",
+    "chartOutgoing": "#FFADBA",
+    "categorySlate": "#B2C1D2",
+    "categoryBlue": "#A7CEFA",
+    "categoryTeal": "#88D9D1",
+    "categoryGreen": "#8BDEB6",
+    "categoryOlive": "#C2D688",
+    "categoryAmber": "#F7C279",
+    "categoryOrange": "#FFBB92",
+    "categoryRed": "#FFADBA",
+    "categoryPink": "#F2B0DB",
+    "categoryViolet": "#D2B6F4"
+  },
+  "foundation": {
+    "unit": "CSS px or native dp; type scales with user settings",
+    "spacing": [
+      0,
+      4,
+      8,
+      12,
+      16,
+      20,
+      24,
+      32,
+      40,
+      48,
+      64,
+      96
+    ],
+    "radius": {
+      "control": 6,
+      "panel": 10,
+      "dialog": 14,
+      "pill": 999
+    },
+    "stroke": {
+      "rule": 1,
+      "trace": 2,
+      "focus": 2,
+      "focusOffset": 2,
+      "chart": 2
+    },
+    "type": {
+      "sans": "Geist",
+      "mono": "Geist Mono",
+      "nativeFallback": "system",
+      "styles": {
+        "caption": [
+          12,
+          16,
+          500
+        ],
+        "table": [
+          14,
+          20,
+          400
+        ],
+        "body": [
+          16,
+          24,
+          400
+        ],
+        "section": [
+          20,
+          28,
+          600
+        ],
+        "title": [
+          28,
+          36,
+          650
+        ],
+        "total": [
+          36,
+          44,
+          650
+        ]
+      },
+      "styleOrder": [
+        "size",
+        "lineHeight",
+        "weight"
+      ],
+      "headingTrackingEm": -0.025,
+      "moneyFeatures": [
+        "tnum",
+        "lnum"
+      ]
+    },
+    "layout": {
+      "compactBelow": 768,
+      "wideFrom": 1200,
+      "sidebar": 224,
+      "rail": 288,
+      "contentMax": 1440,
+      "formMax": 560,
+      "dialogMax": 480,
+      "gutterCompact": 16,
+      "gutterMedium": 24,
+      "gutterWide": 32,
+      "rowDenseMin": 40,
+      "rowDefaultMin": 48,
+      "rowMobileMin": 64,
+      "controlFineMin": 36,
+      "targetWebCoarseMin": 44,
+      "targetNativeMin": 48,
+      "barTopMin": 56,
+      "emptyMin": 160
+    },
+    "icon": {
+      "inline": 16,
+      "control": 20,
+      "empty": 24,
+      "stroke": 1.75
+    },
+    "motionMs": {
+      "feedback": 100,
+      "disclosure": 160,
+      "reducedSpatial": 0,
+      "native": 0
+    },
+    "elevation": {
+      "overlayOpacity": 0.55,
+      "menu": "0 8px 24px #00000026",
+      "dialog": "0 16px 48px #00000033",
+      "panel": "none"
+    },
+    "layer": {
+      "sticky": 10,
+      "menu": 20,
+      "overlay": 30,
+      "dialog": 40,
+      "toast": 50
+    }
+  },
+  "contrastPairs": {
+    "textOnStandard": [
+      "ink",
+      "muted",
+      "accent",
+      "positive",
+      "negative",
+      "warning"
+    ],
+    "standardSurfaces": [
+      "bg",
+      "surface",
+      "soft",
+      "selected"
+    ],
+    "textPairs": [
+      [
+        "onAccent",
+        "accent"
+      ],
+      [
+        "onAccent",
+        "accentHover"
+      ],
+      [
+        "onAccent",
+        "accentPressed"
+      ],
+      [
+        "positive",
+        "positiveSoft"
+      ],
+      [
+        "negative",
+        "negativeSoft"
+      ],
+      [
+        "warning",
+        "warningSoft"
+      ],
+      [
+        "info",
+        "infoSoft"
+      ],
+      [
+        "disabledInk",
+        "disabledSurface"
+      ],
+      [
+        "dangerOn",
+        "negative"
+      ]
+    ],
+    "nonTextOnStandard": [
+      "focus",
+      "controlBorder",
+      "chartCurrent",
+      "chartPrevious",
+      "chartPlan",
+      "chartIncoming",
+      "chartOutgoing",
+      "categorySlate",
+      "categoryBlue",
+      "categoryTeal",
+      "categoryGreen",
+      "categoryOlive",
+      "categoryAmber",
+      "categoryOrange",
+      "categoryRed",
+      "categoryPink",
+      "categoryViolet"
+    ]
+  }
+}

@@ -1,0 +1,71 @@
+﻿# Código | edição | padrão | título | ação | conteúdo de exemplo
+Dashboard|ambas|dashboard|Visão geral|Novo lançamento|Saldo total;Entradas;Saídas;Fluxo do mês;Atividade recente
+Transactions|ambas|table|Transações|Novo lançamento|Supermercado,Alimentação,− R$ 186,42;Salário,Renda,+ R$ 6.800,00;Aluguel,Moradia,− R$ 1.850,00;Internet,Serviços,− R$ 119,90;Padaria,Alimentação,− R$ 24,50
+Accounts|ambas|table|Contas|Nova conta|Conta principal,Corrente,R$ 8.240,30;Reserva,Poupança,R$ 4.500,00;Carteira,Dinheiro,R$ 100,00
+Categories|ambas|table|Categorias e etiquetas|Nova categoria|Alimentação,Despesa,Ativa;Moradia,Despesa,Ativa;Salário,Receita,Ativa;Viagem,Etiqueta,Ativa
+Cards|ambas|table|Cartões|Novo cartão|Cartão pessoal,Fatura aberta,R$ 1.219,40;Cartão da casa,Fatura paga,R$ 640,20
+CardStatement|ambas|detail|Fatura do cartão|Pagar fatura|Cartão pessoal,R$ 1.219,40 em aberto;Fechamento,23 nov;Vencimento,30 nov;Compras parceladas,2 compras neste mês
+Budgets|ambas|progress|Orçamentos|Novo orçamento|Alimentação,68,R$ 544 de R$ 800;Moradia,92,R$ 1.850 de R$ 2.000;Lazer,110,R$ 330 de R$ 300
+Goals|ambas|progress|Metas|Nova meta|Reserva de emergência,75,R$ 4.500 de R$ 6.000;Viagem,26,R$ 780 de R$ 3.000
+Recurrences|ambas|table|Recorrências|Nova recorrência|Internet,Todo dia 12,− R$ 119,90;Aluguel,Todo dia 5,− R$ 1.850,00;Salário,Todo dia 30,+ R$ 6.800,00
+Reports|ambas|dashboard|Relatórios|Exportar|Resultado do período;Receitas;Despesas;Evolução patrimonial;Gastos por categoria
+Import|ambas|form|Importar transações|Revisar arquivo|Arquivo CSV ou OFX;Conta de destino;Formato da data;Delimitador
+Suggestions|ambas|table|Sugestões de categoria|Revisar|Mercado do bairro,Alimentação,Pendente;Fibra residencial,Serviços,Pendente
+AI|ambas|detail|Inteligência artificial|Configurar|Status,Desativada;Provedor,Escolha um provedor;Chave própria,Armazenada com criptografia;Uso mensal,0 consultas
+Workspace|ambas|detail|Espaço de trabalho|Editar espaço|Nome,Finanças da casa;Membros,Gerenciar permissões;Convites,Ver convites pendentes
+Notifications|ambas|detail|Notificações|Preferências|Alimentação atingiu 80%,Orçamento mensal;Internet vence amanhã,Recorrência;Canais,Configurar alertas
+Settings/Telegram|ambas|detail|Telegram|Gerar código|Vínculo,Nenhum chat vinculado;Enviar alertas,Desativado;Código de vínculo,Válido por 10 minutos
+Tokens|ambas|table|Tokens de acesso|Criar token|Relatórios,Leitura,Ativo;Automação,Transações,Ativo
+Devices|ambas|table|Dispositivos|Adicionar dispositivo|Celular pessoal,Última sincronização hoje,Ativo
+Billing|saas|detail|Plano e cobrança|Assinar Pro|Plano atual,Gratuito;Cartão,Pagamento recorrente via Stripe;PIX,Acesso pelo período selecionado;Histórico,Ver pagamentos
+Auth/TwoFactor|ambas|detail|Autenticação em dois fatores|Ativar|Autenticador,Proteja sua conta com um código temporário;Códigos de recuperação,Guarde em um local seguro
+Privacy|ambas|detail|Privacidade e dados|Exportar meus dados|Dados da conta,Exportar em JSON;Zona de risco,Confirme sua senha para continuar
+ConnectedApps|saas|table|Aplicativos conectados|Ver acesso|assistente.exemplo.com,Leitura,Conectado
+OAuthConsent|saas|auth|Autorizar aplicativo|Permitir acesso|Aplicativo verificado;Espaço de trabalho;Permissões solicitadas
+Setup|pessoal|auth|Configurar Vukem Finances|Criar conta local|Código de configuração;Seu nome;E-mail;Senha
+InviteAccept|ambas|auth|Aceitar convite|Aceitar convite|Espaço de trabalho;Conta atual
+InviteRegister|ambas|auth|Crie sua conta pelo convite|Criar conta|Seu nome;E-mail do convite;Senha
+Auth/Login|ambas|auth|Entrar|Entrar|E-mail;Senha
+Auth/Register|saas|auth|Criar conta|Criar conta|Nome;E-mail;Senha;Confirmar senha
+Auth/CheckEmail|saas|auth|Confira seu e-mail|Voltar para entrar|Enviamos um link de verificação para o seu e-mail.
+Auth/VerifyEmail|saas|auth|Confirme seu endereço|Reenviar e-mail|Abra o link no e-mail para continuar.
+Auth/ForgotPassword|ambas|auth|Recuperar senha|Enviar link|E-mail
+Auth/ResetPassword|ambas|auth|Escolha uma nova senha|Salvar senha|E-mail;Nova senha;Confirmar senha
+Auth/TwoFactorChallenge|ambas|auth|Confirme sua identidade|Verificar código|Código de seis dígitos
+Auth/AccountDeletion|ambas|auth|Exclusão de conta agendada|Cancelar exclusão|Os dados serão apagados ao fim do prazo de 30 dias.
+Error|ambas|auth|Página indisponível|Voltar ao início|Confira o endereço ou volte à página inicial.
+Admin/Dashboard|saas|dashboard|Administração|Ver usuários|Usuários;Espaços;Planos ativos;Atividade;Cadastros recentes
+Admin/ResourceList|saas|table|Usuários|Filtrar|Marina Costa,Verificado,Ativo;Rafael Lima,Verificado,Ativo
+Admin/ResourceShow|saas|detail|Detalhes do usuário|Voltar à lista|Marina Costa,marina@example.com;E-mail,Verificado;Status,Ativo
+Admin/Revenue|saas|table|Receita administrativa|Filtrar|Pagamento PIX,Confirmado,R$ 29,90;Assinatura Stripe,Ativa,R$ 29,90
+Desktop/Backup|pessoal|detail|Exportar backup|Salvar backup|Arquivo de backup,Cópia consistente dos dados locais;Pasta de destino,Selecione no diálogo do sistema
+Desktop/About|pessoal|detail|Sobre o Vukem Finances|Fechar|Vukem Finances,Aplicativo desktop;Dados locais,Abra a pasta pelo menu Arquivo
+Desktop/Locked|pessoal|auth|Abra pelo aplicativo desktop|Voltar ao aplicativo|Abra novamente o Vukem Finances pelo menu do sistema.
+Mobile/Home|local|dashboard|Visão geral|Novo lançamento|Saldo total;Entradas;Saídas;Fluxo do mês;Atividade recente
+Mobile/Transactions|local|table|Transações|Adicionar|Supermercado,Alimentação,− R$ 186,42;Salário,Renda,+ R$ 6.800,00;Aluguel,Moradia,− R$ 1.850,00
+Mobile/Add|local|form|Novo lançamento|Salvar lançamento|Tipo de transação;Valor;Descrição;Conta;Categoria;Data
+Mobile/Accounts|local|table|Contas|Adicionar|Conta principal,Corrente,R$ 8.240,30;Reserva,Poupança,R$ 4.500,00
+Mobile/More|local|detail|Mais|Configurações|Planejamento,Orçamentos e recorrências;Organização,Categorias e etiquetas;Dados,Sincronização e backup
+Mobile/Budgets|local|progress|Orçamentos|Novo|Alimentação,68,R$ 544 de R$ 800;Moradia,92,R$ 1.850 de R$ 2.000;Lazer,110,R$ 330 de R$ 300
+Mobile/Categories|local|table|Categorias|Adicionar|Alimentação,Despesa,Ativa;Moradia,Despesa,Ativa;Salário,Receita,Ativa
+Mobile/Tags|local|table|Etiquetas|Adicionar|Casa,Etiqueta,Ativa;Viagem,Etiqueta,Ativa
+Mobile/Cards|local|table|Cartões|Adicionar|Cartão pessoal,Fatura aberta,R$ 1.219,40;Cartão da casa,Fatura paga,R$ 640,20
+Mobile/Recurrences|local|table|Recorrências|Adicionar|Internet,Dia 12,− R$ 119,90;Aluguel,Dia 5,− R$ 1.850,00
+Mobile/Reports|local|dashboard|Relatórios|Selecionar período|Resultado;Receitas;Despesas;Evolução;Gastos por categoria
+Mobile/Settings|local|detail|Configurações|Exportar backup|Aparência,Seguir o sistema;Idioma,Português;Bloqueio do aplicativo,Desativado;Backup,Compartilhar arquivo JSON
+Mobile/SyncStatus|local|detail|Sincronização|Sincronizar agora|Conexão,Conectado ao espaço Finanças da casa;Última atualização,Hoje às 09h42;Pendências,2 alterações locais
+Mobile/SyncConnect|local|form|Conectar dispositivo|Conectar|Endereço do servidor;Código de pareamento;Nome do dispositivo
+Mobile/SyncMerge|local|detail|Combinar dados|Combinar e sincronizar|Neste celular,24 transações locais;No servidor,126 transações;Antes de continuar,Revise o que será combinado
+Mobile/SyncConflicts|local|detail|Conflitos de sincronização|Resolver conflito|Supermercado,Alterado nos dois dispositivos;Valor local,R$ 186,42;Valor do servidor,R$ 172,90
+Mobile/SyncProblems|local|detail|Problemas de sincronização|Revisar alteração|Transação não foi enviada,A conta vinculada não está mais disponível;Seus dados locais,Continuam no dispositivo
+Mobile/FirstRun|local|auth|Suas finanças no celular|Começar|Seus lançamentos ficam disponíveis offline.
+Mobile/Lock|local|auth|Aplicativo bloqueado|Desbloquear|Use a autenticação do dispositivo para continuar.
+Mobile/BootstrapError|local|auth|Não foi possível abrir os dados|Tentar novamente|A inicialização do armazenamento local falhou.
+State/QuickAdd|ambas|form|Adicionar transação|Salvar transação|Tipo;Valor;Descrição;Conta;Categoria;Data
+State/Pix|saas|detail|Pague com PIX|Copiar código PIX|PIX pendente,Aguardando confirmação;Valor,R$ 29,90;Copia e cola,Use o aplicativo do seu banco
+State/ImportReview|ambas|table|Revisar importação|Importar selecionadas|Mercado,Linha válida,− R$ 186,42;Internet,Possível duplicata,− R$ 119,90;Fatura,Data inválida,Revisar
+State/Palette|ambas|detail|Buscar ações|Executar|Novo lançamento,N;Ir para transações,G T;Abrir ajuda,?
+State/Empty|ambas|auth|Nenhuma transação neste mês|Adicionar transação|Registre sua primeira entrada ou despesa para acompanhar o mês.
+State/Delete|ambas|auth|Excluir transação?|Excluir transação|Supermercado · R$ 186,42. Esta ação não pode ser desfeita.
+State/Readonly|saas|detail|Espaço em modo de leitura|Ver situação|Exclusão agendada,Os dados continuam visíveis durante o prazo;Edição,Alterações estão bloqueadas
+State/Help|ambas|detail|Ajuda de transações|Entendi|Transferência,Move dinheiro entre suas contas;Atalhos,Abra a lista com ?;Tutorial,Retome quando quiser
