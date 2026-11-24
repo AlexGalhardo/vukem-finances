@@ -19,7 +19,11 @@ const finalOnly = process.argv.includes("--final");
 for (const direction of finalOnly ? [4] : [1, 2, 3]) {
   const final = direction === 4;
   const tokens = JSON.parse(readFileSync(join(here, `proposta-${final ? 2 : direction}.tokens.json`), "utf8").replace(/^\uFEFF/, ""));
-  if (final) tokens.name = "Vukem Finances · Direção final";
+  if (final) {
+    tokens.name = "Vukem Finances · Direção final";
+    Object.assign(tokens.light, { bg: "#FAFAFB", soft: "#F0F0F5", ink: "#202126", muted: "#575963", border: "#DDDDE3", control: "#878792" });
+    Object.assign(tokens.dark, { bg: "#101113", surface: "#191A1D", soft: "#242529", ink: "#F1F1F3", muted: "#B1B2BB", border: "#34353B", control: "#747580" });
+  }
   let serial = 0;
   const node = (type, name, extra = {}) => ({ id: `1:${++serial}`, name, type, ...extra });
   const box = (x, y, width, height) => ({ x, y, width, height });
@@ -105,7 +109,7 @@ for (const direction of finalOnly ? [4] : [1, 2, 3]) {
     { radius: 5, rail: 202, inset: 34, family: "Inter", weight: 700, marker: "ledger" },
     { radius: 18, rail: 232, inset: 44, family: "Nunito Sans", weight: 800, marker: "guide" },
     { radius: 8, rail: 184, inset: 32, family: "Inter", weight: 700, marker: "command" },
-    { radius: 12, rail: 222, inset: 36, family: "Nunito Sans", weight: 800 },
+    { radius: 8, rail: 222, inset: 36, family: "Inter", weight: 650 },
   ][direction];
 
   function app(target, entry, platform, edition, theme, c) {
@@ -183,7 +187,12 @@ for (const direction of finalOnly ? [4] : [1, 2, 3]) {
         });
         rule(16, h - 88, rail - 32);
         t("Rodapé", 19, h - 70, rail - 25, "Conta    Documentação", 12, c.muted, 550);
-        t("Busca", rail + inset, top + 20, 240, "Buscar ações  ·  Ctrl K", 13, c.muted, 550);
+        if (final) {
+          r("Busca de ações", rail + inset, top + 8, 236, 35, c.surface, 7, c.border);
+          t("Busca", rail + inset + 12, top + 17, 140, "Buscar ações", 13, c.muted, 500);
+          r("Tecla de atalho", rail + inset + 177, top + 14, 51, 23, c.soft, 4);
+          t("Atalho", rail + inset + 177, top + 18, 51, "Ctrl K", 11, c.muted, 600, { align: "CENTER" });
+        } else t("Busca", rail + inset, top + 20, 240, "Buscar ações  ·  Ctrl K", 13, c.muted, 550);
         t("Aparência", w - 220, top + 20, 180, final ? "Ajuda" : "Ajuda     Tema", 13, c.muted, 550, { align: "RIGHT" });
         rule(rail, top + 51, w - rail);
         if (final) drawFinalSidebarActions(drawing, c, { rail, top, h, theme, admin, edition });

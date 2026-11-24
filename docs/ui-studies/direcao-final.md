@@ -4,7 +4,8 @@ Open the [FigCraft document](direcao-final.figcraft) on **Revisão · Dashboard 
 
 ## Design decisions
 
-- Monthly Margin supplies the indigo palette, heading typography, and budget bar with a marked limit and remaining amount.
+- The final study pairs indigo actions with neutral surfaces in both themes. Inter headings, a compact command field and fine dividers reflect the visual hierarchy studied on [Linear](https://linear.app/).
+- Monthly Margin supplies the budget bar with a marked limit and remaining amount. The monthly summary uses separate columns for balance, income and expenses. Transaction amounts align on the right, and row actions use quiet icons with 44 px targets.
 - Ledger Line supplies icon navigation, action search, and compact controls for desktop and web.
 - Ledger Trace informs tables with aligned amounts, explicit signs, and row actions.
 

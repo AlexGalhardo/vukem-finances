@@ -1,4 +1,4 @@
-﻿const scenarios = [
+const scenarios = [
   ["income", "Nova receita"], ["expense", "Nova despesa"], ["import", "Importar transações"],
   ["import-review", "Revisar importação"], ["edit", "Editar transação"], ["delete", "Excluir transação"],
   ["page-size", "Escolher linhas por página"], ["search", "Busca por mercado"], ["empty", "Busca sem resultados"],
@@ -45,7 +45,7 @@ function label(g, c, name, x, y, width, value, size = 14, weight = 500, options 
 function action(g, c, { title, x, y, width, mode = "secondary", symbol, to }) {
   const fill = mode === "primary" ? c.accent : mode === "danger" ? c.negative : c.surface;
   const ink = mode === "primary" ? c.onAccent : mode === "danger" ? c.bg : c.ink;
-  g.rect(title, x, y, width, 44, fill, 10, mode === "secondary" ? c.control ?? c.border : undefined);
+  g.rect(title, x, y, width, 44, fill, 8, mode === "secondary" ? c.control ?? c.border : undefined);
   if (symbol) icon(g, symbol, x + 12, y + 13, ink);
   label(g, c, "Rótulo", x + (symbol ? 38 : 8), y + 12, width - (symbol ? 44 : 16), title, 13, 720, { color: ink, align: symbol ? "LEFT" : "CENTER" });
   if (to) g.link(title, x, y, width, 44, to);
@@ -110,8 +110,8 @@ function ring(g, x, y, size, data, theme) {
 }
 
 function chart(g, c, x, y, width, height, title, amount, data, theme, phone) {
-  g.rect("Painel do gráfico", x, y, width, height, c.surface, 14, c.border);
-  label(g, c, "Título do gráfico", x + 16, y + 14, width - 32, title, 16, 760);
+  g.rect("Painel do gráfico", x, y, width, height, c.surface, 10, c.border);
+  label(g, c, "Título do gráfico", x + 16, y + 14, width - 32, title, 16, 640);
   const size = phone ? 100 : 124;
   const rx = x + 18;
   const ry = y + (phone ? 45 : 54);
@@ -141,7 +141,7 @@ function budget(g, c, x, y, width, phone, step = 2) {
 }
 
 function iconAction(g, c, name, symbol, x, y, color, to) {
-  g.rect(name, x, y, 44, 44, c.surface, 8, c.border);
+  g.rect(name, x, y, 44, 44, c.surface, 8, ["left", "right"].includes(symbol) ? c.border : undefined);
   icon(g, symbol, x + 13, y + 13, color);
   if (to) g.link(name, x, y, 44, 44, to);
 }
@@ -174,7 +174,7 @@ function transactionTable(g, c, { x, y, width, phone, scenario, target, ownPage 
   if (!phone) {
     g.rect("Cabeçalho", x + 1, tableY + 1, width - 2, 35, c.soft, 9);
     [["Data", .014], ["Descrição", .115], ["Categoria", .38], ["Conta", .55], ["Valor", .69], ["Ações", .891]].forEach(([column, offset]) => {
-      label(g, c, "Coluna", x + width * offset, tableY + 8, 90, column, 12, 750, { color: c.muted });
+      label(g, c, "Coluna", x + width * offset, tableY + 8, column === "Valor" ? width * .145 : 90, column, 12, 600, { color: c.muted, align: column === "Valor" ? "RIGHT" : "LEFT" });
     });
   }
   if (!rowCount) label(g, c, "Estado vazio", x + 14, tableY + head + 27, width - 28, "Nenhuma transação encontrada. Tente outro termo.", phone ? 13 : 15, 650, { align: "CENTER" });
@@ -190,10 +190,10 @@ function transactionTable(g, c, { x, y, width, phone, scenario, target, ownPage 
       label(g, c, "Descrição", x + width * .115, yy + 14, width * .26, desc, 14, 700);
       label(g, c, "Categoria", x + width * .38, yy + 15, width * .16, category, 13);
       label(g, c, "Conta", x + width * .55, yy + 15, width * .14, account, 13, 530, { color: c.muted });
-      label(g, c, "Valor", x + width * .69, yy + 15, width * .145, amount, 13, 730, { color: amount.startsWith("+") ? c.positive : c.negative });
+      label(g, c, "Valor", x + width * .69, yy + 15, width * .145, amount, 13, 650, { align: "RIGHT", color: amount.startsWith("+") ? c.positive : c.negative });
     }
-    iconAction(g, c, "Editar transação", "edit", x + width - 98, yy + (phone ? 7 : 2), c.accent, target("edit"));
-    iconAction(g, c, "Excluir transação", "trash", x + width - 49, yy + (phone ? 7 : 2), c.negative, target("delete"));
+    iconAction(g, c, "Editar transação", "edit", x + width - 98, yy + (phone ? 7 : 2), c.muted, target("edit"));
+    iconAction(g, c, "Excluir transação", "trash", x + width - 49, yy + (phone ? 7 : 2), c.muted, target("delete"));
   });
   const footerY = tableY + head + bodyHeight + 10;
   const selectX = phone ? x : x + width - 290;
@@ -303,7 +303,7 @@ export function drawFinalDashboard(g, c, { entry, platform, edition, theme, x, t
   const width = g.w - x - inset;
   const titleY = top + (phone ? 54 : 76);
   if (phone && entry.id === "Mobile/More") {
-    label(g, c, "Título", x, titleY, width, "Mais", 29, 800, { family: "Nunito Sans" });
+    label(g, c, "Título", x, titleY, width, "Mais", 29, 650, { family: "Inter" });
     action(g, c, { title: "Nova receita", x, y: titleY + 55, width, mode: "primary", symbol: "down", to: target("income") });
     action(g, c, { title: "Nova despesa", x, y: titleY + 107, width, symbol: "up", to: target("expense") });
     action(g, c, { title: "Importar arquivo", x, y: titleY + 159, width, symbol: "upload", to: target("import") });
@@ -313,20 +313,21 @@ export function drawFinalDashboard(g, c, { entry, platform, edition, theme, x, t
     drawFinalMobileNav(g, c, edition, theme, entry.id);
     return;
   }
-  label(g, c, "Título", x, titleY, width - (phone ? 0 : 170), ownPage ? "Transações" : "Visão geral", phone ? 29 : 38, 800, { family: "Nunito Sans" });
+  label(g, c, "Título", x, titleY, width - (phone ? 0 : 170), ownPage ? "Transações" : "Visão geral", phone ? 29 : 38, 650, { family: "Inter" });
   const periodY = titleY + (phone ? 39 : 14);
   label(g, c, "Período", phone ? x : x + width - 225, periodY, phone ? width : 204, "Novembro de 2026", 13, 670,
     { color: c.muted, align: phone ? "LEFT" : "RIGHT" });
   if (!phone) icon(g, "chevron", x + width - 15, periodY + 4, c.muted, 13);
   let y = titleY + (phone ? 66 : 63);
   if (!ownPage) {
-    g.rect("Resumo do mês", x, y, width, phone ? 112 : 91, c.soft, 14);
+    g.rect("Resumo do mês", x, y, width, phone ? 112 : 91, c.surface, 10, c.border);
     const stats = [["Saldo total", "R$ 12.840,30", c.ink], ["Entradas", "+ R$ 6.800,00", c.positive], ["Saídas", "− R$ 4.551,94", c.negative]];
     stats.forEach(([name, amount, ink], i) => {
+      if (i && !phone) g.rect("Separador de indicadores", x + i * width / 3, y + 17, 1, 56, c.border);
       const dx = x + 14 + (phone ? (i === 2 ? (width - 25) / 2 : 0) : i * width / 3);
       const dy = y + (phone ? (i ? 64 : 9) : 14);
       label(g, c, "Indicador", dx, dy, phone ? 147 : width / 3 - 26, name, phone ? 11 : 13, 680, { color: c.muted });
-      label(g, c, "Valor", dx, dy + 19, phone ? 152 : width / 3 - 27, amount, phone ? (i ? 15 : 24) : (i ? 25 : 32), 790, { color: ink });
+      label(g, c, "Valor", dx, dy + 19, phone ? 152 : width / 3 - 27, amount, phone ? (i ? 15 : 24) : (i ? 25 : 32), 650, { color: ink });
     });
     y += phone ? 123 : 105;
     const chartWidth = phone ? width : (width - 16) / 2;
@@ -358,7 +359,7 @@ export function drawFinalLanding(g, c, theme, phone, step) {
   if (step !== undefined) {
     const titles = ["Antes da compra", "Uma despesa entrou", "O orçamento foi atualizado"];
     const detail = ["Confira quanto ainda cabe no mês.", "Mercado do bairro · − R$ 186,42", "O limite segue em R$ 800. Agora restam R$ 256."];
-    label(g, c, "Cena", 34, 28, w - 68, titles[step], 32, 800, { family: "Nunito Sans" });
+    label(g, c, "Cena", 34, 28, w - 68, titles[step], 32, 650, { family: "Inter" });
     label(g, c, "O que mudou", 34, 79, w - 68, detail[step], 17, 550, { color: c.muted });
     budget(g, c, 34, 130, w - 68, false, step);
     if (step > 0) {
@@ -383,7 +384,7 @@ export function drawFinalLanding(g, c, theme, phone, step) {
   g.rect("Divisor do cabeçalho", pad, 65, width, 1, c.border);
   g.rect("Superfície do hero", cx - (phone ? 0 : 20), phone ? 357 : 106, cw + (phone ? 0 : 20), phone ? 282 : 462, c.soft, 25);
   label(g, c, "Título principal", pad, head, headWidth, "Entenda seu mês.\nPlaneje o próximo.", phone ? 33 : 59, 830,
-    { family: "Nunito Sans", height: phone ? 117 : 168 });
+    { family: "Inter", height: phone ? 117 : 168 });
   const textY = head + (phone ? 125 : 164);
   label(g, c, "Descrição", pad, textY, headWidth - (phone ? 0 : 26),
     "Organize contas, transações e orçamentos em um app de código aberto que roda no seu computador ou servidor.",
@@ -394,7 +395,7 @@ export function drawFinalLanding(g, c, theme, phone, step) {
   preview(g, c, theme, "dashboard", cx + 13, phone ? 378 : 137, cw - 27, phone ? 238 : 410);
   label(g, c, "Legenda", cx + 17, phone ? 650 : 583, cw - 27, "Visão geral com dados fictícios", 11, 600, { color: c.muted });
   const sectionY = phone ? 705 : 674;
-  label(g, c, "Título da seção", pad, sectionY, width, "Veja quanto ainda cabe no mês", phone ? 27 : 43, 810, { family: "Nunito Sans", height: 77 });
+  label(g, c, "Título da seção", pad, sectionY, width, "Veja quanto ainda cabe no mês", phone ? 27 : 43, 660, { family: "Inter", height: 77 });
   const sectionCopyY = sectionY + (phone ? 74 : 62);
   label(g, c, "Descrição da seção", pad, sectionCopyY, phone ? width : 550, "Acompanhe o gasto, o limite e o valor que resta em cada orçamento.", 16, 550,
     { color: c.muted, height: 66 });
@@ -407,11 +408,11 @@ export function drawFinalLanding(g, c, theme, phone, step) {
     label(g, c, "Legenda da prévia", pad, mobileY + 391, width, "Prévia de design para celular", 11, 650,
       { color: c.muted, align: "CENTER" });
   } else {
-    label(g, c, "Tarefa ilustrada", 1045, mobileY + 111, 295, "Registre rápido. Revise com calma.", 25, 800, { family: "Nunito Sans", height: 78 });
+    label(g, c, "Tarefa ilustrada", 1045, mobileY + 111, 295, "Registre rápido. Revise com calma.", 25, 650, { family: "Inter", height: 78 });
     label(g, c, "Resumo da tarefa", 1045, mobileY + 200, 270, "Prévia de design para celular, com dados de demonstração.", 14, 540, { color: c.muted, height: 75 });
   }
   const editionsY = phone ? mobileY + 426 : 1046;
-  label(g, c, "Título das edições", pad, editionsY, width, "Escolha sua edição", phone ? 30 : 42, 810, { family: "Nunito Sans" });
+  label(g, c, "Título das edições", pad, editionsY, width, "Escolha sua edição", phone ? 30 : 42, 660, { family: "Inter" });
   const cardWidth = phone ? width : (width - 20) / 2;
   [
     ["Pessoal", "Rode offline, com um espaço para suas finanças."],
@@ -425,7 +426,7 @@ export function drawFinalLanding(g, c, theme, phone, step) {
   });
   const installY = editionsY + (phone ? 278 : 209);
   g.rect("Sessão de instalação", pad, installY, width, phone ? 189 : 179, c.soft, 18);
-  label(g, c, "Título de instalação", pad + 19, installY + 18, width - 38, "Comece com a instalação", phone ? 25 : 34, 810, { family: "Nunito Sans", height: 54 });
+  label(g, c, "Título de instalação", pad + 19, installY + 18, width - 38, "Comece com a instalação", phone ? 25 : 34, 660, { family: "Inter", height: 54 });
   label(g, c, "Opções", pad + 19, installY + 71, width - 38, "Escolha o aplicativo desktop ou instale com Docker.", 13, 550, { color: c.muted, height: 41 });
   action(g, c, { title: "Ver guia de instalação", x: pad + 19, y: installY + 118, width: 207, mode: "primary" });
   const footerY = Math.min(h - 60, installY + (phone ? 217 : 259));
