@@ -23,6 +23,11 @@ import (
 // Existing users are never promoted, verified or given a new password.
 type FinanceAdminSeeder struct{}
 
+const (
+	defaultFinanceAdminEmail    = "admin@gmail.com"
+	defaultFinanceAdminPassword = "adminpassword@!123"
+)
+
 // SeedApp implements vukem.AppSeeder. No production mode (including --force)
 // can run this local convenience seed.
 func (FinanceAdminSeeder) SeedApp(ctx context.Context, app *vukem.App) error {
@@ -50,6 +55,9 @@ func (FinanceAdminSeeder) SeedApp(ctx context.Context, app *vukem.App) error {
 		return err
 	}
 	password := app.Source.Get("FINANCE_ADMIN_PASSWORD")
+	if password == "" && email == defaultFinanceAdminEmail {
+		password = defaultFinanceAdminPassword
+	}
 	if password != "" && len(password) < 16 {
 		return errors.New("finance seed: FINANCE_ADMIN_PASSWORD must contain at least 16 characters")
 	}
@@ -93,7 +101,7 @@ func (FinanceAdminSeeder) SeedApp(ctx context.Context, app *vukem.App) error {
 func financeAdminEmail(app *vukem.App) string {
 	email := strings.ToLower(strings.TrimSpace(app.Source.Get("FINANCE_ADMIN_EMAIL")))
 	if email == "" {
-		return "admin@example.test"
+		return defaultFinanceAdminEmail
 	}
 	return email
 }

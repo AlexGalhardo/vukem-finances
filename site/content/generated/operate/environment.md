@@ -18,7 +18,7 @@ description: "Every setting of .env.example with its default, the edition it bel
 | `DATABASE_URL` | `file:storage/database.sqlite` | both | No comment in the example file. |
 | `QUEUE_TABLE` | `queue_jobs` | both | Database queue (QUEUE_CONNECTION=database) tables, prefixed so they never collide with an app table such as "jobs". Set before the first boot. |
 | `QUEUE_FAILED_TABLE` | `queue_failed_jobs` | both | No comment in the example file. |
-| `ADMIN_EMAILS` | `admin@example.test` | both | No comment in the example file. |
+| `ADMIN_EMAILS` | `admin@gmail.com` | both | Local seed account. Set your own allowlist for production. |
 | `APP_EDITION` | `personal` | both | The edition of the binary: personal (the default when unset) or saas; any other value stops the boot. personal: one implicit workspace, no billing, no public sign-up, no landing page, no plan limits; the first owner is created at /setup and the other people join by invite link. saas: public sign-up, many workspaces, Stripe billing and plan limits; set it explicitly in production. |
 | `SETUP_TOKEN` | empty | personal | personal only: the secret that /setup asks for. Leave empty to use the one-time code the server prints in its boot log ("setup code: ..."). |
 | `STRIPE_KEY` | empty | saas | Stripe (vukem install:billing), saas only: personal never reads these. Develop in a sandbox: stripe sandbox create. A restricted key (rk_...) with only the billing permissions. |
@@ -42,7 +42,7 @@ description: "Every setting of .env.example with its default, the edition it bel
 | `AI_ALLOW_PRIVATE_HOSTS` | `false` | personal | AI (bring your own key, docs/ai.md): the owner saves a provider key in the app, encrypted with APP_KEY. personal only: true lets the OpenAI-compatible provider reach a model server on this machine or a private network (http is then accepted for those hosts). saas ignores it. |
 | `SOCIAL_GOOGLE_CLIENT_ID` | empty | both | Optional Google sign-in. Leave both empty to use password login only. Set both together, and register SOCIAL callback `http://localhost:3000/auth/google/callback`. |
 | `SOCIAL_GOOGLE_CLIENT_SECRET` | empty | both | No comment in the example file. |
-| `FINANCE_ADMIN_EMAIL` | `admin@example.test` | both | Local administrator created by vukem db:seed (development and test only). Leave the password empty to generate one into storage/finance-admin-\*.txt. |
+| `FINANCE_ADMIN_EMAIL` | `admin@gmail.com` | both | Local administrator created by vukem db:seed (development and test only). An empty password uses the demo default for the default seed email. For another email, an empty password generates a private credential file. |
 | `FINANCE_ADMIN_PASSWORD` | empty | both | No comment in the example file. |
 | `APP_DOMAIN` | empty | both | compose.prod.yaml (the VPS stack with Caddy): the public host name Caddy gets a certificate for, whose DNS record must already point at the server. Compose reads it from here or from the shell. See deploy/README.md. |
 | `TOMBSTONE_RETENTION_DAYS` | `90` | both | Optional, commented out in the example. How many days a deleted row (a tombstone) and its change-log entries are kept before the nightly compaction purges them. 30 or more (the restore window). |
