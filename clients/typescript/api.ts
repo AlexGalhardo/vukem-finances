@@ -1064,7 +1064,14 @@ export type ApiProblem = {
   request_id?: string;
   code?: string;
   errors?: Record<string, string[]>;
-  issues?: { path: string; code: string; key?: string; message: string; params?: Record<string, unknown>; on?: string }[];
+  issues?: {
+    path: string;
+    code: string;
+    key?: string;
+    message: string;
+    params?: Record<string, unknown>;
+    on?: string;
+  }[];
   [extension: string]: unknown;
 };
 
@@ -1088,8 +1095,31 @@ export class ApiError extends Error {
 
 /** HttpErrorStatus lists the error statuses the client narrows on. A status outside it is returned as it is: the type is an approximation. */
 export type HttpErrorStatus =
-  | 400 | 401 | 402 | 403 | 404 | 405 | 406 | 408 | 409 | 410 | 412 | 413 | 415
-  | 422 | 423 | 425 | 428 | 429 | 431 | 451 | 500 | 501 | 502 | 503 | 504;
+  | 400
+  | 401
+  | 402
+  | 403
+  | 404
+  | 405
+  | 406
+  | 408
+  | 409
+  | 410
+  | 412
+  | 413
+  | 415
+  | 422
+  | 423
+  | 425
+  | 428
+  | 429
+  | 431
+  | 451
+  | 500
+  | 501
+  | 502
+  | 503
+  | 504;
 
 /** ApiResult is what every client method resolves to: data on 2xx, error otherwise. A failed fetch (network, abort) is not a result: it rejects. */
 export type ApiResult<T, E> =
@@ -1514,7 +1544,6 @@ export type TransfersDeleteError =
   | { status: 422; value: Problem }
   | { status: Exclude<HttpErrorStatus, 401 | 422>; value: ApiProblem | undefined };
 
-
 /** Client has one method per API operation. */
 export interface Client {
   /**
@@ -1536,9 +1565,7 @@ export interface Client {
   /**
    * GET /accounts: List the accounts with their balances
    */
-  accountsList(
-    options?: CallOptions,
-  ): Promise<ApiResult<AccountsListResponse, AccountsListError>>;
+  accountsList(options?: CallOptions): Promise<ApiResult<AccountsListResponse, AccountsListError>>;
 
   /**
    * GET /accounts/{uid}: Read an account
@@ -1599,9 +1626,7 @@ export interface Client {
   /**
    * GET /cards: List the credit cards with their limits and statements
    */
-  cardsList(
-    options?: CallOptions,
-  ): Promise<ApiResult<CardsListResponse, CardsListError>>;
+  cardsList(options?: CallOptions): Promise<ApiResult<CardsListResponse, CardsListError>>;
 
   /**
    * GET /cards/{uid}: Read a credit card
@@ -1646,9 +1671,7 @@ export interface Client {
   /**
    * GET /categories: List the categories
    */
-  categoriesList(
-    options?: CallOptions,
-  ): Promise<ApiResult<CategoriesListResponse, CategoriesListError>>;
+  categoriesList(options?: CallOptions): Promise<ApiResult<CategoriesListResponse, CategoriesListError>>;
 
   /**
    * GET /categories/{uid}: Read a category
@@ -1677,9 +1700,7 @@ export interface Client {
   /**
    * GET /export/workspace: Download the whole workspace as one JSON document (owner and admins)
    */
-  exportWorkspace(
-    options?: CallOptions,
-  ): Promise<ApiResult<ExportWorkspaceResponse, ExportWorkspaceError>>;
+  exportWorkspace(options?: CallOptions): Promise<ApiResult<ExportWorkspaceResponse, ExportWorkspaceError>>;
 
   /**
    * POST /goals/{uid}/archive: Archive a goal; its contributions stay
@@ -1724,9 +1745,7 @@ export interface Client {
   /**
    * GET /goals: List the savings goals with their progress
    */
-  goalsList(
-    options?: CallOptions,
-  ): Promise<ApiResult<GoalsListResponse, GoalsListError>>;
+  goalsList(options?: CallOptions): Promise<ApiResult<GoalsListResponse, GoalsListError>>;
 
   /**
    * POST /goals/{uid}/unarchive: Bring an archived goal back
@@ -1747,9 +1766,7 @@ export interface Client {
   /**
    * GET /me: The token, its scopes and the workspace it works in
    */
-  meShow(
-    options?: CallOptions,
-  ): Promise<ApiResult<MeShowResponse, MeShowError>>;
+  meShow(options?: CallOptions): Promise<ApiResult<MeShowResponse, MeShowError>>;
 
   /**
    * POST /recurrences: Create a recurring rule and post what is already due
@@ -1770,9 +1787,7 @@ export interface Client {
   /**
    * GET /recurrences: List the recurring rules
    */
-  recurrencesList(
-    options?: CallOptions,
-  ): Promise<ApiResult<RecurrencesListResponse, RecurrencesListError>>;
+  recurrencesList(options?: CallOptions): Promise<ApiResult<RecurrencesListResponse, RecurrencesListError>>;
 
   /**
    * PATCH /recurrences/{uid}: Change a recurring rule
@@ -1873,24 +1888,17 @@ export interface Client {
   /**
    * GET /sync/devices: List the devices the caller registered in this workspace
    */
-  syncDevicesList(
-    options?: CallOptions,
-  ): Promise<ApiResult<SyncDevicesListResponse, SyncDevicesListError>>;
+  syncDevicesList(options?: CallOptions): Promise<ApiResult<SyncDevicesListResponse, SyncDevicesListError>>;
 
   /**
    * GET /sync/info: The sync protocol versions, the entities and fields this server knows, and its limits
    */
-  syncInfo(
-    options?: CallOptions,
-  ): Promise<ApiResult<SyncInfoResponse, SyncInfoError>>;
+  syncInfo(options?: CallOptions): Promise<ApiResult<SyncInfoResponse, SyncInfoError>>;
 
   /**
    * POST /sync/pair: Trade a pairing code for a sync token and a registered device
    */
-  syncPair(
-    args: { body: SyncPairBody },
-    options?: CallOptions,
-  ): Promise<ApiResult<SyncPairResponse, SyncPairError>>;
+  syncPair(args: { body: SyncPairBody }, options?: CallOptions): Promise<ApiResult<SyncPairResponse, SyncPairError>>;
 
   /**
    * GET /sync/pull: Read the changes after a cursor, parents first
@@ -1903,10 +1911,7 @@ export interface Client {
   /**
    * POST /sync/push: Send the mutations a device made offline
    */
-  syncPush(
-    args: { body: SyncPushBody },
-    options?: CallOptions,
-  ): Promise<ApiResult<SyncPushResponse, SyncPushError>>;
+  syncPush(args: { body: SyncPushBody }, options?: CallOptions): Promise<ApiResult<SyncPushResponse, SyncPushError>>;
 
   /**
    * GET /sync/snapshot: Read the live rows of one entity to rebuild a device
@@ -1935,9 +1940,7 @@ export interface Client {
   /**
    * GET /tags: List the tags
    */
-  tagsList(
-    options?: CallOptions,
-  ): Promise<ApiResult<TagsListResponse, TagsListError>>;
+  tagsList(options?: CallOptions): Promise<ApiResult<TagsListResponse, TagsListError>>;
 
   /**
    * PATCH /tags/{uid}: Rename or recolor a tag
@@ -2013,26 +2016,20 @@ export function createClient(options: ClientOptions = {}): Client {
       request<AccountsArchiveResponse, AccountsArchiveError>("POST", "/accounts/{uid}/archive", args, options),
     accountsCreate: (args, options) =>
       request<AccountsCreateResponse, AccountsCreateError>("POST", "/accounts", args, options),
-    accountsList: (options) =>
-      request<AccountsListResponse, AccountsListError>("GET", "/accounts", undefined, options),
+    accountsList: (options) => request<AccountsListResponse, AccountsListError>("GET", "/accounts", undefined, options),
     accountsShow: (args, options) =>
       request<AccountsShowResponse, AccountsShowError>("GET", "/accounts/{uid}", args, options),
     accountsUpdate: (args, options) =>
       request<AccountsUpdateResponse, AccountsUpdateError>("PATCH", "/accounts/{uid}", args, options),
     budgetsDelete: (args, options) =>
       request<BudgetsDeleteResponse, BudgetsDeleteError>("DELETE", "/budgets/{uid}", args, options),
-    budgetsList: (args, options) =>
-      request<BudgetsListResponse, BudgetsListError>("GET", "/budgets", args, options),
-    budgetsSet: (args, options) =>
-      request<BudgetsSetResponse, BudgetsSetError>("POST", "/budgets", args, options),
+    budgetsList: (args, options) => request<BudgetsListResponse, BudgetsListError>("GET", "/budgets", args, options),
+    budgetsSet: (args, options) => request<BudgetsSetResponse, BudgetsSetError>("POST", "/budgets", args, options),
     cardsArchive: (args, options) =>
       request<CardsArchiveResponse, CardsArchiveError>("POST", "/cards/{uid}/archive", args, options),
-    cardsCreate: (args, options) =>
-      request<CardsCreateResponse, CardsCreateError>("POST", "/cards", args, options),
-    cardsList: (options) =>
-      request<CardsListResponse, CardsListError>("GET", "/cards", undefined, options),
-    cardsShow: (args, options) =>
-      request<CardsShowResponse, CardsShowError>("GET", "/cards/{uid}", args, options),
+    cardsCreate: (args, options) => request<CardsCreateResponse, CardsCreateError>("POST", "/cards", args, options),
+    cardsList: (options) => request<CardsListResponse, CardsListError>("GET", "/cards", undefined, options),
+    cardsShow: (args, options) => request<CardsShowResponse, CardsShowError>("GET", "/cards/{uid}", args, options),
     cardsUnarchive: (args, options) =>
       request<CardsUnarchiveResponse, CardsUnarchiveError>("POST", "/cards/{uid}/unarchive", args, options),
     cardsUpdate: (args, options) =>
@@ -2057,18 +2054,15 @@ export function createClient(options: ClientOptions = {}): Client {
       request<GoalsContributionsAddResponse, GoalsContributionsAddError>("POST", "/goals/{uid}/contributions", args, options),
     goalsContributionsDelete: (args, options) =>
       request<GoalsContributionsDeleteResponse, GoalsContributionsDeleteError>("DELETE", "/goals/{uid}/contributions/{contribution_uid}", args, options),
-    goalsCreate: (args, options) =>
-      request<GoalsCreateResponse, GoalsCreateError>("POST", "/goals", args, options),
+    goalsCreate: (args, options) => request<GoalsCreateResponse, GoalsCreateError>("POST", "/goals", args, options),
     goalsDelete: (args, options) =>
       request<GoalsDeleteResponse, GoalsDeleteError>("DELETE", "/goals/{uid}", args, options),
-    goalsList: (options) =>
-      request<GoalsListResponse, GoalsListError>("GET", "/goals", undefined, options),
+    goalsList: (options) => request<GoalsListResponse, GoalsListError>("GET", "/goals", undefined, options),
     goalsUnarchive: (args, options) =>
       request<GoalsUnarchiveResponse, GoalsUnarchiveError>("POST", "/goals/{uid}/unarchive", args, options),
     goalsUpdate: (args, options) =>
       request<GoalsUpdateResponse, GoalsUpdateError>("PATCH", "/goals/{uid}", args, options),
-    meShow: (options) =>
-      request<MeShowResponse, MeShowError>("GET", "/me", undefined, options),
+    meShow: (options) => request<MeShowResponse, MeShowError>("GET", "/me", undefined, options),
     recurrencesCreate: (args, options) =>
       request<RecurrencesCreateResponse, RecurrencesCreateError>("POST", "/recurrences", args, options),
     recurrencesDelete: (args, options) =>
@@ -2095,30 +2089,21 @@ export function createClient(options: ClientOptions = {}): Client {
       request<StatementsPayResponse, StatementsPayError>("POST", "/cards/{uid}/statements/{ref}/pay", args, options),
     statementsShow: (args, options) =>
       request<StatementsShowResponse, StatementsShowError>("GET", "/cards/{uid}/statements/{ref}", args, options),
-    summaryShow: (args, options) =>
-      request<SummaryShowResponse, SummaryShowError>("GET", "/summary", args, options),
+    summaryShow: (args, options) => request<SummaryShowResponse, SummaryShowError>("GET", "/summary", args, options),
     syncDevicesCreate: (args, options) =>
       request<SyncDevicesCreateResponse, SyncDevicesCreateError>("POST", "/sync/devices", args, options),
     syncDevicesList: (options) =>
       request<SyncDevicesListResponse, SyncDevicesListError>("GET", "/sync/devices", undefined, options),
-    syncInfo: (options) =>
-      request<SyncInfoResponse, SyncInfoError>("GET", "/sync/info", undefined, options),
-    syncPair: (args, options) =>
-      request<SyncPairResponse, SyncPairError>("POST", "/sync/pair", args, options),
-    syncPull: (args, options) =>
-      request<SyncPullResponse, SyncPullError>("GET", "/sync/pull", args, options),
-    syncPush: (args, options) =>
-      request<SyncPushResponse, SyncPushError>("POST", "/sync/push", args, options),
+    syncInfo: (options) => request<SyncInfoResponse, SyncInfoError>("GET", "/sync/info", undefined, options),
+    syncPair: (args, options) => request<SyncPairResponse, SyncPairError>("POST", "/sync/pair", args, options),
+    syncPull: (args, options) => request<SyncPullResponse, SyncPullError>("GET", "/sync/pull", args, options),
+    syncPush: (args, options) => request<SyncPushResponse, SyncPushError>("POST", "/sync/push", args, options),
     syncSnapshot: (args, options) =>
       request<SyncSnapshotResponse, SyncSnapshotError>("GET", "/sync/snapshot", args, options),
-    tagsCreate: (args, options) =>
-      request<TagsCreateResponse, TagsCreateError>("POST", "/tags", args, options),
-    tagsDelete: (args, options) =>
-      request<TagsDeleteResponse, TagsDeleteError>("DELETE", "/tags/{uid}", args, options),
-    tagsList: (options) =>
-      request<TagsListResponse, TagsListError>("GET", "/tags", undefined, options),
-    tagsUpdate: (args, options) =>
-      request<TagsUpdateResponse, TagsUpdateError>("PATCH", "/tags/{uid}", args, options),
+    tagsCreate: (args, options) => request<TagsCreateResponse, TagsCreateError>("POST", "/tags", args, options),
+    tagsDelete: (args, options) => request<TagsDeleteResponse, TagsDeleteError>("DELETE", "/tags/{uid}", args, options),
+    tagsList: (options) => request<TagsListResponse, TagsListError>("GET", "/tags", undefined, options),
+    tagsUpdate: (args, options) => request<TagsUpdateResponse, TagsUpdateError>("PATCH", "/tags/{uid}", args, options),
     transactionsCreate: (args, options) =>
       request<TransactionsCreateResponse, TransactionsCreateError>("POST", "/transactions", args, options),
     transactionsDelete: (args, options) =>

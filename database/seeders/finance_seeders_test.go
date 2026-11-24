@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/AlexGalhardo/vukem"
+	"github.com/AlexGalhardo/vukem/auth/hash"
 	"github.com/AlexGalhardo/vukem/config"
 	"github.com/AlexGalhardo/vukem/orm"
 	"github.com/AlexGalhardo/vukem/vukemtest"
@@ -32,7 +33,10 @@ func TestSecurity_FinanceSeedRejectsProduction(t *testing.T) {
 func TestSecurity_FinanceSeedRandomPrivateCredential(t *testing.T) {
 	t.Chdir(t.TempDir())
 	app := vukemtest.New(t, bootstrap.New, vukemtest.Options{
-		Env: map[string]string{"ADMIN_EMAILS": "admin@example.test"},
+		Env: map[string]string{
+			"ADMIN_EMAILS":        "admin@example.test",
+			"FINANCE_ADMIN_EMAIL": "admin@example.test",
+		},
 	})
 	if err := (seeders.FinanceAdminSeeder{}).SeedApp(t.Context(), app.App); err != nil {
 		t.Fatal(err)
@@ -87,7 +91,7 @@ func TestSecurity_FinanceSeedRandomPrivateCredential(t *testing.T) {
 func TestFinanceDemoSeedHasAccountsATransferAndACard(t *testing.T) {
 	t.Chdir(t.TempDir())
 	app := vukemtest.New(t, bootstrap.New, vukemtest.Options{
-		Env: map[string]string{"ADMIN_EMAILS": "admin@example.test"},
+		Env: map[string]string{"ADMIN_EMAILS": "admin@gmail.com"},
 	})
 
 	for _, seeder := range []vukem.AppSeeder{seeders.FinanceAdminSeeder{}, seeders.FinanceDemoSeeder{}} {
@@ -99,6 +103,13 @@ func TestFinanceDemoSeedHasAccountsATransferAndACard(t *testing.T) {
 	db, err := app.DB()
 	if err != nil {
 		t.Fatal(err)
+	}
+	owner, err := orm.QueryOf[models.User](db).Where("email", "admin@gmail.com").First(t.Context())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if valid, err := hash.Default().Verify(owner.Password, "adminpassword@!123"); err != nil || !valid {
+		t.Fatalf("seeded owner cannot sign in with the default demo password: %v", err)
 	}
 
 	ctx := workspaces.WithTenant(t.Context(), 1)

@@ -3,7 +3,7 @@ module github.com/AlexGalhardo/vukem-finances/desktop
 go 1.27.4
 
 require (
-	github.com/AlexGalhardo/vukem v0.48.0
+	github.com/AlexGalhardo/vukem v0.49.0
 	github.com/AlexGalhardo/vukem-finances v0.0.0-00010101000000-000000000000
 	github.com/wailsapp/wails/v3 v3.1.0
 	golang.org/x/sys v0.50.0

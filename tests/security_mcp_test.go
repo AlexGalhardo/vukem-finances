@@ -1104,7 +1104,16 @@ func TestSecurity_MCP_RateLimit(t *testing.T) {
 	})
 
 	t.Run("a refusal by limit holds no data and is not a server error", func(t *testing.T) {
-		r := callTool(t, s, tok.Access, "tags_create", map[string]any{"name": "after"})
+		// The limiter refills one call at a time, so a call may be served between two refusals.
+		var r rpc
+
+		for i := range 70 {
+			r = callTool(t, s, tok.Access, "tags_create", map[string]any{"name": "after" + itoa(int64(i))})
+			if strings.Contains(r.text(), "rate_limited") {
+				break
+			}
+		}
+
 		if !strings.Contains(r.text(), "rate_limited") || strings.Contains(r.text(), "t1") && strings.Contains(r.text(), "uid") {
 			t.Fatalf("answer: %s", r.raw)
 		}

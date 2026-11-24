@@ -1,0 +1,153 @@
+{
+  "name": "Monthly Margin",
+  "light": {
+    "bg": "#F3F5FA",
+    "surface": "#FFFFFF",
+    "ink": "#171D30",
+    "muted": "#505A72",
+    "border": "#D5DAE6",
+    "accent": "#3149B4",
+    "onAccent": "#FFFFFF",
+    "soft": "#E7EBFA",
+    "positive": "#006447",
+    "negative": "#9C2F48",
+    "warning": "#774600",
+    "info": "#24578A",
+    "control": "#69738B",
+    "focus": "#3149B4",
+    "hover": "#EDF0F7",
+    "accentHover": "#293D99",
+    "accentPressed": "#233482",
+    "positiveSoft": "#E0F2E9",
+    "negativeSoft": "#F9E7ED",
+    "warningSoft": "#FAEFD9",
+    "infoSoft": "#E3EFFB",
+    "chartPlan": "#3149B4",
+    "chartActual": "#505A72",
+    "overlay": "#171D3099"
+  },
+  "dark": {
+    "bg": "#111522",
+    "surface": "#1A2030",
+    "ink": "#F4F6FF",
+    "muted": "#B8C2DA",
+    "border": "#343E56",
+    "accent": "#AEBEFF",
+    "onAccent": "#151E43",
+    "soft": "#292F50",
+    "positive": "#83DDB8",
+    "negative": "#FF9EB5",
+    "warning": "#FFD08A",
+    "info": "#9ACDFF",
+    "control": "#8692AE",
+    "focus": "#AEBEFF",
+    "hover": "#242C41",
+    "accentHover": "#C1CCFF",
+    "accentPressed": "#99ADF9",
+    "positiveSoft": "#193A32",
+    "negativeSoft": "#492637",
+    "warningSoft": "#422F1B",
+    "infoSoft": "#243A50",
+    "chartPlan": "#AEBEFF",
+    "chartActual": "#B8C2DA",
+    "overlay": "#050812B3"
+  },
+  "typography": {
+    "familyWeb": "Geist Variable",
+    "familyMobile": "System",
+    "numerals": "tabular-nums",
+    "display": [
+      40,
+      44,
+      600,
+      -1.2
+    ],
+    "title": [
+      28,
+      34,
+      600,
+      -0.6
+    ],
+    "section": [
+      20,
+      26,
+      600,
+      -0.2
+    ],
+    "body": [
+      15,
+      22,
+      400,
+      0
+    ],
+    "label": [
+      14,
+      20,
+      550,
+      0
+    ],
+    "caption": [
+      12,
+      18,
+      400,
+      0
+    ]
+  },
+  "space": [
+    0,
+    4,
+    8,
+    12,
+    16,
+    20,
+    24,
+    32,
+    40,
+    48,
+    64
+  ],
+  "radius": {
+    "control": 8,
+    "panel": 12,
+    "pill": 999
+  },
+  "stroke": {
+    "divider": 1,
+    "focus": 2,
+    "focusOffset": 2,
+    "budgetTrack": 4
+  },
+  "size": {
+    "webRow": 44,
+    "coarseTarget": 44,
+    "mobileTarget": 48,
+    "icon": 20,
+    "iconSmall": 16,
+    "rail": 224,
+    "header": 56,
+    "guide": 320,
+    "form": 480,
+    "contentMax": 1280
+  },
+  "breakpoint": {
+    "compact": 768,
+    "guideBeside": 1200
+  },
+  "motionMs": {
+    "control": 100,
+    "disclosure": 160,
+    "reduced": 0
+  },
+  "easing": "cubic-bezier(0.2, 0, 0, 1)",
+  "layer": {
+    "base": 0,
+    "sticky": 10,
+    "menu": 20,
+    "dialog": 30,
+    "toast": 40
+  },
+  "shadow": {
+    "light": "0 8px 24px #171D3026",
+    "dark": "0 8px 24px #05081280"
+  }
+}

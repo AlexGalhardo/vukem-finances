@@ -76,7 +76,11 @@ func TestSecurity_FinanceGoogleRequiresTwoFactor(t *testing.T) {
 func TestSecurity_FinanceLocalSeedPreservesCredentialsAndData(t *testing.T) {
 	t.Parallel()
 	const password = "local-example-password-123456"
-	app := newApp(t, map[string]string{"ADMIN_EMAILS": "admin@example.test", "FINANCE_ADMIN_PASSWORD": password})
+	app := newApp(t, map[string]string{
+		"ADMIN_EMAILS":           "admin@example.test",
+		"FINANCE_ADMIN_EMAIL":    "admin@example.test",
+		"FINANCE_ADMIN_PASSWORD": password,
+	})
 	for range 2 {
 		if err := (seeders.FinanceAdminSeeder{}).SeedApp(t.Context(), app.App); err != nil {
 			t.Fatal(err)

@@ -61,3 +61,12 @@ paths = [
 	'''^resources/js/components/PasswordField\.tsx$''',
 	'''^app/accounts/lang/.*\.json$''',
 ]
+
+# The demo credential is public and the seeder refuses production.
+[[allowlists]]
+description = "exact default credential for the local finance demo seed"
+condition = "AND"
+targetRules = ["generic-password"]
+paths = ['''^database/seeders/finance_admin_seeder\.go$''']
+regexTarget = "secret"
+regexes = ['''^adminpassword@!123$''']

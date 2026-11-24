@@ -270,6 +270,16 @@ The entries of task 12 (accessibility audit) are numbered from QA-600. All of th
 - **Severity:** Low (test infrastructure).
 - **Status:** fixed: the lint ignores `test-results/`.
 
+## QA-612: the MCP rate limit test assumes the next write is refused
+
+- **Surface:** `TestSecurity_MCP_RateLimit` in `tests/security_mcp_test.go`.
+- **Steps:** run the test under `-race` on a slow runner.
+- **Expected:** the test finds a refusal and checks that it holds no data.
+- **Actual:** the limiter refills one call at a time, so the single write after the limit was sometimes served and the test failed. The product behaved as designed.
+- **Evidence:** CI of `main` on the v0.8.0 commit, run 45256474690.
+- **Severity:** Low (test infrastructure).
+- **Status:** fixed: the test writes until it gets a refusal, then makes the same checks on it.
+
 ## Round log
 
 Written by `scripts/qa/round.sh` after a round in which every check passed. Round 1 was written by hand: it failed, and the problems it found are the entries above.
